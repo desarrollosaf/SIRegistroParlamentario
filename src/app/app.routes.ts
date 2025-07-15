@@ -45,7 +45,11 @@ export const routes: Routes = [
       {
         path: 'general',
         loadChildren: () => import('./views/pages/general/general.routes')
-      }
+      },
+      {
+      path: 'agenda',
+      loadComponent: () => import('./views/pages/agenda/agenda.component').then(c => c.AgendaComponent)
+      },
     ]
   },
   {
