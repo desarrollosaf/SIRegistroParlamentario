@@ -7,13 +7,13 @@ export const MENU: MenuItem[] = [
     link: '/dashboard'
   },
   {
-    label: 'Apps',
+    label: 'Agenda',
     icon: 'mail',
     subMenus: [
       {
         subMenuItems: [
           {
-            label: 'Email',
+            label: 'agenda2',
             isTitle: true,
           },
           {
