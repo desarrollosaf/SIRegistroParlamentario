@@ -3,178 +3,49 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="card-title">Agenda</h6>
-                <form [formGroup]="formAgenda" (ngSubmit)="enviarDatos()" class="forms-sample">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="mb-3">
-                                <label class="form-label negri">Fecha:*</label>
-                                <input formControlName="a_fecha" type="datetime-local"
-                                    class="form-control input-simulado-disabled" />
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="mb-3">
-                                <label class="form-label negri">Sede:</label>
-                                <ng-select [items]="demoSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="a_sede">
-                                </ng-select>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="mb-3">
-                                <label class="form-label negri">Tipo Evento:</label>
-                                <ng-select [items]="demoSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="a_tipo_evento">
-                                </ng-select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <div class="mb-3">
-                                <label class="form-label negri">Descripción:</label>
-                                <textarea formControlName="a_descripcion" class="form-control"
-                                    id="exampleFormControlTextarea1" rows="6"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <h5>Anfitriones</h5>
-                            <br>
-                            <div class="agregar-container">
-                                <button (click)="abrirModal()" type="button" class="add-anf-btn">
-                                    <i class="feather icon-plus" style="color: white;"></i> Agregar anfitrión
-                                </button>
-                            </div>
-                            <br>
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" style="text-align: center;">Núm.</th>
-                                            <th scope="col" style="text-align: center;">Tipo de anfitrión.</th>
-                                            <th scope="col" style="text-align: center;">Autor.</th>
-                                            <th scope="col" style="text-align: center;">Opciones.</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr *ngIf="itemsTabla.length === 0">
-                                            <td colspan="4" style="text-align: center;">No hay autores asignados</td>
-                                        </tr>
-                                        <tr *ngFor="let item of itemsTabla; let i = index">
-                                            <th scope="row" style="text-align: center;">{{ i + 1 }}</th>
-                                            <td style="text-align: center;">{{ item.tipoAutorNombre }}</td>
-                                            <td style="text-align: center;">
-                                                {{ getAutoresNombres(item.autores) }}
-                                            </td>
-                                            <td style="text-align: center;">
-                                                <a class="btn btn-danger btn-sm" (click)="eliminarFila(i)">Eliminar</a>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-
-                        </div>
-                    </div>
-                    <br>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <div class="mb-3">
-                                <label class="form-label negri">¿Se transmite en pagina principal?:</label>
-                                <div>
-                                    <label class="form-check form-check-inline">
-                                        <input type="radio" class="form-check-input" formControlName="a_transmite"
-                                            [value]="true" />
-                                        Sí
-                                    </label>
-
-                                    <label class="form-check form-check-inline">
-                                        <input type="radio" class="form-check-input" formControlName="a_transmite"
-                                            [value]="false" />
-                                        No
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div *ngIf="formAgenda.get('a_transmite')?.value">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="mb-3">
-                                    <label class="form-label negri">Liga:</label>
-                                    <textarea formControlName="a_liga" class="form-control"
-                                        id="exampleFormControlTextarea1" rows="6"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="mb-3">
-                                    <label class="form-label negri">Hora inicio:</label>
-                                    <input formControlName="a_hora_inicio" type="datetime-local"
-                                        class="form-control input-simulado-disabled" />
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="mb-3">
-                                    <label class="form-label negri">Hora fin:</label>
-                                    <input formControlName="a_hora_fin" type="datetime-local"
-                                        class="form-control input-simulado-disabled" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center mt-4">
-                        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-                            <button type="submit" class="btn btn-primary px-4"
-                                style="background-color: #800048; color: white; border: none;">
-                                Enviar
-                            </button>
-
-                        </div>
-                    </div>
-                </form>
+         <div class="row">
+          <div class="col-xl-3 col-md-4">
+            <input type="text" class="form-control form-control-sm" placeholder="Buscar..."
+              (input)="updateFilter($event)" />
+          </div>
+        </div>
+             <div class="table-responsive">
+          <div *ngIf="rows.length === 0 && !loading" class="text-center my-3">
+            <p><strong>No hay datos para mostrar</strong></p>
+          </div>
+          <ngx-datatable
+           [externalPaging]="true"  [externalPaging]="true" 
+            #table class="bootstrap" [rows]="rows" [columnMode]="'force'" [headerHeight]="50"
+            *ngIf="rows.length > 0" [footerHeight]="50" [rowHeight]="'auto'" [limit]="pageSize" [count]="filteredCount"
+            [offset]="page" (page)="setPage($event)" [loadingIndicator]="loading">
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Cuándo">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{row.fecha}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Quién / Qué">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+               {{row.quien}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Dónde">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+               {{row.ubicacion}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Acciones">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="text-center">
+                  <a routerLink="show/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                    title="Ver detalles">
+                   
+                  </a>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
             </div>
         </div>
     </div>
 </div>
-
-
-
-<ng-template #xlModal let-modal>
-    <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Autores y Coautores</h5>
-        <button type="button" class="btn-close" (click)="modal.close('by: close icon')" aria-label="Close"></button>
-    </div>
-    <div class="modal-body">
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="mb-3">
-                    <label class="form-label negri">Tipo autor:</label>
-                    <ng-select [items]="tipoAutor" bindLabel="name" bindValue="id" [(ngModel)]="tipoAutorSeleccionado"
-                        (ngModelChange)="setTipoAutor($event)" placeholder="--Selecciona tipo autor--">
-                    </ng-select>
-                </div>
-            </div>
-            <div class="col-sm-12">
-                <div class="mb-3">
-                    <label class="form-label negri">Autor:</label>
-                    <ng-select [items]="autoresFiltrados" bindLabel="name" bindValue="id"
-                        [multiple]="esMultiple(tipoAutorSeleccionado)" [(ngModel)]="autoresSeleccionados"
-                        [attr.disabled]="!tipoAutorSeleccionado ? true : null" placeholder="--Selecciona autor--">
-                    </ng-select>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.close('by: close button')">Cerrar</button>
-        <button type="button" class="btn" style="background-color: #800048; color: white;"
-            (click)="agregarFila()">Agregar</button>
-    </div>
-</ng-template>

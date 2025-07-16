@@ -48,7 +48,7 @@ export const routes: Routes = [
       },
       {
       path: 'agenda',
-      loadComponent: () => import('./views/pages/agenda/agenda.component').then(c => c.AgendaComponent)
+       loadChildren: () => import('./views/pages/agenda/agenda.route')
       },
     ]
   },
