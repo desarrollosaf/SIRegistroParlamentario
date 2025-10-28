@@ -1,0 +1,771 @@
+{
+  "pagination": {
+    "pageSize": 100,
+    "page": 20,
+    "totalRows": 30,
+    "hasNextPage": true
+  },
+  "results": [
+    {
+      "metadata": {
+        "actualizacion": "2017-07-21T17:32:28Z",
+        "institucion": "Secretaría de Educación Pública",
+        "contacto": "usuario@dominio.org",
+        "personaContacto": "José John"
+      },
+      "publisher": {
+        "name": "Nombre",
+        "scheme": "Esquema",
+        "uid": "uid",
+        "uri": "https://"
+      },
+      "cycle": 2017,
+      "ocid": "Open Contracting ID",
+      "id": "ID de Entrega",
+      "date": "2017-07-21T17:32:28Z",
+      "tag": [
+        "planning"
+      ],
+      "initiationType": "tender",
+      "parties": [
+        {
+          "name": "Nombre común",
+          "id": "string",
+          "identifier": {
+            "scheme": "Esquema",
+            "id": "ID",
+            "legalName": "Nombre Legal",
+            "uri": "https://"
+          },
+          "additionalIdentifiers": [
+            {
+              "scheme": "Esquema",
+              "id": "ID",
+              "legalName": "Nombre Legal",
+              "uri": "https://"
+            }
+          ],
+          "address": {
+            "streetAddress": "1600 Amphitheatre Pkwy.",
+            "locality": "Mountain View.",
+            "region": "CA.",
+            "postalCode": "94043",
+            "countryName": "Estados Unidos."
+          },
+          "contactPoint": {
+            "name": "El nombre de la persona",
+            "email": "La dirección de correo",
+            "telephone": "El número de teléfono",
+            "faxNumber": "El número de fax",
+            "url": "https://"
+          },
+          "roles": [
+            "buyer"
+          ],
+          "details": {
+            "scale": "micro"
+          }
+        }
+      ],
+      "buyer": {
+        "name": "Nombre de la Organización",
+        "id": "ID de Organización",
+        "identifier": {
+          "scheme": "Esquema",
+          "id": "ID",
+          "legalName": "Nombre Legal",
+          "uri": "https://"
+        },
+        "additionalIdentifiers": [
+          {
+            "scheme": "Esquema",
+            "id": "ID",
+            "legalName": "Nombre Legal",
+            "uri": "https://"
+          }
+        ],
+        "address": {
+          "streetAddress": "1600 Amphitheatre Pkwy.",
+          "locality": "Mountain View.",
+          "region": "CA.",
+          "postalCode": "94043",
+          "countryName": "Estados Unidos."
+        },
+        "contactPoint": {
+          "name": "El nombre de la persona",
+          "email": "La dirección de correo",
+          "telephone": "El número de teléfono",
+          "faxNumber": "El número de fax",
+          "url": "https://"
+        }
+      },
+      "planning": {
+        "rationale": "Justificación",
+        "budget": {
+          "id": "ID",
+          "description": "Fuente del Presupuesto",
+          "amount": {
+            "amount": 10,
+            "currency": "MXN"
+          },
+          "project": "Título del Proyecto",
+          "projectID": "Identificador de proyecto",
+          "uri": "Información vinculada de presupuesto",
+          "source": "https://"
+        },
+        "documents": [
+          {
+            "id": "ID",
+            "documentType": "plannedProcurementNotice",
+            "title": "Título",
+            "description": "Descripción",
+            "url": "URL",
+            "datePublished": "2017-07-21T17:32:28Z",
+            "dateModified": "2017-07-21T17:32:28Z",
+            "format": "Formato",
+            "language": "Idioma"
+          }
+        ],
+        "milestones": [
+          {
+            "id": "ID",
+            "title": "Título",
+            "type": "preProcurement",
+            "description": "Descripción",
+            "code": "Código de hito",
+            "dueDate": "2017-07-21T17:32:28Z",
+            "dateMet": "2017-07-21T17:32:28Z",
+            "dateModified": "2017-07-21T17:32:28Z",
+            "status": "scheduled",
+            "documents": [
+              {
+                "id": "ID",
+                "documentType": "plannedProcurementNotice",
+                "title": "Título",
+                "description": "Descripción",
+                "url": "URL",
+                "datePublished": "2017-07-21T17:32:28Z",
+                "dateModified": "2017-07-21T17:32:28Z",
+                "format": "Formato",
+                "language": "Idioma"
+              }
+            ]
+          }
+        ]
+      },
+      "tender": {
+        "id": "ID de licitación",
+        "title": "Título de la licitación",
+        "description": "Descripción de la licitación",
+        "status": "planning",
+        "procuringEntity": {
+          "name": "Nombre de la Organización",
+          "id": "ID de Organización",
+          "identifier": {
+            "scheme": "Esquema",
+            "id": "ID",
+            "legalName": "Nombre Legal",
+            "uri": "https://"
+          },
+          "additionalIdentifiers": [
+            {
+              "scheme": "Esquema",
+              "id": "ID",
+              "legalName": "Nombre Legal",
+              "uri": "https://"
+            }
+          ],
+          "address": {
+            "streetAddress": "1600 Amphitheatre Pkwy.",
+            "locality": "Mountain View.",
+            "region": "CA.",
+            "postalCode": "94043",
+            "countryName": "Estados Unidos."
+          },
+          "contactPoint": {
+            "name": "El nombre de la persona",
+            "email": "La dirección de correo",
+            "telephone": "El número de teléfono",
+            "faxNumber": "El número de fax",
+            "url": "https://"
+          }
+        },
+        "items": [
+          {
+            "id": "ID",
+            "description": "Descripción",
+            "classification": {
+              "scheme": "CPV",
+              "id": "ID",
+              "description": "Descripción",
+              "uri": "https://"
+            },
+            "additionalClassifications": [
+              {
+                "scheme": "CPV",
+                "id": "ID",
+                "description": "Descripción",
+                "uri": "https://"
+              }
+            ],
+            "quantity": 10,
+            "unit": {
+              "scheme": "UNCEFACT",
+              "id": "ID",
+              "name": "Nombre",
+              "value": {
+                "amount": 10,
+                "currency": "MXN"
+              },
+              "uri": "https://"
+            }
+          }
+        ],
+        "value": {
+          "amount": 10,
+          "currency": "MXN"
+        },
+        "minValue": {
+          "amount": 10,
+          "currency": "MXN"
+        },
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Detalles del método de contratación",
+        "procurementMethodRationale": "Justificación para el método de contratación",
+        "mainProcurementCategory": "goods",
+        "additionalProcurementCategories": [
+          "goods"
+        ],
+        "awardCriteria": "priceOnly",
+        "awardCriteriaDetails": "Detalles de los criterios de adjudicación",
+        "submissionMethod": [
+          "electronicSubmission"
+        ],
+        "submissionMethodDetails": "Detalles del método de presentación",
+        "tenderPeriod": {
+          "startDate": "2017-07-21T17:32:28Z",
+          "endDate": "2017-07-21T17:32:28Z",
+          "maxExtentDate": "2017-07-21T17:32:28Z",
+          "durationInDays": 10
+        },
+        "enquiryPeriod": {
+          "startDate": "2017-07-21T17:32:28Z",
+          "endDate": "2017-07-21T17:32:28Z",
+          "maxExtentDate": "2017-07-21T17:32:28Z",
+          "durationInDays": 10
+        },
+        "hasEnquiries": true,
+        "eligibilityCriteria": "Criterios de elegibilidad",
+        "awardPeriod": {
+          "startDate": "2017-07-21T17:32:28Z",
+          "endDate": "2017-07-21T17:32:28Z",
+          "maxExtentDate": "2017-07-21T17:32:28Z",
+          "durationInDays": 10
+        },
+        "contractPeriod": {
+          "startDate": "2017-07-21T17:32:28Z",
+          "endDate": "2017-07-21T17:32:28Z",
+          "maxExtentDate": "2017-07-21T17:32:28Z",
+          "durationInDays": 10
+        },
+        "numberOfTenderers": 10,
+        "tenderers": [
+          {
+            "name": "Nombre de la Organización",
+            "id": "ID de Organización",
+            "identifier": {
+              "scheme": "Esquema",
+              "id": "ID",
+              "legalName": "Nombre Legal",
+              "uri": "https://"
+            },
+            "additionalIdentifiers": [
+              {
+                "scheme": "Esquema",
+                "id": "ID",
+                "legalName": "Nombre Legal",
+                "uri": "https://"
+              }
+            ],
+            "address": {
+              "streetAddress": "1600 Amphitheatre Pkwy.",
+              "locality": "Mountain View.",
+              "region": "CA.",
+              "postalCode": "94043",
+              "countryName": "Estados Unidos."
+            },
+            "contactPoint": {
+              "name": "El nombre de la persona",
+              "email": "La dirección de correo",
+              "telephone": "El número de teléfono",
+              "faxNumber": "El número de fax",
+              "url": "https://"
+            }
+          }
+        ],
+        "documents": [
+          {
+            "id": "ID",
+            "documentType": "plannedProcurementNotice",
+            "title": "Título",
+            "description": "Descripción",
+            "url": "URL",
+            "datePublished": "2017-07-21T17:32:28Z",
+            "dateModified": "2017-07-21T17:32:28Z",
+            "format": "Formato",
+            "language": "Idioma"
+          }
+        ],
+        "milestones": [
+          {
+            "id": "ID",
+            "title": "Título",
+            "type": "preProcurement",
+            "description": "Descripción",
+            "code": "Código de hito",
+            "dueDate": "2017-07-21T17:32:28Z",
+            "dateMet": "2017-07-21T17:32:28Z",
+            "dateModified": "2017-07-21T17:32:28Z",
+            "status": "scheduled",
+            "documents": [
+              {
+                "id": "ID",
+                "documentType": "plannedProcurementNotice",
+                "title": "Título",
+                "description": "Descripción",
+                "url": "URL",
+                "datePublished": "2017-07-21T17:32:28Z",
+                "dateModified": "2017-07-21T17:32:28Z",
+                "format": "Formato",
+                "language": "Idioma"
+              }
+            ]
+          }
+        ],
+        "amendments": [
+          {
+            "date": "2017-07-21T17:32:28Z",
+            "rationale": "Justificación",
+            "id": "ID",
+            "description": "Descripción",
+            "amendsReleaseID": "Entrega enmendada (identificador)",
+            "releaseID": "Entrega de enmienda (identificador)",
+            "changes": [
+              {
+                "property": "Propiedad",
+                "former_value": "Valor"
+              }
+            ]
+          }
+        ],
+        "amendment": {
+          "date": "2017-07-21T17:32:28Z",
+          "rationale": "Justificación",
+          "id": "ID",
+          "description": "Descripción",
+          "amendsReleaseID": "Entrega enmendada (identificador)",
+          "releaseID": "Entrega de enmienda (identificador)",
+          "changes": [
+            {
+              "property": "Propiedad",
+              "former_value": "Valor"
+            }
+          ]
+        }
+      },
+      "language": "es",
+      "awards": [
+        {
+          "id": "ID de Adjudicación",
+          "title": "Título",
+          "description": "Descripción",
+          "status": "pending",
+          "date": "2017-07-21T17:32:28Z",
+          "value": {
+            "amount": 10,
+            "currency": "MXN"
+          },
+          "suppliers": [
+            {
+              "name": "Nombre de la Organización",
+              "id": "ID de Organización",
+              "identifier": {
+                "scheme": "Esquema",
+                "id": "ID",
+                "legalName": "Nombre Legal",
+                "uri": "https://"
+              },
+              "additionalIdentifiers": [
+                {
+                  "scheme": "Esquema",
+                  "id": "ID",
+                  "legalName": "Nombre Legal",
+                  "uri": "https://"
+                }
+              ],
+              "address": {
+                "streetAddress": "1600 Amphitheatre Pkwy.",
+                "locality": "Mountain View.",
+                "region": "CA.",
+                "postalCode": "94043",
+                "countryName": "Estados Unidos."
+              },
+              "contactPoint": {
+                "name": "El nombre de la persona",
+                "email": "La dirección de correo",
+                "telephone": "El número de teléfono",
+                "faxNumber": "El número de fax",
+                "url": "https://"
+              }
+            }
+          ],
+          "items": [
+            {
+              "id": "ID",
+              "description": "Descripción",
+              "classification": {
+                "scheme": "CPV",
+                "id": "ID",
+                "description": "Descripción",
+                "uri": "https://"
+              },
+              "additionalClassifications": [
+                {
+                  "scheme": "CPV",
+                  "id": "ID",
+                  "description": "Descripción",
+                  "uri": "https://"
+                }
+              ],
+              "quantity": 10,
+              "unit": {
+                "scheme": "UNCEFACT",
+                "id": "ID",
+                "name": "Nombre",
+                "value": {
+                  "amount": 10,
+                  "currency": "MXN"
+                },
+                "uri": "https://"
+              }
+            }
+          ],
+          "contractPeriod": {
+            "startDate": "2017-07-21T17:32:28Z",
+            "endDate": "2017-07-21T17:32:28Z",
+            "maxExtentDate": "2017-07-21T17:32:28Z",
+            "durationInDays": 10
+          },
+          "documents": [
+            {
+              "id": "ID",
+              "documentType": "plannedProcurementNotice",
+              "title": "Título",
+              "description": "Descripción",
+              "url": "URL",
+              "datePublished": "2017-07-21T17:32:28Z",
+              "dateModified": "2017-07-21T17:32:28Z",
+              "format": "Formato",
+              "language": "Idioma"
+            }
+          ],
+          "amendments": [
+            {
+              "date": "2017-07-21T17:32:28Z",
+              "rationale": "Justificación",
+              "id": "ID",
+              "description": "Descripción",
+              "amendsReleaseID": "Entrega enmendada (identificador)",
+              "releaseID": "Entrega de enmienda (identificador)",
+              "changes": [
+                {
+                  "property": "Propiedad",
+                  "former_value": "Valor"
+                }
+              ]
+            }
+          ],
+          "amendment": {
+            "date": "2017-07-21T17:32:28Z",
+            "rationale": "Justificación",
+            "id": "ID",
+            "description": "Descripción",
+            "amendsReleaseID": "Entrega enmendada (identificador)",
+            "releaseID": "Entrega de enmienda (identificador)",
+            "changes": [
+              {
+                "property": "Propiedad",
+                "former_value": "Valor"
+              }
+            ]
+          }
+        }
+      ],
+      "contracts": [
+        {
+          "id": "ID del Contrato",
+          "awardID": "ID de Adjudicación",
+          "title": "Título del contrato",
+          "description": "Descripción del contrato",
+          "status": "pending",
+          "period": {
+            "startDate": "2017-07-21T17:32:28Z",
+            "endDate": "2017-07-21T17:32:28Z",
+            "maxExtentDate": "2017-07-21T17:32:28Z",
+            "durationInDays": 10
+          },
+          "value": {
+            "amount": 10,
+            "currency": "MXN"
+          },
+          "items": [
+            {
+              "id": "ID",
+              "description": "Descripción",
+              "classification": {
+                "scheme": "CPV",
+                "id": "ID",
+                "description": "Descripción",
+                "uri": "https://"
+              },
+              "additionalClassifications": [
+                {
+                  "scheme": "CPV",
+                  "id": "ID",
+                  "description": "Descripción",
+                  "uri": "https://"
+                }
+              ],
+              "quantity": 10,
+              "unit": {
+                "scheme": "UNCEFACT",
+                "id": "ID",
+                "name": "Nombre",
+                "value": {
+                  "amount": 10,
+                  "currency": "MXN"
+                },
+                "uri": "https://"
+              }
+            }
+          ],
+          "dateSigned": "2017-07-21T17:32:28Z",
+          "documents": [
+            {
+              "id": "ID",
+              "documentType": "plannedProcurementNotice",
+              "title": "Título",
+              "description": "Descripción",
+              "url": "URL",
+              "datePublished": "2017-07-21T17:32:28Z",
+              "dateModified": "2017-07-21T17:32:28Z",
+              "format": "Formato",
+              "language": "Idioma"
+            }
+          ],
+          "implementation": {
+            "transactions": [
+              {
+                "id": "ID",
+                "source": "Fuente de los Datos",
+                "date": "Fecha",
+                "value": {
+                  "amount": 10,
+                  "currency": "MXN"
+                },
+                "payer": {
+                  "name": "Nombre de la Organización",
+                  "id": "ID de Organización",
+                  "identifier": {
+                    "scheme": "Esquema",
+                    "id": "ID",
+                    "legalName": "Nombre Legal",
+                    "uri": "https://"
+                  },
+                  "additionalIdentifiers": [
+                    {
+                      "scheme": "Esquema",
+                      "id": "ID",
+                      "legalName": "Nombre Legal",
+                      "uri": "https://"
+                    }
+                  ],
+                  "address": {
+                    "streetAddress": "1600 Amphitheatre Pkwy.",
+                    "locality": "Mountain View.",
+                    "region": "CA.",
+                    "postalCode": "94043",
+                    "countryName": "Estados Unidos."
+                  },
+                  "contactPoint": {
+                    "name": "El nombre de la persona",
+                    "email": "La dirección de correo",
+                    "telephone": "El número de teléfono",
+                    "faxNumber": "El número de fax",
+                    "url": "https://"
+                  }
+                },
+                "payee": {
+                  "name": "Nombre de la Organización",
+                  "id": "ID de Organización",
+                  "identifier": {
+                    "scheme": "Esquema",
+                    "id": "ID",
+                    "legalName": "Nombre Legal",
+                    "uri": "https://"
+                  },
+                  "additionalIdentifiers": [
+                    {
+                      "scheme": "Esquema",
+                      "id": "ID",
+                      "legalName": "Nombre Legal",
+                      "uri": "https://"
+                    }
+                  ],
+                  "address": {
+                    "streetAddress": "1600 Amphitheatre Pkwy.",
+                    "locality": "Mountain View.",
+                    "region": "CA.",
+                    "postalCode": "94043",
+                    "countryName": "Estados Unidos."
+                  },
+                  "contactPoint": {
+                    "name": "El nombre de la persona",
+                    "email": "La dirección de correo",
+                    "telephone": "El número de teléfono",
+                    "faxNumber": "El número de fax",
+                    "url": "https://"
+                  }
+                },
+                "uri": "https://",
+                "amount": {
+                  "amount": 10,
+                  "currency": "MXN"
+                },
+                "providerOrganization": {
+                  "scheme": "Esquema",
+                  "id": "ID",
+                  "legalName": "Nombre Legal",
+                  "uri": "https://"
+                },
+                "receiverOrganization": {
+                  "scheme": "Esquema",
+                  "id": "ID",
+                  "legalName": "Nombre Legal",
+                  "uri": "https://"
+                }
+              }
+            ],
+            "milestones": [
+              {
+                "id": "ID",
+                "title": "Título",
+                "type": "preProcurement",
+                "description": "Descripción",
+                "code": "Código de hito",
+                "dueDate": "2017-07-21T17:32:28Z",
+                "dateMet": "2017-07-21T17:32:28Z",
+                "dateModified": "2017-07-21T17:32:28Z",
+                "status": "scheduled",
+                "documents": [
+                  {
+                    "id": "ID",
+                    "documentType": "plannedProcurementNotice",
+                    "title": "Título",
+                    "description": "Descripción",
+                    "url": "URL",
+                    "datePublished": "2017-07-21T17:32:28Z",
+                    "dateModified": "2017-07-21T17:32:28Z",
+                    "format": "Formato",
+                    "language": "Idioma"
+                  }
+                ]
+              }
+            ],
+            "documents": [
+              {
+                "id": "ID",
+                "documentType": "plannedProcurementNotice",
+                "title": "Título",
+                "description": "Descripción",
+                "url": "URL",
+                "datePublished": "2017-07-21T17:32:28Z",
+                "dateModified": "2017-07-21T17:32:28Z",
+                "format": "Formato",
+                "language": "Idioma"
+              }
+            ]
+          },
+          "relatedProcesses": [
+            {
+              "id": "ID de relación",
+              "relationship": [
+                "framework"
+              ],
+              "title": "Título de proceso relacionado",
+              "scheme": "ocid",
+              "identifier": "Identificador",
+              "uri": "https://"
+            }
+          ],
+          "milestones": [
+            {
+              "id": "ID",
+              "title": "Título",
+              "type": "preProcurement",
+              "description": "Descripción",
+              "code": "Código de hito",
+              "dueDate": "2017-07-21T17:32:28Z",
+              "dateMet": "2017-07-21T17:32:28Z",
+              "dateModified": "2017-07-21T17:32:28Z",
+              "status": "scheduled",
+              "documents": [
+                {
+                  "id": "ID",
+                  "documentType": "plannedProcurementNotice",
+                  "title": "Título",
+                  "description": "Descripción",
+                  "url": "URL",
+                  "datePublished": "2017-07-21T17:32:28Z",
+                  "dateModified": "2017-07-21T17:32:28Z",
+                  "format": "Formato",
+                  "language": "Idioma"
+                }
+              ]
+            }
+          ],
+          "amendments": [
+            {
+              "date": "2017-07-21T17:32:28Z",
+              "rationale": "Justificación",
+              "id": "ID",
+              "description": "Descripción",
+              "amendsReleaseID": "Entrega enmendada (identificador)",
+              "releaseID": "Entrega de enmienda (identificador)",
+              "changes": [
+                {
+                  "property": "Propiedad",
+                  "former_value": "Valor"
+                }
+              ]
+            }
+          ],
+          "amendment": {
+            "date": "2017-07-21T17:32:28Z",
+            "rationale": "Justificación",
+            "id": "ID",
+            "description": "Descripción",
+            "amendsReleaseID": "Entrega enmendada (identificador)",
+            "releaseID": "Entrega de enmienda (identificador)",
+            "changes": [
+              {
+                "property": "Propiedad",
+                "former_value": "Valor"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
