@@ -1,0 +1,51 @@
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Sesión</h6>
+
+                <div class="wizard-container">
+  <ul class="nav nav-pills mb-4 justify-content-center">
+    <li class="nav-item" *ngFor="let s of [1, 2, 3, 4]">
+      <a class="nav-link" [class.active]="step === s" (click)="goToStep(s)">
+        Paso {{ s }}
+      </a>
+    </li>
+  </ul>
+
+  <div class="card">
+    <div class="card-body">
+      <div [ngSwitch]="step">
+        <div *ngSwitchCase="1">
+          <h5>Paso 1</h5>
+          <p>Contenido del paso 1</p>
+        </div>
+        <div *ngSwitchCase="2">
+          <h5>Paso 2</h5>
+          <p>Contenido del paso 2</p>
+        </div>
+        <div *ngSwitchCase="3">
+          <h5>Paso 3</h5>
+          <p>Contenido del paso 3</p>
+        </div>
+        <div *ngSwitchCase="4">
+          <h5>Paso 4</h5>
+          <p>Contenido del paso 4</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer text-end">
+      <button class="btn btn-secondary me-2" (click)="prevStep()" [disabled]="step === 1">Anterior</button>
+      <button class="btn btn-primary" (click)="nextStep()" [disabled]="step === 4">Siguiente</button>
+    </div>
+  </div>
+</div>
+<br>
+<br><br>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
