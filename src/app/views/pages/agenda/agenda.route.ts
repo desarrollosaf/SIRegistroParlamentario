@@ -13,4 +13,9 @@ export default [
         path: 'edit/:id',
         loadComponent: () => import('./add-edit-agenda/add-edit-agenda.component').then(c => c.AddEditAgendaComponent)
     }
+    ,
+    {
+        path: 'sesion/:id',
+        loadComponent: () => import('./sesion/sesion.component').then(c => c.SesionComponent)
+    }
 ] as Routes;

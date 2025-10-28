@@ -36,8 +36,12 @@
             <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Acciones">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div class="text-center">
-                  <a routerLink="show/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                  <a routerLink="edit/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
                     title="Ver detalles">
+                   
+                  </a>
+                  <a routerLink="sesion/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                    title="Sesión">
                    
                   </a>
                 </div>
