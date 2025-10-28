@@ -40,9 +40,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/ng-wizard/themes/ng_wizard.min.css",
-              "node_modules/ng-wizard/themes/ng_wizard_theme_arrows.min.css"
+              "src/styles.scss"
             ],
             "scripts": [
               "node_modules/apexcharts/dist/apexcharts.min.js"
