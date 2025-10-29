@@ -1,11 +1,11 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
 import sequelize from '../database/pleno';
-import AnfitrionAgenda from '../../faltantesmodelos/anfitrion_agendas';
-import Sede from '../../faltantesmodelos/sedes';
-import SesionAgenda from '../../faltantesmodelos/sesion_agendas';
-import Sesion from '../../faltantesmodelos/sesiones';
-import TipoEvento from '../../faltantesmodelos/tipo_eventos';
-import TurnoComision from '../../faltantesmodelos/turno_comisions';
+import AnfitrionAgenda from '../models/anfitrion_agendas';
+import Sede from '../models/sedes';
+import SesionAgenda from '../models/sesion_agendas';
+import Sesion from '../models/sesiones';
+import TipoEvento from '../models/tipo_eventos';
+import TurnoComision from '../models/turno_comisions';
 
 class Agenda extends Model {
   declare id: string;
