@@ -1,63 +1,52 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
-import type { agendas, agendasId } from './agendas';
+import { Model, DataTypes, CreationOptional, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyAddAssociationsMixin, HasManySetAssociationsMixin, HasManyRemoveAssociationMixin, HasManyRemoveAssociationsMixin, HasManyHasAssociationMixin, HasManyHasAssociationsMixin, HasManyCountAssociationsMixin, ForeignKey } from 'sequelize';
+import sequelize from '../database/pleno';
+import Agendas from './agendas';
 
-export interface tipo_eventosAttributes {
-  id: string;
-  nombre: string;
-  created_at?: Date;
-  updated_at?: Date;
+class TipoEventos extends Model {
+  declare id: string;
+  declare nombre: string;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+  declare deletedAt: CreationOptional<Date>;
+
+  // Asociaciones
+  declare agendas?: Agendas[];
+  declare getAgendas: HasManyGetAssociationsMixin<Agendas>;
+  declare setAgendas: HasManySetAssociationsMixin<Agendas, string>;
+  declare addAgenda: HasManyAddAssociationMixin<Agendas, string>;
+  declare addAgendas: HasManyAddAssociationsMixin<Agendas, string>;
+  declare removeAgenda: HasManyRemoveAssociationMixin<Agendas, string>;
+  declare removeAgendas: HasManyRemoveAssociationsMixin<Agendas, string>;
+  declare hasAgenda: HasManyHasAssociationMixin<Agendas, string>;
+  declare hasAgendas: HasManyHasAssociationsMixin<Agendas, string>;
+  declare countAgendas: HasManyCountAssociationsMixin;
 }
 
-export type tipo_eventosPk = "id";
-export type tipo_eventosId = tipo_eventos[tipo_eventosPk];
-export type tipo_eventosOptionalAttributes = "created_at" | "updated_at";
-export type tipo_eventosCreationAttributes = Optional<tipo_eventosAttributes, tipo_eventosOptionalAttributes>;
-
-export class tipo_eventos extends Model<tipo_eventosAttributes, tipo_eventosCreationAttributes> implements tipo_eventosAttributes {
-  id!: string;
-  nombre!: string;
-  created_at?: Date;
-  updated_at?: Date;
-
-  // tipo_eventos hasMany agendas via tipo_evento_id
-  agendas!: agendas[];
-  getAgendas!: Sequelize.HasManyGetAssociationsMixin<agendas>;
-  setAgendas!: Sequelize.HasManySetAssociationsMixin<agendas, agendasId>;
-  addAgenda!: Sequelize.HasManyAddAssociationMixin<agendas, agendasId>;
-  addAgendas!: Sequelize.HasManyAddAssociationsMixin<agendas, agendasId>;
-  createAgenda!: Sequelize.HasManyCreateAssociationMixin<agendas>;
-  removeAgenda!: Sequelize.HasManyRemoveAssociationMixin<agendas, agendasId>;
-  removeAgendas!: Sequelize.HasManyRemoveAssociationsMixin<agendas, agendasId>;
-  hasAgenda!: Sequelize.HasManyHasAssociationMixin<agendas, agendasId>;
-  hasAgendas!: Sequelize.HasManyHasAssociationsMixin<agendas, agendasId>;
-  countAgendas!: Sequelize.HasManyCountAssociationsMixin;
-
-  static initModel(sequelize: Sequelize.Sequelize): typeof tipo_eventos {
-    return tipo_eventos.init({
+// Inicialización
+TipoEventos.init(
+  {
     id: {
       type: DataTypes.CHAR(36),
       allowNull: false,
-      primaryKey: true
+      primaryKey: true,
     },
     nombre: {
       type: DataTypes.STRING(255),
-      allowNull: false
-    }
-  }, {
+      allowNull: false,
+    },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
+    deletedAt: DataTypes.DATE,
+  },
+  {
     sequelize,
     tableName: 'tipo_eventos',
     timestamps: true,
-    indexes: [
-      {
-        name: "PRIMARY",
-        unique: true,
-        using: "BTREE",
-        fields: [
-          { name: "id" },
-        ]
-      },
-    ]
-  });
+    paranoid: true,
   }
-}
+);
+
+// Asociaciones
+TipoEventos.hasMany(Agendas, { foreignKey: 'tipo_evento_id', as: 'agendas' });
+
+export default TipoEventos;

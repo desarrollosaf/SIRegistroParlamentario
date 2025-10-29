@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const cuestionariosConnection_1 = __importDefault(require("../database/cuestionariosConnection"));
+const pleno_1 = __importDefault(require("../database/pleno"));
 const sesiones_1 = __importDefault(require("./sesiones"));
 class PeriodoSesions extends sequelize_1.Model {
 }
@@ -23,7 +23,7 @@ PeriodoSesions.init({
     updatedAt: sequelize_1.DataTypes.DATE,
     deletedAt: sequelize_1.DataTypes.DATE,
 }, {
-    sequelize: cuestionariosConnection_1.default,
+    sequelize: pleno_1.default,
     tableName: 'periodo_sesions',
     timestamps: true,
     paranoid: true,

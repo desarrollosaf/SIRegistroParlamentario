@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/pleno';
 
 class Proponentes extends Model<InferAttributes<Proponentes>, InferCreationAttributes<Proponentes>> {
   declare id: string;

@@ -12,7 +12,7 @@ import type { RegimenSesions } from './regimen_sesions';
 import type { SesionAgendas } from './sesion_agendas';
 import type { TemasVotos } from './temas_votos';
 import type { TipoAsambleas } from './tipo_asambleas';
-import type { TipoSesions } from './tipo_sesions';
+import type { TipoSesions } from '../../faltantesmodelos/tipo_sesions';
 
 export class Sesiones extends Model<InferAttributes<Sesiones>, InferCreationAttributes<Sesiones>> {
   declare id: string;

@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors'
 import path from 'path';
+import eventos from "../routes/eventos";
 
 class Server {
 
@@ -10,7 +11,7 @@ class Server {
 
     constructor(){
         this.app = express()
-        this.port = process.env.PORT || '3012'
+        this.port = process.env.PORT || '3008'
         this.midlewares();
         this.router();
         this.DBconnetc();
@@ -26,7 +27,7 @@ class Server {
     }
 
     router(){
-       
+       this.app.use(eventos);
 
     }
 
@@ -45,7 +46,7 @@ class Server {
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/registro/datos/',
+                '/api/eventos/geteventos/',
                 '/api/registro/saveregistro/',
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));

@@ -177,7 +177,7 @@ const tipo_ordens_1 = require("./tipo_ordens");
 Object.defineProperty(exports, "tipo_ordens", { enumerable: true, get: function () { return tipo_ordens_1.tipo_ordens; } });
 const tipo_presentas_1 = require("./tipo_presentas");
 Object.defineProperty(exports, "tipo_presentas", { enumerable: true, get: function () { return tipo_presentas_1.tipo_presentas; } });
-const tipo_sesions_1 = require("./tipo_sesions");
+const tipo_sesions_1 = require("../../faltantesmodelos/tipo_sesions");
 Object.defineProperty(exports, "tipo_sesions", { enumerable: true, get: function () { return tipo_sesions_1.tipo_sesions; } });
 const tomo_debates_1 = require("./tomo_debates");
 Object.defineProperty(exports, "tomo_debates", { enumerable: true, get: function () { return tomo_debates_1.tomo_debates; } });

@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/pleno';
 
 class OtrosAutores extends Model {
   declare id: string;

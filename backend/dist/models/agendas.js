@@ -4,13 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
-const anfitrion_agendas_1 = __importDefault(require("./anfitrion_agendas"));
-const sedes_1 = __importDefault(require("./sedes"));
-const sesion_agendas_1 = __importDefault(require("./sesion_agendas"));
-const sesiones_1 = __importDefault(require("./sesiones"));
-const tipo_eventos_1 = __importDefault(require("./tipo_eventos"));
-const turno_comisions_1 = __importDefault(require("./turno_comisions"));
+const pleno_1 = __importDefault(require("../database/pleno"));
 class Agenda extends sequelize_1.Model {
 }
 Agenda.init({
@@ -82,20 +76,29 @@ Agenda.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
-    deletedAt: sequelize_1.DataTypes.DATE
+    createdAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'created_at',
+    },
+    updatedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'updated_at',
+    },
+    deletedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'deleted_at',
+    },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: pleno_1.default,
     tableName: 'agendas',
     timestamps: true,
-    paranoid: true, // Para soft deletes (deletedAt)
+    paranoid: true, // usa deletedAt en lugar de borrado físico
 });
 // 👇 Asociaciones
-Agenda.hasMany(anfitrion_agendas_1.default, { foreignKey: 'agenda_id', as: 'anfitrion_agendas' });
-Agenda.hasMany(sesion_agendas_1.default, { foreignKey: 'agenda_id', as: 'sesion_agendas' });
-Agenda.hasMany(sesiones_1.default, { foreignKey: 'agenda_id', as: 'sesiones' });
-Agenda.hasMany(turno_comisions_1.default, { foreignKey: 'id_agenda', as: 'turno_comisions' });
-Agenda.belongsTo(sedes_1.default, { foreignKey: 'sede_id', as: 'sede' });
-Agenda.belongsTo(tipo_eventos_1.default, { foreignKey: 'tipo_evento_id', as: 'tipo_evento' });
+// Agenda.hasMany(AnfitrionAgenda, { foreignKey: 'agenda_id', as: 'anfitrion_agendas' });
+// Agenda.hasMany(SesionAgenda, { foreignKey: 'agenda_id', as: 'sesion_agendas' });
+// Agenda.hasMany(Sesion, { foreignKey: 'agenda_id', as: 'sesiones' });
+// Agenda.hasMany(TurnoComision, { foreignKey: 'id_agenda', as: 'turno_comisions' });
+// Agenda.belongsTo(Sede, { foreignKey: 'sede_id', as: 'sede' });
+// Agenda.belongsTo(TipoEvento, { foreignKey: 'tipo_evento_id', as: 'tipo_evento' });
 exports.default = Agenda;

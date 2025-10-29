@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const cuestionariosConnection_1 = __importDefault(require("../database/cuestionariosConnection"));
+const pleno_1 = __importDefault(require("../database/pleno"));
 const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
 class Partidos extends sequelize_1.Model {
 }
@@ -39,7 +39,7 @@ Partidos.init({
     updatedAt: sequelize_1.DataTypes.DATE,
     deletedAt: sequelize_1.DataTypes.DATE,
 }, {
-    sequelize: cuestionariosConnection_1.default,
+    sequelize: pleno_1.default,
     tableName: 'partidos',
     timestamps: true,
     paranoid: true,

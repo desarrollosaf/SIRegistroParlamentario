@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/pleno';
 import DatosUsers from './datos_users';
 import PuntosOrdens from './puntos_ordens';
 

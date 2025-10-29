@@ -15,10 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
+const eventos_1 = __importDefault(require("../routes/eventos"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
-        this.port = process.env.PORT || '3012';
+        this.port = process.env.PORT || '3008';
         this.midlewares();
         this.router();
         this.DBconnetc();
@@ -30,6 +31,7 @@ class Server {
         });
     }
     router() {
+        this.app.use(eventos_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -42,7 +44,7 @@ class Server {
         this.app.use((req, res, next) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/registro/datos/',
+                '/api/eventos/geteventos/',
                 '/api/registro/saveregistro/',
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));

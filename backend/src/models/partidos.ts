@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/pleno';
 import IntegranteLegislaturas from './integrante_legislaturas';
 
 class Partidos extends Model {
