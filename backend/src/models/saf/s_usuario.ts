@@ -9,7 +9,6 @@ import sequelize from '../../database/connection';
 import Dependencia from '../saf/t_dependencia';
 import Direccion from '../saf/t_direccion';
 import Departamento from '../saf/t_departamento';
-import sesion from '../sesion_cuestionario';
 
 class SUsuario extends Model<
   InferAttributes<SUsuario>,
@@ -191,6 +190,7 @@ SUsuario.init(
 SUsuario.belongsTo(Dependencia, { as: 'dependencia', foreignKey: 'id_Dependencia' });
 SUsuario.belongsTo(Direccion, { as: 'direccion', foreignKey: 'id_Direccion' });
 SUsuario.belongsTo(Departamento, { as: 'departamento', foreignKey: 'id_Departamento' });
+
 
 
 

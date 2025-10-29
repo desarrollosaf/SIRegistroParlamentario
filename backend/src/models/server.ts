@@ -14,6 +14,7 @@ class Server {
         this.midlewares();
         this.router();
         this.DBconnetc();
+      
         this.listen();
         
     }
