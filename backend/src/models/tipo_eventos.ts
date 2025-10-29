@@ -7,7 +7,7 @@ class TipoEventos extends Model {
   declare nombre: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-  declare deletedAt: CreationOptional<Date>;
+
 
   // Asociaciones
   declare agendas?: Agendas[];
@@ -36,17 +36,15 @@ TipoEventos.init(
     },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
   },
   {
     sequelize,
     tableName: 'tipo_eventos',
     timestamps: true,
-    paranoid: true,
   }
 );
 
 // Asociaciones
-TipoEventos.hasMany(Agendas, { foreignKey: 'tipo_evento_id', as: 'agendas' });
+// TipoEventos.hasMany(Agendas, { foreignKey: 'tipo_evento_id', as: 'agendas' });
 
 export default TipoEventos;

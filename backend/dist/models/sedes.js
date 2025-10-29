@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Sedes = void 0;
 const sequelize_1 = require("sequelize");
-const cuestionariosConnection_1 = __importDefault(require("../database/cuestionariosConnection"));
+const pleno_1 = __importDefault(require("../database/pleno"));
 class Sedes extends sequelize_1.Model {
 }
 exports.Sedes = Sedes;
@@ -22,7 +22,7 @@ Sedes.init({
     createdAt: sequelize_1.DataTypes.DATE,
     updatedAt: sequelize_1.DataTypes.DATE,
 }, {
-    sequelize: cuestionariosConnection_1.default,
+    sequelize: pleno_1.default,
     tableName: 'sedes',
     timestamps: true,
 });

@@ -142,7 +142,7 @@ Agenda.init(
 // Agenda.hasMany(SesionAgenda, { foreignKey: 'agenda_id', as: 'sesion_agendas' });
 // Agenda.hasMany(Sesion, { foreignKey: 'agenda_id', as: 'sesiones' });
 // Agenda.hasMany(TurnoComision, { foreignKey: 'id_agenda', as: 'turno_comisions' });
-// Agenda.belongsTo(Sede, { foreignKey: 'sede_id', as: 'sede' });
-// Agenda.belongsTo(TipoEvento, { foreignKey: 'tipo_evento_id', as: 'tipo_evento' });
+Agenda.belongsTo(Sede, { foreignKey: 'sede_id', as: 'sede' });
+Agenda.belongsTo(TipoEvento, { foreignKey: 'tipo_evento_id', as: 'tipoevento' });
 
 export default Agenda;

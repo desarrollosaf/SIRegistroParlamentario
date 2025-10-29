@@ -14,9 +14,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
+const sedes_1 = __importDefault(require("../models/sedes"));
+const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const eventos = yield agendas_1.default.findAll();
+        const eventos = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: sedes_1.default,
+                    as: "sede",
+                    attributes: ["id", "sede"]
+                },
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"]
+                }
+            ],
+        });
         return res.status(200).json({
             msg: "listoooo :v ",
             citas: eventos

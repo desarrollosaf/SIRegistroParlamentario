@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const pleno_1 = __importDefault(require("../database/pleno"));
+const sedes_1 = __importDefault(require("../models/sedes"));
+const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 class Agenda extends sequelize_1.Model {
 }
 Agenda.init({
@@ -99,6 +101,6 @@ Agenda.init({
 // Agenda.hasMany(SesionAgenda, { foreignKey: 'agenda_id', as: 'sesion_agendas' });
 // Agenda.hasMany(Sesion, { foreignKey: 'agenda_id', as: 'sesiones' });
 // Agenda.hasMany(TurnoComision, { foreignKey: 'id_agenda', as: 'turno_comisions' });
-// Agenda.belongsTo(Sede, { foreignKey: 'sede_id', as: 'sede' });
-// Agenda.belongsTo(TipoEvento, { foreignKey: 'tipo_evento_id', as: 'tipo_evento' });
+Agenda.belongsTo(sedes_1.default, { foreignKey: 'sede_id', as: 'sede' });
+Agenda.belongsTo(tipo_eventos_1.default, { foreignKey: 'tipo_evento_id', as: 'tipoevento' });
 exports.default = Agenda;
