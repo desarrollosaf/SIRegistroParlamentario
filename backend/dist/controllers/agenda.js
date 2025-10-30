@@ -57,7 +57,6 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { id } = req.params;
-        // 🟢 Buscar el evento principal
         const evento = yield agendas_1.default.findOne({
             where: { id },
             include: [
@@ -68,12 +67,10 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!evento) {
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
-        // 🟢 Ver si ya existen asistencias registradas
         const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
             raw: true,
         });
-        // Si ya existen, solo devolver con los datos relacionados
         if (asistenciasExistentes.length > 0) {
             const resultados = yield Promise.all(asistenciasExistentes.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c;
@@ -98,7 +95,6 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 integrantes: resultados,
             });
         }
-        // 🟠 Si no existen asistencias, generarlas dinámicamente
         const listadoDiputados = [];
         let bandera = 1;
         if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {

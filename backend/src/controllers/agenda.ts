@@ -46,8 +46,6 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-
-    // 🟢 Buscar el evento principal
     const evento = await Agenda.findOne({
       where: { id },
       include: [
@@ -60,13 +58,11 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
 
-    // 🟢 Ver si ya existen asistencias registradas
     const asistenciasExistentes = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
       raw: true,
     });
 
-    // Si ya existen, solo devolver con los datos relacionados
     if (asistenciasExistentes.length > 0) {
       const resultados = await Promise.all(
         asistenciasExistentes.map(async (inte) => {
@@ -101,7 +97,6 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       });
     }
 
-    // 🟠 Si no existen asistencias, generarlas dinámicamente
     const listadoDiputados: { id_diputado: string; id_partido: string; bandera: number }[] = [];
     let bandera = 1;
 
