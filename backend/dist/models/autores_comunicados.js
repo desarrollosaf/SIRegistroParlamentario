@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const comunicados_1 = __importDefault(require("./comunicados"));
 class AutorComunicado extends sequelize_1.Model {
 }
@@ -30,7 +30,7 @@ AutorComunicado.init({
     updatedAt: sequelize_1.DataTypes.DATE,
     deletedAt: sequelize_1.DataTypes.DATE
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'autores_comunicados',
     timestamps: true,
     paranoid: true,

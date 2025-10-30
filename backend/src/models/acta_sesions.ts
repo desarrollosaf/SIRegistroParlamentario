@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 
 
 class ActaSesion extends Model {

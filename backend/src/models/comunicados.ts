@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, Association, NonAttribute, HasManyGetAssociationsMixin, ForeignKey } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import AutoresComunicado from './autores_comunicados';
 import ComunicadosSesion from './comunicados_sesions';
 import DescripcioneComunicado from './descripcione_comunicados';

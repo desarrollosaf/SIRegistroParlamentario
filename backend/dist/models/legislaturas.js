@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const cuestionariosConnection_1 = __importDefault(require("../database/cuestionariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
 class Legislatura extends sequelize_1.Model {
 }
@@ -27,11 +27,20 @@ Legislatura.init({
         type: sequelize_1.DataTypes.DATEONLY,
         allowNull: false,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
-    deletedAt: sequelize_1.DataTypes.DATE,
+    createdAt: {
+        field: 'created_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
+    updatedAt: {
+        field: 'updated_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
+    deletedAt: {
+        field: 'deleted_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
 }, {
-    sequelize: cuestionariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'legislaturas',
     timestamps: true,
     paranoid: true,

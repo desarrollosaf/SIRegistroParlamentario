@@ -10,6 +10,7 @@ export class Sedes extends Model<InferAttributes<Sedes>, InferCreationAttributes
 
   // Asociación hasMany agendas
   declare agendas?: Agendas[];
+  
 }
 
 Sedes.init(

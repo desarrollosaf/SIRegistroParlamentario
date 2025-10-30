@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/legislativoConnection';
 import IntegranteLegislatura from './integrante_legislaturas';
 
 class Legislatura extends Model {
@@ -32,9 +32,18 @@ Legislatura.init(
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
+    createdAt: {
+      field: 'created_at',
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
+      field: 'updated_at',
+      type: DataTypes.DATE,
+    },
+    deletedAt: {
+      field: 'deleted_at',
+      type: DataTypes.DATE,
+    },
   },
   {
     sequelize,

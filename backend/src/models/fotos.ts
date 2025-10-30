@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 
 class Fotos extends Model<InferAttributes<Fotos>, InferCreationAttributes<Fotos>> {
   declare id: string;

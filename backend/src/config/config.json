@@ -1,0 +1,16 @@
+{
+  "production": {
+      "username": "root",
+    "password": "",
+    "database": "registrocomisiones",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "development": {
+    "username": "root",
+    "password": "",
+    "database": "registrocomisiones",
+    "host": "localhost",
+    "dialect": "mysql"
+  }
+}

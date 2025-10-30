@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, NonAttribute, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import LicenciasDiputados from './licencias_diputados';
 import MovimientosDiputados from './movimientos_diputados';
 

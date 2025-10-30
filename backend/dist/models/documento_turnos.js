@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const documentos_1 = __importDefault(require("./documentos"));
 class DocumentoTurnos extends sequelize_1.Model {
 }
@@ -47,7 +47,7 @@ DocumentoTurnos.init({
         field: 'updated_at',
     },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'documento_turnos',
     timestamps: true,
     underscored: true,

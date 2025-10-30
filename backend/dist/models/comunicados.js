@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const autores_comunicados_1 = __importDefault(require("./autores_comunicados"));
 const comunicados_sesions_1 = __importDefault(require("./comunicados_sesions"));
 const descripcione_comunicados_1 = __importDefault(require("./descripcione_comunicados"));
@@ -59,7 +59,7 @@ Comunicado.init({
         field: 'deleted_at',
     },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'comunicados',
     timestamps: true,
     paranoid: true,

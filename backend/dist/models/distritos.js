@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
 const municipios_1 = __importDefault(require("./municipios"));
 class Distrito extends sequelize_1.Model {
@@ -40,7 +40,7 @@ Distrito.init({
         field: 'updated_at',
     },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'distritos',
     timestamps: true,
     underscored: true,

@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import IntegranteComision from './integrante_comisions';
 import TipoComision from './tipo_comisions';
 import TurnoComision from './turno_comisions';

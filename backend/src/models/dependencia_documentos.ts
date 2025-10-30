@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, NonAttribute, Association } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import MarcoJ from './marco_j_s';
 
 class DependenciaDocumento extends Model {

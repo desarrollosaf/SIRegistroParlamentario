@@ -6,7 +6,7 @@ import {
   NonAttribute,
   Association,
 } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import TomoDebate from './tomo_debates';
 
 class Debate extends Model {

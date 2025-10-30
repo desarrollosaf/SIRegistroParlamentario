@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, NonAttribute, Association } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import Iniciativa from './iniciativas';
 
 class DecretoIniciativa extends Model {
