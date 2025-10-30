@@ -1,0 +1,141 @@
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Sesión</h6>
+
+                <div class="wizard-container">
+  <ul class="nav nav-pills mb-4 justify-content-center">
+    <li class="nav-item" *ngFor="let s of [1, 2, 3, 4]">
+      <a class="nav-link" [class.active]="step === s" (click)="goToStep(s)">
+        Paso {{ s }}
+      </a>
+    </li>
+  </ul>
+
+  <div class="card">
+    <div class="card-body">
+      <div [ngSwitch]="step">
+            <div *ngSwitchCase="1">
+                          <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">Lista de Asistencia</h5>
+                            <div class="d-flex gap-3">
+                              <span class="badge bg-success">Presente</span>
+                              <span class="badge bg-info">Remota</span>
+                              <span class="badge bg-danger">Ausente</span>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <!-- Columna 1 -->
+                            <div class="col-md-6">
+                              <div class="table-responsive">
+                                <table class="table table-hover">
+                                  <tbody>
+                                    <tr *ngFor="let miembro of columna1" 
+                                        [ngClass]="getClaseAsistencia(miembro.asistencia)">
+                                      <td class="align-middle fw-medium" style="width: 50%">
+                                        {{ miembro.nombre }}
+                                      </td>
+                                      <td class="align-middle text-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                          <button type="button" 
+                                                  class="btn btn-outline-success"
+                                                  [class.active]="miembro.asistencia === 'presente'"
+                                                  (click)="marcarAsistencia(miembro, 'presente')"
+                                                  title="Presente">
+                                            <i class="icon-sm" data-feather="check"></i>
+                                          </button>
+                                          <button type="button" 
+                                                  class="btn btn-outline-info"
+                                                  [class.active]="miembro.asistencia === 'remota'"
+                                                  (click)="marcarAsistencia(miembro, 'remota')"
+                                                  title="Remota">
+                                            <i class="icon-sm" data-feather="monitor"></i>
+                                          </button>
+                                          <button type="button" 
+                                                  class="btn btn-outline-danger"
+                                                  [class.active]="miembro.asistencia === 'ausente'"
+                                                  (click)="marcarAsistencia(miembro, 'ausente')"
+                                                  title="Ausente">
+                                            <i class="icon-sm" data-feather="x"></i>
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            <!-- Columna 2 -->
+                            <div class="col-md-6">
+                              <div class="table-responsive">
+                                <table class="table table-hover">
+                                  <tbody>
+                                    <tr *ngFor="let miembro of columna2" 
+                                        [ngClass]="getClaseAsistencia(miembro.asistencia)">
+                                      <td class="align-middle fw-medium" style="width: 50%">
+                                        {{ miembro.nombre }}
+                                      </td>
+                                      <td class="align-middle text-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                          <button type="button" 
+                                                  class="btn btn-outline-success"
+                                                  [class.active]="miembro.asistencia === 'presente'"
+                                                  (click)="marcarAsistencia(miembro, 'presente')"
+                                                  title="Presente">
+                                            <i class="icon-sm" data-feather="check"></i>
+                                          </button>
+                                          <button type="button" 
+                                                  class="btn btn-outline-info"
+                                                  [class.active]="miembro.asistencia === 'remota'"
+                                                  (click)="marcarAsistencia(miembro, 'remota')"
+                                                  title="Remota">
+                                            <i class="icon-sm" data-feather="monitor"></i>
+                                          </button>
+                                          <button type="button" 
+                                                  class="btn btn-outline-danger"
+                                                  [class.active]="miembro.asistencia === 'ausente'"
+                                                  (click)="marcarAsistencia(miembro, 'ausente')"
+                                                  title="Ausente">
+                                            <i class="icon-sm" data-feather="x"></i>
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+        <div *ngSwitchCase="2">
+          <h5>Paso 2</h5>
+          <p>Contenido del paso 2</p>
+        </div>
+        <div *ngSwitchCase="3">
+          <h5>Paso 3</h5>
+          <p>Contenido del paso 3</p>
+        </div>
+        <div *ngSwitchCase="4">
+          <h5>Paso 4</h5>
+          <p>Contenido del paso 4</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer text-end">
+      <button class="btn btn-secondary me-2" (click)="prevStep()" [disabled]="step === 1">Anterior</button>
+      <button class="btn btn-primary" (click)="nextStep()" [disabled]="step === 4">Siguiente</button>
+    </div>
+  </div>
+</div>
+<br>
+<br><br>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

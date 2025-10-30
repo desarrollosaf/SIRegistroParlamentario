@@ -4,7 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
+
+const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
 const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
+
 const licencias_diputados_1 = __importDefault(require("./licencias_diputados"));
 const movimientos_diputados_1 = __importDefault(require("./movimientos_diputados"));
 class EstatusDiputados extends sequelize_1.Model {
