@@ -7,7 +7,7 @@ import {
   HasManyGetAssociationsMixin,
   ForeignKey,
 } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 
 import Genero from './generos';
 import User from './users';

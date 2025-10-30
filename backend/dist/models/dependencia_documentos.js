@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const marco_j_s_1 = __importDefault(require("./marco_j_s"));
 class DependenciaDocumento extends sequelize_1.Model {
 }
@@ -41,7 +41,7 @@ DependenciaDocumento.init({
         field: 'updated_at',
     },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'dependencia_documentos',
     timestamps: true,
     underscored: true, // para usar created_at y updated_at

@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import DatosUser from './datos_users';
 import User from './users';
 

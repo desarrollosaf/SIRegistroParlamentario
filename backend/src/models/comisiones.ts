@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 
 class Comision extends Model {
   declare id: CreationOptional<number>;

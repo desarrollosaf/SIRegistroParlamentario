@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 const comunicados_1 = __importDefault(require("./comunicados"));
 const sesiones_1 = __importDefault(require("./sesiones"));
 class ComunicadosSesion extends sequelize_1.Model {
@@ -40,7 +40,7 @@ ComunicadosSesion.init({
         field: 'updated_at',
     },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'comunicados_sesions',
     timestamps: true,
     underscored: true, // 👈 nombres tipo snake_case

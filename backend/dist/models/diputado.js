@@ -5,33 +5,72 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
-const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
-class Partidos extends sequelize_1.Model {
+// import Gender from './gender';
+class Diputado extends sequelize_1.Model {
 }
-// Inicialización
-Partidos.init({
+Diputado.init({
     id: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,
         primaryKey: true,
     },
-    siglas: {
+    apaterno: {
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
-    nombre: {
+    amaterno: {
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
-    emblema: {
+    nombres: {
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
-    rgb: {
+    descripcion: {
+        type: sequelize_1.DataTypes.TEXT('long'),
+        allowNull: true,
+    },
+    shortname: {
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
-    rgb2: {
+    fancyurl: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    gender_id: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: false,
+    },
+    email: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    ext: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    facebook: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    twitter: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    instagram: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    ubicacion: {
+        type: sequelize_1.DataTypes.TEXT('long'),
+        allowNull: false,
+    },
+    link_web: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    telefono: {
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
@@ -52,10 +91,13 @@ Partidos.init({
     },
 }, {
     sequelize: legislativoConnection_1.default,
-    tableName: 'partidos',
+    tableName: 'diputados',
     timestamps: true,
     paranoid: true,
 });
-// Asociación
-Partidos.hasMany(integrante_legislaturas_1.default, { foreignKey: 'partido_id', as: 'integrante_legislaturas' });
-exports.default = Partidos;
+// 🔗 Asociación (si existe modelo Gender)
+// Diputado.belongsTo(Gender, {
+//   foreignKey: 'gender_id',
+//   as: 'gender',
+// });
+exports.default = Diputado;

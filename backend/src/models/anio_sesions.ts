@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import Sesion from './sesiones';
 
 class AnioSesion extends Model {

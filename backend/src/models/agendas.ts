@@ -42,7 +42,8 @@ class Agenda extends Model {
     sesiones: Association<Agenda, Sesion>;
     turno_comisions: Association<Agenda, TurnoComision>;
     sede: Association<Agenda, Sede>;
-    tipo_evento: Association<Agenda, TipoEvento>;
+    tipoevento: Association<Agenda, TipoEvento>;
+
   };
 }
 

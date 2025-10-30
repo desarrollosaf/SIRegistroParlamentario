@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/legislativoConnection';
 import IntegranteLegislaturas from './integrante_legislaturas';
 
 class Partidos extends Model {
@@ -45,9 +45,21 @@ Partidos.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
+    createdAt: {
+      field: 'created_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      field: 'updated_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    deletedAt: {
+      field: 'deleted_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,

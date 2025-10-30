@@ -4,72 +4,64 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
-const datos_users_1 = __importDefault(require("./datos_users"));
-const sesiones_1 = __importDefault(require("./sesiones"));
+const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 class AsistenciaVoto extends sequelize_1.Model {
 }
 AsistenciaVoto.init({
     id: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,
-        primaryKey: true
+        primaryKey: true,
+    },
+    sentido_voto: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
     },
     mensaje: {
         type: sequelize_1.DataTypes.STRING(255),
-        allowNull: false
+        allowNull: false,
     },
     timestamp: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
-        defaultValue: sequelize_1.DataTypes.NOW
-    },
-    status: {
-        type: sequelize_1.DataTypes.BOOLEAN,
-        allowNull: false
+        defaultValue: sequelize_1.DataTypes.NOW,
     },
     id_diputado: {
         type: sequelize_1.DataTypes.CHAR(36),
-        allowNull: false
+        allowNull: false,
     },
-    id_sesion: {
+    partido_dip: {
         type: sequelize_1.DataTypes.CHAR(36),
-        allowNull: false
+        allowNull: false,
     },
-    votacionActiva: {
-        type: sequelize_1.DataTypes.STRING(255),
-        allowNull: false
-    },
-    banderaC: {
-        type: sequelize_1.DataTypes.BOOLEAN,
-        allowNull: true
-    },
-    randomCU: {
-        type: sequelize_1.DataTypes.STRING(255),
-        allowNull: true
-    },
-    tiempoVotacion: {
-        type: sequelize_1.DataTypes.DATE,
-        allowNull: true
-    },
-    tiempoVotacionInicio: {
-        type: sequelize_1.DataTypes.DATE,
-        allowNull: true
+    id_agenda: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: false,
     },
     usuario_registra: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
-    deletedAt: sequelize_1.DataTypes.DATE
+    createdAt: {
+        field: 'created_at',
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+    updatedAt: {
+        field: 'updated_at',
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+    deletedAt: {
+        field: 'deleted_at',
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
-    sequelize: parlamentariosConnection_1.default,
+    sequelize: registrocomisiones_1.default,
     tableName: 'asistencia_votos',
     timestamps: true,
     paranoid: true,
 });
-// 👇 Asociaciones
-AsistenciaVoto.belongsTo(datos_users_1.default, { foreignKey: 'id_diputado', as: 'diputado' });
-AsistenciaVoto.belongsTo(sesiones_1.default, { foreignKey: 'id_sesion', as: 'sesion' });
+// AsistenciaVoto.belongsTo(Sesion, { foreignKey: 'id_agenda', as: 'sesion' });
 exports.default = AsistenciaVoto;

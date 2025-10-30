@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/pleno';
 import Agenda from './agendas';
 
 class AnfitrionAgenda extends Model {
@@ -38,9 +38,18 @@ AnfitrionAgenda.init(
       type: DataTypes.CHAR(36),
       allowNull: false
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE
+    createdAt: {
+      type: DataTypes.DATE,
+      field: 'created_at',
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      field: 'updated_at',
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      field: 'deleted_at',
+    },
   },
   {
     sequelize,

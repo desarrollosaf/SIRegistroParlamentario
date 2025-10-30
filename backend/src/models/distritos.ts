@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, NonAttribute, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 import IntegranteLegislatura from './integrante_legislaturas';
 import Municipio from './municipios';
 

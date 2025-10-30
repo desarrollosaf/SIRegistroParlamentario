@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/parlamentariosConnection';
+import sequelize from '../database/legislativoConnection';
 
 class EventoVotos extends Model<InferAttributes<EventoVotos>, InferCreationAttributes<EventoVotos>> {
   declare id: CreationOptional<number>;
