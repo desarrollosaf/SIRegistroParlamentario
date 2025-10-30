@@ -1,9 +1,11 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { EventoService } from '../../../../service/evento.service';
+import { HttpErrorResponse } from '@angular/common/http';
 interface Miembro {
   id: number;
   nombre: string;
@@ -26,15 +28,18 @@ export class DetalleComisionComponent implements OnInit {
   datosDetalle: any = {};
   datosConfiguracion: any = {};
   datosResumen: any = {};
-
-
+  private _eventoService = inject(EventoService);
+  idComision: string;
 
 
   constructor(
     private fb: FormBuilder,
+    private aRouter: ActivatedRoute,
     private router: Router
-    // Inyecta tus servicios aquí
-  ) {}
+  ) {
+
+     this.idComision = String(aRouter.snapshot.paramMap.get('id'));
+  }
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
@@ -82,6 +87,44 @@ export class DetalleComisionComponent implements OnInit {
 
   // Métodos para cargar datos de cada sección
   private cargardatosAsistencia(): void {
+
+
+
+  this._eventoService.getEvento(this.idComision).subscribe({
+      next: (response: any) => {
+        console.log(response);
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       this.miembros = [
       { id: 1, nombre: 'Juan Pérez García', asistencia: null },
       { id: 2, nombre: 'María González López', asistencia: null },
