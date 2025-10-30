@@ -1,0 +1,55 @@
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Agenda</h6>
+         <div class="row">
+          <div class="col-xl-3 col-md-4">
+            <input type="text" class="form-control form-control-sm" placeholder="Buscar..."
+              (input)="updateFilter($event)" />
+          </div>
+        </div>
+             <div class="table-responsive">
+          <div *ngIf="rows.length === 0 && !loading" class="text-center my-3">
+            <p><strong>No hay datos para mostrar</strong></p>
+          </div>
+          <ngx-datatable
+           [externalPaging]="true"  [externalPaging]="true" 
+            #table class="bootstrap" [rows]="rows" [columnMode]="'force'" [headerHeight]="50"
+            *ngIf="rows.length > 0" [footerHeight]="50" [rowHeight]="'auto'" [limit]="pageSize" [count]="filteredCount"
+            [offset]="page" (page)="setPage($event)" [loadingIndicator]="loading">
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Cuándo">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{row.fecha}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Quién / Qué">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+               {{row.quien}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Dónde">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+               {{row.ubicacion}} 
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Acciones">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="text-center">
+                  <a routerLink="edit/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                    title="Ver detalles">
+                   
+                  </a>
+                  <a routerLink="sesion/{{ row.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                    title="Sesión">
+                   
+                  </a>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+            </div>
+        </div>
+    </div>
+</div>
