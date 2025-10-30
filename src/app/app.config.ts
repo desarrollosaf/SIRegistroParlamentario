@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection, LOCALE_ID, NgModule } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -6,7 +6,12 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { SweetAlert2Module } from '@sweetalert2/ngx-sweetalert2';
 import { provideHighlightOptions } from 'ngx-highlightjs';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import localeEs from '@angular/common/locales/es-MX';
+import { registerLocaleData } from '@angular/common';
 
 const highlightOptions = {
   coreLibraryLoader: () => import('highlight.js/lib/core'),
@@ -17,13 +22,16 @@ const highlightOptions = {
   },
 };
 
+registerLocaleData(localeEs);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }), 
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })), 
     provideAnimationsAsync(),
-    importProvidersFrom([SweetAlert2Module.forRoot()]), // ngx-sweetalert2: https://github.com/sweetalert2/ngx-sweetalert2
-    provideHighlightOptions(highlightOptions), // ngx-highlightjs: https://github.com/murhafsousli/ngx-highlightjs
+    importProvidersFrom([SweetAlert2Module.forRoot(), HttpClientModule, NgModule, FormsModule, ReactiveFormsModule]),
+    provideHighlightOptions(highlightOptions),
+    { provide: LOCALE_ID, useValue: 'es-MX' },  // 👈 Corregido (tenías la sintaxis mal)
   ],
 };

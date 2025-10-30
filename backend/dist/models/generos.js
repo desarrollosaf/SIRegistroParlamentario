@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Generos = void 0;
 const sequelize_1 = require("sequelize");
-const parlamentariosConnection_1 = __importDefault(require("../src/database/parlamentariosConnection"));
+const parlamentariosConnection_1 = __importDefault(require("../database/parlamentariosConnection"));
 class Generos extends sequelize_1.Model {
 }
 exports.Generos = Generos;
