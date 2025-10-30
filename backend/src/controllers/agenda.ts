@@ -159,7 +159,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     const timestamp = new Date();
 
     const asistencias = listadoDiputados.map((diputado) => ({
-      sentido_voto: 1,
+      sentido_voto: 0,
       mensaje,
       timestamp,
       id_diputado: diputado.id_diputado,
