@@ -5,4 +5,5 @@ const agenda_1 = require("../controllers/agenda");
 const router = (0, express_1.Router)();
 router.get("/api/eventos/geteventos/", agenda_1.geteventos);
 router.get("/api/eventos/getevento/:id", agenda_1.getevento);
+router.post("/api/eventos/actasistencia/", agenda_1.actualizar);
 exports.default = router;

@@ -167,6 +167,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       id_agenda: evento.id,
     }));
 
+
     await AsistenciaVoto.bulkCreate(asistencias);
     const nuevasAsistencias = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
@@ -212,3 +213,56 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     });
   }
 };
+
+export const actualizar = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { body } = req
+      
+        const voto = await AsistenciaVoto.findOne({
+          where: {
+            id_agenda: body.idagenda,
+            id_diputado: body.iddiputado,
+          },
+        });
+
+        if (voto) {
+          let nuevoSentido = voto.sentido_voto;
+          let nuevoMensaje = voto.mensaje;
+
+          switch (body.sentido) {
+            case 1:
+              nuevoSentido = 1;
+              nuevoMensaje = "ASISTENCIA";
+              break;
+            case 2:
+              nuevoSentido = 2;
+              nuevoMensaje = "ASISTENCIA ZOOM";
+              break;
+            case 3:
+              nuevoSentido = 0;
+              nuevoMensaje = "PENDIENTE";
+              break;
+            default:
+            break;
+          }
+
+          await voto.update({
+            sentido_voto: nuevoSentido,
+            mensaje: nuevoMensaje,
+          });
+
+          return res.status(200).json({
+            msg: "Asistencia actualizada correctamente",
+            estatus: 200
+          });
+        } else {
+          return res.status(404).json({
+            msg: "No se encontró el registro de asistencia para este diputado y agenda",
+          });
+        }
+
+    } catch (error) {
+        console.error('Error al generar consulta:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor' });
+    }
+}

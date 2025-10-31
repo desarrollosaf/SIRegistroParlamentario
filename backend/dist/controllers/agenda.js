@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getevento = exports.geteventos = void 0;
+exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -193,3 +193,52 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getevento = getevento;
+const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const voto = yield asistencia_votos_1.default.findOne({
+            where: {
+                id_agenda: body.idagenda,
+                id_diputado: body.iddiputado,
+            },
+        });
+        if (voto) {
+            let nuevoSentido = voto.sentido_voto;
+            let nuevoMensaje = voto.mensaje;
+            switch (body.sentido) {
+                case 1:
+                    nuevoSentido = 1;
+                    nuevoMensaje = "ASISTENCIA";
+                    break;
+                case 2:
+                    nuevoSentido = 2;
+                    nuevoMensaje = "ASISTENCIA ZOOM";
+                    break;
+                case 3:
+                    nuevoSentido = 0;
+                    nuevoMensaje = "PENDIENTE";
+                    break;
+                default:
+                    break;
+            }
+            yield voto.update({
+                sentido_voto: nuevoSentido,
+                mensaje: nuevoMensaje,
+            });
+            return res.status(200).json({
+                msg: "Asistencia actualizada correctamente",
+                estatus: 200
+            });
+        }
+        else {
+            return res.status(404).json({
+                msg: "No se encontró el registro de asistencia para este diputado y agenda",
+            });
+        }
+    }
+    catch (error) {
+        console.error('Error al generar consulta:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor' });
+    }
+});
+exports.actualizar = actualizar;
