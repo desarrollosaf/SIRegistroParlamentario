@@ -6,10 +6,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
-interface Miembro {
+interface Integrante {
   id: number;
-  nombre: string;
-  asistencia: 'presente' | 'remota' | 'ausente' | null;
+  id_diputado: string;
+  diputado: string;
+  partido: string;
+  sentido_voto: number; // 0: sin selección, 1: presente, 2: remota, 3: ausente
 }
 
 @Component({
@@ -20,16 +22,17 @@ interface Miembro {
 })
 export class DetalleComisionComponent implements OnInit {
   step = 1;
-  miembros: Miembro[] = [];
-  columna1: Miembro[] = [];
-  columna2: Miembro[] = [];
+  integrantes: Integrante[] = [];
+  columna1: Integrante[] = [];
+  columna2: Integrante[] = [];
+  idComision: string; // Obtén este ID de tu ruta o como lo necesites
 
   datosAsistencia: any = {};
   datosDetalle: any = {};
   datosConfiguracion: any = {};
   datosResumen: any = {};
   private _eventoService = inject(EventoService);
-  idComision: string;
+  idComisionRuta: string;
 
 
   constructor(
@@ -38,7 +41,7 @@ export class DetalleComisionComponent implements OnInit {
     private router: Router
   ) {
 
-     this.idComision = String(aRouter.snapshot.paramMap.get('id'));
+    this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
   }
 
   ngOnInit(): void {
@@ -69,7 +72,7 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   private cargarDatosSeccion(seccion: number): void {
-    switch(seccion) {
+    switch (seccion) {
       case 1:
         this.cargardatosAsistencia();
         break;
@@ -85,96 +88,59 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
-  // Métodos para cargar datos de cada sección
+
   private cargardatosAsistencia(): void {
 
-
-
-  this._eventoService.getEvento(this.idComision).subscribe({
+    this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log(response);
+        this.integrantes = response.integrantes || [];
+        this.dividirEnColumnas();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      this.miembros = [
-      { id: 1, nombre: 'Juan Pérez García', asistencia: null },
-      { id: 2, nombre: 'María González López', asistencia: null },
-      { id: 3, nombre: 'Carlos Rodríguez Martínez', asistencia: null },
-      { id: 4, nombre: 'Ana Fernández Sánchez', asistencia: null },
-      { id: 5, nombre: 'Luis Martínez Hernández', asistencia: null },
-      { id: 6, nombre: 'Carmen Díaz Moreno', asistencia: null },
-      { id: 7, nombre: 'José López Jiménez', asistencia: null },
-      { id: 8, nombre: 'Laura Torres Ruiz', asistencia: null },
-      { id: 9, nombre: 'Pedro Ramírez Castro', asistencia: null },
-      { id: 10, nombre: 'Isabel Flores Ortiz', asistencia: null },
-      { id: 11, nombre: 'Miguel Ángel Vargas Silva', asistencia: null },
-      { id: 12, nombre: 'Patricia Méndez Reyes', asistencia: null },
-      { id: 13, nombre: 'Roberto Castillo Ramos', asistencia: null },
-      { id: 14, nombre: 'Sofía Herrera Domínguez', asistencia: null },
-      { id: 15, nombre: 'Fernando Gutiérrez Cruz', asistencia: null },
-      { id: 16, nombre: 'Gabriela Morales Santos', asistencia: null },
-      { id: 17, nombre: 'Alejandro Núñez Vega', asistencia: null },
-      { id: 18, nombre: 'Verónica Romero Medina', asistencia: null },
-      { id: 19, nombre: 'Diego Aguilar Peña', asistencia: null },
-      { id: 20, nombre: 'Claudia Silva Contreras', asistencia: null },
-      { id: 21, nombre: 'Ricardo Mendoza Luna', asistencia: null },
-      { id: 22, nombre: 'Daniela Castro Guerrero', asistencia: null },
-      { id: 23, nombre: 'Jorge Delgado Paredes', asistencia: null },
-      { id: 24, nombre: 'Adriana Ríos Campos', asistencia: null },
-      { id: 25, nombre: 'Héctor Valenzuela Soto', asistencia: null }
-    ];
-
-    this.dividirEnColumnas();
-  }
-
-    private dividirEnColumnas(): void {
-    const mitad = Math.ceil(this.miembros.length / 2);
-    this.columna1 = this.miembros.slice(0, mitad);
-    this.columna2 = this.miembros.slice(mitad);
   }
 
 
-
-  marcarAsistencia(miembro: Miembro, tipo: 'presente' | 'remota' | 'ausente'): void {
-    miembro.asistencia = tipo;
+  private dividirEnColumnas(): void {
+    const mitad = Math.ceil(this.integrantes.length / 2);
+    this.columna1 = this.integrantes.slice(0, mitad);
+    this.columna2 = this.integrantes.slice(mitad);
   }
 
-  getClaseAsistencia(asistencia: string | null): string {
-    switch(asistencia) {
-      case 'presente':
+contarAsistencias(tipo: number): number {
+  return this.integrantes.filter(i => i.sentido_voto === tipo).length;
+}
+
+  marcarAsistencia(integrante: Integrante, sentido: number): void {
+    integrante.sentido_voto = sentido;
+    this.guardarSentidoVoto(integrante.id_diputado, sentido, this.idComisionRuta);
+  }
+
+  guardarSentidoVoto(idIntegrante: string, sentido: number, idAgenda: string): void {
+    // Aquí haces tu petición al backend
+    // this._eventoService.guardarSentidoVoto(idIntegrante, sentido).subscribe({
+    //   next: (response) => {
+    //     console.log('Sentido guardado correctamente', response);
+    //   },
+    //   error: (e: HttpErrorResponse) => {
+    //     console.error('Error al guardar sentido:', e.error?.msg);
+    //   }
+    // });
+
+    console.log(`Guardando sentido: id_duputado ${idIntegrante}, Sentido ${sentido}, id_agenda ${idAgenda}`);
+  }
+
+  getClaseAsistencia(sentido_voto: number): string {
+    switch (sentido_voto) {
+      case 1:
         return 'asistencia-presente';
-      case 'remota':
+      case 2:
         return 'asistencia-remota';
-      case 'ausente':
+      case 3:
         return 'asistencia-ausente';
       default:
         return '';
@@ -185,7 +151,7 @@ export class DetalleComisionComponent implements OnInit {
 
 
 
-  
+
 
   private cargarDatosDetalle(): void {
     // Consulta para sección 2
