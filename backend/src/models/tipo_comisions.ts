@@ -1,69 +1,48 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
-import type { comisions, comisionsId } from './comisions';
+import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
+import sequelize from '../database/pleno'; // ajusta la ruta si tu conexión está en otro archivo
 
-export interface tipo_comisionsAttributes {
-  id: string;
-  valor: string;
-  alias?: string;
-  created_at?: Date;
-  updated_at?: Date;
+class TipoComisions extends Model<
+  InferAttributes<TipoComisions>,
+  InferCreationAttributes<TipoComisions>
+> {
+  declare id: string;
+  declare valor: string;
+  declare alias: string | null;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
 }
 
-export type tipo_comisionsPk = "id";
-export type tipo_comisionsId = tipo_comisions[tipo_comisionsPk];
-export type tipo_comisionsOptionalAttributes = "alias" | "created_at" | "updated_at";
-export type tipo_comisionsCreationAttributes = Optional<tipo_comisionsAttributes, tipo_comisionsOptionalAttributes>;
-
-export class tipo_comisions extends Model<tipo_comisionsAttributes, tipo_comisionsCreationAttributes> implements tipo_comisionsAttributes {
-  id!: string;
-  valor!: string;
-  alias?: string;
-  created_at?: Date;
-  updated_at?: Date;
-
-  // tipo_comisions hasMany comisions via tipo_comision_id
-  comisions!: comisions[];
-  getComisions!: Sequelize.HasManyGetAssociationsMixin<comisions>;
-  setComisions!: Sequelize.HasManySetAssociationsMixin<comisions, comisionsId>;
-  addComision!: Sequelize.HasManyAddAssociationMixin<comisions, comisionsId>;
-  addComisions!: Sequelize.HasManyAddAssociationsMixin<comisions, comisionsId>;
-  createComision!: Sequelize.HasManyCreateAssociationMixin<comisions>;
-  removeComision!: Sequelize.HasManyRemoveAssociationMixin<comisions, comisionsId>;
-  removeComisions!: Sequelize.HasManyRemoveAssociationsMixin<comisions, comisionsId>;
-  hasComision!: Sequelize.HasManyHasAssociationMixin<comisions, comisionsId>;
-  hasComisions!: Sequelize.HasManyHasAssociationsMixin<comisions, comisionsId>;
-  countComisions!: Sequelize.HasManyCountAssociationsMixin;
-
-  static initModel(sequelize: Sequelize.Sequelize): typeof tipo_comisions {
-    return tipo_comisions.init({
+TipoComisions.init(
+  {
     id: {
       type: DataTypes.CHAR(36),
       allowNull: false,
-      primaryKey: true
+      primaryKey: true,
     },
     valor: {
       type: DataTypes.STRING(255),
-      allowNull: false
+      allowNull: false,
     },
     alias: {
       type: DataTypes.STRING(255),
-      allowNull: true
-    }
-  }, {
+      allowNull: true,
+    },
+    createdAt: {
+      field: 'created_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      field: 'updated_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+  },
+  {
     sequelize,
     tableName: 'tipo_comisions',
     timestamps: true,
-    indexes: [
-      {
-        name: "PRIMARY",
-        unique: true,
-        using: "BTREE",
-        fields: [
-          { name: "id" },
-        ]
-      },
-    ]
-  });
   }
-}
+);
+
+export default TipoComisions;

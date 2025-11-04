@@ -10,6 +10,9 @@ import IntegranteComision from "../models/integrante_comisions";
 import AsistenciaVoto from "../models/asistencia_votos";
 import { setEngine } from "node:crypto";
 import Partidos from "../models/partidos";
+import Proponentes from "../models/proponentes";
+import TipoCategoriaIniciativas  from "../models/tipo_categoria_iniciativas";
+import Comision from "../models/comisions";
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
@@ -260,6 +263,68 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
             msg: "No se encontró el registro de asistencia para este diputado y agenda",
           });
         }
+
+    } catch (error) {
+        console.error('Error al generar consulta:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor' });
+    }
+}
+
+
+export const crearordendia = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { body } = req
+        const proponentes = await Proponentes.findAll({
+          attributes: ['id', 'valor'],
+          raw: true,
+        });
+
+        const tipo_categoria = await TipoCategoriaIniciativas.findAll({
+          attributes: ['id', 'valor'],
+          raw: true,
+        });
+
+        const comisiones = await Comision.findAll({
+          attributes: ['id', 'nombre'],
+          raw: true,
+        });
+
+
+        const legislatura = await Legislatura.findOne({
+          order: [["fecha_inicio", "DESC"]],
+        });
+
+        let diputadosMap: Record<string, string> = {};
+
+        if (legislatura) {
+          const diputados = await IntegranteLegislatura.findAll({
+            where: { legislatura_id: legislatura.id },
+            include: [
+              {
+                model: Diputado,
+                as: "diputado",
+                attributes: ["id", "nombres", "apaterno", "amaterno"],
+              },
+            ],
+          });
+
+          diputados.forEach((d) => {
+            if (d.diputado) {
+              const nombreCompleto = `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim();
+              diputadosMap[d.diputado.id] = nombreCompleto;
+            }
+          });
+        }
+
+       
+
+        return res.status(404).json({
+            proponentes: proponentes,
+            tipcategoria: tipo_categoria,
+            comisiones: comisiones,
+            diputados: diputadosMap,
+
+          });
 
     } catch (error) {
         console.error('Error al generar consulta:', error);

@@ -1,38 +1,39 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tipo_comisions = void 0;
 const sequelize_1 = require("sequelize");
-class tipo_comisions extends sequelize_1.Model {
-    static initModel(sequelize) {
-        return tipo_comisions.init({
-            id: {
-                type: sequelize_1.DataTypes.CHAR(36),
-                allowNull: false,
-                primaryKey: true
-            },
-            valor: {
-                type: sequelize_1.DataTypes.STRING(255),
-                allowNull: false
-            },
-            alias: {
-                type: sequelize_1.DataTypes.STRING(255),
-                allowNull: true
-            }
-        }, {
-            sequelize,
-            tableName: 'tipo_comisions',
-            timestamps: true,
-            indexes: [
-                {
-                    name: "PRIMARY",
-                    unique: true,
-                    using: "BTREE",
-                    fields: [
-                        { name: "id" },
-                    ]
-                },
-            ]
-        });
-    }
+const pleno_1 = __importDefault(require("../database/pleno")); // ajusta la ruta si tu conexión está en otro archivo
+class TipoComisions extends sequelize_1.Model {
 }
-exports.tipo_comisions = tipo_comisions;
+TipoComisions.init({
+    id: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: false,
+        primaryKey: true,
+    },
+    valor: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    alias: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: true,
+    },
+    createdAt: {
+        field: 'created_at',
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+    updatedAt: {
+        field: 'updated_at',
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+}, {
+    sequelize: pleno_1.default,
+    tableName: 'tipo_comisions',
+    timestamps: true,
+});
+exports.default = TipoComisions;
