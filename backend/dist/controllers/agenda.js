@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.crearordendia = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -23,6 +23,9 @@ const diputado_1 = __importDefault(require("../models/diputado"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const partidos_1 = __importDefault(require("../models/partidos"));
+const proponentes_1 = __importDefault(require("../models/proponentes"));
+const tipo_categoria_iniciativas_1 = __importDefault(require("../models/tipo_categoria_iniciativas"));
+const comisions_1 = __importDefault(require("../models/comisions"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -242,3 +245,54 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.actualizar = actualizar;
+const crearordendia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const proponentes = yield proponentes_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        });
+        const tipo_categoria = yield tipo_categoria_iniciativas_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        });
+        const comisiones = yield comisions_1.default.findAll({
+            attributes: ['id', 'nombre'],
+            raw: true,
+        });
+        const legislatura = yield legislaturas_1.default.findOne({
+            order: [["fecha_inicio", "DESC"]],
+        });
+        let diputadosMap = {};
+        if (legislatura) {
+            const diputados = yield integrante_legislaturas_1.default.findAll({
+                where: { legislatura_id: legislatura.id },
+                include: [
+                    {
+                        model: diputado_1.default,
+                        as: "diputado",
+                        attributes: ["id", "nombres", "apaterno", "amaterno"],
+                    },
+                ],
+            });
+            diputados.forEach((d) => {
+                var _a, _b, _c;
+                if (d.diputado) {
+                    const nombreCompleto = `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim();
+                    diputadosMap[d.diputado.id] = nombreCompleto;
+                }
+            });
+        }
+        return res.status(404).json({
+            proponentes: proponentes,
+            tipcategoria: tipo_categoria,
+            comisiones: comisiones,
+            diputados: diputadosMap,
+        });
+    }
+    catch (error) {
+        console.error('Error al generar consulta:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor' });
+    }
+});
+exports.crearordendia = crearordendia;

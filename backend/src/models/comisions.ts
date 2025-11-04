@@ -67,24 +67,24 @@ Comision.init(
     tableName: 'comisions',
     timestamps: true,
     paranoid: true,
-    underscored: true, // 👈 Hace que use snake_case en BD (opcional pero recomendado)
+    underscored: true, 
   }
 );
 
-// 🔗 Asociaciones
-Comision.hasMany(IntegranteComision, {
-  foreignKey: 'comision_id',
-  as: 'integrantes',
-});
 
-Comision.hasMany(TurnoComision, {
-  foreignKey: 'comision_id', // 👈 cambiado de id_comision → comision_id para consistencia
-  as: 'turnos',
-});
+// Comision.hasMany(IntegranteComision, {
+//   foreignKey: 'comision_id',
+//   as: 'integrantes',
+// });
 
-Comision.belongsTo(TipoComision, {
-  foreignKey: 'tipo_comision_id',
-  as: 'tipo_comision',
-});
+// Comision.hasMany(TurnoComision, {
+//   foreignKey: 'comision_id', 
+//   as: 'turnos',
+// });
+
+// Comision.belongsTo(TipoComision, {
+//   foreignKey: 'tipo_comision_id',
+//   as: 'tipo_comision',
+// });
 
 export default Comision;

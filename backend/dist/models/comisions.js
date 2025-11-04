@@ -5,9 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
-const integrante_comisions_1 = __importDefault(require("./integrante_comisions"));
-const tipo_comisions_1 = __importDefault(require("./tipo_comisions"));
-const turno_comisions_1 = __importDefault(require("./turno_comisions"));
 class Comision extends sequelize_1.Model {
 }
 Comision.init({
@@ -49,19 +46,18 @@ Comision.init({
     tableName: 'comisions',
     timestamps: true,
     paranoid: true,
-    underscored: true, // 👈 Hace que use snake_case en BD (opcional pero recomendado)
+    underscored: true,
 });
-// 🔗 Asociaciones
-Comision.hasMany(integrante_comisions_1.default, {
-    foreignKey: 'comision_id',
-    as: 'integrantes',
-});
-Comision.hasMany(turno_comisions_1.default, {
-    foreignKey: 'comision_id', // 👈 cambiado de id_comision → comision_id para consistencia
-    as: 'turnos',
-});
-Comision.belongsTo(tipo_comisions_1.default, {
-    foreignKey: 'tipo_comision_id',
-    as: 'tipo_comision',
-});
+// Comision.hasMany(IntegranteComision, {
+//   foreignKey: 'comision_id',
+//   as: 'integrantes',
+// });
+// Comision.hasMany(TurnoComision, {
+//   foreignKey: 'comision_id', 
+//   as: 'turnos',
+// });
+// Comision.belongsTo(TipoComision, {
+//   foreignKey: 'tipo_comision_id',
+//   as: 'tipo_comision',
+// });
 exports.default = Comision;
