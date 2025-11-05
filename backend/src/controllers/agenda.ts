@@ -16,6 +16,7 @@ import Comision from "../models/comisions";
 import TipoComisions from "../models/tipo_comisions";
 import { Op } from 'sequelize';
 import AdminCat from "../models/admin_cats";
+import PuntosOrden from "../models/puntos_ordens";
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
@@ -437,12 +438,42 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
     const combo = await AdminCat.findAll({ where: { id_presenta: proponente.id } });
     arr.combo = combo;
     arr.tipoCombo = proponente;
-
-  
-
     return res.json(arr);
   } catch (error) {
     console.error('Error en getTiposPuntos:', error);
     return res.status(500).json({ message: 'Error al obtener tipos de puntos', error: error.message });
+  }
+};
+
+export const guardarpunto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { body } = req;
+    const file = req.file;
+
+    const evento = await Agenda.findOne({ where: { id } });
+
+    if (!evento) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    const puntonuevo = await PuntosOrden.create({
+      id_evento: evento.id,
+      nopunto: body.numpunto,
+      id_proponente: body.proponente,
+      id_tipo: body.tipo,
+      tribuna: body.tribuna,
+      path_doc: file ? `/uploads/puntos/${file.filename}` : null,
+      punto: body.punto,
+      observaciones: body.observaciones,
+    });
+
+    return res.status(201).json({
+      message: "Punto creado correctamente",
+      data: puntonuevo,
+    });
+  } catch (error: any) {
+    console.error("Error al guardar el punto:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };

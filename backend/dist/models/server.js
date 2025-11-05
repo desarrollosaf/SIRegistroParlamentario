@@ -49,6 +49,7 @@ class Server {
                 '/api/eventos/actasistencia/',
                 '/api/eventos/catalogos/',
                 '/api/eventos/gettipos/',
+                '/api/eventos/savepunto/',
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

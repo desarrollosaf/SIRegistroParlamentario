@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -28,6 +28,7 @@ const comisions_1 = __importDefault(require("../models/comisions"));
 const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const sequelize_1 = require("sequelize");
 const admin_cats_1 = __importDefault(require("../models/admin_cats"));
+const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -412,3 +413,33 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getTiposPuntos = getTiposPuntos;
+const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { body } = req;
+        const file = req.file;
+        const evento = yield agendas_1.default.findOne({ where: { id } });
+        if (!evento) {
+            return res.status(404).json({ message: "Evento no encontrado" });
+        }
+        const puntonuevo = yield puntos_ordens_1.default.create({
+            id_evento: evento.id,
+            nopunto: body.numpunto,
+            id_proponente: body.proponente,
+            id_tipo: body.tipo,
+            tribuna: body.tribuna,
+            path_doc: file ? `/uploads/puntos/${file.filename}` : null,
+            punto: body.punto,
+            observaciones: body.observaciones,
+        });
+        return res.status(201).json({
+            message: "Punto creado correctamente",
+            data: puntonuevo,
+        });
+    }
+    catch (error) {
+        console.error("Error al guardar el punto:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.guardarpunto = guardarpunto;
