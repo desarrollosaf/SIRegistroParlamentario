@@ -1,60 +1,68 @@
-import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
-import type { DatosUsers } from './datos_users';
-import type { PresentaPuntos } from './presenta_puntos';
-import type { PresentanPuntos } from './presentan_puntos';
-import type { TemasVotos } from './temas_votos';
-import type { TipoCategoriaIniciativas } from './tipo_categoria_iniciativas';
-import type { TurnoComisions } from './turno_comisions';
+import {
+  Model,
+  DataTypes,
+  CreationOptional,
+  ForeignKey,
+  NonAttribute,
+  Association,
+} from "sequelize";
+import sequelize from "../database/registrocomisiones";
 
-export class PuntosOrdens extends Model<InferAttributes<PuntosOrdens>, InferCreationAttributes<PuntosOrdens>> {
-  declare id: string;
-  declare id_evento?: string;
-  declare noPunto?: number;
+import TipoCategoriaIniciativas from "./tipo_categoria_iniciativas";
+import Proponentes from "./proponentes";
+
+
+
+class PuntosOrden extends Model {
+  declare id: CreationOptional<number>;
+  declare id_evento: null;
+  declare nopunto: number | null;
   declare punto: string;
-  declare observaciones?: string;
-  declare path_doc?: string;
-  declare tribuna?: string;
-  declare id_tipo?: string;
-  declare status: number;
-  declare punto_turno_id?: string;
-  declare id_proponente?: string;
-  declare dispensa?: number;
+  declare observaciones: string | null;
+  declare path_doc: string | null;
+  declare tribuna:  null;
+  declare id_tipo:  null;
+  declare status: boolean;
+  declare punto_turno_id:  null;
+  declare id_proponente:  null;
+  declare dispensa: number | null;
   declare editado: number;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
 
-  // Asociaciones
-  declare tribuna_datos_user?: DatosUsers;
-  declare presenta_puntos?: PresentaPuntos[];
-  declare presentan_puntos?: PresentanPuntos[];
-  declare temas_votos?: TemasVotos[];
-  declare turno_comisions?: TurnoComisions[];
-  declare id_tipo_tipo_categoria_iniciativa?: TipoCategoriaIniciativas;
+
+  declare tipo?: NonAttribute<TipoCategoriaIniciativas>;
+  declare proponente?: NonAttribute<Proponentes>;
+
+
+  declare static associations: {
+    tipo: Association<PuntosOrden, TipoCategoriaIniciativas>;
+    proponente: Association<PuntosOrden, Proponentes>;
+  };
 }
 
-PuntosOrdens.init(
+PuntosOrden.init(
   {
     id: {
-      type: DataTypes.CHAR(36),
-      allowNull: false,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     id_evento: {
       type: DataTypes.CHAR(36),
       allowNull: true,
     },
-    noPunto: {
+    nopunto: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
     punto: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
     observaciones: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: true,
     },
     path_doc: {
@@ -64,21 +72,13 @@ PuntosOrdens.init(
     tribuna: {
       type: DataTypes.CHAR(36),
       allowNull: true,
-      references: {
-        model: 'datos_users',
-        key: 'id',
-      },
     },
     id_tipo: {
       type: DataTypes.CHAR(36),
       allowNull: true,
-      references: {
-        model: 'tipo_categoria_iniciativas',
-        key: 'id',
-      },
     },
     status: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TINYINT,
       allowNull: false,
       defaultValue: 1,
     },
@@ -99,16 +99,14 @@ PuntosOrdens.init(
       allowNull: false,
       defaultValue: 0,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
   },
   {
     sequelize,
-    tableName: 'puntos_ordens',
+    tableName: "puntos_ordens",
     timestamps: true,
     paranoid: true,
+    underscored: false,
   }
 );
 
-export default PuntosOrdens;
+export default PuntosOrden;
