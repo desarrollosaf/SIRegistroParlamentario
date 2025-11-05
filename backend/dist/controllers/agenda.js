@@ -265,6 +265,7 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             order: [["fecha_inicio", "DESC"]],
         });
         let diputadosMap = {};
+        let diputadosArray = [];
         if (legislatura) {
             const diputados = yield integrante_legislaturas_1.default.findAll({
                 where: { legislatura_id: legislatura.id },
@@ -276,18 +277,20 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     },
                 ],
             });
-            diputados.forEach((d) => {
+            diputadosArray = diputados
+                .filter(d => d.diputado)
+                .map(d => {
                 var _a, _b, _c;
-                if (d.diputado) {
-                    const nombreCompleto = `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim();
-                    diputadosMap[d.diputado.id] = nombreCompleto;
-                }
+                return ({
+                    id: d.diputado.id,
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                });
             });
         }
         return res.status(404).json({
             proponentes: proponentes,
             comisiones: comisiones,
-            diputados: diputadosMap,
+            diputados: diputadosArray
         });
     }
     catch (error) {
