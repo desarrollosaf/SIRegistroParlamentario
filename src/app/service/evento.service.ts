@@ -33,10 +33,14 @@ export class EventoService {
   getCatalogos(): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/catalogos/`)
   }
+
   getTipo(id: any): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/gettipos/${id}`)
   }
 
+   saveRegistro(data: FormData, id: String): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savepunto/${id}`,data)
+  }
 
 
 }

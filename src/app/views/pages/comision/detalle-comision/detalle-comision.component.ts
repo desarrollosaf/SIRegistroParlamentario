@@ -58,7 +58,7 @@ export class DetalleComisionComponent implements OnInit {
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
 
     this.formPunto = this.fb.group({
-      numero: [''],
+      numpunto: [''],
       proponente: [''],
       presenta: [''],
       tipo: [''],
@@ -229,10 +229,32 @@ export class DetalleComisionComponent implements OnInit {
         formData.append(key, value as string);
       }
     });
-    console.log('Datos del punto a guardar:', this.formPunto.value);
 
-    this.formPunto.reset();
-    this.mostrarFormularioPunto = false;
+
+    formData.forEach((valor, clave) => {
+          console.log(clave, valor);
+    });
+
+
+    this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        console.log(response);
+
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+
+
+
+    
+
+
+
+    // this.formPunto.reset();
+    // this.mostrarFormularioPunto = false;
   }
 
 
