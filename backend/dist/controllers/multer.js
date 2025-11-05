@@ -47,12 +47,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const uploadDir = path_1.default.join(__dirname, "../../uploads/puntos");
+if (!fs_1.default.existsSync(uploadDir)) {
+    fs_1.default.mkdirSync(uploadDir, { recursive: true });
+}
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path_1.default.join(__dirname, "../../uploads/puntos"));
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => __awaiter(void 0, void 0, void 0, function* () {
-        const { v4: uuidv4 } = yield Promise.resolve().then(() => __importStar(require('uuid'))); // 👈 import dinámico
+        const { v4: uuidv4 } = yield Promise.resolve().then(() => __importStar(require('uuid')));
         const uniqueName = `${uuidv4()}${path_1.default.extname(file.originalname)}`;
         cb(null, uniqueName);
     }),
