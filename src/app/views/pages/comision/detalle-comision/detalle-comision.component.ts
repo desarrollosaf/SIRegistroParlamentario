@@ -22,6 +22,13 @@ interface Integrante {
 })
 export class DetalleComisionComponent implements OnInit {
   step = 1;
+  stepNames = [
+    { numero: 1, nombre: 'Asistencia' },
+    { numero: 2, nombre: 'Orden del día' },
+    { numero: 3, nombre: 'Votaciones' },
+    { numero: 4, nombre: 'Resumen' }
+  ];
+
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
   columna2: Integrante[] = [];
@@ -34,6 +41,8 @@ export class DetalleComisionComponent implements OnInit {
   private _eventoService = inject(EventoService);
   idComisionRuta: string;
 
+  mostrarFormularioPunto = false;
+  formPunto!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
@@ -42,10 +51,49 @@ export class DetalleComisionComponent implements OnInit {
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
+
+    this.formPunto = this.fb.group({
+      numero: [''],
+      proponente: [''],
+      presenta: [''],
+      tipo: [''],
+      tribuna: [''],
+      documento: [null],
+      punto: [''],
+      observaciones: ['']
+    });
   }
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
+  }
+  toggleFormularioPunto() {
+    this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+  }
+
+
+  guardarPunto() {
+    if (this.formPunto.invalid) {
+      this.formPunto.markAllAsTouched();
+      return;
+    }
+
+    const formData = new FormData();
+    Object.entries(this.formPunto.value).forEach(([key, value]) => {
+      if (key === 'documento' && value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value as string);
+      }
+    });
+
+    console.log('Datos del punto a guardar:', this.formPunto.value);
+
+    // Aquí luego puedes llamar tu servicio, ejemplo:
+    // this._eventoService.guardarPunto(formData).subscribe(...)
+
+    this.formPunto.reset();
+    this.mostrarFormularioPunto = false;
   }
 
   nextStep() {
@@ -90,7 +138,6 @@ export class DetalleComisionComponent implements OnInit {
 
 
   private cargardatosAsistencia(): void {
-
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log(response);
@@ -111,9 +158,9 @@ export class DetalleComisionComponent implements OnInit {
     this.columna2 = this.integrantes.slice(mitad);
   }
 
-contarAsistencias(tipo: number): number {
-  return this.integrantes.filter(i => i.sentido_voto === tipo).length;
-}
+  contarAsistencias(tipo: number): number {
+    return this.integrantes.filter(i => i.sentido_voto === tipo).length;
+  }
 
   marcarAsistencia(integrante: Integrante, sentido: number): void {
     integrante.sentido_voto = sentido;
@@ -121,17 +168,20 @@ contarAsistencias(tipo: number): number {
   }
 
   guardarSentidoVoto(idIntegrante: string, sentido: number, idAgenda: string): void {
-    // Aquí haces tu petición al backend
-    // this._eventoService.guardarSentidoVoto(idIntegrante, sentido).subscribe({
-    //   next: (response) => {
-    //     console.log('Sentido guardado correctamente', response);
-    //   },
-    //   error: (e: HttpErrorResponse) => {
-    //     console.error('Error al guardar sentido:', e.error?.msg);
-    //   }
-    // });
-
-    console.log(`Guardando sentido: id_duputado ${idIntegrante}, Sentido ${sentido}, id_agenda ${idAgenda}`);
+    const datos = {
+      iddiputado: idIntegrante,
+      sentido: sentido,
+      idagenda: idAgenda
+    };
+    this._eventoService.actualizaAsistencia(datos).subscribe({
+      next: (response: any) => {
+        console.log(`Guardando sentido: id_duputado ${idIntegrante}, Sentido ${sentido}, id_agenda ${idAgenda}`);
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
 
   getClaseAsistencia(sentido_voto: number): string {
@@ -146,9 +196,6 @@ contarAsistencias(tipo: number): number {
         return '';
     }
   }
-
-
-
 
 
 

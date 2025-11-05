@@ -21,9 +21,12 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/`)
   }
 
- getEvento(id: String): Observable<any> {
+  getEvento(id: String): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getevento/${id}`)
   }
 
 
+   actualizaAsistencia(data:any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actasistencia/`,data)
+  }
 }
