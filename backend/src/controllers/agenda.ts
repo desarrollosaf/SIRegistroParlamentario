@@ -281,10 +281,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           raw: true,
         });
 
-        // const tipo_categoria = await TipoCategoriaIniciativas.findAll({
-        //   attributes: ['id', 'valor'],
-        //   raw: true,
-        // });
 
         const comisiones = await Comision.findAll({
           attributes: ['id', 'nombre'],
@@ -296,8 +292,7 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           order: [["fecha_inicio", "DESC"]],
         });
 
-        let diputadosMap: Record<string, string> = {};
-        let diputadosArray = [];
+        let diputadosArray: { id: string; nombre: string }[] = [];
 
         if (legislatura) {
           const diputados = await IntegranteLegislatura.findAll({
@@ -318,14 +313,12 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             }));
         }
 
-       
-
-        return res.status(404).json({
+        return res.json({
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray
 
-          });
+        });
 
     } catch (error) {
         console.error('Error al generar consulta:', error);
@@ -447,7 +440,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
 
   
 
-    return res.status(200).json(arr);
+    return res.json(arr);
   } catch (error) {
     console.error('Error en getTiposPuntos:', error);
     return res.status(500).json({ message: 'Error al obtener tipos de puntos', error: error.message });

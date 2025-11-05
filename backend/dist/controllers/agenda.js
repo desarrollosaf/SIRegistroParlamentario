@@ -253,10 +253,6 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'valor'],
             raw: true,
         });
-        // const tipo_categoria = await TipoCategoriaIniciativas.findAll({
-        //   attributes: ['id', 'valor'],
-        //   raw: true,
-        // });
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', 'nombre'],
             raw: true,
@@ -264,7 +260,6 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
-        let diputadosMap = {};
         let diputadosArray = [];
         if (legislatura) {
             const diputados = yield integrante_legislaturas_1.default.findAll({
@@ -287,7 +282,7 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
             });
         }
-        return res.status(404).json({
+        return res.json({
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray
@@ -409,7 +404,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const combo = yield admin_cats_1.default.findAll({ where: { id_presenta: proponente.id } });
         arr.combo = combo;
         arr.tipoCombo = proponente;
-        return res.status(200).json(arr);
+        return res.json(arr);
     }
     catch (error) {
         console.error('Error en getTiposPuntos:', error);
