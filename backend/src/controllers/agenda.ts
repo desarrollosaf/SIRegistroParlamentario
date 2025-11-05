@@ -297,6 +297,7 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         });
 
         let diputadosMap: Record<string, string> = {};
+        let diputadosArray = [];
 
         if (legislatura) {
           const diputados = await IntegranteLegislatura.findAll({
@@ -309,13 +310,12 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
               },
             ],
           });
-
-          diputados.forEach((d) => {
-            if (d.diputado) {
-              const nombreCompleto = `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim();
-              diputadosMap[d.diputado.id] = nombreCompleto;
-            }
-          });
+          diputadosArray = diputados
+            .filter(d => d.diputado)
+            .map(d => ({
+              id: d.diputado.id,
+              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+            }));
         }
 
        
@@ -323,7 +323,7 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         return res.status(404).json({
             proponentes: proponentes,
             comisiones: comisiones,
-            diputados: diputadosMap,
+            diputados: diputadosArray
 
           });
 
