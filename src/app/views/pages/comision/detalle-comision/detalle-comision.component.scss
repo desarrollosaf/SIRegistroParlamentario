@@ -302,6 +302,77 @@
   }
 }
 
+
+
+.card form {
+  .form-label {
+    font-weight: 500;
+  }
+
+  input[type="file"] {
+    padding: 6px;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  button[type="submit"] {
+    min-width: 140px;
+  }
+}
+
+.btn.btn-primary i {
+  margin-right: 4px;
+}
+
+
+
+
+
+.form-card {
+  background-color: #f8f9fa; // gris Bootstrap claro
+  border: 1px solid #dee2e6;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  .card-body {
+    background: transparent;
+  }
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+
+.card[ngif] {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+:host ::ng-deep .fade-in {
+  animation: fadeInSlide 0.4s ease forwards;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+
+
+
+
+
 // Tablets
 @media (min-width: 577px) and (max-width: 991px) {
   .stats-card {
