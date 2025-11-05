@@ -67,6 +67,7 @@ export class DetalleComisionComponent implements OnInit {
   ngOnInit(): void {
     this.cargarDatosIniciales();
   }
+
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
   }
@@ -125,7 +126,7 @@ export class DetalleComisionComponent implements OnInit {
         this.cargardatosAsistencia();
         break;
       case 2:
-        this.cargarDatosDetalle();
+        this.cargarOrdenDia();
         break;
       case 3:
         this.cargarDatosConfiguracion();
@@ -200,8 +201,23 @@ export class DetalleComisionComponent implements OnInit {
 
 
 
-  private cargarDatosDetalle(): void {
-    // Consulta para sección 2
+  private cargarOrdenDia(): void {
+    this.mostrarFormularioPunto = false;
+
+    this._eventoService.getCatalogos().subscribe({
+      next: (response: any) => {
+        console.log(response);
+
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+
+
+
+    console.log('holi');
   }
 
   private cargarDatosConfiguracion(): void {
