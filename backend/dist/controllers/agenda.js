@@ -418,6 +418,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
+        console.log(body);
         const evento = yield agendas_1.default.findOne({ where: { id } });
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });

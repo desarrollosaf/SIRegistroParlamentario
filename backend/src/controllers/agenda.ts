@@ -450,7 +450,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
-
+console.log(body);
     const evento = await Agenda.findOne({ where: { id } });
 
     if (!evento) {
