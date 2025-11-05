@@ -6,6 +6,6 @@ const router = (0, express_1.Router)();
 router.get("/api/eventos/geteventos/", agenda_1.geteventos);
 router.get("/api/eventos/getevento/:id", agenda_1.getevento);
 router.post("/api/eventos/actasistencia/", agenda_1.actualizar);
-router.get("/api/eventos/ordendia/:id", agenda_1.crearordendia);
+router.get("/api/eventos/catalogos/", agenda_1.catalogos);
 router.get("/api/eventos/gettipos/:id", agenda_1.getTiposPuntos);
 exports.default = router;
