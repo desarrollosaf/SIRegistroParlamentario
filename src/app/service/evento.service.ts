@@ -26,7 +26,15 @@ export class EventoService {
   }
 
 
-   actualizaAsistencia(data:any): Observable<string> {
+  actualizaAsistencia(data:any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actasistencia/`,data)
   }
+  
+  getCatalogos(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/catalogos/`)
+  }
+
+
+
+
 }
