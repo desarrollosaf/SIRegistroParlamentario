@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
+
 interface Integrante {
   id: number;
   id_diputado: string;
@@ -40,6 +41,10 @@ export class DetalleComisionComponent implements OnInit {
   datosResumen: any = {};
   private _eventoService = inject(EventoService);
   idComisionRuta: string;
+  slctProponentes: any;
+  slcTribunaDip: any;
+  slcPresenta: any;
+  slcTipo: any;
 
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
@@ -68,34 +73,7 @@ export class DetalleComisionComponent implements OnInit {
     this.cargarDatosIniciales();
   }
 
-  toggleFormularioPunto() {
-    this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
-  }
 
-
-  guardarPunto() {
-    if (this.formPunto.invalid) {
-      this.formPunto.markAllAsTouched();
-      return;
-    }
-
-    const formData = new FormData();
-    Object.entries(this.formPunto.value).forEach(([key, value]) => {
-      if (key === 'documento' && value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, value as string);
-      }
-    });
-
-    console.log('Datos del punto a guardar:', this.formPunto.value);
-
-    // Aquí luego puedes llamar tu servicio, ejemplo:
-    // this._eventoService.guardarPunto(formData).subscribe(...)
-
-    this.formPunto.reset();
-    this.mostrarFormularioPunto = false;
-  }
 
   nextStep() {
     if (this.step < 4) {
@@ -116,7 +94,6 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   private cargarDatosIniciales(): void {
-    // Carga inicial si necesitas algo al montar el componente
     this.cargarDatosSeccion(1);
   }
 
@@ -203,11 +180,28 @@ export class DetalleComisionComponent implements OnInit {
 
   private cargarOrdenDia(): void {
     this.mostrarFormularioPunto = false;
-
+    this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response);
-
+        this.slctProponentes = response.proponentes;
+        this.slcTribunaDip = response.diputados;
+        this.slcPresenta = response.comisiones;
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+    console.log('holi');
+  }
+  getTipoP(id: any): void {
+    this._eventoService.getTipo(id.id).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        this.formPunto.get('tipo')?.setValue(null);
+        this.slcTipo = [];
+        this.slcTipo = response.tipos;
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -215,10 +209,34 @@ export class DetalleComisionComponent implements OnInit {
       }
     });
 
-
-
-    console.log('holi');
   }
+
+  toggleFormularioPunto() {
+    this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+  }
+
+  guardarPunto() {
+    if (this.formPunto.invalid) {
+      this.formPunto.markAllAsTouched();
+      return;
+    }
+
+    const formData = new FormData();
+    Object.entries(this.formPunto.value).forEach(([key, value]) => {
+      if (key === 'documento' && value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value as string);
+      }
+    });
+    console.log('Datos del punto a guardar:', this.formPunto.value);
+
+    this.formPunto.reset();
+    this.mostrarFormularioPunto = false;
+  }
+
+
+
 
   private cargarDatosConfiguracion(): void {
     // Consulta para sección 3
@@ -227,4 +245,7 @@ export class DetalleComisionComponent implements OnInit {
   private cargarDatosResumen(): void {
     // Consulta para sección 4
   }
+
+
+
 }
