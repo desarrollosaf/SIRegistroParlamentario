@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTiposPuntos = exports.crearordendia = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -24,7 +24,6 @@ const integrante_comisions_1 = __importDefault(require("../models/integrante_com
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const partidos_1 = __importDefault(require("../models/partidos"));
 const proponentes_1 = __importDefault(require("../models/proponentes"));
-const tipo_categoria_iniciativas_1 = __importDefault(require("../models/tipo_categoria_iniciativas"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const sequelize_1 = require("sequelize");
@@ -248,17 +247,16 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.actualizar = actualizar;
-const crearordendia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { body } = req;
         const proponentes = yield proponentes_1.default.findAll({
             attributes: ['id', 'valor'],
             raw: true,
         });
-        const tipo_categoria = yield tipo_categoria_iniciativas_1.default.findAll({
-            attributes: ['id', 'valor'],
-            raw: true,
-        });
+        // const tipo_categoria = await TipoCategoriaIniciativas.findAll({
+        //   attributes: ['id', 'valor'],
+        //   raw: true,
+        // });
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', 'nombre'],
             raw: true,
@@ -288,7 +286,6 @@ const crearordendia = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         return res.status(404).json({
             proponentes: proponentes,
-            tipcategoria: tipo_categoria,
             comisiones: comisiones,
             diputados: diputadosMap,
         });
@@ -298,7 +295,7 @@ const crearordendia = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return res.status(500).json({ msg: 'Error interno del servidor' });
     }
 });
-exports.crearordendia = crearordendia;
+exports.catalogos = catalogos;
 const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;

@@ -274,18 +274,17 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
 }
 
 
-export const crearordendia = async (req: Request, res: Response): Promise<any> => {
+export const catalogos = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { body } = req
         const proponentes = await Proponentes.findAll({
           attributes: ['id', 'valor'],
           raw: true,
         });
 
-        const tipo_categoria = await TipoCategoriaIniciativas.findAll({
-          attributes: ['id', 'valor'],
-          raw: true,
-        });
+        // const tipo_categoria = await TipoCategoriaIniciativas.findAll({
+        //   attributes: ['id', 'valor'],
+        //   raw: true,
+        // });
 
         const comisiones = await Comision.findAll({
           attributes: ['id', 'nombre'],
@@ -323,7 +322,6 @@ export const crearordendia = async (req: Request, res: Response): Promise<any> =
 
         return res.status(404).json({
             proponentes: proponentes,
-            tipcategoria: tipo_categoria,
             comisiones: comisiones,
             diputados: diputadosMap,
 
