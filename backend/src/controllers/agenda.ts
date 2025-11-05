@@ -13,6 +13,9 @@ import Partidos from "../models/partidos";
 import Proponentes from "../models/proponentes";
 import TipoCategoriaIniciativas  from "../models/tipo_categoria_iniciativas";
 import Comision from "../models/comisions";
+import TipoComisions from "../models/tipo_comisions";
+import { Op } from 'sequelize';
+import AdminCat from "../models/admin_cats";
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
@@ -331,3 +334,124 @@ export const crearordendia = async (req: Request, res: Response): Promise<any> =
         return res.status(500).json({ msg: 'Error interno del servidor' });
     }
 }
+
+export const getTiposPuntos = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const proponente = await Proponentes.findByPk(id);
+
+    if (!proponente) {
+      return res.status(404).json({ message: 'Proponente no encontrado' });
+    }
+  
+    const arr: any = {proponente};
+    let tiposRelacionados = await proponente.getTipos({ attributes: ['id', 'valor'], joinTableAttributes: [] });
+   
+    arr.tipos = tiposRelacionados;
+
+   
+    if (proponente.valor === 'Diputadas y Diputados') {
+
+      const legis = await Legislatura.findOne({
+          order: [["fecha_inicio", "DESC"]],
+        });
+
+      if (legis) {
+        const dips = await IntegranteLegislatura.findAll({
+          where: { legislatura_id: legis.id },
+          include: [{ model: Diputado, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+        });
+
+        const dipss = dips
+          .filter((d) => d.diputado)
+          .map((item) => ({
+            id: item.diputado.id,
+            diputado: `${item.diputado.apaterno ?? ''} ${item.diputado.amaterno ?? ''} ${item.diputado.nombres ?? ''}`.trim(),
+          }));
+
+        arr.diputados = dipss;
+      }
+      
+    } else if (proponente.valor === 'Mesa Directiva en turno') {
+      const idMesa = await TipoComisions.findOne({ where: { valor: 'Mesa Directiva' } });
+      if (idMesa) {
+        const mesa = await Comision.findOne({
+          where: { tipo_comision_id: idMesa.id },
+          order: [['created_at', 'DESC']],
+        });
+        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+      }
+     
+    } else if (proponente.valor === 'Junta de Coordinación Politica') {
+      const idMesa = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
+      if (idMesa) {
+        const mesa = await Comision.findOne({
+          where: {
+            tipo_comision_id: idMesa.id,
+            nombre: { [Op.like]: '%jucopo%' },
+          },
+          order: [['created_at', 'DESC']],
+        });
+        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+      }
+      
+    } else if (proponente.valor === 'Secretarías del GEM') {
+  
+    } else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
+      // no acciones extra aparte de tipos
+    } else if (
+      proponente.valor === 'Tribunal Superior de Justicia' ||
+      proponente.valor === 'Ayuntamientos' ||
+      proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
+      proponente.valor === 'Comición de Derechos Humanos del Estado de México' ||
+      proponente.valor === 'Fiscalía General de Justicia del Estado de México'
+    ) {
+      // no acciones extra aparte de tipos
+    } else if (proponente.valor === 'Comisiones Legislativas') {
+      const idMesa = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
+      if (idMesa) {
+        const comi = await Comision.findAll({ where: { tipo_comision_id: idMesa.id } });
+        const comisiones = comi.map((item) => ({ id: item.id, comision: item.nombre }));
+        arr.comisiones = comisiones;
+      }
+       
+    } else if (proponente.valor === 'Comisión instaladora') {
+      // no acciones extra aparte de tipos
+    } else if (proponente.valor === 'Municipios') {
+      // no actions extra
+    } else if (proponente.valor === 'Diputación Permanente') {
+      const idMesa = await TipoComisions.findOne({ where: { valor: 'Diputación Permanente' } });
+      if (idMesa) {
+        const mesa = await Comision.findOne({
+          where: { tipo_comision_id: idMesa.id },
+          order: [['created_at', 'DESC']],
+        });
+        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+      }
+    } else if (
+      proponente.valor === 'Cámara de Diputados del H. Congreso de la Unión' ||
+      proponente.valor === 'Cámara de Senadores del H. Congreso de la Unión'
+    ) {
+      // no actions extra
+    } else if (proponente.valor === 'Grupo Parlamentario') {
+      const partidos = await Partidos.findAll();
+      arr.partidos = partidos;
+      //  console.log(arr.partidos)
+      // return(500)
+    } else if (proponente.valor === 'Legislatura') {
+      const legislaturas = await Legislatura.findAll();
+      arr.legislaturas = legislaturas;
+    }
+
+    const combo = await AdminCat.findAll({ where: { id_presenta: proponente.id } });
+    arr.combo = combo;
+    arr.tipoCombo = proponente;
+
+  
+
+    return res.status(200).json(arr);
+  } catch (error) {
+    console.error('Error en getTiposPuntos:', error);
+    return res.status(500).json({ message: 'Error al obtener tipos de puntos', error: error.message });
+  }
+};
