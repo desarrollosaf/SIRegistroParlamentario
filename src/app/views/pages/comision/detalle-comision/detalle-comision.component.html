@@ -202,7 +202,7 @@
                                     </div>
                                     <div class="card mt-3 form-card fade-in" *ngIf="mostrarFormularioPunto">
                                         <div class="card-body">
-                                            
+
                                             <form [formGroup]="formPunto" (ngSubmit)="guardarPunto()">
 
                                                 <div class="row g-3">
@@ -214,30 +214,34 @@
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Proponente</label>
-                                                        <select class="form-select" formControlName="proponente">
-                                                            <!-- opciones por suscribe -->
-                                                        </select>
+                                                        <ng-select [items]="slctProponentes" bindLabel="valor"
+                                                            bindValue="id" formControlName="proponente"
+                                                            placeholder="Selecciona" (change)="getTipoP($event)">
+                                                        </ng-select>
                                                     </div>
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Presenta</label>
-                                                        <select class="form-select" formControlName="presenta">
-                                                            <!-- opciones por suscribe -->
-                                                        </select>
+                                                        <ng-select [items]="slcPresenta" bindLabel="nombre"
+                                                            bindValue="id" formControlName="presenta"
+                                                            placeholder="Selecciona">
+                                                        </ng-select>
                                                     </div>
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Tipo</label>
-                                                        <select class="form-select" formControlName="tipo">
-                                                            <!-- opciones por suscribe -->
-                                                        </select>
+                                                           <ng-select [items]="slcTipo" bindLabel="valor"
+                                                            bindValue="id" formControlName="tipo"
+                                                            placeholder="Selecciona">
+                                                        </ng-select>
                                                     </div>
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Tribuna</label>
-                                                        <select class="form-select" formControlName="tribuna">
-                                                            <!-- opciones por suscribe -->
-                                                        </select>
+                                                        <ng-select [items]="slcTribunaDip" bindLabel="nombre"
+                                                            bindValue="id" formControlName="tribuna"
+                                                            placeholder="Selecciona">
+                                                        </ng-select>
                                                     </div>
 
                                                     <div class="col-md-4">
