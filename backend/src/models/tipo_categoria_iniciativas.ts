@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/pleno'; 
+import sequelize from '../database/registrocomisiones'; 
 
 class TipoCategoriaIniciativas extends Model<
   InferAttributes<TipoCategoriaIniciativas>,
@@ -14,10 +14,11 @@ class TipoCategoriaIniciativas extends Model<
 
 TipoCategoriaIniciativas.init(
   {
-    id: {
-      type: DataTypes.CHAR(36),
-      allowNull: false,
-      primaryKey: true,
+   id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
     },
     valor: {
       type: DataTypes.STRING(255),
@@ -43,7 +44,7 @@ TipoCategoriaIniciativas.init(
     sequelize,
     tableName: 'tipo_categoria_iniciativas',
     timestamps: true,
-    paranoid: true, 
+    paranoid: false, 
   }
 );
 

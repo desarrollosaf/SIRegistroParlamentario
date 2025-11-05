@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/legislativoConnection';
+import sequelize from '../database/pleno';
 
 class AdminCat extends Model {
   declare id: CreationOptional<number>;
@@ -46,8 +46,14 @@ AdminCat.init(
       allowNull: false,
       defaultValue: 1
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE
+    createdAt: {
+      type: DataTypes.DATE,
+      field: 'created_at',
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      field: 'updated_at',
+    },
   },
   {
     sequelize,
