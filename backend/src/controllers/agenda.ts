@@ -525,3 +525,38 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { body } = req;
+    const file = req.file;
+
+    const punto = await PuntosOrden.findOne({ where: { id } });
+
+    if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+
+    const nuevoPath = file ? `/storage/puntos/${file.filename}` : punto.path_doc;
+
+    await punto.update({
+      nopunto: body.numpunto ?? punto.nopunto,
+      id_proponente: body.proponente ?? punto.id_proponente,
+      id_tipo: body.tipo ?? punto.id_tipo,
+      tribuna: body.tribuna ?? punto.tribuna,
+      path_doc: nuevoPath,
+      punto: body.punto ?? punto.punto,
+      observaciones: body.observaciones ?? punto.observaciones,
+      editado: 1, 
+    });
+
+    return res.status(200).json({
+      message: "Punto actualizado correctamente",
+      data: punto,
+    });
+  } catch (error: any) {
+    console.error("Error al actualizar el punto:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
