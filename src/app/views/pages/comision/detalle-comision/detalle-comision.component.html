@@ -287,25 +287,26 @@
                                     </div>
 
 
-                                    <!-- Accordion de puntos registrados -->
+                  
                                     <div *ngIf="listaPuntos.length > 0" ngbAccordion [closeOthers]="true" class="mt-4">
                                         <div *ngFor="let punto of listaPuntos; let i = index" ngbAccordionItem
                                             [collapsed]="true">
-                                            <!-- Header -->
+                               
                                             <h2 ngbAccordionHeader>
                                                 <button ngbAccordionButton class="w-100">
                                                     <div
                                                         class="d-flex justify-content-between align-items-center w-100">
-                                                        <span class="fw-semibold">Punto: {{ punto.punto }} <br>Número: {{ punto.nopunto }}</span>
+                                                        <span class="fw-semibold">Punto: {{ punto.punto }} <br>Número:
+                                                            {{ punto.nopunto }}</span>
                                                     </div>
                                                 </button>
                                             </h2>
 
-                                            <!-- Body -->
+                                        
                                             <div ngbAccordionCollapse>
                                                 <div ngbAccordionBody>
                                                     <ng-template>
-                                                        <!-- Formulario editable -->
+                                                    
                                                         <form [formGroup]="punto.form">
                                                             <div class="row g-3 mb-3">
                                                                 <div class="col-md-4">
@@ -353,17 +354,16 @@
                                                                         rows="2"></textarea>
                                                                 </div>
 
-                                                                <!-- Sección de documento -->
                                                                 <div class="col-12">
                                                                     <label class="form-label">Documento</label>
                                                                     <div
                                                                         class="d-flex gap-2 align-items-center flex-wrap">
- <button type="button"
-        class="btn btn-outline-primary btn-sm"
-        *ngIf="punto.path_doc"
-        (click)="verDocumento(punto)">
-    <i class="bi bi-file-pdf"></i> Ver documento
-</button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            *ngIf="punto.path_doc"
+                                                                            (click)="verDocumento(punto)">
+                                                                            <i class="bi bi-file-pdf"></i> Ver documento
+                                                                        </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-success btn-sm"
                                                                             (click)="triggerFileInput(i)">
@@ -429,20 +429,6 @@
                                         <i class="bi bi-list-ul text-muted" style="font-size: 3rem;"></i>
                                         <p class="text-muted mt-3">No hay puntos registrados</p>
                                     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                                 </div>
 
                                 <!-- PASO 3 -->
