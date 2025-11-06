@@ -14,7 +14,7 @@ interface Integrante {
   id_diputado: string;
   diputado: string;
   partido: string;
-  sentido_voto: number; // 0: sin selección, 1: presente, 2: remota, 3: ausente
+  sentido_voto: number;
 }
 
 @Component({
@@ -35,7 +35,7 @@ export class DetalleComisionComponent implements OnInit {
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
   columna2: Integrante[] = [];
-  idComision: string; // Obtén este ID de tu ruta o como lo necesites
+  idComision: string; 
   enviro = enviroment.endpoint;
   datosAsistencia: any = {};
   datosDetalle: any = {};
@@ -213,11 +213,10 @@ export class DetalleComisionComponent implements OnInit {
       next: (response: any) => {
         console.log(response);
         this.listaPuntos = response.data || [];
-        // Convertir cada punto en un formulario editable
         this.listaPuntos = this.listaPuntos.map(punto => {
         const puntoMapeado = {
           ...punto,
-          tiposDisponibles: [], // ✅ Inicializar array vacío
+          tiposDisponibles: [],
           form: this.fb.group({
             id: [punto.id],
             numpunto: [punto.nopunto],
@@ -230,7 +229,7 @@ export class DetalleComisionComponent implements OnInit {
           })
         };
         
-        // ✅ Cargar tipos para este punto si tiene proponente
+  
         if (punto.id_proponente) {
           this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
         }
@@ -258,10 +257,10 @@ cargarTiposParaPunto(punto: any, idProponente: number): void {
   });
 }
 
-// ✅ Método para cuando cambian el proponente en un punto del accordion
+
 getTipoPParaPunto(event: any, punto: any): void {
   if (event && event.id) {
-    punto.form.get('tipo')?.setValue(null); // Resetear el tipo seleccionado
+    punto.form.get('tipo')?.setValue(null); 
     this.cargarTiposParaPunto(punto, event.id);
   }
 }
@@ -277,9 +276,28 @@ getTipoPParaPunto(event: any, punto: any): void {
 
   guardarCambiosPunto(punto: any) {
 
+      const formData = new FormData();
+  Object.entries(punto.form.value).forEach(([key, value]) => {
+    formData.append(key, value as string);
+  });
+
+  if (punto.nuevoDocumento) {
+    formData.append('documento', punto.nuevoDocumento);
   }
 
-  // Para eliminar un punto
+  this._eventoService.updatePunto(formData, punto.id).subscribe({
+    next: (response: any) => {
+      console.log('Punto actualizado:', response);
+      this.cargarPuntosRegistrados();
+    },
+    error: (e: HttpErrorResponse) => {
+      console.error('Error al actualizar:', e);
+    }
+  });
+
+  }
+
+
   eliminarPunto(punto: any, index: number) {
     if (confirm('¿Estás seguro de eliminar este punto?')) {
 
@@ -314,13 +332,11 @@ getTipoPParaPunto(event: any, punto: any): void {
   }
 
   intervencion(punto: any) {
-    // Tu lógica para intervención
-    console.log('Intervención para punto:', punto);
+  
   }
 
   notificar(punto: any) {
-    // Tu lógica para notificar por WhatsApp
-    console.log('Notificar punto:', punto);
+ 
   }
 
 
@@ -434,11 +450,11 @@ getTipoPParaPunto(event: any, punto: any): void {
 
 
   private cargarDatosConfiguracion(): void {
-    // Consulta para sección 3
+ 
   }
 
   private cargarDatosResumen(): void {
-    // Consulta para sección 4
+    
   }
 
 

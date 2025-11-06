@@ -46,4 +46,10 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getpuntos/${id}`)
   }
 
+  updatePunto(data: FormData, id: String): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actualizarPunto/${id}`,data)
+  }
+
+
+  
 }
