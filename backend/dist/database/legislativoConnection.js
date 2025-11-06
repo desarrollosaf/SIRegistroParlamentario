@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const sequelizeCuestionarios = new sequelize_1.Sequelize('legislativoedomex', 'root', '', {
+const sequelizeCuestionarios = new sequelize_1.Sequelize('adminleg', 'root', '', {
     host: 'localhost',
     dialect: 'mysql',
     define: {
