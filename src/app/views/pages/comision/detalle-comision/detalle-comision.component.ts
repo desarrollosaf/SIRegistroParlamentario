@@ -8,6 +8,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { enviroment } from '../../../../../enviroments/enviroment';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 interface Integrante {
   id: number;
   id_diputado: string;
@@ -56,7 +57,8 @@ export class DetalleComisionComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
@@ -286,7 +288,14 @@ getTipoPParaPunto(event: any, punto: any): void {
 
 
   verDocumento(punto: any) {
-    window.open(this.enviro + punto.path_doc, '_blank');
+      if (punto.path_doc) {
+    const url = punto.path_doc.startsWith('http') 
+      ? punto.path_doc 
+      : `${this.enviro}${punto.path_doc}`;
+    window.open(url, '_blank');
+  } else {
+    alert('No hay documento disponible');
+  }
   }
 
   onFileSelectPunto(event: Event, punto: any) {
