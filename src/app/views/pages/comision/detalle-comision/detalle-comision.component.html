@@ -358,12 +358,12 @@
                                                                     <label class="form-label">Documento</label>
                                                                     <div
                                                                         class="d-flex gap-2 align-items-center flex-wrap">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-primary btn-sm"
-                                                                            *ngIf="punto.path_doc"
-                                                                            (click)="verDocumento(punto)">
-                                                                            <i class="bi bi-file-pdf"></i> Ver documento
-                                                                        </button>
+ <button type="button"
+        class="btn btn-outline-primary btn-sm"
+        *ngIf="punto.path_doc"
+        (click)="verDocumento(punto)">
+    <i class="bi bi-file-pdf"></i> Ver documento
+</button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-success btn-sm"
                                                                             (click)="triggerFileInput(i)">
