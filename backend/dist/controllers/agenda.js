@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -484,3 +484,35 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getpuntos = getpuntos;
+const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    try {
+        const { id } = req.params;
+        const { body } = req;
+        const file = req.file;
+        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        if (!punto) {
+            return res.status(404).json({ message: "Punto no encontrado" });
+        }
+        const nuevoPath = file ? `/storage/puntos/${file.filename}` : punto.path_doc;
+        yield punto.update({
+            nopunto: (_a = body.numpunto) !== null && _a !== void 0 ? _a : punto.nopunto,
+            id_proponente: (_b = body.proponente) !== null && _b !== void 0 ? _b : punto.id_proponente,
+            id_tipo: (_c = body.tipo) !== null && _c !== void 0 ? _c : punto.id_tipo,
+            tribuna: (_d = body.tribuna) !== null && _d !== void 0 ? _d : punto.tribuna,
+            path_doc: nuevoPath,
+            punto: (_e = body.punto) !== null && _e !== void 0 ? _e : punto.punto,
+            observaciones: (_f = body.observaciones) !== null && _f !== void 0 ? _f : punto.observaciones,
+            editado: 1,
+        });
+        return res.status(200).json({
+            message: "Punto actualizado correctamente",
+            data: punto,
+        });
+    }
+    catch (error) {
+        console.error("Error al actualizar el punto:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.actualizarPunto = actualizarPunto;

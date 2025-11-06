@@ -53,6 +53,7 @@ class Server {
                 '/api/eventos/gettipos/',
                 '/api/eventos/savepunto/',
                 '/api/eventos/getpuntos/',
+                '/api/eventos/actualizarPunto/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
