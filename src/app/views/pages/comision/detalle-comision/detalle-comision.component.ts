@@ -3,10 +3,11 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import { enviroment } from '../../../../../enviroments/enviroment';
 interface Integrante {
   id: number;
   id_diputado: string;
@@ -17,7 +18,7 @@ interface Integrante {
 
 @Component({
   selector: 'app-detalle-comision',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink, NgbAccordionModule],
   templateUrl: './detalle-comision.component.html',
   styleUrl: './detalle-comision.component.scss'
 })
@@ -34,7 +35,7 @@ export class DetalleComisionComponent implements OnInit {
   columna1: Integrante[] = [];
   columna2: Integrante[] = [];
   idComision: string; // Obtén este ID de tu ruta o como lo necesites
-
+  enviro = enviroment.endpoint;
   datosAsistencia: any = {};
   datosDetalle: any = {};
   datosConfiguracion: any = {};
@@ -45,7 +46,7 @@ export class DetalleComisionComponent implements OnInit {
   slcTribunaDip: any;
   slcPresenta: any;
   slcTipo: any;
-
+  listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
 
@@ -69,7 +70,7 @@ export class DetalleComisionComponent implements OnInit {
       punto: [''],
       observaciones: ['']
     });
-  
+
   }
 
   ngOnInit(): void {
@@ -121,7 +122,6 @@ export class DetalleComisionComponent implements OnInit {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        console.log(response);
         this.integrantes = response.integrantes || [];
         this.dividirEnColumnas();
       },
@@ -156,7 +156,6 @@ export class DetalleComisionComponent implements OnInit {
     };
     this._eventoService.actualizaAsistencia(datos).subscribe({
       next: (response: any) => {
-        console.log(`Guardando sentido: id_duputado ${idIntegrante}, Sentido ${sentido}, id_agenda ${idAgenda}`);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -186,22 +185,166 @@ export class DetalleComisionComponent implements OnInit {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         this.slcPresenta = response.comisiones;
+        this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
-    console.log('holi');
+    
+
+
+
+
+
+
+
   }
+
+
+  cargarPuntosRegistrados(): void {
+    this._eventoService.getPuntos(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        this.listaPuntos = response.data || [];
+        // Convertir cada punto en un formulario editable
+        this.listaPuntos = this.listaPuntos.map(punto => {
+        const puntoMapeado = {
+          ...punto,
+          tiposDisponibles: [], // ✅ Inicializar array vacío
+          form: this.fb.group({
+            id: [punto.id],
+            numpunto: [punto.nopunto],
+            proponente: [punto.id_proponente ? Number(punto.id_proponente) : null],
+            presenta: [punto.id_presenta ? Number(punto.id_presenta) : null],
+            tipo: [punto.id_tipo ? Number(punto.id_tipo) : null],
+            tribuna: [punto.tribuna],
+            punto: [punto.punto],
+            observaciones: [punto.observaciones]
+          })
+        };
+        
+        // ✅ Cargar tipos para este punto si tiene proponente
+        if (punto.id_proponente) {
+          this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
+        }
+        
+        return puntoMapeado;
+      });
+
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+  }
+
+cargarTiposParaPunto(punto: any, idProponente: number): void {
+  this._eventoService.getTipo(idProponente).subscribe({
+    next: (response: any) => {
+      punto.tiposDisponibles = response.tipos || [];
+    },
+    error: (e: HttpErrorResponse) => {
+      console.error('Error al cargar tipos para punto:', e);
+      punto.tiposDisponibles = [];
+    }
+  });
+}
+
+// ✅ Método para cuando cambian el proponente en un punto del accordion
+getTipoPParaPunto(event: any, punto: any): void {
+  if (event && event.id) {
+    punto.form.get('tipo')?.setValue(null); // Resetear el tipo seleccionado
+    this.cargarTiposParaPunto(punto, event.id);
+  }
+}
+
+  triggerFileInput(index: number): void {
+    const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+
+
+  guardarCambiosPunto(punto: any) {
+
+  }
+
+  // Para eliminar un punto
+  eliminarPunto(punto: any, index: number) {
+    if (confirm('¿Estás seguro de eliminar este punto?')) {
+
+    }
+  }
+
+
+  verDocumento(punto: any) {
+    window.open(this.enviro + punto.path_doc, '_blank');
+  }
+
+  onFileSelectPunto(event: Event, punto: any) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      punto.nuevoDocumento = input.files[0];
+    }
+  }
+
+  eliminarDocumento(punto: any, index: number) {
+    punto.nuevoDocumento = null;
+    const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  intervencion(punto: any) {
+    // Tu lógica para intervención
+    console.log('Intervención para punto:', punto);
+  }
+
+  notificar(punto: any) {
+    // Tu lógica para notificar por WhatsApp
+    console.log('Notificar punto:', punto);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   getTipoP(id: any): void {
     this._eventoService.getTipo(id.id).subscribe({
       next: (response: any) => {
-        console.log(response);
         this.formPunto.get('tipo')?.setValue(null);
         this.slcTipo = [];
         this.slcTipo = response.tipos;
@@ -224,10 +367,28 @@ export class DetalleComisionComponent implements OnInit {
     this.documentos[campo] = null;
     inputRef.value = '';
   }
+
+
+
+
+
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
   }
 
+
+
+
+
+
+
+
+
+
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
   guardarPunto() {
     if (this.formPunto.invalid) {
       this.formPunto.markAllAsTouched();
@@ -236,34 +397,28 @@ export class DetalleComisionComponent implements OnInit {
 
     const formData = new FormData();
     Object.entries(this.formPunto.value).forEach(([key, value]) => {
-        formData.append(key, value as string);
+      formData.append(key, value as string);
     });
 
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
     formData.forEach((valor, clave) => {
-          console.log(clave, valor);
+      console.log(clave, valor);
     });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
-        console.log(response);
-
+          this.documentos['docPunto'] = null;
+    this.formPunto.reset();
+    this.mostrarFormularioPunto = false;
+    this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
-
-
-
-    
-
-
-//  this.documentos['docPunto'] = null;
-    // this.formPunto.reset();
-    // this.mostrarFormularioPunto = false;
+  
   }
 
 
