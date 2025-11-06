@@ -49,6 +49,9 @@ export class DetalleComisionComponent implements OnInit {
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
 
+  documentos: { [key: string]: File | null } = {
+    docPunto: null,
+  };
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -63,10 +66,10 @@ export class DetalleComisionComponent implements OnInit {
       presenta: [''],
       tipo: [''],
       tribuna: [''],
-      documento: [null],
       punto: [''],
       observaciones: ['']
     });
+  
   }
 
   ngOnInit(): void {
@@ -208,9 +211,19 @@ export class DetalleComisionComponent implements OnInit {
         console.error('Error del servidor:', msg);
       }
     });
-
   }
-
+  onFileSelect(event: Event, campo: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.documentos[campo] = input.files[0];
+    }
+  }
+  //PARA BORRAR  LOS ARCHIVOS QUE SE GUARDARON TEMPORALMENTE
+  eliminarArchivo(campo: string, inputRef: HTMLInputElement): void {
+    delete this.documentos[campo];
+    this.documentos[campo] = null;
+    inputRef.value = '';
+  }
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
   }
@@ -223,19 +236,15 @@ export class DetalleComisionComponent implements OnInit {
 
     const formData = new FormData();
     Object.entries(this.formPunto.value).forEach(([key, value]) => {
-      if (key === 'documento' && value instanceof File) {
-        formData.append(key, value);
-      } else {
         formData.append(key, value as string);
-      }
     });
 
-
+    if (this.documentos['docPunto']) {
+      formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
+    }
     formData.forEach((valor, clave) => {
           console.log(clave, valor);
     });
-
-
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log(response);
@@ -252,7 +261,7 @@ export class DetalleComisionComponent implements OnInit {
     
 
 
-
+//  this.documentos['docPunto'] = null;
     // this.formPunto.reset();
     // this.mostrarFormularioPunto = false;
   }

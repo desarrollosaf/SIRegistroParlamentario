@@ -208,8 +208,8 @@
                                                 <div class="row g-3">
                                                     <div class="col-md-4">
                                                         <label class="form-label">Número</label>
-                                                        <input type="text" class="form-control" formControlName="numpunto"
-                                                            placeholder="Número de punto">
+                                                        <input type="text" class="form-control"
+                                                            formControlName="numpunto" placeholder="Número de punto">
                                                     </div>
 
                                                     <div class="col-md-4">
@@ -230,9 +230,8 @@
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Tipo</label>
-                                                           <ng-select [items]="slcTipo" bindLabel="valor"
-                                                            bindValue="id" formControlName="tipo"
-                                                            placeholder="Selecciona">
+                                                        <ng-select [items]="slcTipo" bindLabel="valor" bindValue="id"
+                                                            formControlName="tipo" placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
 
@@ -246,8 +245,23 @@
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Documento</label>
-                                                        <input type="file" class="form-control"
-                                                            formControlName="documento">
+                                                        <div class="position-relative d-flex flex-column flex-grow-1"
+                                                            style="padding-bottom: 1rem;">
+                                                            <input class="form-control" type="file" id="docPunto"
+                                                                accept="application/pdf"
+                                                                (change)="onFileSelect($event, 'docPunto')"
+                                                                #docPunto_t />
+                                                            <br>
+                                                            <div *ngIf="documentos?.docPunto"
+                                                                style="position: absolute; bottom: 0; right: 0;">
+                                                                <button type="button" class="btn btn-danger btn-sm"
+                                                                    (click)="eliminarArchivo('docPunto', docPunto_t)">
+                                                                    <i class="bi bi-trash3-fill me-1"></i>
+                                                                    Eliminar archivo
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
 
                                                     <div class="col-12">
