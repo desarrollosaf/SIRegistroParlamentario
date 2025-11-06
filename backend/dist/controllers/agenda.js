@@ -220,7 +220,7 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     nuevoSentido = 2;
                     nuevoMensaje = "ASISTENCIA ZOOM";
                     break;
-                case 3:
+                case 0:
                     nuevoSentido = 0;
                     nuevoMensaje = "PENDIENTE";
                     break;
@@ -418,7 +418,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(body);
+        console.log(file);
         const evento = yield agendas_1.default.findOne({ where: { id } });
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
@@ -429,7 +429,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             id_proponente: body.proponente,
             id_tipo: body.tipo,
             tribuna: body.tribuna,
-            path_doc: file ? `/uploads/puntos/${file.filename}` : null,
+            path_doc: file ? `/storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
         });

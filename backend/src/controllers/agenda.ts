@@ -245,7 +245,7 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
               nuevoSentido = 2;
               nuevoMensaje = "ASISTENCIA ZOOM";
               break;
-            case 3:
+            case 0:
               nuevoSentido = 0;
               nuevoMensaje = "PENDIENTE";
               break;
@@ -450,7 +450,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
-console.log(body);
+    console.log(file);
     const evento = await Agenda.findOne({ where: { id } });
 
     if (!evento) {
@@ -463,7 +463,7 @@ console.log(body);
       id_proponente: body.proponente,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
-      path_doc: file ? `/uploads/puntos/${file.filename}` : null,
+      path_doc: file ? `/storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
     });
