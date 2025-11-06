@@ -171,7 +171,7 @@ export class DetalleComisionComponent implements OnInit {
         return 'asistencia-presente';
       case 2:
         return 'asistencia-remota';
-      case 3:
+      case 0:
         return 'asistencia-ausente';
       default:
         return '';
