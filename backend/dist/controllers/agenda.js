@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -78,7 +78,12 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             raw: true,
         });
         if (asistenciasExistentes.length > 0) {
-            const resultados = yield Promise.all(asistenciasExistentes.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
+            const asistenciasExistentes2 = Object.values(asistenciasExistentes.reduce((acc, curr) => {
+                if (!acc[curr.id_diputado])
+                    acc[curr.id_diputado] = curr;
+                return acc;
+            }, {}));
+            const resultados = yield Promise.all(asistenciasExistentes2.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c;
                 const diputado = yield diputado_1.default.findOne({
                     where: { id: inte.id_diputado },
@@ -117,6 +122,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         listadoDiputados.push({
                             id_diputado: inteLegis.diputado.id,
                             id_partido: inteLegis.partido_id,
+                            comision_dip_id: null,
                             bandera,
                         });
                     }
@@ -145,6 +151,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         listadoDiputados.push({
                             id_diputado: inte.integranteLegislatura.diputado.id,
                             id_partido: inte.integranteLegislatura.partido_id,
+                            comision_dip_id: inte.comision_id,
                             bandera,
                         });
                     }
@@ -160,13 +167,20 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             timestamp,
             id_diputado: diputado.id_diputado,
             partido_dip: diputado.id_partido,
+            comision_dip_id: diputado.comision_dip_id,
             id_agenda: evento.id,
         }));
         yield asistencia_votos_1.default.bulkCreate(asistencias);
-        const nuevasAsistencias = yield asistencia_votos_1.default.findAll({
+        const asistenciasRaw = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
+            order: [['created_at', 'DESC']],
             raw: true,
         });
+        const nuevasAsistencias = Object.values(asistenciasRaw.reduce((acc, curr) => {
+            if (!acc[curr.id_diputado])
+                acc[curr.id_diputado] = curr;
+            return acc;
+        }, {}));
         const resultados = yield Promise.all(nuevasAsistencias.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c;
             const diputado = yield diputado_1.default.findOne({
@@ -202,15 +216,15 @@ exports.getevento = getevento;
 const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        const voto = yield asistencia_votos_1.default.findOne({
+        const votos = yield asistencia_votos_1.default.findAll({
             where: {
                 id_agenda: body.idagenda,
                 id_diputado: body.iddiputado,
             },
         });
-        if (voto) {
-            let nuevoSentido = voto.sentido_voto;
-            let nuevoMensaje = voto.mensaje;
+        if (votos && votos.length > 0) {
+            let nuevoSentido;
+            let nuevoMensaje;
             switch (body.sentido) {
                 case 1:
                     nuevoSentido = 1;
@@ -227,12 +241,17 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 default:
                     break;
             }
-            yield voto.update({
+            yield asistencia_votos_1.default.update({
                 sentido_voto: nuevoSentido,
                 mensaje: nuevoMensaje,
+            }, {
+                where: {
+                    id_agenda: body.idagenda,
+                    id_diputado: body.iddiputado,
+                }
             });
             return res.status(200).json({
-                msg: "Asistencia actualizada correctamente",
+                msg: `${votos.length} registro(s) actualizado(s) correctamente`,
                 estatus: 200
             });
         }
@@ -444,3 +463,24 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.guardarpunto = guardarpunto;
+const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const puntos = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id },
+            order: [['nopunto', 'DESC']]
+        });
+        if (!puntos) {
+            return res.status(404).json({ message: "Evento no encontrado" });
+        }
+        return res.status(201).json({
+            message: "Se encontraron registros",
+            data: puntos,
+        });
+    }
+    catch (error) {
+        console.error("Error al guardar el punto:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.getpuntos = getpuntos;

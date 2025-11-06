@@ -29,6 +29,10 @@ module.exports = {
         type: Sequelize.DataTypes.CHAR(36),
         allowNull: false,
       },
+      comision_dip_id: {
+        type: Sequelize.DataTypes.CHAR(36),
+        allowNull: true,
+      },
       id_agenda: {
         type: Sequelize.DataTypes.CHAR(36),
         allowNull: false,
