@@ -371,12 +371,6 @@
                                                                             punto.path_doc ? 'Reemplazar' : 'Subir' }}
                                                                             documento
                                                                         </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-danger btn-sm"
-                                                                            *ngIf="punto.path_doc || punto.nuevoDocumento"
-                                                                            (click)="eliminarDocumento(punto, i)">
-                                                                            <i class="bi bi-trash3"></i> Eliminar
-                                                                        </button>
                                                                         <input type="file" [id]="'fileInput' + i" hidden
                                                                             accept="application/pdf"
                                                                             (change)="onFileSelectPunto($event, punto)">
