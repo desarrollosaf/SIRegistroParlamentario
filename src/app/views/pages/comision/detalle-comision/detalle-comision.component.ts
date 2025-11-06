@@ -35,7 +35,7 @@ export class DetalleComisionComponent implements OnInit {
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
   columna2: Integrante[] = [];
-  idComision: string; 
+  idComision: string;
   enviro = enviroment.endpoint;
   datosAsistencia: any = {};
   datosDetalle: any = {};
@@ -179,9 +179,6 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
-
-
-
   private cargarOrdenDia(): void {
     this.mostrarFormularioPunto = false;
     this.formPunto.reset();
@@ -197,14 +194,6 @@ export class DetalleComisionComponent implements OnInit {
         console.error('Error del servidor:', msg);
       }
     });
-    
-
-
-
-
-
-
-
   }
 
 
@@ -214,28 +203,28 @@ export class DetalleComisionComponent implements OnInit {
         console.log(response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
-        const puntoMapeado = {
-          ...punto,
-          tiposDisponibles: [],
-          form: this.fb.group({
-            id: [punto.id],
-            numpunto: [punto.nopunto],
-            proponente: [punto.id_proponente ? Number(punto.id_proponente) : null],
-            presenta: [punto.id_presenta ? Number(punto.id_presenta) : null],
-            tipo: [punto.id_tipo ? Number(punto.id_tipo) : null],
-            tribuna: [punto.tribuna],
-            punto: [punto.punto],
-            observaciones: [punto.observaciones]
-          })
-        };
-        
-  
-        if (punto.id_proponente) {
-          this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
-        }
-        
-        return puntoMapeado;
-      });
+          const puntoMapeado = {
+            ...punto,
+            tiposDisponibles: [],
+            form: this.fb.group({
+              id: [punto.id],
+              numpunto: [punto.nopunto],
+              proponente: [punto.id_proponente ? Number(punto.id_proponente) : null],
+              presenta: [punto.id_presenta ? Number(punto.id_presenta) : null],
+              tipo: [punto.id_tipo ? Number(punto.id_tipo) : null],
+              tribuna: [punto.tribuna],
+              punto: [punto.punto],
+              observaciones: [punto.observaciones]
+            })
+          };
+
+
+          if (punto.id_proponente) {
+            this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
+          }
+
+          return puntoMapeado;
+        });
 
       },
       error: (e: HttpErrorResponse) => {
@@ -245,25 +234,25 @@ export class DetalleComisionComponent implements OnInit {
     });
   }
 
-cargarTiposParaPunto(punto: any, idProponente: number): void {
-  this._eventoService.getTipo(idProponente).subscribe({
-    next: (response: any) => {
-      punto.tiposDisponibles = response.tipos || [];
-    },
-    error: (e: HttpErrorResponse) => {
-      console.error('Error al cargar tipos para punto:', e);
-      punto.tiposDisponibles = [];
-    }
-  });
-}
-
-
-getTipoPParaPunto(event: any, punto: any): void {
-  if (event && event.id) {
-    punto.form.get('tipo')?.setValue(null); 
-    this.cargarTiposParaPunto(punto, event.id);
+  cargarTiposParaPunto(punto: any, idProponente: number): void {
+    this._eventoService.getTipo(idProponente).subscribe({
+      next: (response: any) => {
+        punto.tiposDisponibles = response.tipos || [];
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar tipos para punto:', e);
+        punto.tiposDisponibles = [];
+      }
+    });
   }
-}
+
+
+  getTipoPParaPunto(event: any, punto: any): void {
+    if (event && event.id) {
+      punto.form.get('tipo')?.setValue(null);
+      this.cargarTiposParaPunto(punto, event.id);
+    }
+  }
 
   triggerFileInput(index: number): void {
     const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
@@ -276,24 +265,24 @@ getTipoPParaPunto(event: any, punto: any): void {
 
   guardarCambiosPunto(punto: any) {
 
-      const formData = new FormData();
-  Object.entries(punto.form.value).forEach(([key, value]) => {
-    formData.append(key, value as string);
-  });
+    const formData = new FormData();
+    Object.entries(punto.form.value).forEach(([key, value]) => {
+      formData.append(key, value as string);
+    });
 
-  if (punto.nuevoDocumento) {
-    formData.append('documento', punto.nuevoDocumento);
-  }
-
-  this._eventoService.updatePunto(formData, punto.id).subscribe({
-    next: (response: any) => {
-      console.log('Punto actualizado:', response);
-      this.cargarPuntosRegistrados();
-    },
-    error: (e: HttpErrorResponse) => {
-      console.error('Error al actualizar:', e);
+    if (punto.nuevoDocumento) {
+      formData.append('documento', punto.nuevoDocumento);
     }
-  });
+
+    this._eventoService.updatePunto(formData, punto.id).subscribe({
+      next: (response: any) => {
+        console.log('Punto actualizado:', response);
+        this.cargarPuntosRegistrados();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al actualizar:', e);
+      }
+    });
 
   }
 
@@ -306,14 +295,14 @@ getTipoPParaPunto(event: any, punto: any): void {
 
 
   verDocumento(punto: any) {
-      if (punto.path_doc) {
-    const url = punto.path_doc.startsWith('http') 
-      ? punto.path_doc 
-      : `${this.enviro}${punto.path_doc}`;
-    window.open(url, '_blank');
-  } else {
-    alert('No hay documento disponible');
-  }
+    if (punto.path_doc) {
+      const url = punto.path_doc.startsWith('http')
+        ? punto.path_doc
+        : `${this.enviro}${punto.path_doc}`;
+      window.open(url, '_blank');
+    } else {
+      alert('No hay documento disponible');
+    }
   }
 
   onFileSelectPunto(event: Event, punto: any) {
@@ -323,48 +312,13 @@ getTipoPParaPunto(event: any, punto: any): void {
     }
   }
 
-  eliminarDocumento(punto: any, index: number) {
-    punto.nuevoDocumento = null;
-    const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  }
-
   intervencion(punto: any) {
-  
+
   }
 
   notificar(punto: any) {
- 
+
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   getTipoP(id: any): void {
@@ -386,34 +340,18 @@ getTipoPParaPunto(event: any, punto: any): void {
       this.documentos[campo] = input.files[0];
     }
   }
-  //PARA BORRAR  LOS ARCHIVOS QUE SE GUARDARON TEMPORALMENTE
+
   eliminarArchivo(campo: string, inputRef: HTMLInputElement): void {
     delete this.documentos[campo];
     this.documentos[campo] = null;
     inputRef.value = '';
   }
 
-
-
-
-
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
   }
 
 
-
-
-
-
-
-
-
-
-  //********************************************************************************************************* */
-  //********************************************************************************************************* */
-  //********************************************************************************************************* */
-  //********************************************************************************************************* */
   guardarPunto() {
     if (this.formPunto.invalid) {
       this.formPunto.markAllAsTouched();
@@ -433,28 +371,30 @@ getTipoPParaPunto(event: any, punto: any): void {
     });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
-          this.documentos['docPunto'] = null;
-    this.formPunto.reset();
-    this.mostrarFormularioPunto = false;
-    this.cargarPuntosRegistrados();
+        this.documentos['docPunto'] = null;
+        this.formPunto.reset();
+        this.mostrarFormularioPunto = false;
+        this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
-  
+
   }
 
-
-
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
+  //********************************************************************************************************* */
 
   private cargarDatosConfiguracion(): void {
- 
+
   }
 
   private cargarDatosResumen(): void {
-    
+
   }
 
 
