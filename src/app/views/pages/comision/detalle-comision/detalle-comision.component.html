@@ -130,13 +130,13 @@
                                                                         title="Remota">
                                                                         <i class="bi bi-display"></i>
                                                                     </button>
-                                                                   <button type="button"
-    class="btn btn-outline-warning flex-fill"
-    [class.active]="integrante.sentido_voto === 0"
-    (click)="marcarAsistencia(integrante, 0)"
-    title="Pendiente">
-    <i class="bi bi-hourglass-split"></i>
-</button>
+                                                                    <button type="button"
+                                                                        class="btn btn-outline-warning flex-fill"
+                                                                        [class.active]="integrante.sentido_voto === 0"
+                                                                        (click)="marcarAsistencia(integrante, 0)"
+                                                                        title="Pendiente">
+                                                                        <i class="bi bi-hourglass-split"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -176,12 +176,12 @@
                                                                         <i class="bi bi-display"></i>
                                                                     </button>
                                                                     <button type="button"
-    class="btn btn-outline-warning flex-fill"
-    [class.active]="integrante.sentido_voto === 0"
-    (click)="marcarAsistencia(integrante, 0)"
-    title="Pendiente">
-    <i class="bi bi-hourglass-split"></i>
-</button>
+                                                                        class="btn btn-outline-warning flex-fill"
+                                                                        [class.active]="integrante.sentido_voto === 0"
+                                                                        (click)="marcarAsistencia(integrante, 0)"
+                                                                        title="Pendiente">
+                                                                        <i class="bi bi-hourglass-split"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -254,11 +254,11 @@
                                                             <br>
                                                             <div *ngIf="documentos?.docPunto"
                                                                 style="position: absolute; bottom: 0; right: 0;">
-                                                              <button type="button" class="btn-eliminar-doc"
-    (click)="eliminarArchivo('docPunto', docPunto_t)">
-    <i class="bi bi-trash3-fill"></i>
-    <span>Eliminar</span>
-</button>
+                                                                <button type="button" class="btn-eliminar-doc"
+                                                                    (click)="eliminarArchivo('docPunto', docPunto_t)">
+                                                                    <i class="bi bi-trash3-fill"></i>
+                                                                    <span>Eliminar</span>
+                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -287,9 +287,148 @@
                                     </div>
 
 
+                                    <!-- Accordion de puntos registrados -->
+                                    <div *ngIf="listaPuntos.length > 0" ngbAccordion [closeOthers]="true" class="mt-4">
+                                        <div *ngFor="let punto of listaPuntos; let i = index" ngbAccordionItem
+                                            [collapsed]="true">
+                                            <!-- Header -->
+                                            <h2 ngbAccordionHeader>
+                                                <button ngbAccordionButton class="w-100">
+                                                    <div
+                                                        class="d-flex justify-content-between align-items-center w-100">
+                                                        <span class="fw-semibold">Punto: {{ punto.punto }} <br>Número: {{ punto.nopunto }}</span>
+                                                    </div>
+                                                </button>
+                                            </h2>
 
+                                            <!-- Body -->
+                                            <div ngbAccordionCollapse>
+                                                <div ngbAccordionBody>
+                                                    <ng-template>
+                                                        <!-- Formulario editable -->
+                                                        <form [formGroup]="punto.form">
+                                                            <div class="row g-3 mb-3">
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label">Número</label>
+                                                                    <input type="text" class="form-control"
+                                                                        formControlName="numpunto">
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label">Proponente</label>
+                                                                    <ng-select [items]="slctProponentes"
+                                                                        bindLabel="valor" bindValue="id"
+                                                                        formControlName="proponente"
+                                                                        (change)="getTipoPParaPunto($event, punto)">
+                                                                    </ng-select>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label">Presenta</label>
+                                                                    <ng-select [items]="slcPresenta" bindLabel="nombre"
+                                                                        bindValue="id" formControlName="presenta">
+                                                                    </ng-select>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Tipo</label>
+                                                                    <ng-select [items]="punto.tiposDisponibles"
+                                                                        bindLabel="valor" bindValue="id"
+                                                                        formControlName="tipo">
+                                                                    </ng-select>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Tribuna</label>
+                                                                    <ng-select [items]="slcTribunaDip"
+                                                                        bindLabel="nombre" bindValue="id"
+                                                                        formControlName="tribuna">
+                                                                    </ng-select>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Punto</label>
+                                                                    <textarea class="form-control"
+                                                                        formControlName="punto" rows="3"></textarea>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Observaciones</label>
+                                                                    <textarea class="form-control"
+                                                                        formControlName="observaciones"
+                                                                        rows="2"></textarea>
+                                                                </div>
 
+                                                                <!-- Sección de documento -->
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Documento</label>
+                                                                    <div
+                                                                        class="d-flex gap-2 align-items-center flex-wrap">
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            *ngIf="punto.path_doc"
+                                                                            (click)="verDocumento(punto)">
+                                                                            <i class="bi bi-file-pdf"></i> Ver documento
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-success btn-sm"
+                                                                            (click)="triggerFileInput(i)">
+                                                                            <i class="bi bi-upload"></i> {{
+                                                                            punto.path_doc ? 'Reemplazar' : 'Subir' }}
+                                                                            documento
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-danger btn-sm"
+                                                                            *ngIf="punto.path_doc || punto.nuevoDocumento"
+                                                                            (click)="eliminarDocumento(punto, i)">
+                                                                            <i class="bi bi-trash3"></i> Eliminar
+                                                                        </button>
+                                                                        <input type="file" [id]="'fileInput' + i" hidden
+                                                                            accept="application/pdf"
+                                                                            (change)="onFileSelectPunto($event, punto)">
+                                                                        <small class="text-muted ms-2"
+                                                                            *ngIf="punto.nuevoDocumento">
+                                                                            {{ punto.nuevoDocumento.name }}
+                                                                        </small>
+                                                                        <small class="text-muted ms-2"
+                                                                            *ngIf="!punto.nuevoDocumento && punto.path_doc">
+                                                                            Documento actual
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
 
+                                                        <!-- Barra de acciones -->
+                                                        <div
+                                                            class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pt-3 border-top gap-2">
+                                                            <div class="d-flex gap-2 flex-wrap">
+                                                                <button class="btn btn-outline-info btn-sm"
+                                                                    (click)="intervencion(punto)">
+                                                                    <i class="bi bi-mic-fill"></i> Intervención
+                                                                </button>
+                                                                <button class="btn btn-outline-success btn-sm"
+                                                                    (click)="notificar(punto)">
+                                                                    <i class="bi bi-whatsapp"></i> Notificar
+                                                                </button>
+                                                            </div>
+                                                            <div class="d-flex gap-2 flex-wrap">
+                                                                <button class="btn btn-success btn-sm"
+                                                                    (click)="guardarCambiosPunto(punto)">
+                                                                    <i class="bi bi-save"></i> Guardar
+                                                                </button>
+                                                                <button class="btn btn-danger btn-sm"
+                                                                    (click)="eliminarPunto(punto, i)">
+                                                                    <i class="bi bi-trash3"></i> Eliminar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </ng-template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje cuando no hay puntos -->
+                                    <div class="text-center py-5"
+                                        *ngIf="listaPuntos.length === 0 && !mostrarFormularioPunto">
+                                        <i class="bi bi-list-ul text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-3">No hay puntos registrados</p>
+                                    </div>
 
 
 
