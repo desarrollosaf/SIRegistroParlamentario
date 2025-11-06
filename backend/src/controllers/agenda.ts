@@ -71,8 +71,16 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     });
 
     if (asistenciasExistentes.length > 0) {
+
+      const asistenciasExistentes2 = Object.values(
+        asistenciasExistentes.reduce<Record<string, any>>((acc, curr) => {
+          if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
+          return acc;
+        }, {})
+      );
+
       const resultados = await Promise.all(
-        asistenciasExistentes.map(async (inte) => {
+        asistenciasExistentes2.map(async (inte) => {
           const diputado = await Diputado.findOne({
             where: { id: inte.id_diputado },
             attributes: ["apaterno", "amaterno", "nombres"],
@@ -104,7 +112,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       });
     }
 
-    const listadoDiputados: { id_diputado: string; id_partido: string; bandera: number }[] = [];
+    const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; bandera: number }[] = [];
     let bandera = 1;
 
     if (evento.tipoevento?.nombre === "Sesión") {
@@ -123,6 +131,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
             listadoDiputados.push({
               id_diputado: inteLegis.diputado.id,
               id_partido: inteLegis.partido_id,
+              comision_dip_id: null,
               bandera,
             });
           }
@@ -154,6 +163,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
             listadoDiputados.push({
               id_diputado: inte.integranteLegislatura!.diputado!.id,
               id_partido: inte.integranteLegislatura!.partido_id,
+              comision_dip_id: inte.comision_id,
               bandera,
             });
           }
@@ -171,15 +181,24 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       timestamp,
       id_diputado: diputado.id_diputado,
       partido_dip: diputado.id_partido,
+      comision_dip_id: diputado.comision_dip_id,
       id_agenda: evento.id,
     }));
-
-
     await AsistenciaVoto.bulkCreate(asistencias);
-    const nuevasAsistencias = await AsistenciaVoto.findAll({
+
+
+    const asistenciasRaw = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
+      order: [['created_at', 'DESC']],
       raw: true,
     });
+
+    const nuevasAsistencias = Object.values(
+      asistenciasRaw.reduce<Record<string, any>>((acc, curr) => {
+        if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
+        return acc;
+      }, {})
+    );
 
     const resultados = await Promise.all(
       nuevasAsistencias.map(async (inte) => {
@@ -225,17 +244,17 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
     try {
         const { body } = req
       
-        const voto = await AsistenciaVoto.findOne({
+        const votos = await AsistenciaVoto.findAll({
           where: {
             id_agenda: body.idagenda,
             id_diputado: body.iddiputado,
           },
         });
 
-        if (voto) {
-          let nuevoSentido = voto.sentido_voto;
-          let nuevoMensaje = voto.mensaje;
-
+        if (votos && votos.length > 0) {
+          let nuevoSentido;
+          let nuevoMensaje;
+          
           switch (body.sentido) {
             case 1:
               nuevoSentido = 1;
@@ -250,16 +269,24 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
               nuevoMensaje = "PENDIENTE";
               break;
             default:
-            break;
+              break;
           }
 
-          await voto.update({
-            sentido_voto: nuevoSentido,
-            mensaje: nuevoMensaje,
-          });
+          await AsistenciaVoto.update(
+            {
+              sentido_voto: nuevoSentido,
+              mensaje: nuevoMensaje,
+            },
+            {
+              where: {
+                id_agenda: body.idagenda,
+                id_diputado: body.iddiputado,
+              }
+            }
+          );
 
           return res.status(200).json({
-            msg: "Asistencia actualizada correctamente",
+            msg: `${votos.length} registro(s) actualizado(s) correctamente`,
             estatus: 200
           });
         } else {
@@ -476,4 +503,25 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     console.error("Error al guardar el punto:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
+};
+
+export const getpuntos = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { id } = req.params;
+
+      const puntos = await PuntosOrden.findAll({
+        where: { id_evento: id },
+        order: [['nopunto', 'DESC']] 
+      });
+      if (!puntos) {
+        return res.status(404).json({ message: "Evento no encontrado" });
+      }
+      return res.status(201).json({
+        message: "Se encontraron registros",
+        data: puntos,
+      });
+    } catch (error: any) {
+      console.error("Error al guardar el punto:", error);
+      return res.status(500).json({ message: "Error interno del servidor" });
+    }
 };

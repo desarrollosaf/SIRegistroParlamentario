@@ -34,6 +34,10 @@ AsistenciaVoto.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,
     },
+    comision_dip_id: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: true,
+    },
     id_agenda: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,

@@ -9,6 +9,7 @@ class AsistenciaVoto extends Model {
   declare timestamp: CreationOptional<Date>;
   declare id_diputado: ForeignKey<string>;
   declare partido_dip: string;
+  declare comision_dip_id: string | null;
   declare id_agenda: ForeignKey<string>;
   declare usuario_registra: number | null;
   declare createdAt: CreationOptional<Date>;
@@ -16,7 +17,7 @@ class AsistenciaVoto extends Model {
   declare deletedAt: CreationOptional<Date>;
 
   // Relaciones
-  declare sesion?: NonAttribute<Sesion>; // si "id_agenda" apunta a Sesion
+  declare sesion?: NonAttribute<Sesion>; 
   declare static associations: {
     sesion: Association<AsistenciaVoto, Sesion>;
   };
@@ -49,6 +50,10 @@ AsistenciaVoto.init(
     partido_dip: {
       type: DataTypes.CHAR(36),
       allowNull: false,
+    },
+    comision_dip_id: {
+      type: DataTypes.CHAR(36),
+      allowNull: true,
     },
     id_agenda: {
       type: DataTypes.CHAR(36),
