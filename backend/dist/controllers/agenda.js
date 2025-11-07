@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -564,3 +564,36 @@ const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.saveintervencion = saveintervencion;
+const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const intervenci = yield intervenciones_1.default.findAll({
+            where: {
+                id_evento: body.idagenda,
+                tipo: body.tipo,
+                id_punto: body.idpunto,
+            },
+            raw: true,
+        });
+        const resultados = yield Promise.all(intervenci.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c;
+            const diputado = yield diputado_1.default.findOne({
+                where: { id: inte.id_diputado },
+                attributes: ["apaterno", "amaterno", "nombres"],
+                raw: true,
+            });
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : null;
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado });
+        })));
+        return res.status(200).json({
+            data: resultados,
+        });
+    }
+    catch (error) {
+        console.error("Error al traer el evento:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.getintervenciones = getintervenciones;

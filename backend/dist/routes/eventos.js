@@ -17,4 +17,5 @@ router.get("/api/eventos/getpuntos/:id", agenda_1.getpuntos);
 router.post("/api/eventos/actualizarPunto/:id", multer_1.default.single("documento"), agenda_1.actualizarPunto);
 router.post("/api/eventos/eliminarpunto/:id", agenda_1.eliminarpunto);
 router.post("/api/eventos/saveintervencion/", agenda_1.saveintervencion);
+router.get("/api/eventos/getintervenciones/", agenda_1.getintervenciones);
 exports.default = router;

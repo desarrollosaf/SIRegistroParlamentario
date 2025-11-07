@@ -612,3 +612,46 @@ export const saveintervencion = async (req: Request, res: Response): Promise<any
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+
+export const getintervenciones = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+
+    const intervenci = await Intervencion.findAll({
+      where: {
+        id_evento: body.idagenda,
+        tipo: body.tipo,
+        id_punto: body.idpunto,
+      },
+      raw: true, 
+    });
+
+      const resultados = await Promise.all(
+        intervenci.map(async (inte) => {
+          const diputado = await Diputado.findOne({
+            where: { id: inte.id_diputado },
+            attributes: ["apaterno", "amaterno", "nombres"],
+            raw: true,
+          });
+
+          const nombreCompletoDiputado = diputado
+            ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+            : null;
+
+        
+          return {
+            ...inte,
+            diputado: nombreCompletoDiputado,
+          };
+        })
+      );
+
+      return res.status(200).json({
+        data: resultados,
+      });
+   
+  } catch (error: any) {
+    console.error("Error al traer el evento:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
