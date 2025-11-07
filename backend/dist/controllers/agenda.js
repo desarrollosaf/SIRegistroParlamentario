@@ -478,36 +478,10 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'valor'],
             raw: true,
         });
-        const legislatura = yield legislaturas_1.default.findOne({
-            order: [["fecha_inicio", "DESC"]],
-        });
-        let diputadosArray = [];
-        if (legislatura) {
-            const diputados = yield integrante_legislaturas_1.default.findAll({
-                where: { legislatura_id: legislatura.id },
-                include: [
-                    {
-                        model: diputado_1.default,
-                        as: "diputado",
-                        attributes: ["id", "nombres", "apaterno", "amaterno"],
-                    },
-                ],
-            });
-            diputadosArray = diputados
-                .filter(d => d.diputado)
-                .map(d => {
-                var _a, _b, _c;
-                return ({
-                    id: d.diputado.id,
-                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
-                });
-            });
-        }
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
             tipointervencion: tipointer,
-            diputados: diputadosArray
         });
     }
     catch (error) {

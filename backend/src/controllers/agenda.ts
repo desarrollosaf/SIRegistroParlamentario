@@ -522,36 +522,11 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         raw: true,
       });
 
-      const legislatura = await Legislatura.findOne({
-          order: [["fecha_inicio", "DESC"]],
-        });
-
-        let diputadosArray: { id: string; nombre: string }[] = [];
-
-        if (legislatura) {
-          const diputados = await IntegranteLegislatura.findAll({
-            where: { legislatura_id: legislatura.id },
-            include: [
-              {
-                model: Diputado,
-                as: "diputado",
-                attributes: ["id", "nombres", "apaterno", "amaterno"],
-              },
-            ],
-          });
-          diputadosArray = diputados
-            .filter(d => d.diputado)
-            .map(d => ({
-              id: d.diputado.id,
-              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
-            }));
-        }
-
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos,
         tipointervencion: tipointer,
-        diputados: diputadosArray
+        
       });
     } catch (error: any) {
       console.error("Error al guardar el punto:", error);
