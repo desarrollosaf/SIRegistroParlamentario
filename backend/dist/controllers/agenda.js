@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -30,6 +30,7 @@ const sequelize_1 = require("sequelize");
 const admin_cats_1 = __importDefault(require("../models/admin_cats"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const tipo_intervencions_1 = __importDefault(require("../models/tipo_intervencions"));
+const intervenciones_1 = __importDefault(require("../models/intervenciones"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -540,3 +541,25 @@ const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.eliminarpunto = eliminarpunto;
+const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const registros = body.id_diputado.map((diputadoId) => ({
+            id_punto: body.id_punto,
+            id_evento: body.id_evento,
+            id_diputado: diputadoId,
+            id_tipo_intervencion: body.id_tipo_intervencion,
+            mensaje: body.mensaje,
+            tipo: body.tipo,
+        }));
+        yield intervenciones_1.default.bulkCreate(registros);
+        return res.status(200).json({
+            message: "Intervenciones guardadas correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al guardar evento:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.saveintervencion = saveintervencion;

@@ -18,6 +18,7 @@ import { Op } from 'sequelize';
 import AdminCat from "../models/admin_cats";
 import PuntosOrden from "../models/puntos_ordens";
 import TipoIntervencion from "../models/tipo_intervencions";
+import Intervencion from "../models/intervenciones";
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
@@ -584,6 +585,29 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
     });
   } catch (error: any) {
     console.error("Error al eliminar el punto:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+export const saveintervencion = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+      const registros = body.id_diputado.map((diputadoId: string) => ({
+        id_punto: body.id_punto,
+        id_evento: body.id_evento,
+        id_diputado: diputadoId,
+        id_tipo_intervencion: body.id_tipo_intervencion,
+        mensaje: body.mensaje,
+        tipo: body.tipo,
+      }));
+
+      await Intervencion.bulkCreate(registros);
+
+      return res.status(200).json({
+        message: "Intervenciones guardadas correctamente",
+      });
+  } catch (error: any) {
+    console.error("Error al guardar evento:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
