@@ -549,8 +549,9 @@ const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, functio
             id_evento: body.id_evento,
             id_diputado: diputadoId,
             id_tipo_intervencion: body.id_tipo_intervencion,
-            mensaje: body.mensaje,
+            mensaje: body.comentario,
             tipo: body.tipo,
+            destacado: body.destacada,
         }));
         yield intervenciones_1.default.bulkCreate(registros);
         return res.status(200).json({

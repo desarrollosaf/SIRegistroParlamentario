@@ -597,8 +597,9 @@ export const saveintervencion = async (req: Request, res: Response): Promise<any
         id_evento: body.id_evento,
         id_diputado: diputadoId,
         id_tipo_intervencion: body.id_tipo_intervencion,
-        mensaje: body.mensaje,
+        mensaje: body.comentario,
         tipo: body.tipo,
+        destacado: body.destacada,
       }));
 
       await Intervencion.bulkCreate(registros);
