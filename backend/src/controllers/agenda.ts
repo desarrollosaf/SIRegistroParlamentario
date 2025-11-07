@@ -342,10 +342,17 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             }));
         }
 
+        const tipointer = await TipoIntervencion.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+          });
+
+
         return res.json({
             proponentes: proponentes,
             comisiones: comisiones,
-            diputados: diputadosArray
+            diputados: diputadosArray,
+            tipointer: tipointer
 
         });
 
@@ -517,16 +524,10 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       if (!puntos) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-      const tipointer = await TipoIntervencion.findAll({
-        attributes: ['id', 'valor'],
-        raw: true,
-      });
-
+     
       return res.status(201).json({
         message: "Se encontraron registros",
-        data: puntos,
-        tipointervencion: tipointer,
-        
+        data: puntos, 
       });
     } catch (error: any) {
       console.error("Error al guardar el punto:", error);

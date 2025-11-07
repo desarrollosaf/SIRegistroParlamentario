@@ -303,10 +303,15 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
             });
         }
+        const tipointer = yield tipo_intervencions_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        });
         return res.json({
             proponentes: proponentes,
             comisiones: comisiones,
-            diputados: diputadosArray
+            diputados: diputadosArray,
+            tipointer: tipointer
         });
     }
     catch (error) {
@@ -474,14 +479,9 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!puntos) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
-        const tipointer = yield tipo_intervencions_1.default.findAll({
-            attributes: ['id', 'valor'],
-            raw: true,
-        });
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
-            tipointervencion: tipointer,
         });
     }
     catch (error) {
