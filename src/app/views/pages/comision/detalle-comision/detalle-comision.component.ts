@@ -1,9 +1,9 @@
 
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,6 +17,15 @@ interface Integrante {
   sentido_voto: number;
 }
 
+interface Intervencion {
+  id?: number;
+  id_tipo_intervencion: string;
+  id_diputado: any[];
+  comentario?: string;
+  destacada: boolean;
+  id_punto?: number;
+}
+
 @Component({
   selector: 'app-detalle-comision',
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink, NgbAccordionModule],
@@ -24,6 +33,7 @@ interface Integrante {
   styleUrl: './detalle-comision.component.scss'
 })
 export class DetalleComisionComponent implements OnInit {
+  @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   step = 1;
   stepNames = [
     { numero: 1, nombre: 'Asistencia' },
@@ -51,6 +61,19 @@ export class DetalleComisionComponent implements OnInit {
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
 
+  modalRef!: NgbModalRef;
+  formIntervencion!: FormGroup;
+  mostrarFormIntervencion = false;
+  tipoIntervencionActual: number = 1; // 1 = general, 2 = por punto
+  puntoSeleccionado: any = null;
+  listaIntervenciones: Intervencion[] = [];
+  // tiposIntervencion:any;
+ tiposIntervencion = [
+    { id: 1, nombre: 'A favor' },
+    { id: 2, nombre: 'En contra' },
+    { id: 3, nombre: 'Comentario' },
+  ];
+
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
@@ -58,7 +81,8 @@ export class DetalleComisionComponent implements OnInit {
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
     private router: Router,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private modalService: NgbModal
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
@@ -71,6 +95,13 @@ export class DetalleComisionComponent implements OnInit {
       tribuna: [''],
       punto: [''],
       observaciones: ['']
+    });
+
+     this.formIntervencion = this.fb.group({
+      id_diputado: [[]],
+      id_tipo_intervencion: [null],
+      comentario: [''],
+      destacada: [false]
     });
 
   }
@@ -312,10 +343,150 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
-  intervencion(punto: any) {
-
+   // ==================== MÉTODOS DEL MODAL DE INTERVENCIONES ====================
+  
+  abrirModalIntervencionGeneral() {
+    this.tipoIntervencionActual = 1;
+    this.puntoSeleccionado = null;
+    this.abrirModalIntervencion();
   }
 
+  intervencion(punto: any) {
+    this.tipoIntervencionActual = 2;
+    this.puntoSeleccionado = punto;
+    this.abrirModalIntervencion();
+  }
+
+  abrirModalIntervencion() {
+    this.formIntervencion.reset({
+      diputados: [],
+      tipo_intervencion: null,
+      comentario: '',
+      destacada: false
+    });
+    this.mostrarFormIntervencion = false;
+    this.cargarIntervenciones();
+    this.modalRef = this.modalService.open(this.xlModal, { 
+      size: 'xl',
+      centered: true,
+      backdrop: 'static'
+    });
+  }
+
+  toggleFormIntervencion() {
+    this.mostrarFormIntervencion = !this.mostrarFormIntervencion;
+    if (!this.mostrarFormIntervencion) {
+      this.formIntervencion.reset({
+        diputados: [],
+        tipo_intervencion: null,
+        comentario: '',
+        destacada: false
+      });
+    }
+  }
+
+  onTipoIntervencionChange(event: any) {
+    const tipoId = event?.id;
+    const comentarioControl = this.formIntervencion.get('comentario');
+    
+    if (tipoId === 3) { // Comentario
+      comentarioControl?.enable();
+    } else {
+      comentarioControl?.disable();
+      comentarioControl?.setValue('');
+    }
+  }
+
+  cargarIntervenciones() {
+    // Aquí harás el subscribe a tu servicio
+    // Por ahora simulo datos de ejemplo
+    /* 
+    this._eventoService.getIntervenciones(params).subscribe({
+      next: (response: any) => {
+        this.listaIntervenciones = response.data || [];
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar intervenciones:', e);
+      }
+    });
+    */
+    
+    // Datos de ejemplo (eliminar cuando implementes el servicio real)
+    this.listaIntervenciones = [];
+  }
+
+  guardarIntervencion() {
+    if (this.formIntervencion.invalid) {
+      this.formIntervencion.markAllAsTouched();
+      return;
+    }
+
+    const datos = {
+      ...this.formIntervencion.value,
+      tipo: this.tipoIntervencionActual,
+      id_punto: this.puntoSeleccionado?.id || null,
+      id_agenda: this.idComisionRuta
+    };
+
+    console.log('Datos a enviar:', datos);
+
+    /*
+    this._eventoService.guardarIntervencion(datos).subscribe({
+      next: (response: any) => {
+        console.log('Intervención guardada:', response);
+        this.cargarIntervenciones();
+        this.toggleFormIntervencion();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al guardar intervención:', e);
+      }
+    });
+    */
+
+    // Simulación (eliminar cuando implementes el servicio real)
+    const nuevaIntervencion: Intervencion = {
+      id: Date.now(),
+      // id_tipo_intervencion: this.tiposIntervencion.find(t => t.id === datos.tipo_intervencion)?.nombre || '',
+      id_tipo_intervencion: '',
+      id_diputado: datos.diputados,
+      comentario: datos.comentario,
+      destacada: datos.destacada
+    };
+    this.listaIntervenciones.push(nuevaIntervencion);
+    this.toggleFormIntervencion();
+  }
+
+  eliminarIntervencion(intervencion: Intervencion, index: number) {
+    if (confirm('¿Estás seguro de eliminar esta intervención?')) {
+      /*
+      this._eventoService.eliminarIntervencion(intervencion.id).subscribe({
+        next: (response: any) => {
+          console.log('Intervención eliminada:', response);
+          this.cargarIntervenciones();
+        },
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al eliminar:', e);
+        }
+      });
+      */
+      
+      // Simulación (eliminar cuando implementes el servicio real)
+      this.listaIntervenciones.splice(index, 1);
+    }
+  }
+
+  getNombreDiputados(diputados: any[]): string {
+    if (!diputados || diputados.length === 0) return 'Sin diputados';
+    return diputados.map(d => d.nombre || d).join(', ');
+  }
+
+  cerrarModal() {
+    this.modalRef.close();
+  }
+
+
+
+  // ==================== FIN MÉTODOS DEL MODAL ====================
   notificar(punto: any) {
 
   }
