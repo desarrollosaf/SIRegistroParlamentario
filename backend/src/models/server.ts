@@ -11,12 +11,11 @@ class Server {
 
     constructor(){
         this.app = express()
-        this.port = process.env.PORT || '3008'
+        this.port = process.env.PORT || '3013'
         this.midlewares();
         this.router();
         this.DBconnetc();
-        this.listen();
-        
+        this.listen();  
     }
 
     listen(){
@@ -34,8 +33,8 @@ class Server {
     midlewares(){
         this.app.use(express.json())
         this.app.use(cors({
-            origin: 'http://localhost:4200',
-            //origin: 'https://ofrendas.congresoedomex.gob.mx',
+            //origin: 'http://localhost:4200',
+            origin: 'https://parlamentario.congresoedomex.gob.mx',
             credentials: true
         }));
 
