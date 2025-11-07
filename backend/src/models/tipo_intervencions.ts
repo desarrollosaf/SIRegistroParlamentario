@@ -1,50 +1,45 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
+import { Model, DataTypes, CreationOptional } from "sequelize";
+import sequelize from "../database/registrocomisiones"; 
 
-export interface tipo_intervencionsAttributes {
-  id: string;
-  valor: string;
-  created_at?: Date;
-  updated_at?: Date;
+class TipoIntervencion extends Model {
+  declare id: string;
+  declare valor: string | null;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+  declare deletedAt: CreationOptional<Date>;
 }
 
-export type tipo_intervencionsPk = "id";
-export type tipo_intervencionsId = tipo_intervencions[tipo_intervencionsPk];
-export type tipo_intervencionsOptionalAttributes = "created_at" | "updated_at";
-export type tipo_intervencionsCreationAttributes = Optional<tipo_intervencionsAttributes, tipo_intervencionsOptionalAttributes>;
-
-export class tipo_intervencions extends Model<tipo_intervencionsAttributes, tipo_intervencionsCreationAttributes> implements tipo_intervencionsAttributes {
-  id!: string;
-  valor!: string;
-  created_at?: Date;
-  updated_at?: Date;
-
-
-  static initModel(sequelize: Sequelize.Sequelize): typeof tipo_intervencions {
-    return tipo_intervencions.init({
+TipoIntervencion.init(
+  {
     id: {
       type: DataTypes.CHAR(36),
       allowNull: false,
-      primaryKey: true
+      primaryKey: true,
     },
     valor: {
       type: DataTypes.STRING(255),
-      allowNull: false
-    }
-  }, {
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      field: "created_at",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      field: "updated_at",
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      field: "deleted_at",
+    },
+  },
+  {
     sequelize,
-    tableName: 'tipo_intervencions',
+    tableName: "tipo_intervencions",
     timestamps: true,
-    indexes: [
-      {
-        name: "PRIMARY",
-        unique: true,
-        using: "BTREE",
-        fields: [
-          { name: "id" },
-        ]
-      },
-    ]
-  });
+    paranoid: true,
+    underscored: true,
   }
-}
+);
+
+export default TipoIntervencion;

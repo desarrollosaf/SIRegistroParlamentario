@@ -29,6 +29,7 @@ const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const sequelize_1 = require("sequelize");
 const admin_cats_1 = __importDefault(require("../models/admin_cats"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
+const tipo_intervencions_1 = __importDefault(require("../models/tipo_intervencions"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -473,9 +474,40 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!puntos) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
+        const tipointer = yield tipo_intervencions_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        });
+        const legislatura = yield legislaturas_1.default.findOne({
+            order: [["fecha_inicio", "DESC"]],
+        });
+        let diputadosArray = [];
+        if (legislatura) {
+            const diputados = yield integrante_legislaturas_1.default.findAll({
+                where: { legislatura_id: legislatura.id },
+                include: [
+                    {
+                        model: diputado_1.default,
+                        as: "diputado",
+                        attributes: ["id", "nombres", "apaterno", "amaterno"],
+                    },
+                ],
+            });
+            diputadosArray = diputados
+                .filter(d => d.diputado)
+                .map(d => {
+                var _a, _b, _c;
+                return ({
+                    id: d.diputado.id,
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                });
+            });
+        }
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
+            tipointervencion: tipointer,
+            diputados: diputadosArray
         });
     }
     catch (error) {
