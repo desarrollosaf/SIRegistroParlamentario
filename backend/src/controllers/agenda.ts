@@ -490,7 +490,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       id_proponente: body.proponente,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
-      path_doc: file ? `/storage/puntos/${file.filename}` : null,
+      path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
     });
@@ -538,7 +538,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       return res.status(404).json({ message: "Punto no encontrado" });
     }
 
-    const nuevoPath = file ? `/storage/puntos/${file.filename}` : punto.path_doc;
+    const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
 
     await punto.update({
       nopunto: body.numpunto ?? punto.nopunto,
@@ -557,6 +557,24 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     });
   } catch (error: any) {
     console.error("Error al actualizar el punto:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+
+export const eliminarpunto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const punto = await PuntosOrden.findOne({ where: { id } });
+     if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    await punto.destroy();
+    return res.status(200).json({
+      message: "Punto eliminado correctamente",
+    });
+  } catch (error: any) {
+    console.error("Error al eliminar el punto:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
