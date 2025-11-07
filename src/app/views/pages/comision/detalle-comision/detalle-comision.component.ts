@@ -367,7 +367,7 @@ export class DetalleComisionComponent implements OnInit {
     this.cargarIntervenciones();
     this.modalRef = this.modalService.open(this.xlModal, { 
       size: 'xl',
-      centered: true,
+      windowClass: 'modal-top-centered',
       backdrop: 'static'
     });
   }
