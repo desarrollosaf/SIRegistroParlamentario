@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -448,7 +448,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             id_proponente: body.proponente,
             id_tipo: body.tipo,
             tribuna: body.tribuna,
-            path_doc: file ? `/storage/puntos/${file.filename}` : null,
+            path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
         });
@@ -494,7 +494,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
-        const nuevoPath = file ? `/storage/puntos/${file.filename}` : punto.path_doc;
+        const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
         yield punto.update({
             nopunto: (_a = body.numpunto) !== null && _a !== void 0 ? _a : punto.nopunto,
             id_proponente: (_b = body.proponente) !== null && _b !== void 0 ? _b : punto.id_proponente,
@@ -516,3 +516,21 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.actualizarPunto = actualizarPunto;
+const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        if (!punto) {
+            return res.status(404).json({ message: "Punto no encontrado" });
+        }
+        yield punto.destroy();
+        return res.status(200).json({
+            message: "Punto eliminado correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al eliminar el punto:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.eliminarpunto = eliminarpunto;
