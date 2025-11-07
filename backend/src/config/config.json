@@ -1,9 +1,9 @@
 {
   "production": {
-      "username": "root",
-    "password": "",
+    "username": "homestead",
+    "password": "secret",
     "database": "registrocomisiones",
-    "host": "localhost",
+    "host": "192.168.10.10",
     "dialect": "mysql"
   },
   "development": {
