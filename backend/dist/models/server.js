@@ -36,8 +36,8 @@ class Server {
     midlewares() {
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
-            //origin: 'http://localhost:4200',
-            origin: 'https://parlamentario.congresoedomex.gob.mx',
+            origin: 'http://localhost:4200',
+            // origin: 'https://parlamentario.congresoedomex.gob.mx',
             credentials: true
         }));
         this.app.use('/storage', express_1.default.static(path_1.default.join(process.cwd(), 'storage')));

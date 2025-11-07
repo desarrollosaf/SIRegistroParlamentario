@@ -50,6 +50,10 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actualizarPunto/${id}`,data)
   }
 
+  saveIntervencion(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/saveintervencion/`,data)
+  }
+
 
   
 }

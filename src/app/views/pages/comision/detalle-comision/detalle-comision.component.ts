@@ -442,10 +442,31 @@ export class DetalleComisionComponent implements OnInit {
       ...this.formIntervencion.value,
       tipo: this.tipoIntervencionActual,
       id_punto: this.puntoSeleccionado?.id || null,
-      id_agenda: this.idComisionRuta
+      id_evento: this.idComisionRuta
     };
 
     console.log('Datos a enviar:', datos);
+
+
+
+
+
+
+  this._eventoService.saveIntervencion(datos).subscribe({
+      next: (response: any) => {
+        this.toggleFormIntervencion();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+
+
+
+
+
+
 
     /*
     this._eventoService.guardarIntervencion(datos).subscribe({
@@ -470,7 +491,7 @@ export class DetalleComisionComponent implements OnInit {
     //   destacada: datos.destacada
     // };
     // this.listaIntervenciones.push(nuevaIntervencion);
-    this.toggleFormIntervencion();
+   
   }
 
   eliminarIntervencion(intervencion: Intervencion, index: number) {
