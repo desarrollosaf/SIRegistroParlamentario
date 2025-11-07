@@ -200,7 +200,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="card mt-3 form-card fade-in" *ngIf="mostrarFormularioPunto">
                                         <div class="card-body">
                                             <form [formGroup]="formPunto" (ngSubmit)="guardarPunto()">
@@ -459,7 +459,7 @@
         </h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModal()"></button>
     </div>
-    
+
     <div class="modal-body">
         <!-- Botón Agregar/Ocultar -->
         <div class="mb-3">
@@ -479,13 +479,8 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-people-fill me-1"></i> Diputados
                             </label>
-                            <ng-select 
-                                [items]="slcTribunaDip" 
-                                bindLabel="nombre"
-                                bindValue="id"
-                                [multiple]="true"
-                                formControlName="id_diputado"
-                                placeholder="Selecciona uno o más diputados"
+                            <ng-select [items]="slcTribunaDip" bindLabel="nombre" bindValue="id" [multiple]="true"
+                                formControlName="id_diputado" placeholder="Selecciona uno o más diputados"
                                 [closeOnSelect]="false">
                             </ng-select>
                         </div>
@@ -495,25 +490,18 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-tag-fill me-1"></i> Tipo de Intervención
                             </label>
-                            <ng-select 
-                                [items]="tiposIntervencion" 
-                                bindLabel="nombre"
-                                bindValue="id"
-                                formControlName="id_tipo_intervencion"
-                                placeholder="Selecciona el tipo"
+                            <ng-select [items]="slcTipIntervencion" bindLabel="valor" bindValue="id"
+                                formControlName="id_tipo_intervencion" placeholder="Selecciona el tipo"
                                 (change)="onTipoIntervencionChange($event)">
                             </ng-select>
                         </div>
 
                         <!-- Comentario (solo si tipo = Comentario) -->
-                        <div class="col-12" *ngIf="formIntervencion.get('id_tipo_intervencion')?.value === 3">
+                        <div class="col-12" *ngIf="formIntervencion.get('comentario')?.enabled">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-chat-left-text-fill me-1"></i> Comentario
                             </label>
-                            <textarea 
-                                class="form-control" 
-                                formControlName="comentario" 
-                                rows="3"
+                            <textarea class="form-control" formControlName="comentario" rows="3"
                                 placeholder="Escribe el comentario...">
                             </textarea>
                         </div>
@@ -521,10 +509,7 @@
                         <!-- Destacar -->
                         <div class="col-12">
                             <div class="form-check form-switch destacar-switch">
-                                <input 
-                                    class="form-check-input" 
-                                    type="checkbox" 
-                                    id="destacar"
+                                <input class="form-check-input" type="checkbox" id="destacar"
                                     formControlName="destacada">
                                 <label class="form-check-label" for="destacar">
                                     <i class="bi bi-star-fill me-1 text-warning"></i>
@@ -578,11 +563,8 @@
                                     <span class="fw-medium">{{ getNombreDiputados(intervencion.id_diputado) }}</span>
                                 </td>
                                 <td class="text-center">
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-sm btn-outline-danger"
-                                        (click)="eliminarIntervencion(intervencion, i)"
-                                        title="Eliminar">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                        (click)="eliminarIntervencion(intervencion, i)" title="Eliminar">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </td>
@@ -599,7 +581,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
             <i class="bi bi-x-lg me-1"></i> Cerrar

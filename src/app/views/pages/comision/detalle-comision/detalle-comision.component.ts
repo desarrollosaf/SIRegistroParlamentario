@@ -57,6 +57,8 @@ export class DetalleComisionComponent implements OnInit {
   slcTribunaDip: any;
   slcPresenta: any;
   slcTipo: any;
+  slcTipIntervencion:any;
+
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
@@ -64,16 +66,10 @@ export class DetalleComisionComponent implements OnInit {
   modalRef!: NgbModalRef;
   formIntervencion!: FormGroup;
   mostrarFormIntervencion = false;
-  tipoIntervencionActual: number = 1; // 1 = general, 2 = por punto
+  tipoIntervencionActual: number = 1;
   puntoSeleccionado: any = null;
   listaIntervenciones: Intervencion[] = [];
   // tiposIntervencion:any;
- tiposIntervencion = [
-    { id: 1, nombre: 'A favor' },
-    { id: 2, nombre: 'En contra' },
-    { id: 3, nombre: 'Comentario' },
-  ];
-
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
@@ -100,7 +96,7 @@ export class DetalleComisionComponent implements OnInit {
      this.formIntervencion = this.fb.group({
       id_diputado: [[]],
       id_tipo_intervencion: [null],
-      comentario: [''],
+      comentario: [{ value: '', disabled: true }], // ← DESHABILITADO
       destacada: [false]
     });
 
@@ -215,9 +211,11 @@ export class DetalleComisionComponent implements OnInit {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
+        console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         this.slcPresenta = response.comisiones;
+        this.slcTipIntervencion = response.tipointer;
         this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
@@ -359,9 +357,9 @@ export class DetalleComisionComponent implements OnInit {
 
   abrirModalIntervencion() {
     this.formIntervencion.reset({
-      diputados: [],
-      tipo_intervencion: null,
-      comentario: '',
+      id_diputado: [],
+      id_tipo_intervencion: [],
+      comentario: { value: '', disabled: true },
       destacada: false
     });
     this.mostrarFormIntervencion = false;
@@ -377,19 +375,18 @@ export class DetalleComisionComponent implements OnInit {
     this.mostrarFormIntervencion = !this.mostrarFormIntervencion;
     if (!this.mostrarFormIntervencion) {
       this.formIntervencion.reset({
-        diputados: [],
-        tipo_intervencion: null,
-        comentario: '',
+        id_diputado: [],
+        id_tipo_intervencion: [],
+        comentario: { value: '', disabled: true },
         destacada: false
       });
     }
   }
-
-  onTipoIntervencionChange(event: any) {
-    const tipoId = event?.id;
+  onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
+    const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
     const comentarioControl = this.formIntervencion.get('comentario');
-    
-    if (tipoId === 3) { // Comentario
+    console.log('Tipo seleccionado:', event?.valor);
+    if (tipoValor === 'comentario') {
       comentarioControl?.enable();
     } else {
       comentarioControl?.disable();
@@ -444,15 +441,15 @@ export class DetalleComisionComponent implements OnInit {
     */
 
     // Simulación (eliminar cuando implementes el servicio real)
-    const nuevaIntervencion: Intervencion = {
-      id: Date.now(),
-      // id_tipo_intervencion: this.tiposIntervencion.find(t => t.id === datos.tipo_intervencion)?.nombre || '',
-      id_tipo_intervencion: '',
-      id_diputado: datos.diputados,
-      comentario: datos.comentario,
-      destacada: datos.destacada
-    };
-    this.listaIntervenciones.push(nuevaIntervencion);
+    // const nuevaIntervencion: Intervencion = {
+    //   id: Date.now(),
+    //   // id_tipo_intervencion: this.tiposIntervencion.find(t => t.id === datos.tipo_intervencion)?.nombre || '',
+    //   id_tipo_intervencion: '',
+    //   id_diputado: datos.diputados,
+    //   comentario: datos.comentario,
+    //   destacada: datos.destacada
+    // };
+    // this.listaIntervenciones.push(nuevaIntervencion);
     this.toggleFormIntervencion();
   }
 
