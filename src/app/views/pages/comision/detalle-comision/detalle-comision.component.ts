@@ -9,6 +9,7 @@ import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { enviroment } from '../../../../../enviroments/enviroment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import Swal from 'sweetalert2';
 interface Integrante {
   id: number;
   id_diputado: string;
@@ -413,9 +414,28 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   guardarIntervencion() {
-    if (this.formIntervencion.invalid) {
-      this.formIntervencion.markAllAsTouched();
+    if(this.formIntervencion.value.id_diputado == '' || this.formIntervencion.value.id_tipo_intervencion == ''){
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: `Debe seleccionar Diputado y tipo intervención.`,
+        showConfirmButton: false,
+        timer: 2000
+      });
       return;
+    }
+
+    if(this.formIntervencion.value.comentario == ''){
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: `Debe dejar un comentario.`,
+        showConfirmButton: false,
+        timer: 2000
+      });
+    return;
     }
 
     const datos = {
