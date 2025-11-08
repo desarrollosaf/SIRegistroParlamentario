@@ -94,4 +94,5 @@ Intervencion.init(
   }
 );
 
+Intervencion.belongsTo(TipoIntervencion, { foreignKey: 'id_tipo_intervencion', as: 'tipointerven' });
 export default Intervencion;

@@ -574,6 +574,13 @@ const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 id_punto: body.idpunto,
             },
             raw: true,
+            include: [
+                {
+                    model: tipo_intervencions_1.default,
+                    as: "tipointerven",
+                    attributes: ["id", "valor"]
+                },
+            ]
         });
         const resultados = yield Promise.all(intervenci.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c;

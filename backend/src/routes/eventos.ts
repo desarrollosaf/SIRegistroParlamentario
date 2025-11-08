@@ -14,6 +14,6 @@ router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
 router.post("/api/eventos/eliminarpunto/:id",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
-router.get("/api/eventos/getintervenciones/", getintervenciones );
+router.post("/api/eventos/getintervenciones/", getintervenciones );
 
 export default router
