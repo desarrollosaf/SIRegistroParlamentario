@@ -69,7 +69,7 @@ export class DetalleComisionComponent implements OnInit {
   mostrarFormIntervencion = false;
   tipoIntervencionActual: number = 1;
   puntoSeleccionado: any = null;
-  listaIntervenciones: Intervencion[] = [];
+  listaIntervenciones: any;
   // tiposIntervencion:any;
   documentos: { [key: string]: File | null } = {
     docPunto: null,
@@ -406,7 +406,7 @@ export class DetalleComisionComponent implements OnInit {
     this._eventoService.getIntervenciones(datos).subscribe({
       next: (response: any) => {
         console.log(response);
-        // this.listaIntervenciones = response.data || [];
+        this.listaIntervenciones = response.data || [];
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
