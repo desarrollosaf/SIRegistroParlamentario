@@ -624,6 +624,13 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
         id_punto: body.idpunto,
       },
       raw: true, 
+      include: [
+        {
+          model: TipoIntervencion,
+          as: "tipointerven",
+          attributes: ["id", "valor"]
+        },
+      ]
     });
 
       const resultados = await Promise.all(
