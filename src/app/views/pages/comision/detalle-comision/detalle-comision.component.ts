@@ -466,6 +466,7 @@ export class DetalleComisionComponent implements OnInit {
     this._eventoService.saveIntervencion(datos).subscribe({
       next: (response: any) => {
         this.toggleFormIntervencion();
+        this.cargarIntervenciones();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
