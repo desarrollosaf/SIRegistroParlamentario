@@ -54,6 +54,9 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/saveintervencion/`,data)
   }
 
+  getIntervenciones(data: any): Observable<any> {
+    return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl}/getintervenciones/`,data)
+  }
 
   
 }
