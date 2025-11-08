@@ -618,20 +618,19 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
     const { body } = req;
 
     const intervenci = await Intervencion.findAll({
-      where: {
-        id_evento: body.idagenda,
-        tipo: body.tipo,
-        id_punto: body.idpunto,
-      },
-      raw: true, 
-      include: [
-        {
-          model: TipoIntervencion,
-          as: "tipointerven",
-          attributes: ["id", "valor"]
+        where: {
+          id_evento: body.idagenda,
+          tipo: body.tipo,
+          id_punto: body.idpunto,
         },
-      ]
-    });
+        include: [
+          {
+            model: TipoIntervencion,
+            as: "tipointerven",
+            attributes: ["id", "valor"],
+          },
+        ],
+      });
 
       const resultados = await Promise.all(
         intervenci.map(async (inte) => {
@@ -645,9 +644,14 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
             ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
             : null;
 
-        
           return {
-            ...inte,
+            id: inte.id,
+            id_evento: inte.id_evento,
+            id_punto: inte.id_punto,
+            mensaje: inte.mensaje,
+            tipo: inte.tipo,
+            destacado: inte.destacado,
+            tipointerven: inte.tipointerven, 
             diputado: nombreCompletoDiputado,
           };
         })

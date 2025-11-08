@@ -573,14 +573,13 @@ const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 tipo: body.tipo,
                 id_punto: body.idpunto,
             },
-            raw: true,
             include: [
                 {
                     model: tipo_intervencions_1.default,
                     as: "tipointerven",
-                    attributes: ["id", "valor"]
+                    attributes: ["id", "valor"],
                 },
-            ]
+            ],
         });
         const resultados = yield Promise.all(intervenci.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c;
@@ -592,7 +591,16 @@ const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, functi
             const nombreCompletoDiputado = diputado
                 ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
                 : null;
-            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado });
+            return {
+                id: inte.id,
+                id_evento: inte.id_evento,
+                id_punto: inte.id_punto,
+                mensaje: inte.mensaje,
+                tipo: inte.tipo,
+                destacado: inte.destacado,
+                tipointerven: inte.tipointerven,
+                diputado: nombreCompletoDiputado,
+            };
         })));
         return res.status(200).json({
             data: resultados,
