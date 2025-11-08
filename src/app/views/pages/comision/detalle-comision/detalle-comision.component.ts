@@ -58,7 +58,7 @@ export class DetalleComisionComponent implements OnInit {
   slcTribunaDip: any;
   slcPresenta: any;
   slcTipo: any;
-  slcTipIntervencion:any;
+  slcTipIntervencion: any;
 
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
@@ -94,7 +94,7 @@ export class DetalleComisionComponent implements OnInit {
       observaciones: ['']
     });
 
-     this.formIntervencion = this.fb.group({
+    this.formIntervencion = this.fb.group({
       id_diputado: [[]],
       id_tipo_intervencion: [null],
       comentario: [{ value: '', disabled: true }], // ← DESHABILITADO
@@ -212,7 +212,7 @@ export class DetalleComisionComponent implements OnInit {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         this.slcPresenta = response.comisiones;
@@ -230,7 +230,7 @@ export class DetalleComisionComponent implements OnInit {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
           const puntoMapeado = {
@@ -306,7 +306,7 @@ export class DetalleComisionComponent implements OnInit {
 
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
-        console.log('Punto actualizado:', response);
+        // console.log('Punto actualizado:', response);
         this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
@@ -342,8 +342,8 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
-   // ==================== MÉTODOS DEL MODAL DE INTERVENCIONES ====================
-  
+  // ==================== MÉTODOS DEL MODAL DE INTERVENCIONES ====================
+
   abrirModalIntervencionGeneral() {
     this.tipoIntervencionActual = 1;
     this.puntoSeleccionado = null;
@@ -365,7 +365,7 @@ export class DetalleComisionComponent implements OnInit {
     });
     this.mostrarFormIntervencion = false;
     this.cargarIntervenciones();
-    this.modalRef = this.modalService.open(this.xlModal, { 
+    this.modalRef = this.modalService.open(this.xlModal, {
       size: 'xl',
       windowClass: 'modal-top-centered',
       backdrop: 'static'
@@ -386,7 +386,6 @@ export class DetalleComisionComponent implements OnInit {
   onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
     const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
     const comentarioControl = this.formIntervencion.get('comentario');
-    console.log('Tipo seleccionado:', event?.valor);
     if (tipoValor === 'comentario') {
       comentarioControl?.enable();
     } else {
@@ -396,6 +395,24 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   cargarIntervenciones() {
+    const datos = {
+       tipo: this.tipoIntervencionActual,
+      idpunto: this.puntoSeleccionado?.id || null,
+      idagenda: this.idComisionRuta
+    } 
+    console.log(datos);
+    
+
+    this._eventoService.getIntervenciones(datos).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        // this.listaIntervenciones = response.data || [];
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
     // Aquí harás el subscribe a tu servicio
     // Por ahora simulo datos de ejemplo
     /* 
@@ -408,13 +425,13 @@ export class DetalleComisionComponent implements OnInit {
       }
     });
     */
-    
+
     // Datos de ejemplo (eliminar cuando implementes el servicio real)
     this.listaIntervenciones = [];
   }
 
   guardarIntervencion() {
-    if(this.formIntervencion.value.id_diputado == '' || this.formIntervencion.value.id_tipo_intervencion == ''){
+    if (this.formIntervencion.value.id_diputado == '' || this.formIntervencion.value.id_tipo_intervencion == '') {
       Swal.fire({
         position: "center",
         icon: "warning",
@@ -426,7 +443,7 @@ export class DetalleComisionComponent implements OnInit {
       return;
     }
 
-    if(this.formIntervencion.value.comentario == ''){
+    if (this.formIntervencion.value.comentario == '') {
       Swal.fire({
         position: "center",
         icon: "warning",
@@ -435,7 +452,7 @@ export class DetalleComisionComponent implements OnInit {
         showConfirmButton: false,
         timer: 2000
       });
-    return;
+      return;
     }
 
     const datos = {
@@ -445,14 +462,8 @@ export class DetalleComisionComponent implements OnInit {
       id_evento: this.idComisionRuta
     };
 
-    console.log('Datos a enviar:', datos);
-
-
-
-
-
-
-  this._eventoService.saveIntervencion(datos).subscribe({
+    // console.log('Datos a enviar:', datos);
+    this._eventoService.saveIntervencion(datos).subscribe({
       next: (response: any) => {
         this.toggleFormIntervencion();
       },
@@ -491,7 +502,7 @@ export class DetalleComisionComponent implements OnInit {
     //   destacada: datos.destacada
     // };
     // this.listaIntervenciones.push(nuevaIntervencion);
-   
+
   }
 
   eliminarIntervencion(intervencion: Intervencion, index: number) {
@@ -507,7 +518,7 @@ export class DetalleComisionComponent implements OnInit {
         }
       });
       */
-      
+
       // Simulación (eliminar cuando implementes el servicio real)
       this.listaIntervenciones.splice(index, 1);
     }
