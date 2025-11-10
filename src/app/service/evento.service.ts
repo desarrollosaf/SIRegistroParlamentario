@@ -58,5 +58,10 @@ export class EventoService {
     return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl}/getintervenciones/`,data)
   }
 
+
+  deletePunto(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarpunto/${id}`)
+  }
+
   
 }
