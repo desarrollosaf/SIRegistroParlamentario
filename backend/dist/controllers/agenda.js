@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -612,3 +612,21 @@ const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getintervenciones = getintervenciones;
+const eliminarinter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const inter = yield intervenciones_1.default.findOne({ where: { id } });
+        if (!inter) {
+            return res.status(404).json({ message: "Punto no encontrado" });
+        }
+        yield inter.destroy();
+        return res.status(200).json({
+            message: "Intervencion eliminada correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al eliminar la intervencion:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.eliminarinter = eliminarinter;
