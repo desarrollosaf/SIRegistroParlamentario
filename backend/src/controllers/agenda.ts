@@ -666,3 +666,20 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+
+export const eliminarinter = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const inter = await Intervencion.findOne({ where: { id } });
+     if (!inter) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    await inter.destroy();
+    return res.status(200).json({
+      message: "Intervencion eliminada correctamente",
+    });
+  } catch (error: any) {
+    console.error("Error al eliminar la intervencion:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
