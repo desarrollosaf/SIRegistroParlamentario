@@ -2,6 +2,9 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors'
 import path from 'path';
 import eventos from "../routes/eventos";
+import user from "../routes/user";
+import { verifyToken } from '../middlewares/auth';
+import cookieParser from 'cookie-parser';
 
 class Server {
 
@@ -26,42 +29,41 @@ class Server {
 
     router(){
        this.app.use(eventos);
+       this.app.use(user);
 
     }
 
     
     midlewares(){
-        this.app.use(express.json())
-        this.app.use(cors({
-            origin: 'http://localhost:4200',
-            // origin: 'https://parlamentario.congresoedomex.gob.mx',
+       this.app.use(express.json())
+       this.app.use(cors({
+           origin: function (origin, callback) {
+                const allowedOrigins = ['http://localhost:4200'];
+                if (!origin || allowedOrigins.includes(origin) ) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS')); 
+                }
+            },
             credentials: true
         }));
 
-       
+        this.app.use(cookieParser());
         this.app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/geteventos/',
-                '/api/eventos/getevento/',
-                '/api/eventos/actasistencia/',
-                '/api/eventos/catalogos/',
-                '/api/eventos/gettipos/',
-                '/api/eventos/savepunto/',
-                '/api/eventos/getpuntos/',
-                '/api/eventos/actualizarPunto/',
-                '/api/eventos/eliminarpunto/',
-                '/api/eventos/saveintervencion/',
-                '/api/eventos/getintervenciones/',
-                '/api/eventos/eliminarinter/'
             ];
+
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
+            
             if (isPublic) {
                 return next(); 
             }
-            
+
+
+           return verifyToken(req, res, next);
         });
 
     }
