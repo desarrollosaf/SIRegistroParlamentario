@@ -936,3 +936,50 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
+
+export const reiniciarvoto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    if (!body.idpunto) {
+      return res.status(400).json({
+        msg: "Falta el parámetro requerido: idpunto",
+      });
+    }
+    const temavotos = await TemasPuntosVotos.findOne({ 
+      where: { id_punto: body.idpunto } 
+    });
+
+    if (!temavotos) {
+      return res.status(404).json({
+        msg: "No se encontró el tema de votación para este punto",
+      });
+    }
+    const [cantidadActualizada] = await VotosPunto.update(
+      {
+        sentido: 0,
+        mensaje: "PENDIENTE",
+      },
+      {
+        where: {
+          id_tema_punto_voto: temavotos.id,  
+        }
+      }
+    );
+    if (cantidadActualizada === 0) {
+      return res.status(404).json({
+        msg: "No se encontraron votos para reiniciar",
+      });
+    }
+    return res.status(200).json({
+      msg: `${cantidadActualizada} voto(s) reiniciado(s) correctamente a PENDIENTE`,
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error('Error al reiniciar las votaciones:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
