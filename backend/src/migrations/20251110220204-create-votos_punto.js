@@ -1,5 +1,5 @@
 "use strict";
-
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable("votos_punto", {
@@ -9,7 +9,7 @@ module.exports = {
         primaryKey: true,
       },
       sentido: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.DataTypes.INTEGER,
         allowNull: true,
       },
       mensaje: {

@@ -3,7 +3,7 @@ import sequelize from "../database/registrocomisiones";
 
 class VotosPunto extends Model {
   declare id: string;
-  declare sentido: string | null;
+  declare sentido: number | null;
   declare mensaje: string | null;
   declare id_tema_punto_voto: ForeignKey<string> | null;
   declare id_diputado: ForeignKey<string> | null;
@@ -24,7 +24,7 @@ VotosPunto.init(
       defaultValue: DataTypes.UUIDV4,
     },
     sentido: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     mensaje: {

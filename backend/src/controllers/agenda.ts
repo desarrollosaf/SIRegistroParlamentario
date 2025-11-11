@@ -858,3 +858,81 @@ async function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto: string) {
     };
   });
 }
+
+
+export const actualizarvoto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+
+    if (!body.idpunto || !body.iddiputado || body.sentido === undefined) {
+      return res.status(400).json({
+        msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
+      });
+    }
+
+    const temavotos = await TemasPuntosVotos.findOne({ 
+      where: { id_punto: body.idpunto } 
+    });
+
+    if (!temavotos) {
+      return res.status(404).json({
+        msg: "No se encontró el tema de votación para este punto",
+      });
+    }
+
+    let nuevoSentido: number;
+    let nuevoMensaje: string;
+
+    switch (body.sentido) {
+      case 1:
+        nuevoSentido = 1;
+        nuevoMensaje = "A FAVOR";
+        break;
+      case 2:
+        nuevoSentido = 2;
+        nuevoMensaje = "ABSTENCIÓN";
+        break;
+      case 0:
+      case 3:
+        nuevoSentido = 3;
+        nuevoMensaje = "EN CONTRA";
+        break;
+      default:
+        return res.status(400).json({
+          msg: "Sentido de voto inválido. Usa 1 (A FAVOR), 2 (ABSTENCIÓN) o 0/3 (EN CONTRA)",
+        });
+    }
+
+    const [cantidadActualizada] = await VotosPunto.update(
+      {
+        sentido: nuevoSentido,
+        mensaje: nuevoMensaje,
+      },
+      {
+        where: {
+          id_tema_punto_voto: temavotos.id,  
+          id_diputado: body.iddiputado,
+        }
+      }
+    );
+
+    if (cantidadActualizada === 0) {
+      return res.status(404).json({
+        msg: "No se encontró el voto del diputado para este punto",
+      });
+    }
+
+    return res.status(200).json({
+      msg: "Voto actualizado correctamente",
+      estatus: 200,
+      registrosActualizados: cantidadActualizada,
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar el voto:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
