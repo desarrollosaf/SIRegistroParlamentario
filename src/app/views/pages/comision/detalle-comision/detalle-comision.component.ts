@@ -32,7 +32,7 @@ interface Votante {
   id_diputado: string;
   diputado: string;
   partido: string;
-  sentido_voto: number; // 0=pendiente, 1=a favor, 2=abstención, 3=en contra
+  sentido: number; // 0=pendiente, 1=a favor, 2=abstención, 3=en contra
 }
 
 @Component({
@@ -637,38 +637,21 @@ export class DetalleComisionComponent implements OnInit {
   onPuntoVotacionChange(puntoId: any): void {
   
     if (puntoId.id) {
-      this.cargarVotantes();
+      this.cargarVotantes(puntoId.id);
     }
   }
-  private cargarVotantes(): void {
-    // Datos ficticios para prueba
-    this.votantes = [
-      { id: 1, id_diputado: '1', diputado: 'Juan Pérez García', partido: 'Partido A', sentido_voto: 0 },
-      { id: 2, id_diputado: '2', diputado: 'María López Hernández', partido: 'Partido B', sentido_voto: 0 },
-      { id: 3, id_diputado: '3', diputado: 'Carlos Rodríguez Martínez', partido: 'Partido C', sentido_voto: 0 },
-      { id: 4, id_diputado: '4', diputado: 'Ana Sánchez Torres', partido: 'Partido A', sentido_voto: 0 },
-      { id: 5, id_diputado: '5', diputado: 'Pedro Gómez Ramírez', partido: 'Partido D', sentido_voto: 0 },
-      { id: 6, id_diputado: '6', diputado: 'Laura Martínez González', partido: 'Partido B', sentido_voto: 0 },
-      { id: 7, id_diputado: '7', diputado: 'Roberto Fernández López', partido: 'Partido C', sentido_voto: 0 },
-      { id: 8, id_diputado: '8', diputado: 'Carmen Ruiz Jiménez', partido: 'Partido A', sentido_voto: 0 },
-      { id: 9, id_diputado: '9', diputado: 'Miguel Torres Vargas', partido: 'Partido D', sentido_voto: 0 },
-      { id: 10, id_diputado: '10', diputado: 'Sofia Morales Castro', partido: 'Partido B', sentido_voto: 0 }
-    ];
-
-    this.dividirEnColumnasVotacion();
-
-    // Si quieres cargar desde el servicio:
-    /*
-    this._eventoService.getVotantes(this.puntoSeleccionadoVotacion.id).subscribe({
+  private cargarVotantes(punto: any): void {
+    console.log(punto);
+    this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
       next: (response: any) => {
-        this.votantes = response.votantes || [];
+        console.log(response);
+        this.votantes = response.integrantes || [];
         this.dividirEnColumnasVotacion();
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar votantes:', e);
       }
     });
-    */
   }
 
   private dividirEnColumnasVotacion(): void {
@@ -678,17 +661,17 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   contarVotaciones(tipo: number): number {
-    return this.votantes.filter(v => v.sentido_voto === tipo).length;
+    return this.votantes.filter(v => v.sentido === tipo).length;
   }
 
   marcarVotacion(votante: Votante, sentido: number): void {
-    votante.sentido_voto = sentido;
+    votante.sentido = sentido;
     // Aquí puedes agregar la llamada al servicio para guardar
     // this.guardarVotacion(votante.id_diputado, sentido, this.puntoSeleccionadoVotacion.id);
   }
 
-  getClaseVotacion(sentido_voto: number): string {
-    switch (sentido_voto) {
+  getClaseVotacion(sentido: number): string {
+    switch (sentido) {
       case 1:
         return 'votacion-favor';
       case 2:
@@ -743,7 +726,7 @@ export class DetalleComisionComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.votantes.forEach(v => v.sentido_voto = 0);
+        this.votantes.forEach(v => v.sentido = 0);
         this.dividirEnColumnasVotacion();
 
         const Toast = Swal.mixin({

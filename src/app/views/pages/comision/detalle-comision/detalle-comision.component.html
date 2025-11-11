@@ -554,7 +554,7 @@
                                                     <table class="table table-hover mb-0">
                                                         <tbody>
                                                             <tr *ngFor="let votante of columnaVotantes1"
-                                                                [ngClass]="getClaseVotacion(votante.sentido_voto)">
+                                                                [ngClass]="getClaseVotacion(votante.sentido)">
                                                                 <td class="align-middle py-3">
                                                                     <div class="fw-medium mb-1">{{ votante.diputado }}
                                                                     </div>
@@ -567,21 +567,21 @@
                                                                         role="group">
                                                                         <button type="button"
                                                                             class="btn btn-outline-success flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 1"
+                                                                            [class.active]="votante.sentido === 1"
                                                                             (click)="marcarVotacion(votante, 1)"
                                                                             title="A Favor">
                                                                             <i class="bi bi-hand-thumbs-up-fill"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-warning flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 2"
+                                                                            [class.active]="votante.sentido === 2"
                                                                             (click)="marcarVotacion(votante, 2)"
                                                                             title="Abstención">
                                                                             <i class="bi bi-dash-circle-fill"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-danger flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 3"
+                                                                            [class.active]="votante.sentido === 3"
                                                                             (click)="marcarVotacion(votante, 3)"
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
@@ -599,7 +599,7 @@
                                                     <table class="table table-hover mb-0">
                                                         <tbody>
                                                             <tr *ngFor="let votante of columnaVotantes2"
-                                                                [ngClass]="getClaseVotacion(votante.sentido_voto)">
+                                                                [ngClass]="getClaseVotacion(votante.sentido)">
                                                                 <td class="align-middle py-3">
                                                                     <div class="fw-medium mb-1">{{ votante.diputado }}
                                                                     </div>
@@ -612,21 +612,21 @@
                                                                         role="group">
                                                                         <button type="button"
                                                                             class="btn btn-outline-success flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 1"
+                                                                            [class.active]="votante.sentido === 1"
                                                                             (click)="marcarVotacion(votante, 1)"
                                                                             title="A Favor">
                                                                             <i class="bi bi-hand-thumbs-up-fill"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-warning flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 2"
+                                                                            [class.active]="votante.sentido === 2"
                                                                             (click)="marcarVotacion(votante, 2)"
                                                                             title="Abstención">
                                                                             <i class="bi bi-dash-circle-fill"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-danger flex-fill"
-                                                                            [class.active]="votante.sentido_voto === 3"
+                                                                            [class.active]="votante.sentido === 3"
                                                                             (click)="marcarVotacion(votante, 3)"
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
