@@ -55,7 +55,8 @@ class Server {
                 '/api/eventos/eliminarpunto/',
                 '/api/eventos/saveintervencion/',
                 '/api/eventos/getintervenciones/',
-                '/api/eventos/eliminarinter/'
+                '/api/eventos/eliminarinter/',
+                '/api/eventos/getvotospunto/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

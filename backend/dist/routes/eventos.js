@@ -19,4 +19,5 @@ router.post("/api/eventos/eliminarpunto/:id", agenda_1.eliminarpunto);
 router.post("/api/eventos/saveintervencion/", agenda_1.saveintervencion);
 router.post("/api/eventos/getintervenciones/", agenda_1.getintervenciones);
 router.post("/api/eventos/eliminarinter/:id", agenda_1.eliminarinter);
+router.get("/api/eventos/getvotospunto/:id", agenda_1.getvotacionpunto);
 exports.default = router;
