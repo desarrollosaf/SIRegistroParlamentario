@@ -71,5 +71,8 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actvoto/`,data)
   }
   
+  reinicioVotacion(data:any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/reiniciavoto/`,data)
+  }
   
 }
