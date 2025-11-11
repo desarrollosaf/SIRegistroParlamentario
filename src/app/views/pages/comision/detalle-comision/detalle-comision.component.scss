@@ -630,15 +630,42 @@
     }
   }
 
-  .badge-tipo-intervencion {
-    display: inline-block;
-    padding: 0.375rem 0.75rem;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-  }
+  // .badge-tipo-intervencion {
+  //   display: inline-block;
+  //   padding: 0.375rem 0.75rem;
+  //   border-radius: 6px;
+  //   font-weight: 500;
+  //   font-size: 0.875rem;
+  //   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  //   color: white;
+  // }
+.badge-tipo-intervencion {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: white;
+  text-transform: capitalize;
+}
+
+/* A FAVOR → Verde / positivo */
+.badge-a-favor {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+}
+
+/* EN CONTRA → Rojo / negativo */
+.badge-en-contra {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+/* COMENTARIO → Azul / neutral */
+.badge-comentario {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
 
   .btn-outline-danger {
     transition: all 0.2s ease;
@@ -648,6 +675,233 @@
     }
   }
 }
+.tabla-intervenciones-wrapper {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.tabla-intervenciones thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa; /* color del header */
+  z-index: 2;
+}
+
+
+
+
+
+// ==================== ESTILOS VOTACIONES (PASO 3) ====================
+
+.stats-total-votacion {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+
+  .stats-icon {
+    color: white;
+    
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  }
+}
+
+.stats-favor {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+
+  .stats-icon {
+    color: white;
+    
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
+  }
+}
+
+.stats-abstencion {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
+
+  .stats-icon {
+    color: white;
+    
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(234, 179, 8, 0.5);
+  }
+}
+
+.stats-contra {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+
+  .stats-icon {
+    color: white;
+    
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+  }
+}
+
+// Estilos para las filas de votación
+.votacion-favor {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border-left: 4px solid #22c55e !important;
+  
+  td {
+    color: #166534;
+    font-weight: 500;
+  }
+
+  .btn-outline-success.active {
+    background-color: #22c55e;
+    color: white;
+    border-color: #22c55e;
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+  }
+}
+
+.votacion-abstencion {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+  border-left: 4px solid #eab308 !important;
+  
+  td {
+    color: #854d0e;
+    font-weight: 500;
+  }
+
+  .btn-outline-warning.active {
+    background-color: #eab308 !important;
+    color: white !important;
+    border-color: #eab308 !important;
+    box-shadow: 0 2px 6px rgba(234, 179, 8, 0.4);
+    
+    i {
+      color: white !important;
+    }
+  }
+}
+
+.votacion-contra {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-left: 4px solid #ef4444 !important;
+  
+  td {
+    color: #991b1b;
+    font-weight: 500;
+  }
+
+  .btn-outline-danger.active {
+    background-color: #ef4444;
+    color: white;
+    border-color: #ef4444;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.votacion-pendiente {
+  background-color: rgba(148, 163, 184, 0.08) !important;
+  border-left: 4px solid #94a3b8 !important;
+  
+  td {
+    color: #475569;
+    font-weight: 400;
+  }
+}
+
+// Responsive para votaciones
+@media (max-width: 576px) {
+  .btn-group-sm {
+    .btn {
+      padding: 0.5rem 0.4rem;
+      
+      i {
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
+
+
+
+
+
+.stats-pendiente {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  box-shadow: 0 4px 15px rgba(148, 163, 184, 0.4);
+
+  .stats-icon {
+    color: white;
+    
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(148, 163, 184, 0.5);
+  }
+}
+
+
+//fin estilos votacion
+
+
+
+
+
+
+
+
+
+.small-cards .card {
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.small-cards .stats-icon i {
+  font-size: 1rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 :host ::ng-deep {
   .modal-dialog.modal-xl {
@@ -700,6 +954,25 @@
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Responsive para el modal
 @media (max-width: 768px) {

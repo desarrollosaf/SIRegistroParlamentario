@@ -27,6 +27,14 @@ interface Intervencion {
   id_punto?: number;
 }
 
+interface Votante {
+  id: number;
+  id_diputado: string;
+  diputado: string;
+  partido: string;
+  sentido: number; // 0=pendiente, 1=a favor, 2=abstención, 3=en contra
+}
+
 @Component({
   selector: 'app-detalle-comision',
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink, NgbAccordionModule],
@@ -42,7 +50,13 @@ export class DetalleComisionComponent implements OnInit {
     { numero: 3, nombre: 'Votaciones' },
     { numero: 4, nombre: 'Resumen' }
   ];
-
+  //VOTACION
+  votantes: Votante[] = [];
+  columnaVotantes1: Votante[] = [];
+  columnaVotantes2: Votante[] = [];
+  puntoSeleccionadoVotacion: number | null = null; // solo guardará el id
+  listaPuntosVotacion: any[] = [];
+  //VOTACION
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
   columna2: Integrante[] = [];
@@ -97,7 +111,7 @@ export class DetalleComisionComponent implements OnInit {
     this.formIntervencion = this.fb.group({
       id_diputado: [[]],
       id_tipo_intervencion: [null],
-      comentario: [{ value: '', disabled: true }], // ← DESHABILITADO
+      comentario: [{ value: '', disabled: true }],
       destacada: [false]
     });
 
@@ -140,7 +154,7 @@ export class DetalleComisionComponent implements OnInit {
         this.cargarOrdenDia();
         break;
       case 3:
-        this.cargarDatosConfiguracion();
+        this.cargarDatosVotacion();
         break;
       case 4:
         this.cargarDatosResumen();
@@ -230,7 +244,6 @@ export class DetalleComisionComponent implements OnInit {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log(response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
           const puntoMapeado = {
@@ -247,15 +260,11 @@ export class DetalleComisionComponent implements OnInit {
               observaciones: [punto.observaciones]
             })
           };
-
-
           if (punto.id_proponente) {
             this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
           }
-
           return puntoMapeado;
         });
-
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -294,7 +303,6 @@ export class DetalleComisionComponent implements OnInit {
 
 
   guardarCambiosPunto(punto: any) {
-
     const formData = new FormData();
     Object.entries(punto.form.value).forEach(([key, value]) => {
       formData.append(key, value as string);
@@ -306,7 +314,6 @@ export class DetalleComisionComponent implements OnInit {
 
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
-        // console.log('Punto actualizado:', response);
         this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
@@ -318,11 +325,45 @@ export class DetalleComisionComponent implements OnInit {
 
 
   eliminarPunto(punto: any, index: number) {
-    if (confirm('¿Estás seguro de eliminar este punto?')) {
-
-    }
+    console.log(punto.id);
+    Swal.fire({
+      title: "¿Está seguro?",
+      text: "Se eliminará este punto",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._eventoService.deletePunto(punto.id).subscribe({
+          next: (response: any) => {
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 3000,
+              timerProgressBar: true,
+              didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+              }
+            });
+            Toast.fire({
+              icon: "success",
+              title: "Punto eliminado correctamente."
+            });
+            this.cargarPuntosRegistrados();
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error del servidor:', msg);
+          }
+        });
+      }
+    });
   }
-
 
   verDocumento(punto: any) {
     if (punto.path_doc) {
@@ -342,7 +383,7 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
-  // ==================== MÉTODOS DEL MODAL DE INTERVENCIONES ====================
+  // ==================== MODAL DE INTERVENCIONES ====================
 
   abrirModalIntervencionGeneral() {
     this.tipoIntervencionActual = 1;
@@ -396,12 +437,12 @@ export class DetalleComisionComponent implements OnInit {
 
   cargarIntervenciones() {
     const datos = {
-       tipo: this.tipoIntervencionActual,
+      tipo: this.tipoIntervencionActual,
       idpunto: this.puntoSeleccionado?.id || null,
       idagenda: this.idComisionRuta
-    } 
+    }
     console.log(datos);
-    
+
 
     this._eventoService.getIntervenciones(datos).subscribe({
       next: (response: any) => {
@@ -413,20 +454,7 @@ export class DetalleComisionComponent implements OnInit {
         console.error('Error del servidor:', msg);
       }
     });
-    // Aquí harás el subscribe a tu servicio
-    // Por ahora simulo datos de ejemplo
-    /* 
-    this._eventoService.getIntervenciones(params).subscribe({
-      next: (response: any) => {
-        this.listaIntervenciones = response.data || [];
-      },
-      error: (e: HttpErrorResponse) => {
-        console.error('Error al cargar intervenciones:', e);
-      }
-    });
-    */
 
-    // Datos de ejemplo (eliminar cuando implementes el servicio real)
     this.listaIntervenciones = [];
   }
 
@@ -462,9 +490,23 @@ export class DetalleComisionComponent implements OnInit {
       id_evento: this.idComisionRuta
     };
 
-    // console.log('Datos a enviar:', datos);
     this._eventoService.saveIntervencion(datos).subscribe({
       next: (response: any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Intervención guardada correctamente."
+        });
         this.toggleFormIntervencion();
         this.cargarIntervenciones();
       },
@@ -474,54 +516,11 @@ export class DetalleComisionComponent implements OnInit {
       }
     });
 
-
-
-
-
-
-
-    /*
-    this._eventoService.guardarIntervencion(datos).subscribe({
-      next: (response: any) => {
-        console.log('Intervención guardada:', response);
-        this.cargarIntervenciones();
-        this.toggleFormIntervencion();
-      },
-      error: (e: HttpErrorResponse) => {
-        console.error('Error al guardar intervención:', e);
-      }
-    });
-    */
-
-    // Simulación (eliminar cuando implementes el servicio real)
-    // const nuevaIntervencion: Intervencion = {
-    //   id: Date.now(),
-    //   // id_tipo_intervencion: this.tiposIntervencion.find(t => t.id === datos.tipo_intervencion)?.nombre || '',
-    //   id_tipo_intervencion: '',
-    //   id_diputado: datos.diputados,
-    //   comentario: datos.comentario,
-    //   destacada: datos.destacada
-    // };
-    // this.listaIntervenciones.push(nuevaIntervencion);
-
   }
 
   eliminarIntervencion(intervencion: Intervencion, index: number) {
     if (confirm('¿Estás seguro de eliminar esta intervención?')) {
-      /*
-      this._eventoService.eliminarIntervencion(intervencion.id).subscribe({
-        next: (response: any) => {
-          console.log('Intervención eliminada:', response);
-          this.cargarIntervenciones();
-        },
-        error: (e: HttpErrorResponse) => {
-          console.error('Error al eliminar:', e);
-        }
-      });
-      */
 
-      // Simulación (eliminar cuando implementes el servicio real)
-      this.listaIntervenciones.splice(index, 1);
     }
   }
 
@@ -533,10 +532,7 @@ export class DetalleComisionComponent implements OnInit {
   cerrarModal() {
     this.modalRef.close();
   }
-
-
-
-  // ==================== FIN MÉTODOS DEL MODAL ====================
+  // ==================== FIN DEL MODAL ====================
   notificar(punto: any) {
 
   }
@@ -592,6 +588,22 @@ export class DetalleComisionComponent implements OnInit {
     });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Punto guardado correctamente."
+        });
+
         this.documentos['docPunto'] = null;
         this.formPunto.reset();
         this.mostrarFormularioPunto = false;
@@ -610,10 +622,148 @@ export class DetalleComisionComponent implements OnInit {
   //********************************************************************************************************* */
   //********************************************************************************************************* */
 
-  private cargarDatosConfiguracion(): void {
-
+  private cargarDatosVotacion(): void {
+    this._eventoService.getPuntos(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        this.listaPuntosVotacion = response.data || [];
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
 
+  onPuntoVotacionChange(puntoId: any): void {
+  
+    if (puntoId.id) {
+      this.cargarVotantes(puntoId.id);
+    }
+  }
+  private cargarVotantes(punto: any): void {
+    console.log(punto);
+    this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        this.votantes = response.integrantes || [];
+        this.dividirEnColumnasVotacion();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar votantes:', e);
+      }
+    });
+  }
+
+  private dividirEnColumnasVotacion(): void {
+    const mitad = Math.ceil(this.votantes.length / 2);
+    this.columnaVotantes1 = this.votantes.slice(0, mitad);
+    this.columnaVotantes2 = this.votantes.slice(mitad);
+  }
+
+  contarVotaciones(tipo: number): number {
+    return this.votantes.filter(v => v.sentido === tipo).length;
+  }
+
+  marcarVotacion(votante: Votante, sentido: number): void {
+    votante.sentido = sentido;
+    // Aquí puedes agregar la llamada al servicio para guardar
+    // this.guardarVotacion(votante.id_diputado, sentido, this.puntoSeleccionadoVotacion.id);
+  }
+
+  getClaseVotacion(sentido: number): string {
+    switch (sentido) {
+      case 1:
+        return 'votacion-favor';
+      case 2:
+        return 'votacion-abstencion';
+      case 3:
+        return 'votacion-contra';
+      case 0:
+        return 'votacion-pendiente';
+      default:
+        return '';
+    }
+  }
+
+  terminarVotacion(): void {
+    Swal.fire({
+      title: '¿Terminar votación?',
+      text: 'Se finalizará la votación del punto seleccionado',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, terminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Aquí va la lógica para terminar la votación
+        this.puntoSeleccionadoVotacion = null;
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: 'success',
+          title: 'Votación finalizada correctamente'
+        });
+      }
+    });
+  }
+
+  reiniciarVotacion(): void {
+    Swal.fire({
+      title: '¿Reiniciar votación?',
+      text: 'Se borrarán todos los votos del punto seleccionado',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffc107',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, reiniciar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.votantes.forEach(v => v.sentido = 0);
+        this.dividirEnColumnasVotacion();
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: 'info',
+          title: 'Votación reiniciada'
+        });
+      }
+    });
+  }
+
+  imprimirVotacion(): void {
+    Swal.fire({
+      position: 'center',
+      icon: 'info',
+      title: 'Generando reporte...',
+      text: 'Se descargará el reporte de votación',
+      showConfirmButton: false,
+      timer: 2000
+    });
+
+    // Aquí va la lógica para imprimir/descargar
+    setTimeout(() => {
+      console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
+    }, 2000);
+  }
+
+
+
+
+  //este es opcional
   private cargarDatosResumen(): void {
 
   }

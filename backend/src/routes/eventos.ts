@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 const router = Router();
 
@@ -12,9 +12,11 @@ router.get("/api/eventos/gettipos/:id", getTiposPuntos );
 router.post("/api/eventos/savepunto/:id",upload.single("documento"), guardarpunto );
 router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
-router.post("/api/eventos/eliminarpunto/:id",eliminarpunto );
+router.get("/api/eventos/eliminarpunto/:id",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
 router.post("/api/eventos/getintervenciones/", getintervenciones );
 router.post("/api/eventos/eliminarinter/:id",eliminarinter );
-
+router.get("/api/eventos/getvotospunto/:id", getvotacionpunto );
+router.post("/api/eventos/actvoto/", actualizarvoto );
+router.post("/api/eventos/reiniciavoto/", reiniciarvoto );
 export default router

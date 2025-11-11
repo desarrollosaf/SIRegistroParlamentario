@@ -19,7 +19,9 @@ import AdminCat from "../models/admin_cats";
 import PuntosOrden from "../models/puntos_ordens";
 import TipoIntervencion from "../models/tipo_intervencions";
 import Intervencion from "../models/intervenciones";
-
+import TemasPuntosVotos from "../models/temas_puntos_votos";
+import VotosPunto from "../models/votos_punto";
+import { Sequelize } from "sequelize";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -55,6 +57,7 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
+
     const evento = await Agenda.findOne({
       where: { id },
       include: [
@@ -681,5 +684,302 @@ export const eliminarinter = async (req: Request, res: Response): Promise<any> =
   } catch (error: any) {
     console.error("Error al eliminar la intervencion:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+
+export const getvotacionpunto = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+    const punto = await PuntosOrden.findOne({ where: { id } });
+    if (!punto) {
+      return res.status(404).json({ msg: "Punto no encontrado" });
+    }
+
+    const evento = await Agenda.findOne({
+      where: { id: punto.id_evento },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+    let mensajeRespuesta = "Punto con votos existentes";
+
+    if (!temavotos) {
+      const listadoDiputados = await obtenerListadoDiputados(evento);
+      
+      temavotos = await TemasPuntosVotos.create({
+        id_punto: punto.id,
+        id_evento: punto.id_evento,
+        tema_votacion: null,
+        fecha_votacion: Sequelize.literal('CURRENT_TIMESTAMP'),
+      });
+
+      const votospunto = listadoDiputados.map((dip) => ({
+        sentido: 0,
+        mensaje: "PENDIENTE",
+        id_tema_punto_voto: temavotos.id,
+        id_diputado: dip.id_diputado,
+        id_partido: dip.id_partido,
+        id_comision_dip: dip.comision_dip_id,
+      }));
+
+      await VotosPunto.bulkCreate(votospunto);
+      mensajeRespuesta = "Votacion creada correctamente";
+    }
+
+    const integrantes = await obtenerResultadosVotacionOptimizado(temavotos.id);
+    return res.status(200).json({
+      msg: mensajeRespuesta,
+      evento,
+      integrantes,
+    });
+
+  } catch (error: any) {
+    console.error("Error al traer los votos:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+async function obtenerListadoDiputados(evento: any) {
+  const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null }[] = [];
+
+  if (evento.tipoevento?.nombre === "Sesión") {
+    const legislatura = await Legislatura.findOne({
+      order: [["fecha_inicio", "DESC"]],
+    });
+
+    if (legislatura) {
+      const diputados = await IntegranteLegislatura.findAll({
+        where: { legislatura_id: legislatura.id },
+        include: [{ model: Diputado, as: "diputado" }],
+      });
+
+      for (const inteLegis of diputados) {
+        if (inteLegis.diputado) {
+          listadoDiputados.push({
+            id_diputado: inteLegis.diputado.id,
+            id_partido: inteLegis.partido_id,
+            comision_dip_id: null,
+          });
+        }
+      }
+    }
+  } else {
+    const comisiones = await AnfitrionAgenda.findAll({
+      where: { agenda_id: evento.id },
+    });
+
+    if (comisiones.length > 0) {
+      const comisionIds = comisiones.map((c) => c.autor_id);
+      const integrantes = await IntegranteComision.findAll({
+        where: { comision_id: comisionIds },
+        include: [
+          {
+            model: IntegranteLegislatura,
+            as: "integranteLegislatura",
+            include: [{ model: Diputado, as: "diputado" }],
+          },
+        ],
+      });
+
+      for (const inte of integrantes) {
+        if (inte.integranteLegislatura?.diputado) {
+          listadoDiputados.push({
+            id_diputado: inte.integranteLegislatura.diputado.id,
+            id_partido: inte.integranteLegislatura.partido_id,
+            comision_dip_id: inte.comision_id,
+          });
+        }
+      }
+    }
+  }
+
+  return listadoDiputados;
+}
+
+async function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto: string) {
+  const votosRaw = await VotosPunto.findAll({
+    where: { id_tema_punto_voto: idTemaPuntoVoto },
+    raw: true,
+  });
+  const votosUnicos = Object.values(
+    votosRaw.reduce<Record<string, any>>((acc, curr) => {
+      if (!curr.id_diputado) return acc;
+      acc[curr.id_diputado] = curr;
+      return acc;
+    }, {})
+  );
+
+  if (votosUnicos.length === 0) {
+    return [];
+  }
+
+  const diputadoIds = votosUnicos.map(v => v.id_diputado).filter(Boolean);
+  const diputados = await Diputado.findAll({
+    where: { id: diputadoIds },
+    attributes: ["id", "apaterno", "amaterno", "nombres"],
+    raw: true,
+  });
+
+  const diputadosMap = new Map(
+    diputados.map(d => [d.id, d])
+  );
+
+  const partidoIds = votosUnicos.map(v => v.id_partido).filter(Boolean);
+  const partidos = await Partidos.findAll({
+    where: { id: partidoIds },
+    attributes: ["id", "siglas"],
+    raw: true,
+  });
+
+  const partidosMap = new Map(
+    partidos.map(p => [p.id, p])
+  );
+
+
+  return votosUnicos.map((voto) => {
+    const diputado = diputadosMap.get(voto.id_diputado);
+    const partido = partidosMap.get(voto.id_partido);
+
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    return {
+      ...voto,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+    };
+  });
+}
+
+
+export const actualizarvoto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+
+    if (!body.idpunto || !body.iddiputado || body.sentido === undefined) {
+      return res.status(400).json({
+        msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
+      });
+    }
+
+    const temavotos = await TemasPuntosVotos.findOne({ 
+      where: { id_punto: body.idpunto } 
+    });
+
+    if (!temavotos) {
+      return res.status(404).json({
+        msg: "No se encontró el tema de votación para este punto",
+      });
+    }
+
+    let nuevoSentido: number;
+    let nuevoMensaje: string;
+
+    switch (body.sentido) {
+      case 1:
+        nuevoSentido = 1;
+        nuevoMensaje = "A FAVOR";
+        break;
+      case 2:
+        nuevoSentido = 2;
+        nuevoMensaje = "ABSTENCIÓN";
+        break;
+      case 0:
+      case 3:
+        nuevoSentido = 3;
+        nuevoMensaje = "EN CONTRA";
+        break;
+      default:
+        return res.status(400).json({
+          msg: "Sentido de voto inválido. Usa 1 (A FAVOR), 2 (ABSTENCIÓN) o 0/3 (EN CONTRA)",
+        });
+    }
+
+    const [cantidadActualizada] = await VotosPunto.update(
+      {
+        sentido: nuevoSentido,
+        mensaje: nuevoMensaje,
+      },
+      {
+        where: {
+          id_tema_punto_voto: temavotos.id,  
+          id_diputado: body.iddiputado,
+        }
+      }
+    );
+
+    if (cantidadActualizada === 0) {
+      return res.status(404).json({
+        msg: "No se encontró el voto del diputado para este punto",
+      });
+    }
+
+    return res.status(200).json({
+      msg: "Voto actualizado correctamente",
+      estatus: 200,
+      registrosActualizados: cantidadActualizada,
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar el voto:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+export const reiniciarvoto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    if (!body.idpunto) {
+      return res.status(400).json({
+        msg: "Falta el parámetro requerido: idpunto",
+      });
+    }
+    const temavotos = await TemasPuntosVotos.findOne({ 
+      where: { id_punto: body.idpunto } 
+    });
+
+    if (!temavotos) {
+      return res.status(404).json({
+        msg: "No se encontró el tema de votación para este punto",
+      });
+    }
+    const [cantidadActualizada] = await VotosPunto.update(
+      {
+        sentido: 0,
+        mensaje: "PENDIENTE",
+      },
+      {
+        where: {
+          id_tema_punto_voto: temavotos.id,  
+        }
+      }
+    );
+    if (cantidadActualizada === 0) {
+      return res.status(404).json({
+        msg: "No se encontraron votos para reiniciar",
+      });
+    }
+    return res.status(200).json({
+      msg: `${cantidadActualizada} voto(s) reiniciado(s) correctamente a PENDIENTE`,
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error('Error al reiniciar las votaciones:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
   }
 };
