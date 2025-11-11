@@ -67,5 +67,9 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getvotospunto/${id}`)
   }
   
+  saveVotacion(data:any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actvoto/`,data)
+  }
+  
   
 }
