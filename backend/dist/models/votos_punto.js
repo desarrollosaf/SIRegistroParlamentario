@@ -15,7 +15,7 @@ VotosPunto.init({
         defaultValue: sequelize_1.DataTypes.UUIDV4,
     },
     sentido: {
-        type: sequelize_1.DataTypes.STRING(255),
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
     },
     mensaje: {
