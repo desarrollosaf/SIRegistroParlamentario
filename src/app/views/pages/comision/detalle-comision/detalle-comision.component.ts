@@ -738,8 +738,22 @@ export class DetalleComisionComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.votantes.forEach(v => v.sentido = 0);
-        this.dividirEnColumnasVotacion();
+
+        const datos = {
+          idpunto: this.idpto,
+        }
+        this._eventoService.reinicioVotacion(datos).subscribe({
+          next: (response: any) => {
+            console.log(response);
+            this.votantes.forEach(v => v.sentido = 0);
+            this.dividirEnColumnasVotacion();
+          },
+          error: (e: HttpErrorResponse) => {
+            console.error('Error al cargar votantes:', e);
+          }
+        });
+
+
 
         const Toast = Swal.mixin({
           toast: true,
