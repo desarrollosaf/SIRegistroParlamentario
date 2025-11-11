@@ -56,6 +56,7 @@ export class DetalleComisionComponent implements OnInit {
   columnaVotantes2: Votante[] = [];
   puntoSeleccionadoVotacion: number | null = null; // solo guardará el id
   listaPuntosVotacion: any[] = [];
+  idpto: any;
   //VOTACION
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
@@ -635,13 +636,14 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   onPuntoVotacionChange(puntoId: any): void {
-  
+
     if (puntoId.id) {
       this.cargarVotantes(puntoId.id);
     }
   }
   private cargarVotantes(punto: any): void {
     console.log(punto);
+    this.idpto = punto;
     this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
       next: (response: any) => {
         console.log(response);
@@ -666,8 +668,19 @@ export class DetalleComisionComponent implements OnInit {
 
   marcarVotacion(votante: Votante, sentido: number): void {
     votante.sentido = sentido;
-    // Aquí puedes agregar la llamada al servicio para guardar
-    // this.guardarVotacion(votante.id_diputado, sentido, this.puntoSeleccionadoVotacion.id);
+    const datos = {
+      idpunto: this.idpto,
+      iddiputado: votante.id_diputado,
+      sentido: votante.sentido
+    }
+    this._eventoService.saveVotacion(datos).subscribe({
+      next: (response: any) => {
+        console.log(response);
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al votar:', e);
+      }
+    });
   }
 
   getClaseVotacion(sentido: number): string {
@@ -697,7 +710,6 @@ export class DetalleComisionComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Aquí va la lógica para terminar la votación
         this.puntoSeleccionadoVotacion = null;
         const Toast = Swal.mixin({
           toast: true,
@@ -726,8 +738,22 @@ export class DetalleComisionComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.votantes.forEach(v => v.sentido = 0);
-        this.dividirEnColumnasVotacion();
+
+        const datos = {
+          idpunto: this.idpto,
+        }
+        this._eventoService.reinicioVotacion(datos).subscribe({
+          next: (response: any) => {
+            console.log(response);
+            this.votantes.forEach(v => v.sentido = 0);
+            this.dividirEnColumnasVotacion();
+          },
+          error: (e: HttpErrorResponse) => {
+            console.error('Error al cargar votantes:', e);
+          }
+        });
+
+
 
         const Toast = Swal.mixin({
           toast: true,
