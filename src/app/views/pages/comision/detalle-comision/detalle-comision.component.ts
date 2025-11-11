@@ -54,7 +54,7 @@ export class DetalleComisionComponent implements OnInit {
   votantes: Votante[] = [];
   columnaVotantes1: Votante[] = [];
   columnaVotantes2: Votante[] = [];
-  puntoSeleccionadoVotacion: number | null = null;
+  puntoSeleccionadoVotacion: number | null = null; // solo guardará el id
   listaPuntosVotacion: any[] = [];
   //VOTACION
   integrantes: Integrante[] = [];
@@ -244,7 +244,6 @@ export class DetalleComisionComponent implements OnInit {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log(response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
           const puntoMapeado = {
@@ -261,15 +260,11 @@ export class DetalleComisionComponent implements OnInit {
               observaciones: [punto.observaciones]
             })
           };
-
-
           if (punto.id_proponente) {
             this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
           }
-
           return puntoMapeado;
         });
-
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -319,7 +314,6 @@ export class DetalleComisionComponent implements OnInit {
 
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
-        // console.log('Punto actualizado:', response);
         this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
@@ -496,7 +490,6 @@ export class DetalleComisionComponent implements OnInit {
       id_evento: this.idComisionRuta
     };
 
-    // console.log('Datos a enviar:', datos);
     this._eventoService.saveIntervencion(datos).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
@@ -630,32 +623,20 @@ export class DetalleComisionComponent implements OnInit {
   //********************************************************************************************************* */
 
   private cargarDatosVotacion(): void {
-    // Cargar puntos para votación (datos ficticios por ahora)
-    this.listaPuntosVotacion = [
-      { id: 1, numero: '1', descripcion: 'Aprobación del acta de la sesión anterior' },
-      { id: 2, numero: '2', descripcion: 'Dictamen sobre reforma a la Ley de Educación' },
-      { id: 3, numero: '3', descripcion: 'Iniciativa de Ley de Movilidad Sustentable' },
-      { id: 4, numero: '4', descripcion: 'Punto de acuerdo sobre transparencia presupuestal' },
-      { id: 5, numero: '5', descripcion: 'Aprobación de presupuesto anual' }
-    ];
-
-
-    /*
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         this.listaPuntosVotacion = response.data || [];
       },
       error: (e: HttpErrorResponse) => {
-        console.error('Error al cargar puntos:', e);
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
       }
     });
-    */
   }
-  onPuntoVotacionChange(puntoId: number): void {
-    if (puntoId) {
-      // Buscar el punto completo si lo necesitas
-      const punto = this.listaPuntosVotacion.find(p => p.id === puntoId);
-      this.puntoSeleccionadoVotacion = puntoId;
+
+  onPuntoVotacionChange(puntoId: any): void {
+  
+    if (puntoId.id) {
       this.cargarVotantes();
     }
   }
@@ -734,6 +715,7 @@ export class DetalleComisionComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         // Aquí va la lógica para terminar la votación
+        this.puntoSeleccionadoVotacion = null;
         const Toast = Swal.mixin({
           toast: true,
           position: 'top-end',

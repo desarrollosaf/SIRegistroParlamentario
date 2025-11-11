@@ -426,116 +426,105 @@
                                             <div class="col-md-8">
                                                 <label class="form-label fw-semibold">Selecciona el punto a
                                                     votar</label>
-                                                <ng-select [items]="listaPuntosVotacion" bindLabel="descripcion"
+                                                <ng-select [items]="listaPuntosVotacion" bindLabel="punto"
                                                     bindValue="id" [(ngModel)]="puntoSeleccionadoVotacion"
-                                                    (change)="onPuntoVotacionChange($event)"
-                                                    placeholder="Selecciona un punto del orden del día">
+                                                    placeholder="Selecciona un punto del orden del día"
+                                                    (change)="onPuntoVotacionChange($event)">
                                                     <ng-template ng-label-tmp let-item="item">
-                                                        <span class="fw-semibold">Punto {{ item.numero }}:</span> {{
-                                                        item.descripcion }}
+                                                        <span class="fw-semibold">Punto {{ item.nopunto }}:</span> {{
+                                                        item.punto }}
                                                     </ng-template>
+
                                                     <ng-template ng-option-tmp let-item="item">
                                                         <div class="d-flex flex-column">
-                                                            <span class="fw-semibold">Punto {{ item.numero }}</span>
-                                                            <small class="text-muted">{{ item.descripcion }}</small>
+                                                            <span class="fw-semibold">Punto {{ item.nopunto }}</span>
+                                                            <small class="text-muted">{{ item.punto }}</small>
                                                         </div>
                                                     </ng-template>
                                                 </ng-select>
                                             </div>
                                         </div>
                                     </div>
-
+                                    <br>
                                     <div *ngIf="puntoSeleccionadoVotacion" class="fade-in">
                                         <!-- Tarjetas de estadísticas de votación -->
-                                        <div class="row g-3 mb-4">
-                                            <div class="row g-3 mb-4">
-                                                <div class="col-6 col-sm-6 col-lg-3">
-                                                    <div class="card stats-card stats-total-votacion">
-                                                        <div class="card-body p-2">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="stats-icon me-3">
-                                                                    <i class="bi bi-people-fill"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <p class="text-muted mb-1 small">Total</p>
-                                                                    <h3 class="mb-0 fw-bold">{{ votantes.length }}</h3>
-                                                                </div>
+                                        <div class="row g-2 mb-3 small-cards justify-content-center">
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-total-votacion p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-people-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Total</p>
+                                                                <h5 class="mb-0 fw-bold">{{ votantes.length }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div class="col-6 col-sm-6 col-lg-3">
-                                                    <div class="card stats-card stats-favor">
-                                                        <div class="card-body p-2">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="stats-icon me-3">
-                                                                    <i class="bi bi-hand-thumbs-up-fill"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <p class="text-muted mb-1 small">A Favor</p>
-                                                                    <h3 class="mb-0 fw-bold">{{ contarVotaciones(1) }}
-                                                                    </h3>
-                                                                </div>
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-favor p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hand-thumbs-up-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">A Favor</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotaciones(1) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div class="col-6 col-sm-6 col-lg-3">
-                                                    <div class="card stats-card stats-abstencion">
-                                                        <div class="card-body p-2">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="stats-icon me-3">
-                                                                    <i class="bi bi-dash-circle-fill"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <p class="text-muted mb-1 small">Abstención</p>
-                                                                    <h3 class="mb-0 fw-bold">{{ contarVotaciones(2) }}
-                                                                    </h3>
-                                                                </div>
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-abstencion p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-dash-circle-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Abstención</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotaciones(2) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div class="col-6 col-sm-6 col-lg-3">
-                                                    <div class="card stats-card stats-contra">
-                                                        <div class="card-body p-2">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="stats-icon me-3">
-                                                                    <i class="bi bi-hand-thumbs-down-fill"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <p class="text-muted mb-1 small">En Contra</p>
-                                                                    <h3 class="mb-0 fw-bold">{{ contarVotaciones(3) }}
-                                                                    </h3>
-                                                                </div>
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-contra p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hand-thumbs-down-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">En Contra</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotaciones(3) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <!-- Nueva tarjeta de PENDIENTES -->
-                                                <div class="col-12 col-sm-6 col-lg-3 mx-auto">
-                                                    <div class="card stats-card stats-pendiente">
-                                                        <div class="card-body p-2">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="stats-icon me-3">
-                                                                    <i class="bi bi-hourglass-split"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <p class="text-muted mb-1 small">Pendientes</p>
-                                                                    <h3 class="mb-0 fw-bold">{{ contarVotaciones(0) }}
-                                                                    </h3>
-                                                                </div>
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-pendiente p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hourglass-split"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Pendientes</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotaciones(0) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-
+                                        <br>
                                         <div
                                             class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-sm-4 gap-3">
                                             <h5 class="mb-0">
@@ -543,18 +532,21 @@
                                                 Registro de Votos
                                             </h5>
                                             <div class="d-flex gap-2 flex-wrap">
-                                                <button class="btn btn-success btn-sm" (click)="terminarVotacion()">
+                                                <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
                                                 </button>
                                                 <button class="btn btn-warning btn-sm" (click)="reiniciarVotacion()">
                                                     <i class="bi bi-arrow-clockwise me-1"></i> Reiniciar
                                                 </button>
-                                                <button class="btn btn-info btn-sm" (click)="imprimirVotacion()">
+                                                <button class="btn btn-light btn-sm" (click)="imprimirVotacion()">
                                                     <i class="bi bi-printer-fill me-1"></i> Imprimir
+                                                </button>
+                                                <button class="btn btn-success btn-sm" (click)="imprimirVotacion()">
+                                                    <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
                                             </div>
                                         </div>
-
+                                        <br>
                                         <!-- Lista de votantes en dos columnas -->
                                         <div class="row g-3">
                                             <div class="col-12 col-lg-6">
