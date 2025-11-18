@@ -22,6 +22,11 @@ import Intervencion from "../models/intervenciones";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
+import { tipo_cargo_comisions } from "../models/tipo_cargo_comisions";
+import TipoAutor from "../models/tipo_autors";
+import { comisiones } from "../models/init-models";
+import Municipios from "../models/municipios";
+import OtrosAutores from "../models/otros_autores";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -983,3 +988,208 @@ export const reiniciarvoto = async (req: Request, res: Response): Promise<any> =
     });
   }
 };
+
+
+export const catalogossave = async (req: Request, res: Response) => {
+  try {
+    const sedes = await Sedes.findAll({
+      attributes: ['id', 'sede']
+    });
+
+    const comisiones = await Comision.findAll({
+      attributes: ['id', 'nombre']
+    });
+
+    const municipios = await Municipios.findAll({
+      attributes: ['id', 'cabecera'],
+      order: [['cabecera', 'ASC']]
+    });
+
+    const partidos = await Partidos.findAll({
+      attributes: ['id', 'nombre']
+    });
+
+    const tipoAutores = await TipoAutor.findAll({
+      attributes: ['id', 'valor']
+    });
+
+    const otros = await OtrosAutores.findAll({
+      attributes: ['id', 'valor']
+    });
+
+    const legislatura = await Legislatura.findAll({
+      attributes: ['id', 'numero']
+    });
+
+    const tipoevento = await TipoEventos.findAll({
+      attributes: ['id', 'nombre']
+    });
+
+    const idComites = await TipoComisions.findOne({
+      where: { valor: 'Comités' }
+    });
+
+    let comites: Record<string, string> = {};
+
+    if (idComites) {
+      const com = await Comision.findAll({
+        where: { tipo_comision_id: idComites.id },
+        attributes: ['id', 'nombre']
+      });
+
+      comites = Object.fromEntries(
+        com.map(item => [item.id, item.nombre])
+      );
+    }
+
+    const idPermanente = await TipoComisions.findOne({
+      where: { valor: 'Diputación Permanente' }
+    });
+
+    let permanente: Record<string, string> = {};
+
+    if (idPermanente) {
+      const dips = await Comision.findAll({
+        where: { tipo_comision_id: idPermanente.id },
+        attributes: ['id', 'nombre']
+      });
+
+      permanente = Object.fromEntries(
+        dips.map(item => [item.id, item.nombre])
+      );
+    }
+
+    const legisla = await Legislatura.findOne({
+          order: [["fecha_inicio", "DESC"]],
+        });
+
+        let diputadosArray: { id: string; nombre: string }[] = [];
+
+        if (legisla) {
+          const diputados = await IntegranteLegislatura.findAll({
+            where: { legislatura_id: legisla.id },
+            include: [
+              {
+                model: Diputado,
+                as: "diputado",
+                attributes: ["id", "nombres", "apaterno", "amaterno"],
+              },
+            ],
+          });
+          diputadosArray = diputados
+            .filter(d => d.diputado)
+            .map(d => ({
+              id: d.diputado.id,
+              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+            }));
+        }
+
+  
+    return res.json({
+      sedes,
+      comisiones,
+      municipios,
+      partidos,
+      tipoAutores,
+      otros,
+      legislatura,
+      tipoevento,
+      comites,
+      permanente,
+      diputadosArray
+    });
+
+  } catch (error) {
+    console.error("Error al obtener catálogos de agenda:", error);
+    return res.status(500).json({
+      msg: "Error interno del servidor",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    });
+  }
+};
+
+
+
+export const saveagenda = async (req: Request, res: Response) => {
+  try {
+    const agendaBody = req.body;
+    const anfitriones = req.body.autores || [];
+
+    const agenda = await Agenda.create({
+      descripcion: agendaBody.descripcion,
+      fecha: agendaBody.fecha,
+      hora_inicio: agendaBody.hora_inicio,
+      hora_fin: agendaBody.hora_fin,
+      sede_id: agendaBody.sede_id,
+      tipo_evento_id: agendaBody.tipo_evento_id
+    });
+
+    for (const item of anfitriones) {
+   
+      const tipoAutorRecord = await TipoAutor.findOne({
+        where: { valor: item.tipo }
+      });
+
+      const tipoAutorId = tipoAutorRecord?.id;
+      if (!tipoAutorId) continue;
+
+     
+      if (Array.isArray(item.autor_id)) {
+        for (const autor of item.autor_id) {
+          await AnfitrionAgenda.create({
+            agenda_id: agenda.id,
+            tipo_autor_id: tipoAutorId,
+            autor_id: autor.autor_id
+          });
+        }
+      }
+
+  
+      else if (typeof item.autor_id === "string") {
+        await AnfitrionAgenda.create({
+          agenda_id: agenda.id,
+          tipo_autor_id: tipoAutorId,
+          autor_id: item.autor_id
+        });
+      }
+    }
+
+    return res.json({ response: "success", id: agenda.id });
+
+  } catch (error) {
+    console.error("Error al guardar la agenda:", error);
+    return res.status(500).json({
+      msg: "Error interno del servidor",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    });
+  }
+};
+
+export const getAgenda = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const agenda = await Agenda.findByPk(id, {
+      include: [
+        {
+          model: AnfitrionAgenda,
+          as: "anfitrion_agendas"
+        }
+      ]
+    });
+
+    if (!agenda) {
+      return res.status(404).json({ msg: "Agenda no encontrada" });
+    }
+
+    return res.json(agenda);
+
+  } catch (error) {
+    console.error("Error al obtener la agenda:", error);
+    return res.status(500).json({
+      msg: "Error interno del servidor",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    });
+  }
+};
+

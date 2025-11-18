@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const pleno_1 = __importDefault(require("../database/pleno"));
+const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 class OtrosAutores extends sequelize_1.Model {
 }
 // Inicialización
@@ -18,11 +18,20 @@ OtrosAutores.init({
         type: sequelize_1.DataTypes.TEXT,
         allowNull: false,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
-    deletedAt: sequelize_1.DataTypes.DATE,
+    createdAt: {
+        field: 'created_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
+    updatedAt: {
+        field: 'updated_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
+    deletedAt: {
+        field: 'deleted_at',
+        type: sequelize_1.DataTypes.DATE,
+    },
 }, {
-    sequelize: pleno_1.default,
+    sequelize: registrocomisiones_1.default,
     tableName: 'otros_autores',
     timestamps: true,
     paranoid: true,

@@ -1,62 +1,50 @@
-import { Model, DataTypes, Optional, Sequelize } from 'sequelize';
+import { Model, DataTypes, CreationOptional } from 'sequelize';
+import sequelize from '../database/registrocomisiones';
 
-export interface tipo_autorsAttributes {
-  id: string;
-  valor: string;
-  model: string;
-  created_at?: Date;
-  updated_at?: Date;
-  deleted_at?: Date;
+class TipoAutor extends Model {
+  declare id: string;
+  declare valor: string;
+  declare model: string;
+
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+  declare deletedAt: CreationOptional<Date>;
 }
 
-export type tipo_autorsPk = "id";
-export type tipo_autorsId = tipo_autors[tipo_autorsPk];
-export type tipo_autorsOptionalAttributes = "created_at" | "updated_at" | "deleted_at";
-export type tipo_autorsCreationAttributes = Optional<tipo_autorsAttributes, tipo_autorsOptionalAttributes>;
-
-export class tipo_autors extends Model<tipo_autorsAttributes, tipo_autorsCreationAttributes> implements tipo_autorsAttributes {
-  id!: string;
-  valor!: string;
-  model!: string;
-  created_at?: Date;
-  updated_at?: Date;
-  deleted_at?: Date;
-
-  static initModel(sequelize: Sequelize): typeof tipo_autors {
-    return tipo_autors.init(
-      {
-        id: {
-          type: DataTypes.CHAR(36),
-          allowNull: false,
-          primaryKey: true
-        },
-        valor: {
-          type: DataTypes.STRING(255),
-          allowNull: false
-        },
-        model: {
-          type: DataTypes.STRING(255),
-          allowNull: false
-        },
-        created_at: DataTypes.DATE,
-        updated_at: DataTypes.DATE,
-        deleted_at: DataTypes.DATE
-      },
-      {
-        sequelize,
-        tableName: 'tipo_autors',
-        timestamps: true,
-        paranoid: true,
-        underscored: true,
-        indexes: [
-          {
-            name: 'PRIMARY',
-            unique: true,
-            using: 'BTREE',
-            fields: ['id']
-          }
-        ]
-      }
-    );
+TipoAutor.init(
+  {
+    id: {
+      type: DataTypes.CHAR(36),
+      allowNull: false,
+      primaryKey: true,
+    },
+    valor: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    model: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    createdAt: {
+      field: 'created_at',
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
+      field: 'updated_at',
+      type: DataTypes.DATE,
+    },
+    deletedAt: {
+      field: 'deleted_at',
+      type: DataTypes.DATE,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'tipo_autors',
+    timestamps: true,
+    paranoid: true,
   }
-}
+);
+
+export default TipoAutor;

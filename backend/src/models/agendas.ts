@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/registrocomisiones';
 import AnfitrionAgenda from '../models/anfitrion_agendas';
 import Sede from '../models/sedes';
 import SesionAgenda from '../models/sesion_agendas';
@@ -50,9 +50,10 @@ class Agenda extends Model {
 Agenda.init(
   {
     id: {
-      type: DataTypes.CHAR(36),
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
-      primaryKey: true
+      primaryKey: true,
     },
     fecha: {
       type: DataTypes.DATE,
@@ -139,7 +140,7 @@ Agenda.init(
 );
 
 // 👇 Asociaciones
-// Agenda.hasMany(AnfitrionAgenda, { foreignKey: 'agenda_id', as: 'anfitrion_agendas' });
+Agenda.hasMany(AnfitrionAgenda, { foreignKey: 'agenda_id', as: 'anfitrion_agendas' });
 // Agenda.hasMany(SesionAgenda, { foreignKey: 'agenda_id', as: 'sesion_agendas' });
 // Agenda.hasMany(Sesion, { foreignKey: 'agenda_id', as: 'sesiones' });
 // Agenda.hasMany(TurnoComision, { foreignKey: 'id_agenda', as: 'turno_comisions' });

@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/cuestionariosConnection';
+import sequelize from '../database/registrocomisiones';
 import Distritos from './distritos';
 
 class Municipios extends Model {
@@ -8,12 +8,10 @@ class Municipios extends Model {
   declare cabecera: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-
-  // Asociaciones
   declare distritos?: Distritos[];
 }
 
-// Inicialización
+
 Municipios.init(
   {
     id: {
@@ -39,7 +37,6 @@ Municipios.init(
   }
 );
 
-// Asociaciones
-Municipios.hasMany(Distritos, { foreignKey: 'municipio_id', as: 'distritos' });
+// Municipios.hasMany(Distritos, { foreignKey: 'municipio_id', as: 'distritos' });
 
 export default Municipios;
