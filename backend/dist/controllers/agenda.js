@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -34,6 +34,9 @@ const intervenciones_1 = __importDefault(require("../models/intervenciones"));
 const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const sequelize_2 = require("sequelize");
+const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
+const municipios_1 = __importDefault(require("../models/municipios"));
+const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -887,3 +890,172 @@ const reiniciarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.reiniciarvoto = reiniciarvoto;
+const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const sedes = yield sedes_1.default.findAll({
+            attributes: ['id', 'sede']
+        });
+        const comisiones = yield comisions_1.default.findAll({
+            attributes: ['id', 'nombre']
+        });
+        const municipios = yield municipios_1.default.findAll({
+            attributes: ['id', 'cabecera'],
+            order: [['cabecera', 'ASC']]
+        });
+        const partidos = yield partidos_1.default.findAll({
+            attributes: ['id', 'nombre']
+        });
+        const tipoAutores = yield tipo_autors_1.default.findAll({
+            attributes: ['id', 'valor']
+        });
+        const otros = yield otros_autores_1.default.findAll({
+            attributes: ['id', 'valor']
+        });
+        const legislatura = yield legislaturas_1.default.findAll({
+            attributes: ['id', 'numero']
+        });
+        const tipoevento = yield tipo_eventos_1.default.findAll({
+            attributes: ['id', 'nombre']
+        });
+        const idComites = yield tipo_comisions_1.default.findOne({
+            where: { valor: 'Comités' }
+        });
+        let comites = {};
+        if (idComites) {
+            const com = yield comisions_1.default.findAll({
+                where: { tipo_comision_id: idComites.id },
+                attributes: ['id', 'nombre']
+            });
+            comites = Object.fromEntries(com.map(item => [item.id, item.nombre]));
+        }
+        const idPermanente = yield tipo_comisions_1.default.findOne({
+            where: { valor: 'Diputación Permanente' }
+        });
+        let permanente = {};
+        if (idPermanente) {
+            const dips = yield comisions_1.default.findAll({
+                where: { tipo_comision_id: idPermanente.id },
+                attributes: ['id', 'nombre']
+            });
+            permanente = Object.fromEntries(dips.map(item => [item.id, item.nombre]));
+        }
+        const legisla = yield legislaturas_1.default.findOne({
+            order: [["fecha_inicio", "DESC"]],
+        });
+        let diputadosArray = [];
+        if (legisla) {
+            const diputados = yield integrante_legislaturas_1.default.findAll({
+                where: { legislatura_id: legisla.id },
+                include: [
+                    {
+                        model: diputado_1.default,
+                        as: "diputado",
+                        attributes: ["id", "nombres", "apaterno", "amaterno"],
+                    },
+                ],
+            });
+            diputadosArray = diputados
+                .filter(d => d.diputado)
+                .map(d => {
+                var _a, _b, _c;
+                return ({
+                    id: d.diputado.id,
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                });
+            });
+        }
+        return res.json({
+            sedes,
+            comisiones,
+            municipios,
+            partidos,
+            tipoAutores,
+            otros,
+            legislatura,
+            tipoevento,
+            comites,
+            permanente,
+            diputadosArray
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener catálogos de agenda:", error);
+        return res.status(500).json({
+            msg: "Error interno del servidor",
+            error: error instanceof Error ? error.message : "Error desconocido"
+        });
+    }
+});
+exports.catalogossave = catalogossave;
+const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const agendaBody = req.body;
+        const anfitriones = req.body.autores || [];
+        const agenda = yield agendas_1.default.create({
+            descripcion: agendaBody.descripcion,
+            fecha: agendaBody.fecha,
+            hora_inicio: agendaBody.hora_inicio,
+            hora_fin: agendaBody.hora_fin,
+            sede_id: agendaBody.sede_id,
+            tipo_evento_id: agendaBody.tipo_evento_id
+        });
+        for (const item of anfitriones) {
+            const tipoAutorRecord = yield tipo_autors_1.default.findOne({
+                where: { valor: item.tipo }
+            });
+            const tipoAutorId = tipoAutorRecord === null || tipoAutorRecord === void 0 ? void 0 : tipoAutorRecord.id;
+            if (!tipoAutorId)
+                continue;
+            if (Array.isArray(item.autor_id)) {
+                for (const autor of item.autor_id) {
+                    yield anfitrion_agendas_1.default.create({
+                        agenda_id: agenda.id,
+                        tipo_autor_id: tipoAutorId,
+                        autor_id: autor.autor_id
+                    });
+                }
+            }
+            else if (typeof item.autor_id === "string") {
+                yield anfitrion_agendas_1.default.create({
+                    agenda_id: agenda.id,
+                    tipo_autor_id: tipoAutorId,
+                    autor_id: item.autor_id
+                });
+            }
+        }
+        return res.json({ response: "success", id: agenda.id });
+    }
+    catch (error) {
+        console.error("Error al guardar la agenda:", error);
+        return res.status(500).json({
+            msg: "Error interno del servidor",
+            error: error instanceof Error ? error.message : "Error desconocido"
+        });
+    }
+});
+exports.saveagenda = saveagenda;
+const getAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const agenda = yield agendas_1.default.findByPk(id, {
+            include: [
+                {
+                    model: anfitrion_agendas_1.default,
+                    as: "anfitrion_agendas"
+                }
+            ]
+        });
+        if (!agenda) {
+            return res.status(404).json({ msg: "Agenda no encontrada" });
+        }
+        return res.json(agenda);
+    }
+    catch (error) {
+        console.error("Error al obtener la agenda:", error);
+        return res.status(500).json({
+            msg: "Error interno del servidor",
+            error: error instanceof Error ? error.message : "Error desconocido"
+        });
+    }
+});
+exports.getAgenda = getAgenda;

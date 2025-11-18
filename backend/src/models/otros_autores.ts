@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/registrocomisiones';
 
 class OtrosAutores extends Model {
   declare id: string;
@@ -21,9 +21,18 @@ OtrosAutores.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
+     createdAt: {
+      field: 'created_at',
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
+      field: 'updated_at',
+      type: DataTypes.DATE,
+    },
+    deletedAt: {
+      field: 'deleted_at',
+      type: DataTypes.DATE,
+    },
   },
   {
     sequelize,
