@@ -61,7 +61,7 @@ class Server {
                 '/api/eventos/reiniciavoto/',
                 '/api/eventos/catalogossave/',
                 '/api/eventos/saveagenda/',
-                '/api/eventos/getagenda/'
+                '/api/eventos/editagenda/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
