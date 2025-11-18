@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { EventoService } from '../../../service/evento.service';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { NgZone } from '@angular/core';
-
+declare var bootstrap: any;
 @Component({
   selector: 'app-comision',
   imports: [NgxDatatableModule, CommonModule, RouterModule],
@@ -29,7 +29,12 @@ export class ComisionComponent {
   constructor(private ngZone: NgZone) { }
 
   ngOnInit(): void { 
-    console.log('hola');
+      const tooltipTriggerList = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    tooltipTriggerList.forEach(tooltipEl => {
+      new bootstrap.Tooltip(tooltipEl);
+    });
     this.getEventos();
   }
 
