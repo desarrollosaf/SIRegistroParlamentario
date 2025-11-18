@@ -994,10 +994,12 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const agenda = yield agendas_1.default.create({
             descripcion: agendaBody.descripcion,
             fecha: agendaBody.fecha,
+            sede_id: agendaBody.sede_id,
+            tipo_evento_id: agendaBody.tipo_evento_id,
+            transmision: agendaBody.transmite,
+            liga: agendaBody.liga,
             hora_inicio: agendaBody.hora_inicio,
             hora_fin: agendaBody.hora_fin,
-            sede_id: agendaBody.sede_id,
-            tipo_evento_id: agendaBody.tipo_evento_id
         });
         for (const item of anfitriones) {
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
@@ -1071,10 +1073,12 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         yield agenda.update({
             descripcion: body.descripcion,
             fecha: body.fecha,
+            sede_id: body.sede_id,
+            tipo_evento_id: body.tipo_evento_id,
+            transmision: body.transmite,
+            liga: body.liga,
             fecha_hora_inicio: body.hora_inicio,
             fecha_hora_fin: body.hora_fin,
-            sede_id: body.sede_id,
-            tipo_evento_id: body.tipo_evento_id
         });
         yield anfitrion_agendas_1.default.destroy({
             where: { agenda_id: agendaId }

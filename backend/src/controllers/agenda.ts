@@ -1117,10 +1117,13 @@ export const saveagenda = async (req: Request, res: Response) => {
     const agenda = await Agenda.create({
       descripcion: agendaBody.descripcion,
       fecha: agendaBody.fecha,
+      sede_id: agendaBody.sede_id,
+      tipo_evento_id: agendaBody.tipo_evento_id, 
+      transmision: agendaBody.transmite,
+      liga: agendaBody.liga,
       hora_inicio: agendaBody.hora_inicio,
       hora_fin: agendaBody.hora_fin,
-      sede_id: agendaBody.sede_id,
-      tipo_evento_id: agendaBody.tipo_evento_id
+
     });
 
     for (const item of anfitriones) {
@@ -1207,10 +1210,12 @@ export const updateAgenda = async (req: Request, res: Response) => {
     await agenda.update({
       descripcion: body.descripcion,
       fecha: body.fecha,
+      sede_id: body.sede_id,
+      tipo_evento_id: body.tipo_evento_id,
+      transmision: body.transmite,
+      liga: body.liga,
       fecha_hora_inicio: body.hora_inicio,
       fecha_hora_fin: body.hora_fin,
-      sede_id: body.sede_id,
-      tipo_evento_id: body.tipo_evento_id
     });
 
     await AnfitrionAgenda.destroy({
