@@ -1,13 +1,13 @@
 import { Component, ElementRef, inject, QueryList, ViewChildren, ViewChild, TemplateRef } from '@angular/core';
 import { FormArray, FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms'
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AgendaService } from '../../../../service/agenda.service';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-add-edit-agenda',
@@ -30,8 +30,8 @@ export class AddEditAgendaComponent {
   private _agendaService = inject(AgendaService);
 
   selectAll: any;
-
-
+  idAgenda: any;
+  operacion: string = 'Registrar';
   tipoAutor: any[] = [];
   sedesSelect: any[] = [];
   tipoEventoSelect: any[] = [];
@@ -43,11 +43,7 @@ export class AddEditAgendaComponent {
   diputadoPer: any[] = [];
   otro: any[] = [];
   comite: any[] = [];
-
-
-
   tiposMultiples: string[] = [];
-
   autoresPorTipo: { [key: string]: any[] } = {};
 
   get autoresFiltrados() {
@@ -58,35 +54,53 @@ export class AddEditAgendaComponent {
     return autores.map(a => a.name).join(', ');
   }
 
-// "descripcion": "Evento para presentar propuestas de reforma",
-//   "fecha": "2025-02-11 15:00:00",
-//   "hora_inicio": "2025-10-21 13:00:00",
-//   "hora_fin": "2025-10-21 18:00:00",
-//   "sede_id": "0367d6f5-09cf-4729-bbad-7dc9e272dca8",
-//   "tipo_evento_id":
-  constructor(private fb: FormBuilder, private router: Router, private modalService: NgbModal) {
+  constructor(private fb: FormBuilder, private aRouter: ActivatedRoute, private router: Router, private modalService: NgbModal) {
     this.formAgenda = this.fb.group({
       fecha: ['', Validators.required],
       sede_id: ['', Validators.required],
-      tipo_evento_id : ['', Validators.required],
+      tipo_evento_id: ['', Validators.required],
       descripcion: ['', Validators.required],
       transmite: [false, Validators.required],
       liga: [''],
       hora_inicio: [''],
       hora_fin: [''],
     });
+    this.idAgenda = aRouter.snapshot.paramMap.get('id');
   }
 
   ngOnInit(): void {
-    this.getSelect();
+
+    if (this.idAgenda != null) {
+      this.operacion = 'Editar ';
+      this.getAgendaRegistrada();
+    } else {
+      this.getSelect();
+    }
   }
+
+
+
+  //++++++++++++++++++++Holi este es para hacer la editacion+++++++++++++++++++++++
+    getAgendaRegistrada(){
+      
+       this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
+      next: (response: any) => {
+        console.log(response);
+   
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+    }
+
+  //++++++++++++++++++++Holi este es el fin de la editacion+++++++++++++++++++++++
 
   abrirModal() {
     this.modalRef = this.modalService.open(this.xlModal, { size: 'lg' });
     this.modalRef.result.then((result) => {
-      // console.log("Modal cerrado:", result);
     }).catch((res) => {
-      // console.log("Modal cerrado por dismiss");
     });
   }
 
@@ -100,12 +114,51 @@ export class AddEditAgendaComponent {
 
 
   enviarDatos(): void {
+    if (this.formAgenda.invalid) {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Por favor completa todos los campos requeridos"
+      });
+      return;
+    }
     if (this.itemsTabla.length === 0) {
-      alert('Debes agregar al menos un anfitrión');
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Debes agregar al menos un anfitrión"
+      });
       return;
     }
 
-    // Transformar itemsTabla al formato requerido
     const autoresTransformados = this.itemsTabla.map(item => ({
       tipo: item.tipoAutorNombre,
       autor_id: item.autores.map(autor => ({
@@ -113,16 +166,55 @@ export class AddEditAgendaComponent {
       }))
     }));
 
-    // Construir el objeto completo para enviar
     const data = {
       ...this.formAgenda.value,
       autores: autoresTransformados
     };
 
-    console.log('Datos a enviar:', data);
-    console.log('JSON:', JSON.stringify(data, null, 2));
-  }
 
+    this._agendaService.saveAgenda(data).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        Swal.fire({
+          title: "Se guardo correctamente",
+          text: "¿Desea agregar mas información?",
+          icon: "success",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Confirmar",
+          cancelButtonText: "Salir"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.limpiarFormulario();
+          } else {
+            this.router.navigate(['/agenda-comision']);
+          }
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+  }
+  limpiarFormulario(): void {
+    this.formAgenda.reset({
+      fecha: '',
+      sede_id: '',
+      tipo_evento_id: '',
+      descripcion: '',
+      transmite: false,
+      liga: '',
+      hora_inicio: '',
+      hora_fin: ''
+    });
+    this.itemsTabla = [];
+    this.tipoAutorSeleccionado = '';
+    this.autoresSeleccionados = null;
+
+    console.log('Formulario limpiado correctamente');
+  }
   getSelect() {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
@@ -180,24 +272,56 @@ export class AddEditAgendaComponent {
   }
 
 
-
-
   agregarFila() {
     if (!this.tipoAutorSeleccionado) {
-      alert('Selecciona un tipo de autor');
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Selecciona un tipo de autor"
+      });
       return;
     }
 
     if (!this.autoresSeleccionados || (Array.isArray(this.autoresSeleccionados) && this.autoresSeleccionados.length === 0)) {
-      alert('Selecciona al menos un autor');
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Selecciona al menos un autor"
+      });
       return;
     }
 
-    // Obtener el nombre del tipo de autor
     const tipoAutorObj = this.tipoAutor.find(t => t.id === this.tipoAutorSeleccionado);
     if (!tipoAutorObj) return;
 
-    // Obtener lista de autores seleccionados en formato [{id, name}]
     let autoresArray: Array<{ id: string, name: string }> = [];
 
     if (Array.isArray(this.autoresSeleccionados)) {
@@ -208,24 +332,40 @@ export class AddEditAgendaComponent {
       const autor = this.autoresFiltrados.find(a => a.id === this.autoresSeleccionados);
       if (autor) autoresArray = [autor];
     }
-    // Evitar agregar si ya existe la misma combinación (opcional)
+
     const existe = this.itemsTabla.some(item =>
       item.tipoAutorId === this.tipoAutorSeleccionado &&
       JSON.stringify(item.autores.map(a => a.id).sort()) === JSON.stringify(autoresArray.map(a => a.id).sort())
     );
     if (existe) {
-      alert('Esa combinación ya fue agregada');
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Esa combinación ya fue agregada"
+      });
       return;
     }
 
-    // Agregar al array
     this.itemsTabla.push({
       tipoAutorId: this.tipoAutorSeleccionado,
       tipoAutorNombre: tipoAutorObj.name,
       autores: autoresArray
     });
 
-    // Limpiar selección
     this.tipoAutorSeleccionado = '';
     this.autoresSeleccionados = null;
   }

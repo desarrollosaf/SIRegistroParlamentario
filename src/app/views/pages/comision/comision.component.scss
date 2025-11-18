@@ -7,3 +7,32 @@
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
+
+/* Botones  */
+.btn-group-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 6px 8px !important;   /* tamaño medio */
+  font-size: 14px !important;
+  border-radius: 6px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.action-btn i {
+  font-size: 15px;
+}
+
+.action-btn:hover {
+  transform: scale(1.08);
+  opacity: 0.9;
+}
+
+/* Ajuste específico para esta versión */
+.btn-group-actions.mid .action-btn {
+  padding: 6px 8px !important;
+}

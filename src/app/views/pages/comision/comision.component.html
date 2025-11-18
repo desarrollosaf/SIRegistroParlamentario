@@ -5,10 +5,10 @@
             <div class="card-body">
                 <h6 class="card-title">Agenda</h6>
                 <button class="btn btn-sm btn-primary me-2" [routerLink]="['/agenda-comision/add']">
-                    <ng-container >
+                    <ng-container>
                         <i class="arrow-right-circle"></i> Agregar
                     </ng-container>
-                    
+
                 </button>
                 <br><br>
                 <div class="row">
@@ -22,28 +22,19 @@
                     <div *ngIf="rows().length === 0 && !loading()" class="text-center my-3">
                         <p><strong>No hay datos para mostrar</strong></p>
                     </div>
-                    <ngx-datatable #table class="bootstrap" (sort)="onSort($event)" 
-                        [rows]="rows()" 
-                        [columnMode]="'force'"
-                        [headerHeight]="50" 
-                        *ngIf="rows().length > 0" 
-                        [footerHeight]="50" 
-                        [externalSorting]="true"
-                        [externalPaging]="true" 
-                        [rowHeight]="'auto'" 
-                        [limit]="pageSize()" 
-                        [count]="filteredCount()"
-                        [offset]="page()" 
-                        (page)="setPage($event)" 
+                    <ngx-datatable #table class="bootstrap" (sort)="onSort($event)" [rows]="rows()"
+                        [columnMode]="'force'" [headerHeight]="50" *ngIf="rows().length > 0" [footerHeight]="50"
+                        [externalSorting]="true" [externalPaging]="true" [rowHeight]="'auto'" [limit]="pageSize()"
+                        [count]="filteredCount()" [offset]="page()" (page)="setPage($event)"
                         [loadingIndicator]="loading()">
-                        
+
                         <ngx-datatable-column prop="nombre" [headerClass]="'text-center'" [cellClass]="'text-center'"
                             name="Nombre">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.descripcion}}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
                             prop="fechainicio" name="Fecha incio">
                             <ng-template let-row="row" ngx-datatable-cell-template>
@@ -51,7 +42,7 @@
                                 <strong>Hora:</strong> {{ row.fecha_hora_inicio | date:'HH:mm:ss' }}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" prop="fechafin"
                             name="Fecha fin">
                             <ng-template let-row="row" ngx-datatable-cell-template>
@@ -59,30 +50,42 @@
                                 <strong>Hora:</strong> {{ row.fecha_hora_fin | date:'HH:mm:ss' }}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [sortable]="true"
                             [cellClass]="'text-center'" prop="sede" name="Sede">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.sede.sede}}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
                             prop="tipoevento" name="Tipo evento">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.tipoevento.nombre}}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Detalles">
                             <ng-template let-row="row" ngx-datatable-cell-template>
-                                <a class="btn btn-secondary btn-sm"
-                                    style="cursor: pointer; transition: all 0.3s ease;"
-                                    onmouseover="this.style.transform='scale(1.05)'"
-                                    onmouseout="this.style.transform='scale(1)'"
-                                    routerLink="detalle-comision/{{ row.id }}">
-                                    <i class="bi bi-arrow-right-circle"></i> Ir
-                            </a>
+
+                                <div class="btn-group-actions mid">
+
+                                    <a class="btn btn-secondary action-btn" routerLink="detalle-comision/{{ row.id }}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Ir">
+                                        <i class="bi bi-arrow-right-circle"></i>
+                                    </a>
+
+                                    <a class="btn btn-primary action-btn" routerLink="/agenda-comision/edit/{{ row.id }}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Editar ">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <a class="btn btn-danger action-btn" routerLink="comision-add/{{ row.id }}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+
                             </ng-template>
                         </ngx-datatable-column>
                     </ngx-datatable>
