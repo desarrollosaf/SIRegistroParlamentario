@@ -8,23 +8,23 @@
                         <div class="col-sm-4">
                             <div class="mb-3">
                                 <label class="form-label negri">Fecha:*</label>
-                                <input formControlName="a_fecha" type="datetime-local"
+                                <input formControlName="fecha" type="datetime-local"
                                     class="form-control input-simulado-disabled" />
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="mb-3">
                                 <label class="form-label negri">Sede:</label>
-                                <ng-select [items]="demoSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="a_sede">
+                                <ng-select [items]="sedesSelect" [searchable]="false" bindLabel="name" bindValue="id"
+                                    formControlName="sede_id">
                                 </ng-select>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="mb-3">
                                 <label class="form-label negri">Tipo Evento:</label>
-                                <ng-select [items]="demoSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="a_tipo_evento">
+                                <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name" bindValue="id"
+                                    formControlName="tipo_evento_id">
                                 </ng-select>
                             </div>
                         </div>
@@ -33,7 +33,7 @@
                         <div class="col-sm-12">
                             <div class="mb-3">
                                 <label class="form-label negri">Descripción:</label>
-                                <textarea formControlName="a_descripcion" class="form-control"
+                                <textarea formControlName="descripcion" class="form-control"
                                     id="exampleFormControlTextarea1" rows="6"></textarea>
                             </div>
                         </div>
@@ -86,13 +86,13 @@
                                 <label class="form-label negri">¿Se transmite en pagina principal?:</label>
                                 <div>
                                     <label class="form-check form-check-inline">
-                                        <input type="radio" class="form-check-input" formControlName="a_transmite"
+                                        <input type="radio" class="form-check-input" formControlName="transmite"
                                             [value]="true" />
                                         Sí
                                     </label>
 
                                     <label class="form-check form-check-inline">
-                                        <input type="radio" class="form-check-input" formControlName="a_transmite"
+                                        <input type="radio" class="form-check-input" formControlName="transmite"
                                             [value]="false" />
                                         No
                                     </label>
@@ -101,12 +101,12 @@
                         </div>
                     </div>
 
-                    <div *ngIf="formAgenda.get('a_transmite')?.value">
+                    <div *ngIf="formAgenda.get('transmite')?.value">
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="mb-3">
                                     <label class="form-label negri">Liga:</label>
-                                    <textarea formControlName="a_liga" class="form-control"
+                                    <textarea formControlName="liga" class="form-control"
                                         id="exampleFormControlTextarea1" rows="6"></textarea>
                                 </div>
                             </div>
@@ -116,14 +116,14 @@
                             <div class="col-sm-6">
                                 <div class="mb-3">
                                     <label class="form-label negri">Hora inicio:</label>
-                                    <input formControlName="a_hora_inicio" type="datetime-local"
+                                    <input formControlName="hora_inicio" type="datetime-local"
                                         class="form-control input-simulado-disabled" />
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="mb-3">
                                     <label class="form-label negri">Hora fin:</label>
-                                    <input formControlName="a_hora_fin" type="datetime-local"
+                                    <input formControlName="hora_fin" type="datetime-local"
                                         class="form-control input-simulado-disabled" />
                                 </div>
                             </div>
