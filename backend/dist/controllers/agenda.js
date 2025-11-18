@@ -893,29 +893,29 @@ exports.reiniciarvoto = reiniciarvoto;
 const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const sedes = yield sedes_1.default.findAll({
-            attributes: ['id', 'sede']
+            attributes: ['id', ['sede', 'name']]
         });
         const comisiones = yield comisions_1.default.findAll({
-            attributes: ['id', 'nombre']
+            attributes: ['id', ['nombre', 'name']]
         });
         const municipios = yield municipios_1.default.findAll({
-            attributes: ['id', 'cabecera'],
+            attributes: ['id', ['cabecera', 'name']],
             order: [['cabecera', 'ASC']]
         });
         const partidos = yield partidos_1.default.findAll({
-            attributes: ['id', 'nombre']
+            attributes: ['id', ['nombre', 'name']]
         });
         const tipoAutores = yield tipo_autors_1.default.findAll({
-            attributes: ['id', 'valor']
+            attributes: ['id', ['valor', 'name']]
         });
         const otros = yield otros_autores_1.default.findAll({
-            attributes: ['id', 'valor']
+            attributes: ['id', ['valor', 'name']]
         });
         const legislatura = yield legislaturas_1.default.findAll({
-            attributes: ['id', 'numero']
+            attributes: ['id', ['numero', 'name']]
         });
         const tipoevento = yield tipo_eventos_1.default.findAll({
-            attributes: ['id', 'nombre']
+            attributes: ['id', ['nombre', 'name']]
         });
         const idComites = yield tipo_comisions_1.default.findOne({
             where: { valor: 'Comités' }
@@ -924,7 +924,7 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (idComites) {
             const com = yield comisions_1.default.findAll({
                 where: { tipo_comision_id: idComites.id },
-                attributes: ['id', 'nombre']
+                attributes: ['id', ['nombre', 'name']]
             });
             comites = Object.fromEntries(com.map(item => [item.id, item.nombre]));
         }
@@ -935,7 +935,7 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (idPermanente) {
             const dips = yield comisions_1.default.findAll({
                 where: { tipo_comision_id: idPermanente.id },
-                attributes: ['id', 'nombre']
+                attributes: ['id', ['nombre', 'name']]
             });
             permanente = Object.fromEntries(dips.map(item => [item.id, item.nombre]));
         }
