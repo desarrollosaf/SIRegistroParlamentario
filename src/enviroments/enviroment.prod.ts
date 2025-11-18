@@ -1,7 +1,7 @@
 export const enviroment = {
     production: true,
-    // endpoint: 'https://jornadasalud.congresoedomex.gob.mx/vacunacion'
-      endpoint: 'http://localhost:3013/'
+    endpoint: 'https://parlamentario.congresoedomex.gob.mx/backend/'
+    //endpoint: 'http://localhost:3013/'
   };
 
  

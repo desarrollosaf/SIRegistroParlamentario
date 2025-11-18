@@ -13,6 +13,9 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import localeEs from '@angular/common/locales/es-MX';
 import { registerLocaleData } from '@angular/common';
 
+import { authInterceptor } from './views/pages/auth/auth.interceptor';
+
+
 const highlightOptions = {
   coreLibraryLoader: () => import('highlight.js/lib/core'),
   languages: {
@@ -26,6 +29,9 @@ registerLocaleData(localeEs);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }), 
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })), 

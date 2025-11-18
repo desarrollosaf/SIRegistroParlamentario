@@ -16,6 +16,9 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const eventos_1 = __importDefault(require("../routes/eventos"));
+const user_1 = __importDefault(require("../routes/user"));
+const auth_1 = require("../middlewares/auth");
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -32,41 +35,33 @@ class Server {
     }
     router() {
         this.app.use(eventos_1.default);
+        this.app.use(user_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
-            origin: 'http://localhost:4200',
-            // origin: 'https://parlamentario.congresoedomex.gob.mx',
+            origin: function (origin, callback) {
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx'];
+                if (!origin || allowedOrigins.includes(origin)) {
+                    callback(null, true);
+                }
+                else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
             credentials: true
         }));
+        this.app.use((0, cookie_parser_1.default)());
         this.app.use('/storage', express_1.default.static(path_1.default.join(process.cwd(), 'storage')));
         this.app.use((req, res, next) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/geteventos/',
-                '/api/eventos/getevento/',
-                '/api/eventos/actasistencia/',
-                '/api/eventos/catalogos/',
-                '/api/eventos/gettipos/',
-                '/api/eventos/savepunto/',
-                '/api/eventos/getpuntos/',
-                '/api/eventos/actualizarPunto/',
-                '/api/eventos/eliminarpunto/',
-                '/api/eventos/saveintervencion/',
-                '/api/eventos/getintervenciones/',
-                '/api/eventos/eliminarinter/',
-                '/api/eventos/getvotospunto/',
-                '/api/eventos/actvoto/',
-                '/api/eventos/reiniciavoto/',
-                '/api/eventos/catalogossave/',
-                '/api/eventos/saveagenda/',
-                '/api/eventos/editagenda/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
                 return next();
             }
+            return (0, auth_1.verifyToken)(req, res, next);
         });
     }
     DBconnetc() {
