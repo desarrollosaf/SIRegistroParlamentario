@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/registrocomisiones';
 import type Agendas from '../models/agendas';
 
 export class Sedes extends Model<InferAttributes<Sedes>, InferCreationAttributes<Sedes>> {

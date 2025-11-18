@@ -4,15 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const pleno_1 = __importDefault(require("../database/pleno"));
-const agendas_1 = __importDefault(require("./agendas"));
+const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 class AnfitrionAgenda extends sequelize_1.Model {
 }
 AnfitrionAgenda.init({
     id: {
-        type: sequelize_1.DataTypes.CHAR(36),
+        type: sequelize_1.DataTypes.UUID,
+        defaultValue: sequelize_1.DataTypes.UUIDV4,
         allowNull: false,
-        primaryKey: true
+        primaryKey: true,
     },
     agenda_id: {
         type: sequelize_1.DataTypes.CHAR(36),
@@ -39,11 +39,11 @@ AnfitrionAgenda.init({
         field: 'deleted_at',
     },
 }, {
-    sequelize: pleno_1.default,
+    sequelize: registrocomisiones_1.default,
     tableName: 'anfitrion_agendas',
     timestamps: true,
     paranoid: true,
 });
 // 👇 Asociaciones
-AnfitrionAgenda.belongsTo(agendas_1.default, { foreignKey: 'agenda_id', as: 'agenda' });
+// AnfitrionAgenda.belongsTo(Agenda, { foreignKey: 'agenda_id', as: 'agenda' });
 exports.default = AnfitrionAgenda;

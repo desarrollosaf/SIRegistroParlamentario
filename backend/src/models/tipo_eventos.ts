@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyAddAssociationsMixin, HasManySetAssociationsMixin, HasManyRemoveAssociationMixin, HasManyRemoveAssociationsMixin, HasManyHasAssociationMixin, HasManyHasAssociationsMixin, HasManyCountAssociationsMixin, ForeignKey } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/registrocomisiones';
 import Agendas from './agendas';
 
 class TipoEventos extends Model {

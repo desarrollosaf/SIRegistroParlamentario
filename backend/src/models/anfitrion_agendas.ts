@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
-import sequelize from '../database/pleno';
+import sequelize from '../database/registrocomisiones';
 import Agenda from './agendas';
 
 class AnfitrionAgenda extends Model {
@@ -22,9 +22,10 @@ class AnfitrionAgenda extends Model {
 AnfitrionAgenda.init(
   {
     id: {
-      type: DataTypes.CHAR(36),
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
-      primaryKey: true
+      primaryKey: true,
     },
     agenda_id: {
       type: DataTypes.CHAR(36),
@@ -60,6 +61,6 @@ AnfitrionAgenda.init(
 );
 
 // 👇 Asociaciones
-AnfitrionAgenda.belongsTo(Agenda, { foreignKey: 'agenda_id', as: 'agenda' });
+// AnfitrionAgenda.belongsTo(Agenda, { foreignKey: 'agenda_id', as: 'agenda' });
 
 export default AnfitrionAgenda;
