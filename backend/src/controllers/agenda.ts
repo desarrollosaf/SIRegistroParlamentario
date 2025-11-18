@@ -1193,3 +1193,67 @@ export const getAgenda = async (req: Request, res: Response) => {
   }
 };
 
+
+export const updateAgenda = async (req: Request, res: Response) => {
+  try {
+    const agendaId = req.params.id; 
+    const body = req.body;
+    const anfitriones = req.body.autores || [];
+
+    const agenda = await Agenda.findByPk(agendaId);
+    if (!agenda) {
+      return res.status(404).json({ msg: "Agenda no encontrada" });
+    }
+
+    await agenda.update({
+      descripcion: body.descripcion,
+      fecha: body.fecha,
+      fecha_hora_inicio: body.hora_inicio,
+      fecha_hora_fin: body.hora_fin,
+      sede_id: body.sede_id,
+      tipo_evento_id: body.tipo_evento_id
+    });
+
+    await AnfitrionAgenda.destroy({
+      where: { agenda_id: agendaId }
+    });
+
+    for (const item of anfitriones) {
+      const tipoAutorRecord = await TipoAutor.findOne({
+        where: { valor: item.tipo }
+      });
+
+      const tipoAutorId = tipoAutorRecord?.id;
+      if (!tipoAutorId) continue;
+
+      if (Array.isArray(item.autor_id)) {
+        for (const autor of item.autor_id) {
+          await AnfitrionAgenda.create({
+            agenda_id: agendaId,
+            tipo_autor_id: tipoAutorId,
+            autor_id: autor.autor_id
+          });
+        }
+      }
+
+      else if (typeof item.autor_id === "string") {
+        await AnfitrionAgenda.create({
+          agenda_id: agendaId,
+          tipo_autor_id: tipoAutorId,
+          autor_id: item.autor_id
+        });
+      }
+    }
+
+    return res.json({ response: "success", id: agendaId });
+
+  } catch (error) {
+    console.error("Error al actualizar la agenda:", error);
+    return res.status(500).json({
+      msg: "Error interno del servidor",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    });
+  }
+};
+
+
