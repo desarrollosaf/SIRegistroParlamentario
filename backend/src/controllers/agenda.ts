@@ -993,38 +993,37 @@ export const reiniciarvoto = async (req: Request, res: Response): Promise<any> =
 export const catalogossave = async (req: Request, res: Response) => {
   try {
     const sedes = await Sedes.findAll({
-      attributes: ['id', 'sede']
+      attributes: ['id', ['sede', 'name']]
     });
 
     const comisiones = await Comision.findAll({
-      attributes: ['id', 'nombre']
+      attributes: ['id', ['nombre', 'name']]
     });
 
     const municipios = await Municipios.findAll({
-      attributes: ['id', 'cabecera'],
+      attributes: ['id', ['cabecera', 'name']],
       order: [['cabecera', 'ASC']]
     });
 
     const partidos = await Partidos.findAll({
-      attributes: ['id', 'nombre']
+      attributes: ['id', ['nombre', 'name']]
     });
 
     const tipoAutores = await TipoAutor.findAll({
-      attributes: ['id', 'valor']
+      attributes: ['id', ['valor', 'name']]
     });
 
     const otros = await OtrosAutores.findAll({
-      attributes: ['id', 'valor']
+      attributes: ['id', ['valor', 'name']]
     });
 
     const legislatura = await Legislatura.findAll({
-      attributes: ['id', 'numero']
+      attributes: ['id', ['numero', 'name']]
     });
 
     const tipoevento = await TipoEventos.findAll({
-      attributes: ['id', 'nombre']
+      attributes: ['id', ['nombre', 'name']]
     });
-
     const idComites = await TipoComisions.findOne({
       where: { valor: 'Comités' }
     });
@@ -1034,7 +1033,7 @@ export const catalogossave = async (req: Request, res: Response) => {
     if (idComites) {
       const com = await Comision.findAll({
         where: { tipo_comision_id: idComites.id },
-        attributes: ['id', 'nombre']
+        attributes: ['id',['nombre', 'name']]
       });
 
       comites = Object.fromEntries(
@@ -1051,7 +1050,7 @@ export const catalogossave = async (req: Request, res: Response) => {
     if (idPermanente) {
       const dips = await Comision.findAll({
         where: { tipo_comision_id: idPermanente.id },
-        attributes: ['id', 'nombre']
+        attributes: ['id', ['nombre', 'name']]
       });
 
       permanente = Object.fromEntries(
@@ -1060,31 +1059,31 @@ export const catalogossave = async (req: Request, res: Response) => {
     }
 
     const legisla = await Legislatura.findOne({
-          order: [["fecha_inicio", "DESC"]],
-        });
+      order: [["fecha_inicio", "DESC"]],
+    });
 
-        let diputadosArray: { id: string; nombre: string }[] = [];
+    let diputadosArray: { id: string; nombre: string }[] = [];
 
-        if (legisla) {
-          const diputados = await IntegranteLegislatura.findAll({
-            where: { legislatura_id: legisla.id },
-            include: [
-              {
-                model: Diputado,
-                as: "diputado",
-                attributes: ["id", "nombres", "apaterno", "amaterno"],
-              },
-            ],
-          });
-          diputadosArray = diputados
+    if (legisla) {
+      const diputados = await IntegranteLegislatura.findAll({
+        where: { legislatura_id: legisla.id },
+        include: [
+          {
+            model: Diputado,
+            as: "diputado",
+            attributes: ["id", "nombres", "apaterno", "amaterno"],
+          },
+        ],
+      });
+      diputadosArray = diputados
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
               nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
-        }
+    }
 
-  
+
     return res.json({
       sedes,
       comisiones,
