@@ -35,8 +35,8 @@ const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_vot
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const sequelize_2 = require("sequelize");
 const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
-const municipios_1 = __importDefault(require("../models/municipios"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
+const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -427,8 +427,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         else if (proponente.valor === 'Grupo Parlamentario') {
             const partidos = yield partidos_1.default.findAll();
             arr.partidos = partidos;
-            //  console.log(arr.partidos)
-            // return(500)
         }
         else if (proponente.valor === 'Legislatura') {
             const legislaturas = yield legislaturas_1.default.findAll();
@@ -898,9 +896,8 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', ['nombre', 'name']]
         });
-        const municipios = yield municipios_1.default.findAll({
-            attributes: ['id', ['cabecera', 'name']],
-            order: [['cabecera', 'ASC']]
+        const municipios = yield municipiosag_1.default.findAll({
+            attributes: ['id', ['nombre', 'name']],
         });
         const partidos = yield partidos_1.default.findAll({
             attributes: ['id', ['nombre', 'name']]
@@ -1076,9 +1073,9 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             sede_id: body.sede_id,
             tipo_evento_id: body.tipo_evento_id,
             transmision: body.transmite,
-            liga: body.liga,
-            fecha_hora_inicio: body.hora_inicio,
-            fecha_hora_fin: body.hora_fin,
+            liga: body.liga || null,
+            fecha_hora_inicio: body.hora_inicio || null,
+            fecha_hora_fin: body.hora_fin || null,
         });
         yield anfitrion_agendas_1.default.destroy({
             where: { agenda_id: agendaId }

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const pleno_1 = __importDefault(require("../database/pleno")); // ajusta la ruta si tu conexión está en otro archivo
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 class TipoComisions extends sequelize_1.Model {
 }
 TipoComisions.init({
@@ -17,10 +17,6 @@ TipoComisions.init({
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
-    alias: {
-        type: sequelize_1.DataTypes.STRING(255),
-        allowNull: true,
-    },
     createdAt: {
         field: 'created_at',
         type: sequelize_1.DataTypes.DATE,
@@ -32,7 +28,7 @@ TipoComisions.init({
         allowNull: true,
     },
 }, {
-    sequelize: pleno_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: 'tipo_comisions',
     timestamps: true,
 });
