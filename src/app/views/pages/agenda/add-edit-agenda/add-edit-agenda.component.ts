@@ -62,8 +62,8 @@ export class AddEditAgendaComponent {
       descripcion: ['', Validators.required],
       transmite: [false, Validators.required],
       liga: [''],
-      fecha_hora_inicio: [''],
-      fecha_hora_fin: [''],
+      hora_inicio: [''],
+      hora_fin: [''],
     });
     this.idAgenda = aRouter.snapshot.paramMap.get('id');
   }
@@ -92,8 +92,8 @@ export class AddEditAgendaComponent {
           descripcion: response.descripcion,
           transmite: response.transmite,
           liga: response.liga || '',
-          fecha_hora_inicio: this.formatFecha(response.fecha_hora_inicio),
-          fecha_hora_fin: this.formatFecha(response.fecha_hora_fin)
+          hora_inicio: this.formatFecha(response.fecha_hora_inicio),
+          hora_fin: this.formatFecha(response.fecha_hora_fin)
         });
         this.getSelect();
         if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
@@ -228,7 +228,7 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-
+console.log(data);
     this._agendaService.saveAgenda(data).subscribe({
       next: (response: any) => {
         console.log(response);
@@ -255,6 +255,7 @@ export class AddEditAgendaComponent {
       }
     });
   }
+
   limpiarFormulario(): void {
     this.formAgenda.reset({
       fecha: '',
