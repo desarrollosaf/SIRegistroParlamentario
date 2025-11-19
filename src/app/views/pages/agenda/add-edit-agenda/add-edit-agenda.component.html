@@ -87,20 +87,19 @@
                                 <div>
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
-                                            [value]="true" (change)="onTransmiteChange(true)" />
+                                            [value]="true" />
                                         Sí
                                     </label>
 
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
-                                            [value]="false" (change)="onTransmiteChange(false)" />
+                                            [value]="false" />
                                         No
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <div *ngIf="formAgenda.get('transmite')?.value">
                         <div class="row">
                             <div class="col-sm-12">

@@ -70,8 +70,19 @@ export class AddEditAgendaComponent {
 
   ngOnInit(): void {
 
+
+    this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
+      if (value === false) {
+        this.formAgenda.patchValue({
+          liga: '',
+          hora_inicio: '',
+          hora_fin: ''
+        }, { emitEvent: false });
+      }
+    });
+
     if (this.idAgenda != null) {
-      this.operacion = 'Editar ';
+      this.operacion = 'Editar';
       this.getAgendaRegistrada();
     } else {
       this.getSelect();
@@ -79,13 +90,13 @@ export class AddEditAgendaComponent {
   }
 
 
-
   //++++++++++++++++++++Holi este es para hacer la editacion+++++++++++++++++++++++
   getAgendaRegistrada() {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
         console.log(response);
-        const transmiteBoolean = response.transmite === 1 || response.transmite === true;
+        const transmiteBoolean = response.transmision === true || response.transmision === 1;
+
         this.formAgenda.patchValue({
           fecha: this.formatFecha(response.fecha),
           sede_id: response.sede_id,
@@ -93,10 +104,12 @@ export class AddEditAgendaComponent {
           descripcion: response.descripcion,
           transmite: transmiteBoolean,
           liga: transmiteBoolean ? (response.liga || '') : '',
-          hora_inicio: transmiteBoolean ? this.formatFecha(response.hora_inicio) : '',
-          hora_fin: transmiteBoolean ? this.formatFecha(response.hora_fin) : ''
+          hora_inicio: transmiteBoolean ? this.formatFecha(response.fecha_hora_inicio) : '',
+          hora_fin: transmiteBoolean ? this.formatFecha(response.fecha_hora_fin) : ''
         });
+
         this.getSelect();
+
         if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
           setTimeout(() => {
             this.setAnfitriones(response.anfitrion_agendas);
@@ -110,15 +123,6 @@ export class AddEditAgendaComponent {
     });
   }
 
-  onTransmiteChange(value: boolean): void {
-    // if (!value) {
-    //   this.formAgenda.patchValue({
-    //     liga: '',
-    //     hora_inicio: '',
-    //     hora_fin: ''
-    //   });
-    // }
-  }
 
   formatFecha(fecha: string): string {
     if (!fecha) return '';
@@ -162,6 +166,8 @@ export class AddEditAgendaComponent {
       }
     });
   }
+
+
 
   //++++++++++++++++++++Holi este es el fin de la editacion+++++++++++++++++++++++
 
@@ -239,31 +245,55 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-    this._agendaService.saveAgenda(data).subscribe({
-      next: (response: any) => {
-        console.log(response);
-        Swal.fire({
-          title: "Se guardo correctamente",
-          text: "¿Desea agregar mas información?",
-          icon: "success",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Confirmar",
-          cancelButtonText: "Salir"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.limpiarFormulario();
-          } else {
-            this.router.navigate(['/agenda-comision']);
-          }
-        });
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-      }
-    });
+    console.log(data);
+    if (this.operacion == 'Editar') {
+      this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
+        next: (response: any) => {
+          console.log(response);
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "¡Correcto!",
+            text: `Se guardo correctamente.`,
+            showConfirmButton: false,
+            timer: 2000
+          });
+          this.router.navigate(['/agenda-comision']);
+
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+        }
+      });
+    } else {
+      this._agendaService.saveAgenda(data).subscribe({
+        next: (response: any) => {
+          console.log(response);
+          Swal.fire({
+            title: "Se guardo correctamente",
+            text: "¿Desea agregar mas información?",
+            icon: "success",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Confirmar",
+            cancelButtonText: "Salir"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.limpiarFormulario();
+            } else {
+              this.router.navigate(['/agenda-comision']);
+            }
+          });
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+        }
+      });
+    }
+
   }
 
   limpiarFormulario(): void {
