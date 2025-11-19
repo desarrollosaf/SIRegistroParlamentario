@@ -81,19 +81,76 @@ export class AddEditAgendaComponent {
 
 
   //++++++++++++++++++++Holi este es para hacer la editacion+++++++++++++++++++++++
-    getAgendaRegistrada(){
-      
-       this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
+  getAgendaRegistrada() {
+    this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
         console.log(response);
-   
+        this.formAgenda.patchValue({
+          fecha: this.formatFecha(response.fecha),
+          sede_id: response.sede_id,
+          tipo_evento_id: response.tipo_evento_id,
+          descripcion: response.descripcion,
+          transmite: response.transmite,
+          liga: response.liga || '',
+          hora_inicio: this.formatFecha(response.fecha_hora_inicio),
+          hora_fin: this.formatFecha(response.fecha_hora_fin)
+        });
+        this.getSelect();
+        if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
+          setTimeout(() => {
+            this.setAnfitriones(response.anfitrion_agendas);
+          }, 500);
+        }
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
-    }
+  }
+
+  formatFecha(fecha: string): string {
+    if (!fecha) return '';
+    const date = new Date(fecha);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  setAnfitriones(anfitrionesData: any[]) {
+    const agrupados = anfitrionesData.reduce((acc: any, item: any) => {
+      if (!acc[item.tipo_autor_id]) {
+        acc[item.tipo_autor_id] = [];
+      }
+      acc[item.tipo_autor_id].push(item.autor_id);
+      return acc;
+    }, {});
+    this.itemsTabla = [];
+
+    Object.keys(agrupados).forEach(tipoAutorId => {
+      const tipoAutorObj = this.tipoAutor.find(t => t.id === tipoAutorId);
+      if (!tipoAutorObj) return;
+
+      const autoresIds = agrupados[tipoAutorId];
+      const autoresFiltrados = this.autoresPorTipo[tipoAutorId] || [];
+
+      const autoresArray = autoresIds
+        .map((autorId: string) => autoresFiltrados.find((a: any) => a.id === autorId))
+        .filter((a: any) => a !== undefined);
+
+      if (autoresArray.length > 0) {
+        this.itemsTabla.push({
+          tipoAutorId: tipoAutorId,
+          tipoAutorNombre: tipoAutorObj.name,
+          autores: autoresArray
+        });
+      }
+    });
+  }
 
   //++++++++++++++++++++Holi este es el fin de la editacion+++++++++++++++++++++++
 
@@ -171,7 +228,7 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-
+console.log(data);
     this._agendaService.saveAgenda(data).subscribe({
       next: (response: any) => {
         console.log(response);
@@ -198,6 +255,7 @@ export class AddEditAgendaComponent {
       }
     });
   }
+
   limpiarFormulario(): void {
     this.formAgenda.reset({
       fecha: '',
@@ -215,6 +273,7 @@ export class AddEditAgendaComponent {
 
     console.log('Formulario limpiado correctamente');
   }
+
   getSelect() {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
@@ -224,7 +283,6 @@ export class AddEditAgendaComponent {
         this.tipoEventoSelect = response.tipoevento || [];
         this.tipoAutor = response.tipoAutores || [];
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         this.legislatura = response.legislatura || [];
         this.comision = response.comisiones || [];
         this.grupoP = response.partidos || [];
@@ -234,7 +292,6 @@ export class AddEditAgendaComponent {
         this.otro = response.otros || [];
         this.comite = response.comites || [];
 
-
         const tipoLegislaturaId = this.tipoAutor.find(t => t.name === 'Legislatura')?.id;
         const tipoComisionId = this.tipoAutor.find(t => t.name === 'Comision')?.id;
         const tipoGrupoParId = this.tipoAutor.find(t => t.name === 'Grupo Parlamentario')?.id;
@@ -243,7 +300,6 @@ export class AddEditAgendaComponent {
         const tipoDiputadoPermId = this.tipoAutor.find(t => t.name === 'Diputación permanente')?.id;
         const tipoOtroId = this.tipoAutor.find(t => t.name === 'Otros')?.id;
         const tipoComiteId = this.tipoAutor.find(t => t.name === 'Comité')?.id;
-
 
         this.autoresPorTipo = {};
         if (tipoLegislaturaId) this.autoresPorTipo[tipoLegislaturaId] = this.legislatura;
@@ -255,7 +311,7 @@ export class AddEditAgendaComponent {
         if (tipoOtroId) this.autoresPorTipo[tipoOtroId] = this.otro;
         if (tipoComiteId) this.autoresPorTipo[tipoComiteId] = this.comite;
 
-
+        this.tiposMultiples = [];
         if (tipoComisionId) this.tiposMultiples.push(tipoComisionId);
         if (tipoGrupoParId) this.tiposMultiples.push(tipoGrupoParId);
         if (tipoMunicipioId) this.tiposMultiples.push(tipoMunicipioId);
@@ -270,7 +326,6 @@ export class AddEditAgendaComponent {
       }
     });
   }
-
 
   agregarFila() {
     if (!this.tipoAutorSeleccionado) {
