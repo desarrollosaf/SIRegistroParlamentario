@@ -30,7 +30,7 @@ export class AgendaService {
   }
 
   updateAgenda(data: any, id: String){
-    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/editagenda/${id}`,data)  
+    return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl}/editagenda/${id}`,data)  
   }
 
   
