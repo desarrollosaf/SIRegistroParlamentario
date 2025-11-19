@@ -998,8 +998,8 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             tipo_evento_id: agendaBody.tipo_evento_id,
             transmision: agendaBody.transmite,
             liga: agendaBody.liga,
-            hora_inicio: agendaBody.hora_inicio,
-            hora_fin: agendaBody.hora_fin,
+            fecha_hora_inicio: agendaBody.hora_inicio,
+            fecha_hora_fin: agendaBody.hora_fin,
         });
         for (const item of anfitriones) {
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
