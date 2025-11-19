@@ -1,6 +1,7 @@
 import { Model, DataTypes, CreationOptional, ForeignKey, Association, NonAttribute } from 'sequelize';
 import sequelize from '../database/registrocomisiones';
 import Agenda from './agendas';
+import TipoAutor from './tipo_autors';
 
 class AnfitrionAgenda extends Model {
   declare id: string;
@@ -62,5 +63,7 @@ AnfitrionAgenda.init(
 
 // 👇 Asociaciones
 // AnfitrionAgenda.belongsTo(Agenda, { foreignKey: 'agenda_id', as: 'agenda' });
+AnfitrionAgenda.belongsTo(TipoAutor, { foreignKey: "tipo_autor_id", as: "tipo_autor" });
+
 
 export default AnfitrionAgenda;
