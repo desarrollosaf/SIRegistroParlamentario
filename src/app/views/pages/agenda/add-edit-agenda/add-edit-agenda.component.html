@@ -2,7 +2,12 @@
     <div class="col-md-12 stretch-card">
         <div class="card">
             <div class="card-body">
-                <h6 class="card-title">Agenda</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">{{ operacion }} Agenda</h6>
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="volver()">
+                        <i class="feather icon-arrow-left me-1"></i> Volver
+                    </button>
+                </div>
                 <form [formGroup]="formAgenda" (ngSubmit)="enviarDatos()" class="forms-sample">
                     <div class="row">
                         <div class="col-sm-4">
