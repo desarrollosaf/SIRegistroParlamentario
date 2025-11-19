@@ -1079,7 +1079,7 @@ export const catalogossave = async (req: Request, res: Response) => {
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
-              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+              name: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
     }
 

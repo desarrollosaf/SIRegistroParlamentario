@@ -19,8 +19,14 @@ Sedes.init({
         type: sequelize_1.DataTypes.TEXT,
         allowNull: false,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
+    createdAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'created_at',
+    },
+    updatedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'updated_at',
+    },
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: 'sedes',

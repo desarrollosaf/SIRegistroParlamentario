@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
+const tipo_autors_1 = __importDefault(require("./tipo_autors"));
 class AnfitrionAgenda extends sequelize_1.Model {
 }
 AnfitrionAgenda.init({
@@ -46,4 +47,5 @@ AnfitrionAgenda.init({
 });
 // 👇 Asociaciones
 // AnfitrionAgenda.belongsTo(Agenda, { foreignKey: 'agenda_id', as: 'agenda' });
+AnfitrionAgenda.belongsTo(tipo_autors_1.default, { foreignKey: "tipo_autor_id", as: "tipo_autor" });
 exports.default = AnfitrionAgenda;
