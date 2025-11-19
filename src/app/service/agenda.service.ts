@@ -29,5 +29,9 @@ export class AgendaService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getagenda/${id}`)
   }
 
+  updateAgenda(data: any, id: String){
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/editagenda/${id}`,data)  
+  }
+
   
 }
