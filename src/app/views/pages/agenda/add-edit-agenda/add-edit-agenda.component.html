@@ -23,8 +23,8 @@
                         <div class="col-sm-4">
                             <div class="mb-3">
                                 <label class="form-label negri">Tipo Evento:</label>
-                                <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="tipo_evento_id">
+                                <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name"
+                                    bindValue="id" formControlName="tipo_evento_id">
                                 </ng-select>
                             </div>
                         </div>
@@ -87,13 +87,13 @@
                                 <div>
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
-                                            [value]="true" />
+                                            [value]="true" (change)="onTransmiteChange(true)" />
                                         Sí
                                     </label>
 
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
-                                            [value]="false" />
+                                            [value]="false" (change)="onTransmiteChange(false)" />
                                         No
                                     </label>
                                 </div>
