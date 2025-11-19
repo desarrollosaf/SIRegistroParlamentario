@@ -1,5 +1,5 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
-import sequelize from '../database/pleno'; // ajusta la ruta si tu conexión está en otro archivo
+import sequelize from '../database/legislativoConnection'; 
 
 class TipoComisions extends Model<
   InferAttributes<TipoComisions>,
@@ -7,7 +7,6 @@ class TipoComisions extends Model<
 > {
   declare id: string;
   declare valor: string;
-  declare alias: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -22,10 +21,6 @@ TipoComisions.init(
     valor: {
       type: DataTypes.STRING(255),
       allowNull: false,
-    },
-    alias: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
     },
     createdAt: {
       field: 'created_at',

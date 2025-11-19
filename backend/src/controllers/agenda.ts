@@ -27,6 +27,7 @@ import TipoAutor from "../models/tipo_autors";
 import { comisiones } from "../models/init-models";
 import Municipios from "../models/municipios";
 import OtrosAutores from "../models/otros_autores";
+import MunicipiosAg from "../models/municipiosag";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -472,8 +473,6 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
     } else if (proponente.valor === 'Grupo Parlamentario') {
       const partidos = await Partidos.findAll();
       arr.partidos = partidos;
-      //  console.log(arr.partidos)
-      // return(500)
     } else if (proponente.valor === 'Legislatura') {
       const legislaturas = await Legislatura.findAll();
       arr.legislaturas = legislaturas;
@@ -1000,9 +999,8 @@ export const catalogossave = async (req: Request, res: Response) => {
       attributes: ['id', ['nombre', 'name']]
     });
 
-    const municipios = await Municipios.findAll({
-      attributes: ['id', ['cabecera', 'name']],
-      order: [['cabecera', 'ASC']]
+    const municipios = await MunicipiosAg.findAll({
+      attributes: ['id', ['nombre', 'name']],
     });
 
     const partidos = await Partidos.findAll({
@@ -1201,7 +1199,6 @@ export const updateAgenda = async (req: Request, res: Response) => {
     const agendaId = req.params.id; 
     const body = req.body;
     const anfitriones = req.body.autores || [];
-
     const agenda = await Agenda.findByPk(agendaId);
     if (!agenda) {
       return res.status(404).json({ msg: "Agenda no encontrada" });
@@ -1213,9 +1210,9 @@ export const updateAgenda = async (req: Request, res: Response) => {
       sede_id: body.sede_id,
       tipo_evento_id: body.tipo_evento_id,
       transmision: body.transmite,
-      liga: body.liga,
-      fecha_hora_inicio: body.hora_inicio,
-      fecha_hora_fin: body.hora_fin,
+      liga: body.liga || null,
+      fecha_hora_inicio: body.hora_inicio || null,
+      fecha_hora_fin: body.hora_fin || null,
     });
 
     await AnfitrionAgenda.destroy({
