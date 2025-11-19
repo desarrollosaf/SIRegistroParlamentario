@@ -85,15 +85,16 @@ export class AddEditAgendaComponent {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
         console.log(response);
+        const transmiteBoolean = response.transmite === 1 || response.transmite === true;
         this.formAgenda.patchValue({
           fecha: this.formatFecha(response.fecha),
           sede_id: response.sede_id,
           tipo_evento_id: response.tipo_evento_id,
           descripcion: response.descripcion,
-          transmite: response.transmite,
-          liga: response.liga || '',
-          hora_inicio: this.formatFecha(response.fecha_hora_inicio),
-          hora_fin: this.formatFecha(response.fecha_hora_fin)
+          transmite: transmiteBoolean,
+          liga: transmiteBoolean ? (response.liga || '') : '',
+          hora_inicio: transmiteBoolean ? this.formatFecha(response.hora_inicio) : '',
+          hora_fin: transmiteBoolean ? this.formatFecha(response.hora_fin) : ''
         });
         this.getSelect();
         if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
@@ -107,6 +108,16 @@ export class AddEditAgendaComponent {
         console.error('Error del servidor:', msg);
       }
     });
+  }
+
+  onTransmiteChange(value: boolean): void {
+    // if (!value) {
+    //   this.formAgenda.patchValue({
+    //     liga: '',
+    //     hora_inicio: '',
+    //     hora_fin: ''
+    //   });
+    // }
   }
 
   formatFecha(fecha: string): string {
@@ -228,7 +239,6 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-console.log(data);
     this._agendaService.saveAgenda(data).subscribe({
       next: (response: any) => {
         console.log(response);
