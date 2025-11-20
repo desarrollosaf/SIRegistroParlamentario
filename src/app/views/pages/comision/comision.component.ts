@@ -68,15 +68,13 @@ updateFilter(event: any) {
   this.ngZone.runOutsideAngular(() => {
     const filtered = this.originalData().filter((row: any) => {
       const nombre = (row.descripcion || '').toLowerCase();
-      const fechainicio = (row.fecha_hora_inicio || '').toLowerCase();
-      const fechafin = (row.fecha_hora_fin || '').toLowerCase();
+      const fecha = (row.fecha || '').toLowerCase();
       const sede = (row.sede.sede || '').toLowerCase();
       const tipo = (row.tipoevento.nombre || '').toLowerCase();
 
       return (
         nombre.includes(val) ||
-        fechainicio.includes(val) ||
-        fechafin.includes(val) ||
+        fecha.includes(val) ||
         sede.includes(val) ||
         tipo.includes(val)
       );

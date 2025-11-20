@@ -36,21 +36,13 @@
                         </ngx-datatable-column>
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            prop="fechainicio" name="Fecha incio">
+                            prop="fecha" name="Fecha">
                             <ng-template let-row="row" ngx-datatable-cell-template>
-                                <strong>Fecha:</strong> {{ row.fecha_hora_inicio | date:'dd/MM/yyyy' }}<br>
-                                <strong>Hora:</strong> {{ row.fecha_hora_inicio | date:'HH:mm:ss' }}
+                                <strong>Fecha:</strong> {{ row.fecha | date:'dd/MM/yyyy' }}<br>
+                                <strong>Hora:</strong> {{ row.fecha | date:'HH:mm:ss' }}
                             </ng-template>
                         </ngx-datatable-column>
-
-                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" prop="fechafin"
-                            name="Fecha fin">
-                            <ng-template let-row="row" ngx-datatable-cell-template>
-                                <strong>Fecha:</strong> {{ row.fecha_hora_fin | date:'dd/MM/yyyy' }}<br>
-                                <strong>Hora:</strong> {{ row.fecha_hora_fin | date:'HH:mm:ss' }}
-                            </ng-template>
-                        </ngx-datatable-column>
-
+                        
                         <ngx-datatable-column [headerClass]="'text-center'" [sortable]="true"
                             [cellClass]="'text-center'" prop="sede" name="Sede">
                             <ng-template let-row="row" ngx-datatable-cell-template>
