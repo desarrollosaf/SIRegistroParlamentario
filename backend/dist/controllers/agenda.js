@@ -38,6 +38,7 @@ const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const secretarias_1 = require("../models/secretarias");
+const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -385,7 +386,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             }
         }
         else if (proponente.valor === 'Secretarías del GEM') {
-            console.log("holaaaaaaaa");
             const secretgem = yield secretarias_1.Secretarias.findAll();
             arr.secretgem = secretgem.map(s => ({
                 id: s.id,
@@ -393,7 +393,14 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             }));
         }
         else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-            // no acciones extra aparte de tipos
+            const gobernadora = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
+                    vigente: 1
+                },
+            });
+            if (gobernadora)
+                arr.mesa = { id: gobernadora.id, valor: gobernadora.nombre_titular };
         }
         else if (proponente.valor === 'Ayuntamientos') {
             const municipios = yield municipiosag_1.default.findAll();
@@ -412,10 +419,26 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             if (derechoshumanos)
                 arr.mesa = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
         }
-        else if (proponente.valor === 'Tribunal Superior de Justicia' ||
-            proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
+        else if (proponente.valor === 'Tribunal Superior de Justicia') {
+            const tribunal = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
+                    vigente: 1
+                },
+            });
+            if (tribunal)
+                arr.mesa = { id: tribunal.id, valor: tribunal.nombre_titular };
+        }
+        else if (proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
             proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
-            // no acciones extra aparte de tipos
+            const fiscalia = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
+                    vigente: 1
+                },
+            });
+            if (fiscalia)
+                arr.mesa = { id: fiscalia.id, valor: fiscalia.nombre_titular };
         }
         else if (proponente.valor === 'Comisiones Legislativas') {
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
