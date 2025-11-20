@@ -71,38 +71,38 @@ export class AddEditAgendaComponent {
   ngOnInit(): void {
 
 
-  this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
-    const ligaControl = this.formAgenda.get('liga');
-    const horaInicioControl = this.formAgenda.get('hora_inicio');
-    const horaFinControl = this.formAgenda.get('hora_fin');
+    this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
+      const ligaControl = this.formAgenda.get('liga');
+      const horaInicioControl = this.formAgenda.get('hora_inicio');
+      const horaFinControl = this.formAgenda.get('hora_fin');
 
-    if (value === true) {
-      ligaControl?.setValidators([Validators.required]);
-      horaInicioControl?.setValidators([Validators.required]);
-      horaFinControl?.setValidators([Validators.required]);
-    }else {
-      ligaControl?.clearValidators();
-      horaInicioControl?.clearValidators();
-      horaFinControl?.clearValidators();
-      
-      this.formAgenda.patchValue({
-        liga: '',
-        hora_inicio: '',
-        hora_fin: ''
-      }, { emitEvent: false });
+      if (value === true) {
+        ligaControl?.setValidators([Validators.required]);
+        horaInicioControl?.setValidators([Validators.required]);
+        horaFinControl?.setValidators([Validators.required]);
+      } else {
+        ligaControl?.clearValidators();
+        horaInicioControl?.clearValidators();
+        horaFinControl?.clearValidators();
+
+        this.formAgenda.patchValue({
+          liga: '',
+          hora_inicio: '',
+          hora_fin: ''
+        }, { emitEvent: false });
+      }
+
+      ligaControl?.updateValueAndValidity();
+      horaInicioControl?.updateValueAndValidity();
+      horaFinControl?.updateValueAndValidity();
+    });
+
+    if (this.idAgenda != null) {
+      this.operacion = 'Editar';
+      this.getAgendaRegistrada();
+    } else {
+      this.getSelect();
     }
-
-    ligaControl?.updateValueAndValidity();
-    horaInicioControl?.updateValueAndValidity();
-    horaFinControl?.updateValueAndValidity();
-  });
-
-  if (this.idAgenda != null) {
-    this.operacion = 'Editar';
-    this.getAgendaRegistrada();
-  } else {
-    this.getSelect();
-  }
   }
 
 
@@ -223,126 +223,117 @@ export class AddEditAgendaComponent {
   }
 
 
-enviarDatos(): void {
-  Object.keys(this.formAgenda.controls).forEach(key => {
-    this.formAgenda.get(key)?.markAsTouched();
-  });
-
-  if (this.formAgenda.invalid) {
-    const Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      background: "#fff3cd",
-      color: "#856404",
-      iconColor: "#d39e00",
-      didOpen: (toast) => {
-        toast.onmouseenter = Swal.stopTimer;
-        toast.onmouseleave = Swal.resumeTimer;
-      }
+  enviarDatos(): void {
+    Object.keys(this.formAgenda.controls).forEach(key => {
+      this.formAgenda.get(key)?.markAsTouched();
     });
+    if (this.formAgenda.invalid) {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
 
-    Toast.fire({
-      icon: "warning",
-      title: "Por favor completa todos los campos requeridos"
-    });
-    return;
+      Toast.fire({
+        icon: "warning",
+        title: "Por favor completa todos los campos requeridos"
+      });
+      return;
+    }
+    if (this.itemsTabla.length === 0) {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: "#fff3cd",
+        color: "#856404",
+        iconColor: "#d39e00",
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      Toast.fire({
+        icon: "warning",
+        title: "Debes agregar al menos un anfitrión"
+      });
+      return;
+    }
+
+    const autoresTransformados = this.itemsTabla.map(item => ({
+      tipo: item.tipoAutorNombre,
+      autor_id: item.autores.map(autor => ({
+        autor_id: autor.id
+      }))
+    }));
+
+    const data = {
+      ...this.formAgenda.value,
+      autores: autoresTransformados
+    };
+
+    console.log(data);
+    if (this.operacion == 'Editar') {
+      this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
+        next: (response: any) => {
+          console.log(response);
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "¡Correcto!",
+            text: `Se guardo correctamente.`,
+            showConfirmButton: false,
+            timer: 2000
+          });
+          this.router.navigate(['/agenda-comision']);
+
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+        }
+      });
+    } else {
+      this._agendaService.saveAgenda(data).subscribe({
+        next: (response: any) => {
+          console.log(response);
+          Swal.fire({
+            title: "Se guardo correctamente",
+            text: "¿Desea agregar mas información?",
+            icon: "success",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Confirmar",
+            cancelButtonText: "Salir"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.limpiarFormulario();
+            } else {
+              this.router.navigate(['/agenda-comision']);
+            }
+          });
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+        }
+      });
+    }
+
   }
-  
-  if (this.itemsTabla.length === 0) {
-    const Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      background: "#fff3cd",
-      color: "#856404",
-      iconColor: "#d39e00",
-      didOpen: (toast) => {
-        toast.onmouseenter = Swal.stopTimer;
-        toast.onmouseleave = Swal.resumeTimer;
-      }
-    });
-
-    Toast.fire({
-      icon: "warning",
-      title: "Debes agregar al menos un anfitrión"
-    });
-    return;
-  }
-
-  const autoresTransformados = this.itemsTabla.map(item => ({
-    tipo: item.tipoAutorNombre,
-    autor_id: item.autores.map(autor => ({
-      autor_id: autor.id
-    }))
-  }));
-
-  const formData = this.formAgenda.value;
-  const data = {
-    fecha: formData.fecha,
-    sede_id: formData.sede_id,
-    tipo_evento_id: formData.tipo_evento_id,
-    descripcion: formData.descripcion,
-    transmision: formData.transmite,  // Mapear transmite -> transmision
-    liga: formData.liga,
-    hora_inicio: formData.hora_inicio,
-    hora_fin: formData.hora_fin,
-    autores: autoresTransformados
-  };
-
-  console.log(data);
-  
-  if (this.operacion == 'Editar') {
-    this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
-      next: (response: any) => {
-        console.log(response);
-        Swal.fire({
-          position: "center",
-          icon: "success",
-          title: "¡Correcto!",
-          text: `Se guardó correctamente.`,
-          showConfirmButton: false,
-          timer: 2000
-        });
-        this.router.navigate(['/agenda-comision']);
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-      }
-    });
-  } else {
-    this._agendaService.saveAgenda(data).subscribe({
-      next: (response: any) => {
-        console.log(response);
-        Swal.fire({
-          title: "Se guardó correctamente",
-          text: "¿Desea agregar más información?",
-          icon: "success",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Confirmar",
-          cancelButtonText: "Salir"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.limpiarFormulario();
-          } else {
-            this.router.navigate(['/agenda-comision']);
-          }
-        });
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-      }
-    });
-  }
-}
 
   limpiarFormulario(): void {
     this.formAgenda.reset({
