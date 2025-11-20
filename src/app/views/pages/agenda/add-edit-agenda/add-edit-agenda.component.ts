@@ -311,7 +311,7 @@ export class AddEditAgendaComponent {
           console.log(response);
           Swal.fire({
             title: "Se guardo correctamente",
-            text: "¿Desea agregar mas información?",
+            text: "¿Desea agregar otro registro?",
             icon: "success",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
