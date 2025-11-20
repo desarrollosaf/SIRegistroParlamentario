@@ -29,7 +29,6 @@ export class AddEditAgendaComponent {
   }> = [];
   private _agendaService = inject(AgendaService);
 
-  selectAll: any;
   idAgenda: any;
   operacion: string = 'Registrar';
   tipoAutor: any[] = [];
@@ -110,7 +109,7 @@ export class AddEditAgendaComponent {
   getAgendaRegistrada() {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         const transmiteBoolean = response.transmision === true || response.transmision === 1;
 
         this.formAgenda.patchValue({
@@ -284,11 +283,11 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-    console.log(data);
+    // console.log(data);
     if (this.operacion == 'Editar') {
       this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
         next: (response: any) => {
-          console.log(response);
+          // console.log(response);
           Swal.fire({
             position: "center",
             icon: "success",
@@ -308,7 +307,7 @@ export class AddEditAgendaComponent {
     } else {
       this._agendaService.saveAgenda(data).subscribe({
         next: (response: any) => {
-          console.log(response);
+          // console.log(response);
           Swal.fire({
             title: "Se guardo correctamente",
             text: "¿Desea agregar otro registro?",
@@ -349,15 +348,11 @@ export class AddEditAgendaComponent {
     this.itemsTabla = [];
     this.tipoAutorSeleccionado = '';
     this.autoresSeleccionados = null;
-
-    console.log('Formulario limpiado correctamente');
   }
 
   getSelect() {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
-        this.selectAll = response;
-        console.log(this.selectAll);
         this.sedesSelect = response.sedes || [];
         this.tipoEventoSelect = response.tipoevento || [];
         this.tipoAutor = response.tipoAutores || [];
