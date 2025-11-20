@@ -29,6 +29,7 @@ import Municipios from "../models/municipios";
 import OtrosAutores from "../models/otros_autores";
 import MunicipiosAg from "../models/municipiosag";
 import { Secretarias } from "../models/secretarias";
+import CatFunDep from "../models/cat_fun_dep";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -434,14 +435,19 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       }
       
     } else if (proponente.valor === 'Secretarías del GEM') {
-        console.log("holaaaaaaaa")
         const secretgem = await Secretarias.findAll();
         arr.secretgem = secretgem.map(s => ({
           id: s.id,
           valor: `${s.nombre} / ${s.titular}`
         }));
     } else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-      // no acciones extra aparte de tipos
+      const gobernadora = await CatFunDep.findOne({
+          where: {
+            nombre_dependencia: { [Op.like]: '%Gobernadora o Gobernador del Estado%' },
+            vigente: 1
+          },
+        });
+        if (gobernadora) arr.mesa = { id: gobernadora.id, valor: gobernadora.nombre_titular };
 
     } else if (proponente.valor === 'Ayuntamientos'){
       const municipios = await MunicipiosAg.findAll();
@@ -457,13 +463,26 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           order: [['created_at', 'DESC']],
         });
          if (derechoshumanos) arr.mesa = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
+    }else if(proponente.valor === 'Tribunal Superior de Justicia' ){
+      const tribunal = await CatFunDep.findOne({
+          where: {
+            nombre_dependencia: { [Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
+            vigente: 1
+          },
+        });
+        if (tribunal) arr.mesa = { id: tribunal.id, valor: tribunal.nombre_titular };
     } else if (
-      proponente.valor === 'Tribunal Superior de Justicia' ||
       proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-      
       proponente.valor === 'Fiscalía General de Justicia del Estado de México'
     ) {
-      // no acciones extra aparte de tipos
+        const fiscalia = await CatFunDep.findOne({
+          where: {
+            nombre_dependencia: { [Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
+            vigente: 1
+          },
+        });
+        if (fiscalia) arr.mesa = { id: fiscalia.id, valor: fiscalia.nombre_titular };
+          
     } else if (proponente.valor === 'Comisiones Legislativas') {
       const idMesa = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
       if (idMesa) {
