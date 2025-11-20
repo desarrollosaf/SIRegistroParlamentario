@@ -994,9 +994,9 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             sede_id: agendaBody.sede_id,
             tipo_evento_id: agendaBody.tipo_evento_id,
             transmision: agendaBody.transmite,
-            liga: agendaBody.liga,
-            fecha_hora_inicio: agendaBody.hora_inicio,
-            fecha_hora_fin: agendaBody.hora_fin,
+            liga: agendaBody.liga || null,
+            fecha_hora_inicio: agendaBody.hora_inicio || null,
+            fecha_hora_fin: agendaBody.hora_fin || null,
         });
         for (const item of anfitriones) {
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
