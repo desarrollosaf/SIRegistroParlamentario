@@ -74,8 +74,8 @@ module.exports = {
       secretarias.map((item) => ({
         nombre: item.valor,
         titular: item.titular,
-        created_at: new Date(),
-        updated_at: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })),
       {}
     );

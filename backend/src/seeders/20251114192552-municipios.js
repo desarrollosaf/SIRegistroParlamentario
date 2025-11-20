@@ -133,9 +133,9 @@ module.exports = {
     await queryInterface.bulkInsert(
       'Municipios',
       municipios.map((valor) => ({
-        valor,
-        created_at: new Date(),
-        updated_at: new Date(),
+        nombre: valor,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })),
       {}
     );

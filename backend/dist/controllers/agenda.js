@@ -37,6 +37,7 @@ const sequelize_2 = require("sequelize");
 const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
+const secretarias_1 = require("../models/secretarias");
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -352,7 +353,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     var _a, _b, _c;
                     return ({
                         id: item.diputado.id,
-                        diputado: `${(_a = item.diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = item.diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = item.diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim(),
+                        valor: `${(_a = item.diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = item.diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = item.diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim(),
                     });
                 });
                 arr.diputados = dipss;
@@ -384,14 +385,35 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             }
         }
         else if (proponente.valor === 'Secretarías del GEM') {
+            console.log("holaaaaaaaa");
+            const secretgem = yield secretarias_1.Secretarias.findAll();
+            arr.secretgem = secretgem.map(s => ({
+                id: s.id,
+                valor: `${s.nombre} / ${s.titular}`
+            }));
         }
         else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
             // no acciones extra aparte de tipos
         }
+        else if (proponente.valor === 'Ayuntamientos') {
+            const municipios = yield municipiosag_1.default.findAll();
+            arr.municipios = municipios.map(l => ({
+                id: l.id,
+                valor: l.nombre
+            }));
+        }
+        else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
+            const derechoshumanos = yield comisions_1.default.findOne({
+                where: {
+                    nombre: { [sequelize_1.Op.like]: '%Derechos Humanos%' },
+                },
+                order: [['created_at', 'DESC']],
+            });
+            if (derechoshumanos)
+                arr.mesa = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
+        }
         else if (proponente.valor === 'Tribunal Superior de Justicia' ||
-            proponente.valor === 'Ayuntamientos' ||
             proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-            proponente.valor === 'Comición de Derechos Humanos del Estado de México' ||
             proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
             // no acciones extra aparte de tipos
         }
@@ -399,7 +421,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
             if (idMesa) {
                 const comi = yield comisions_1.default.findAll({ where: { tipo_comision_id: idMesa.id } });
-                const comisiones = comi.map((item) => ({ id: item.id, comision: item.nombre }));
+                const comisiones = comi.map((item) => ({ id: item.id, valor: item.nombre }));
                 arr.comisiones = comisiones;
             }
         }
@@ -407,7 +429,11 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             // no acciones extra aparte de tipos
         }
         else if (proponente.valor === 'Municipios') {
-            // no actions extra
+            const municipios = yield municipiosag_1.default.findAll();
+            arr.municipios = municipios.map(l => ({
+                id: l.id,
+                valor: l.nombre
+            }));
         }
         else if (proponente.valor === 'Diputación Permanente') {
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Diputación Permanente' } });
@@ -426,11 +452,17 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         else if (proponente.valor === 'Grupo Parlamentario') {
             const partidos = yield partidos_1.default.findAll();
-            arr.partidos = partidos;
+            arr.partidos = partidos.map(l => ({
+                id: l.id,
+                valor: l.siglas
+            }));
         }
         else if (proponente.valor === 'Legislatura') {
             const legislaturas = yield legislaturas_1.default.findAll();
-            arr.legislaturas = legislaturas;
+            arr.legislaturas = legislaturas.map(l => ({
+                id: l.id,
+                valor: l.numero
+            }));
         }
         const combo = yield admin_cats_1.default.findAll({ where: { id_presenta: proponente.id } });
         arr.combo = combo;
