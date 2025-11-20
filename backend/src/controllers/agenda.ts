@@ -1118,9 +1118,9 @@ export const saveagenda = async (req: Request, res: Response) => {
       sede_id: agendaBody.sede_id,
       tipo_evento_id: agendaBody.tipo_evento_id, 
       transmision: agendaBody.transmite,
-      liga: agendaBody.liga,
-      fecha_hora_inicio: agendaBody.hora_inicio,
-      fecha_hora_fin: agendaBody.hora_fin,
+      liga: agendaBody.liga || null,
+      fecha_hora_inicio: agendaBody.hora_inicio || null,
+      fecha_hora_fin: agendaBody.hora_fin || null,
 
     });
 
