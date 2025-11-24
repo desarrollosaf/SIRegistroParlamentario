@@ -202,13 +202,13 @@
                                         <div class="card-body">
                                             <form [formGroup]="formPunto" (ngSubmit)="guardarPunto()">
                                                 <div class="row g-3">
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-6">
                                                         <label class="form-label">Número</label>
                                                         <input type="text" class="form-control"
                                                             formControlName="numpunto" placeholder="Número de punto">
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-6">
                                                         <label class="form-label">Proponente</label>
                                                         <ng-select [items]="slctProponentes" bindLabel="valor"
                                                             bindValue="id" formControlName="proponente"
@@ -216,10 +216,10 @@
                                                         </ng-select>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-12">
                                                         <label class="form-label">Presenta</label>
-                                                        <ng-select [items]="slcPresenta" bindLabel="nombre"
-                                                            bindValue="id" formControlName="presenta"
+                                                        <ng-select [items]="slcPresenta" bindLabel="valor"
+                                                            [multiple]="true" bindValue="id" formControlName="presenta"
                                                             placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
