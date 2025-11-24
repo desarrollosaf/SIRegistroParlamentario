@@ -10,6 +10,7 @@ import sequelize from "../database/registrocomisiones";
 
 import TipoCategoriaIniciativas from "./tipo_categoria_iniciativas";
 import Proponentes from "./proponentes";
+import PuntosPresenta from "./puntos_presenta";
 
 
 
@@ -108,5 +109,7 @@ PuntosOrden.init(
     underscored: false,
   }
 );
-
+PuntosOrden.hasMany(PuntosPresenta, {
+  foreignKey: 'id_punto', as: 'presentan'
+});
 export default PuntosOrden;
