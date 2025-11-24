@@ -39,6 +39,7 @@ const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const secretarias_1 = require("../models/secretarias");
 const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
+const puntos_presenta_1 = __importDefault(require("../models/puntos_presenta"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -503,7 +504,10 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(file);
+        const presenta = (body.presenta || "")
+            .split(",")
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0);
         const evento = yield agendas_1.default.findOne({ where: { id } });
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
@@ -518,6 +522,13 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             punto: body.punto,
             observaciones: body.observaciones,
         });
+        for (const autorId of presenta) {
+            yield puntos_presenta_1.default.create({
+                id_punto: puntonuevo.id,
+                id_tipo_presenta: body.proponente,
+                id_presenta: autorId
+            });
+        }
         return res.status(201).json({
             message: "Punto creado correctamente",
             data: puntonuevo,
@@ -534,7 +545,14 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const { id } = req.params;
         const puntos = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
-            order: [['nopunto', 'DESC']]
+            order: [['nopunto', 'DESC']],
+            include: [
+                {
+                    model: puntos_presenta_1.default,
+                    as: "presentan",
+                    attributes: ["id", "id_presenta"],
+                },
+            ],
         });
         if (!puntos) {
             return res.status(404).json({ message: "Evento no encontrado" });
@@ -556,6 +574,10 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
+        const presenta = (body.presenta || "")
+            .split(",")
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
@@ -571,6 +593,16 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             observaciones: (_f = body.observaciones) !== null && _f !== void 0 ? _f : punto.observaciones,
             editado: 1,
         });
+        yield puntos_presenta_1.default.destroy({
+            where: { id_punto: punto.id }
+        });
+        for (const autorId of presenta) {
+            yield puntos_presenta_1.default.create({
+                id_punto: punto.id,
+                id_tipo_presenta: body.proponente,
+                id_presenta: autorId
+            });
+        }
         return res.status(200).json({
             message: "Punto actualizado correctamente",
             data: punto,

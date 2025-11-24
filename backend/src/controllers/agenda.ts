@@ -30,6 +30,7 @@ import OtrosAutores from "../models/otros_autores";
 import MunicipiosAg from "../models/municipiosag";
 import { Secretarias } from "../models/secretarias";
 import CatFunDep from "../models/cat_fun_dep";
+import PuntosPresenta from "../models/puntos_presenta";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -548,7 +549,12 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
-    console.log(file);
+
+    const presenta = (body.presenta || "")
+      .split(",")
+      .map((id: string) => id.trim())
+      .filter((id: string) => id.length > 0);
+
     const evento = await Agenda.findOne({ where: { id } });
 
     if (!evento) {
@@ -566,6 +572,14 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       observaciones: body.observaciones,
     });
 
+    for (const autorId of presenta) {
+      await PuntosPresenta.create({
+        id_punto: puntonuevo.id,
+        id_tipo_presenta: body.proponente,
+        id_presenta: autorId
+      });
+    }
+
     return res.status(201).json({
       message: "Punto creado correctamente",
       data: puntonuevo,
@@ -582,7 +596,14 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
 
       const puntos = await PuntosOrden.findAll({
         where: { id_evento: id },
-        order: [['nopunto', 'DESC']] 
+        order: [['nopunto', 'DESC']],
+        include: [
+          {
+            model: PuntosPresenta,
+            as: "presentan",
+            attributes: ["id", "id_presenta"],
+          },
+        ],
       });
       if (!puntos) {
         return res.status(404).json({ message: "Evento no encontrado" });
@@ -603,6 +624,10 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
+    const presenta = (body.presenta || "")
+      .split(",")
+      .map((id: string) => id.trim())
+      .filter((id: string) => id.length > 0);
 
     const punto = await PuntosOrden.findOne({ where: { id } });
 
@@ -612,6 +637,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
 
+
     await punto.update({
       nopunto: body.numpunto ?? punto.nopunto,
       id_proponente: body.proponente ?? punto.id_proponente,
@@ -620,8 +646,21 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       path_doc: nuevoPath,
       punto: body.punto ?? punto.punto,
       observaciones: body.observaciones ?? punto.observaciones,
-      editado: 1, 
+      editado: 1,
     });
+
+    await PuntosPresenta.destroy({
+      where: { id_punto: punto.id }
+    });
+
+
+    for (const autorId of presenta) {
+      await PuntosPresenta.create({
+        id_punto: punto.id,             
+        id_tipo_presenta: body.proponente,      
+        id_presenta: autorId               
+      });
+    }
 
     return res.status(200).json({
       message: "Punto actualizado correctamente",
