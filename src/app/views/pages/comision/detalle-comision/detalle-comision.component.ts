@@ -247,14 +247,19 @@ export class DetalleComisionComponent implements OnInit {
       next: (response: any) => {
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
+          const presentanIds = punto.presentan && Array.isArray(punto.presentan)
+            ? punto.presentan.map((p: any) => String(p.id_presenta))
+            : [];
+
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
+            presentaDisponibles: [],
             form: this.fb.group({
               id: [punto.id],
               numpunto: [punto.nopunto],
               proponente: [punto.id_proponente ? Number(punto.id_proponente) : null],
-              presenta: [punto.id_presenta ? Number(punto.id_presenta) : null],
+              presenta: [presentanIds],
               tipo: [punto.id_tipo ? Number(punto.id_tipo) : null],
               tribuna: [punto.tribuna],
               punto: [punto.punto],
@@ -264,6 +269,7 @@ export class DetalleComisionComponent implements OnInit {
           if (punto.id_proponente) {
             this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
           }
+
           return puntoMapeado;
         });
       },
@@ -274,24 +280,31 @@ export class DetalleComisionComponent implements OnInit {
     });
   }
 
-  cargarTiposParaPunto(punto: any, idProponente: number): void {
-    this._eventoService.getTipo(idProponente).subscribe({
-      next: (response: any) => {
-        punto.tiposDisponibles = response.tipos || [];
-      },
-      error: (e: HttpErrorResponse) => {
-        console.error('Error al cargar tipos para punto:', e);
-        punto.tiposDisponibles = [];
-      }
-    });
-  }
-
 
   getTipoPParaPunto(event: any, punto: any): void {
     if (event && event.id) {
       punto.form.get('tipo')?.setValue(null);
+      punto.form.get('presenta')?.setValue([]);
       this.cargarTiposParaPunto(punto, event.id);
     }
+  }
+
+
+  cargarTiposParaPunto(punto: any, idProponente: number): void {
+    this._eventoService.getTipo(idProponente).subscribe({
+      next: (response: any) => {
+        punto.tiposDisponibles = response.tipos || [];
+        punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar tipos para punto:', e);
+        punto.tiposDisponibles = [];
+        punto.presentaDisponibles = [];
+      }
+    });
   }
 
   triggerFileInput(index: number): void {
@@ -539,16 +552,17 @@ export class DetalleComisionComponent implements OnInit {
   }
 
 
-  getTipoP(id: any): void {
+  getTipoP(id?: any): void {
     this.formPunto.get('tipo')?.setValue(null);
     this.formPunto.get('presenta')?.setValue(null);
     this._eventoService.getTipo(id.id).subscribe({
       next: (response: any) => {
-        console.log(response);
-        this.slcPresenta =[];
-        this.slcPresenta = response.dtSlct;
-        this.slcTipo = [];
-        this.slcTipo = response.tipos;
+        this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+
+        this.slcTipo = response.tipos || [];
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -646,11 +660,11 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
   private cargarVotantes(punto: any): void {
-    console.log(punto);
+    // console.log(punto);
     this.idpto = punto;
     this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.votantes = response.integrantes || [];
         this.dividirEnColumnasVotacion();
       },
@@ -679,7 +693,7 @@ export class DetalleComisionComponent implements OnInit {
     }
     this._eventoService.saveVotacion(datos).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al votar:', e);
@@ -748,7 +762,7 @@ export class DetalleComisionComponent implements OnInit {
         }
         this._eventoService.reinicioVotacion(datos).subscribe({
           next: (response: any) => {
-            console.log(response);
+            // console.log(response);
             this.votantes.forEach(v => v.sentido = 0);
             this.dividirEnColumnasVotacion();
           },
