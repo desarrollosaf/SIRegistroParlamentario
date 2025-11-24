@@ -22,5 +22,5 @@ router.post("/api/eventos/reiniciavoto/", reiniciarvoto );
 router.get("/api/eventos/catalogossave/", catalogossave );
 router.post("/api/eventos/saveagenda/", saveagenda );
 router.get("/api/eventos/getagenda/:id", getAgenda );
-router.get("/api/eventos/editagenda/:id", updateAgenda );
+router.post("/api/eventos/editagenda/:id", updateAgenda );
 export default router

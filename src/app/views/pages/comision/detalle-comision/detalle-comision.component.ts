@@ -230,7 +230,7 @@ export class DetalleComisionComponent implements OnInit {
         // console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
-        this.slcPresenta = response.comisiones;
+        // this.slcPresenta = response.comisiones;
         this.slcTipIntervencion = response.tipointer;
         this.cargarPuntosRegistrados();
       },
@@ -540,9 +540,13 @@ export class DetalleComisionComponent implements OnInit {
 
 
   getTipoP(id: any): void {
+    this.formPunto.get('tipo')?.setValue(null);
+    this.formPunto.get('presenta')?.setValue(null);
     this._eventoService.getTipo(id.id).subscribe({
       next: (response: any) => {
-        this.formPunto.get('tipo')?.setValue(null);
+        console.log(response);
+        this.slcPresenta =[];
+        this.slcPresenta = response.dtSlct;
         this.slcTipo = [];
         this.slcTipo = response.tipos;
       },

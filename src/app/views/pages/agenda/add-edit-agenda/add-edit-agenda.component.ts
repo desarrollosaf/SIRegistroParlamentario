@@ -29,7 +29,6 @@ export class AddEditAgendaComponent {
   }> = [];
   private _agendaService = inject(AgendaService);
 
-  selectAll: any;
   idAgenda: any;
   operacion: string = 'Registrar';
   tipoAutor: any[] = [];
@@ -72,13 +71,29 @@ export class AddEditAgendaComponent {
 
 
     this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
-      if (value === false) {
+      const ligaControl = this.formAgenda.get('liga');
+      const horaInicioControl = this.formAgenda.get('hora_inicio');
+      const horaFinControl = this.formAgenda.get('hora_fin');
+
+      if (value === true) {
+        ligaControl?.setValidators([Validators.required]);
+        horaInicioControl?.setValidators([Validators.required]);
+        horaFinControl?.setValidators([Validators.required]);
+      } else {
+        ligaControl?.clearValidators();
+        horaInicioControl?.clearValidators();
+        horaFinControl?.clearValidators();
+
         this.formAgenda.patchValue({
           liga: '',
           hora_inicio: '',
           hora_fin: ''
         }, { emitEvent: false });
       }
+
+      ligaControl?.updateValueAndValidity();
+      horaInicioControl?.updateValueAndValidity();
+      horaFinControl?.updateValueAndValidity();
     });
 
     if (this.idAgenda != null) {
@@ -94,7 +109,7 @@ export class AddEditAgendaComponent {
   getAgendaRegistrada() {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         const transmiteBoolean = response.transmision === true || response.transmision === 1;
 
         this.formAgenda.patchValue({
@@ -167,7 +182,27 @@ export class AddEditAgendaComponent {
     });
   }
 
-
+  volver(): void {
+    // this.router.navigate(['/agenda-comision']);
+    if (this.formAgenda.dirty || this.itemsTabla.length > 0) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Los cambios no guardados se perderán",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/agenda-comision']);
+        }
+      });
+    } else {
+      this.router.navigate(['/agenda-comision']);
+    }
+  }
 
   //++++++++++++++++++++Holi este es el fin de la editacion+++++++++++++++++++++++
 
@@ -188,6 +223,9 @@ export class AddEditAgendaComponent {
 
 
   enviarDatos(): void {
+    Object.keys(this.formAgenda.controls).forEach(key => {
+      this.formAgenda.get(key)?.markAsTouched();
+    });
     if (this.formAgenda.invalid) {
       const Toast = Swal.mixin({
         toast: true,
@@ -245,11 +283,11 @@ export class AddEditAgendaComponent {
       autores: autoresTransformados
     };
 
-    console.log(data);
+    // console.log(data);
     if (this.operacion == 'Editar') {
       this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
         next: (response: any) => {
-          console.log(response);
+          // console.log(response);
           Swal.fire({
             position: "center",
             icon: "success",
@@ -269,10 +307,10 @@ export class AddEditAgendaComponent {
     } else {
       this._agendaService.saveAgenda(data).subscribe({
         next: (response: any) => {
-          console.log(response);
+          // console.log(response);
           Swal.fire({
             title: "Se guardo correctamente",
-            text: "¿Desea agregar mas información?",
+            text: "¿Desea agregar otro registro?",
             icon: "success",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
@@ -310,15 +348,11 @@ export class AddEditAgendaComponent {
     this.itemsTabla = [];
     this.tipoAutorSeleccionado = '';
     this.autoresSeleccionados = null;
-
-    console.log('Formulario limpiado correctamente');
   }
 
   getSelect() {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
-        this.selectAll = response;
-        console.log(this.selectAll);
         this.sedesSelect = response.sedes || [];
         this.tipoEventoSelect = response.tipoevento || [];
         this.tipoAutor = response.tipoAutores || [];

@@ -2,39 +2,63 @@
     <div class="col-md-12 stretch-card">
         <div class="card">
             <div class="card-body">
-                <h6 class="card-title">Agenda</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">{{ operacion }} Agenda</h6>
+                    <button 
+                        type="button" 
+                        class="btn btn-secondary btn-sm"
+                        (click)="volver()">
+                        <i class="feather icon-arrow-left"></i> Volver
+                    </button>
+                </div>
                 <form [formGroup]="formAgenda" (ngSubmit)="enviarDatos()" class="forms-sample">
                     <div class="row">
                         <div class="col-sm-4">
                             <div class="mb-3">
                                 <label class="form-label negri">Fecha:*</label>
                                 <input formControlName="fecha" type="datetime-local"
-                                    class="form-control input-simulado-disabled" />
+                                    class="form-control input-simulado-disabled"
+                                    [class.is-invalid]="formAgenda.get('fecha')?.invalid && formAgenda.get('fecha')?.touched" />
+                                <div class="invalid-feedback" *ngIf="formAgenda.get('fecha')?.invalid && formAgenda.get('fecha')?.touched">
+                                    <small>La fecha es requerida</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="mb-3">
-                                <label class="form-label negri">Sede:</label>
+                                <label class="form-label negri">Sede:*</label>
                                 <ng-select [items]="sedesSelect" [searchable]="false" bindLabel="name" bindValue="id"
-                                    formControlName="sede_id">
+                                    formControlName="sede_id"
+                                    [class.is-invalid]="formAgenda.get('sede_id')?.invalid && formAgenda.get('sede_id')?.touched">
                                 </ng-select>
+                                <div class="invalid-feedback d-block" *ngIf="formAgenda.get('sede_id')?.invalid && formAgenda.get('sede_id')?.touched">
+                                    <small>La sede es requerida</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="mb-3">
-                                <label class="form-label negri">Tipo Evento:</label>
-                                <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name"
-                                    bindValue="id" formControlName="tipo_evento_id">
+                                <label class="form-label negri">Tipo Evento:*</label>
+                                <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name" bindValue="id"
+                                    formControlName="tipo_evento_id"
+                                    [class.is-invalid]="formAgenda.get('tipo_evento_id')?.invalid && formAgenda.get('tipo_evento_id')?.touched">
                                 </ng-select>
+                                <div class="invalid-feedback d-block" *ngIf="formAgenda.get('tipo_evento_id')?.invalid && formAgenda.get('tipo_evento_id')?.touched">
+                                    <small>El tipo de evento es requerido</small>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="mb-3">
-                                <label class="form-label negri">Descripción:</label>
+                                <label class="form-label negri">Descripción:*</label>
                                 <textarea formControlName="descripcion" class="form-control"
-                                    id="exampleFormControlTextarea1" rows="6"></textarea>
+                                    id="exampleFormControlTextarea1" rows="6"
+                                    [class.is-invalid]="formAgenda.get('descripcion')?.invalid && formAgenda.get('descripcion')?.touched"></textarea>
+                                <div class="invalid-feedback" *ngIf="formAgenda.get('descripcion')?.invalid && formAgenda.get('descripcion')?.touched">
+                                    <small>La descripción es requerida</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -75,15 +99,13 @@
                                     </tbody>
                                 </table>
                             </div>
-
-
                         </div>
                     </div>
                     <br>
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="mb-3">
-                                <label class="form-label negri">¿Se transmite en pagina principal?:</label>
+                                <label class="form-label negri">¿Se transmite en pagina principal?:*</label>
                                 <div>
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
@@ -100,13 +122,18 @@
                             </div>
                         </div>
                     </div>
+
                     <div *ngIf="formAgenda.get('transmite')?.value">
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="mb-3">
-                                    <label class="form-label negri">Liga:</label>
+                                    <label class="form-label negri">Liga:*</label>
                                     <textarea formControlName="liga" class="form-control"
-                                        id="exampleFormControlTextarea1" rows="6"></textarea>
+                                        id="exampleFormControlTextarea2" rows="6"
+                                        [class.is-invalid]="formAgenda.get('liga')?.invalid && formAgenda.get('liga')?.touched"></textarea>
+                                    <div class="invalid-feedback" *ngIf="formAgenda.get('liga')?.invalid && formAgenda.get('liga')?.touched">
+                                        <small>La liga es requerida cuando se transmite</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -114,16 +141,24 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="mb-3">
-                                    <label class="form-label negri">Hora inicio:</label>
+                                    <label class="form-label negri">Hora inicio:*</label>
                                     <input formControlName="hora_inicio" type="datetime-local"
-                                        class="form-control input-simulado-disabled" />
+                                        class="form-control input-simulado-disabled"
+                                        [class.is-invalid]="formAgenda.get('hora_inicio')?.invalid && formAgenda.get('hora_inicio')?.touched" />
+                                    <div class="invalid-feedback" *ngIf="formAgenda.get('hora_inicio')?.invalid && formAgenda.get('hora_inicio')?.touched">
+                                        <small>La hora de inicio es requerida</small>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="mb-3">
-                                    <label class="form-label negri">Hora fin:</label>
+                                    <label class="form-label negri">Hora fin:*</label>
                                     <input formControlName="hora_fin" type="datetime-local"
-                                        class="form-control input-simulado-disabled" />
+                                        class="form-control input-simulado-disabled"
+                                        [class.is-invalid]="formAgenda.get('hora_fin')?.invalid && formAgenda.get('hora_fin')?.touched" />
+                                    <div class="invalid-feedback" *ngIf="formAgenda.get('hora_fin')?.invalid && formAgenda.get('hora_fin')?.touched">
+                                        <small>La hora de fin es requerida</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +169,6 @@
                                 style="background-color: #800048; color: white; border: none;">
                                 Enviar
                             </button>
-
                         </div>
                     </div>
                 </form>
@@ -142,8 +176,6 @@
         </div>
     </div>
 </div>
-
-
 
 <ng-template #xlModal let-modal>
     <div class="modal-header">

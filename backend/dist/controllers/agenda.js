@@ -35,8 +35,10 @@ const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_vot
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const sequelize_2 = require("sequelize");
 const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
-const municipios_1 = __importDefault(require("../models/municipios"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
+const municipiosag_1 = __importDefault(require("../models/municipiosag"));
+const secretarias_1 = require("../models/secretarias");
+const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -352,10 +354,10 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     var _a, _b, _c;
                     return ({
                         id: item.diputado.id,
-                        diputado: `${(_a = item.diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = item.diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = item.diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim(),
+                        valor: `${(_a = item.diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = item.diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = item.diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim(),
                     });
                 });
-                arr.diputados = dipss;
+                arr.dtSlct = dipss;
             }
         }
         else if (proponente.valor === 'Mesa Directiva en turno') {
@@ -366,7 +368,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     order: [['created_at', 'DESC']],
                 });
                 if (mesa)
-                    arr.mesa = { id: mesa.id, valor: mesa.nombre };
+                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
             }
         }
         else if (proponente.valor === 'Junta de Coordinación Politica') {
@@ -380,34 +382,81 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     order: [['created_at', 'DESC']],
                 });
                 if (mesa)
-                    arr.mesa = { id: mesa.id, valor: mesa.nombre };
+                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
             }
         }
         else if (proponente.valor === 'Secretarías del GEM') {
+            const secretgem = yield secretarias_1.Secretarias.findAll();
+            arr.dtSlct = secretgem.map(s => ({
+                id: s.id,
+                valor: `${s.nombre} / ${s.titular}`
+            }));
         }
         else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-            // no acciones extra aparte de tipos
+            const gobernadora = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
+                    vigente: 1
+                },
+            });
+            if (gobernadora)
+                arr.dtSlct = { id: gobernadora.id, valor: gobernadora.nombre_titular };
         }
-        else if (proponente.valor === 'Tribunal Superior de Justicia' ||
-            proponente.valor === 'Ayuntamientos' ||
-            proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-            proponente.valor === 'Comición de Derechos Humanos del Estado de México' ||
+        else if (proponente.valor === 'Ayuntamientos') {
+            const municipios = yield municipiosag_1.default.findAll();
+            arr.dtSlct = municipios.map(l => ({
+                id: l.id,
+                valor: l.nombre
+            }));
+        }
+        else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
+            const derechoshumanos = yield comisions_1.default.findOne({
+                where: {
+                    nombre: { [sequelize_1.Op.like]: '%Derechos Humanos%' },
+                },
+                order: [['created_at', 'DESC']],
+            });
+            if (derechoshumanos)
+                arr.dtSlct = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
+        }
+        else if (proponente.valor === 'Tribunal Superior de Justicia') {
+            const tribunal = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
+                    vigente: 1
+                },
+            });
+            if (tribunal)
+                arr.dtSlct = { id: tribunal.id, valor: tribunal.nombre_titular };
+        }
+        else if (proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
             proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
-            // no acciones extra aparte de tipos
+            const fiscalia = yield cat_fun_dep_1.default.findOne({
+                where: {
+                    nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
+                    vigente: 1
+                },
+            });
+            if (fiscalia)
+                arr.dtSlct = { id: fiscalia.id, valor: fiscalia.nombre_titular };
         }
         else if (proponente.valor === 'Comisiones Legislativas') {
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
             if (idMesa) {
                 const comi = yield comisions_1.default.findAll({ where: { tipo_comision_id: idMesa.id } });
-                const comisiones = comi.map((item) => ({ id: item.id, comision: item.nombre }));
-                arr.comisiones = comisiones;
+                const comisiones = comi.map((item) => ({ id: item.id, valor: item.nombre }));
+                arr.dtSlct = comisiones;
             }
         }
         else if (proponente.valor === 'Comisión instaladora') {
             // no acciones extra aparte de tipos
         }
         else if (proponente.valor === 'Municipios') {
-            // no actions extra
+            const municipios = yield municipiosag_1.default.findAll();
+            arr.dtSlct = municipios.map(l => ({
+                id: l.id,
+                valor: l.nombre
+            }));
         }
         else if (proponente.valor === 'Diputación Permanente') {
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Diputación Permanente' } });
@@ -417,7 +466,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     order: [['created_at', 'DESC']],
                 });
                 if (mesa)
-                    arr.mesa = { id: mesa.id, valor: mesa.nombre };
+                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
             }
         }
         else if (proponente.valor === 'Cámara de Diputados del H. Congreso de la Unión' ||
@@ -426,13 +475,17 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         else if (proponente.valor === 'Grupo Parlamentario') {
             const partidos = yield partidos_1.default.findAll();
-            arr.partidos = partidos;
-            //  console.log(arr.partidos)
-            // return(500)
+            arr.dtSlct = partidos.map(l => ({
+                id: l.id,
+                valor: l.siglas
+            }));
         }
         else if (proponente.valor === 'Legislatura') {
             const legislaturas = yield legislaturas_1.default.findAll();
-            arr.legislaturas = legislaturas;
+            arr.dtSlct = legislaturas.map(l => ({
+                id: l.id,
+                valor: l.numero
+            }));
         }
         const combo = yield admin_cats_1.default.findAll({ where: { id_presenta: proponente.id } });
         arr.combo = combo;
@@ -898,9 +951,8 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', ['nombre', 'name']]
         });
-        const municipios = yield municipios_1.default.findAll({
-            attributes: ['id', ['cabecera', 'name']],
-            order: [['cabecera', 'ASC']]
+        const municipios = yield municipiosag_1.default.findAll({
+            attributes: ['id', ['nombre', 'name']],
         });
         const partidos = yield partidos_1.default.findAll({
             attributes: ['id', ['nombre', 'name']]
@@ -997,9 +1049,9 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             sede_id: agendaBody.sede_id,
             tipo_evento_id: agendaBody.tipo_evento_id,
             transmision: agendaBody.transmite,
-            liga: agendaBody.liga,
-            fecha_hora_inicio: agendaBody.hora_inicio,
-            fecha_hora_fin: agendaBody.hora_fin,
+            liga: agendaBody.liga || null,
+            fecha_hora_inicio: agendaBody.hora_inicio || null,
+            fecha_hora_fin: agendaBody.hora_fin || null,
         });
         for (const item of anfitriones) {
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
@@ -1076,9 +1128,9 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             sede_id: body.sede_id,
             tipo_evento_id: body.tipo_evento_id,
             transmision: body.transmite,
-            liga: body.liga,
-            fecha_hora_inicio: body.hora_inicio,
-            fecha_hora_fin: body.hora_fin,
+            liga: body.liga || null,
+            fecha_hora_inicio: body.hora_inicio || null,
+            fecha_hora_fin: body.hora_fin || null,
         });
         yield anfitrion_agendas_1.default.destroy({
             where: { agenda_id: agendaId }
