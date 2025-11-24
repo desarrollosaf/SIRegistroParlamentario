@@ -408,7 +408,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
             valor: `${item.diputado.apaterno ?? ''} ${item.diputado.amaterno ?? ''} ${item.diputado.nombres ?? ''}`.trim(),
           }));
 
-        arr.diputados = dipss;
+        arr.dtSlct = dipss;
       }
       
     } else if (proponente.valor === 'Mesa Directiva en turno') {
@@ -418,7 +418,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           where: { tipo_comision_id: idMesa.id },
           order: [['created_at', 'DESC']],
         });
-        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+        if (mesa) arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
       }
      
     } else if (proponente.valor === 'Junta de Coordinación Politica') {
@@ -431,12 +431,12 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           },
           order: [['created_at', 'DESC']],
         });
-        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+        if (mesa) arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
       }
       
     } else if (proponente.valor === 'Secretarías del GEM') {
         const secretgem = await Secretarias.findAll();
-        arr.secretgem = secretgem.map(s => ({
+        arr.dtSlct = secretgem.map(s => ({
           id: s.id,
           valor: `${s.nombre} / ${s.titular}`
         }));
@@ -447,11 +447,11 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
             vigente: 1
           },
         });
-        if (gobernadora) arr.mesa = { id: gobernadora.id, valor: gobernadora.nombre_titular };
+        if (gobernadora) arr.dtSlct = { id: gobernadora.id, valor: gobernadora.nombre_titular };
 
     } else if (proponente.valor === 'Ayuntamientos'){
       const municipios = await MunicipiosAg.findAll();
-      arr.municipios = municipios.map(l => ({
+      arr.dtSlct = municipios.map(l => ({
         id: l.id,
         valor: l.nombre
       }));
@@ -462,7 +462,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           },
           order: [['created_at', 'DESC']],
         });
-         if (derechoshumanos) arr.mesa = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
+         if (derechoshumanos) arr.dtSlct = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
     }else if(proponente.valor === 'Tribunal Superior de Justicia' ){
       const tribunal = await CatFunDep.findOne({
           where: {
@@ -470,7 +470,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
             vigente: 1
           },
         });
-        if (tribunal) arr.mesa = { id: tribunal.id, valor: tribunal.nombre_titular };
+        if (tribunal) arr.dtSlct = { id: tribunal.id, valor: tribunal.nombre_titular };
     } else if (
       proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
       proponente.valor === 'Fiscalía General de Justicia del Estado de México'
@@ -481,14 +481,14 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
             vigente: 1
           },
         });
-        if (fiscalia) arr.mesa = { id: fiscalia.id, valor: fiscalia.nombre_titular };
+        if (fiscalia) arr.dtSlct = { id: fiscalia.id, valor: fiscalia.nombre_titular };
           
     } else if (proponente.valor === 'Comisiones Legislativas') {
       const idMesa = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
       if (idMesa) {
         const comi = await Comision.findAll({ where: { tipo_comision_id: idMesa.id } });
         const comisiones = comi.map((item) => ({ id: item.id, valor: item.nombre }));
-        arr.comisiones = comisiones;
+        arr.dtSlct = comisiones;
       }
        
     } else if (proponente.valor === 'Comisión instaladora') {
@@ -496,7 +496,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
 
     } else if (proponente.valor === 'Municipios') {
       const municipios = await MunicipiosAg.findAll();
-      arr.municipios = municipios.map(l => ({
+      arr.dtSlct = municipios.map(l => ({
         id: l.id,
         valor: l.nombre
       }));
@@ -509,7 +509,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           where: { tipo_comision_id: idMesa.id },
           order: [['created_at', 'DESC']],
         });
-        if (mesa) arr.mesa = { id: mesa.id, valor: mesa.nombre };
+        if (mesa) arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
       }
 
     } else if (
@@ -519,7 +519,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
 
     } else if (proponente.valor === 'Grupo Parlamentario') {
       const partidos = await Partidos.findAll();
-      arr.partidos = partidos.map(l => ({
+      arr.dtSlct = partidos.map(l => ({
         id: l.id,
         valor: l.siglas
       }));
@@ -527,7 +527,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
 
     } else if (proponente.valor === 'Legislatura') {
       const legislaturas = await Legislatura.findAll();
-      arr.legislaturas = legislaturas.map(l => ({
+      arr.dtSlct = legislaturas.map(l => ({
         id: l.id,
         valor: l.numero
       }));
