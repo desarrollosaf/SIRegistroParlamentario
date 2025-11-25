@@ -379,7 +379,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
   try {
     const { id } = req.params;
     const proponente = await Proponentes.findByPk(id);
-
+    console.log(id)
     if (!proponente) {
       return res.status(404).json({ message: 'Proponente no encontrado' });
     }
@@ -456,6 +456,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         id: l.id,
         valor: l.nombre
       }));
+      console.log(municipios, arr)
     } else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México' ){
         const derechoshumanos = await Comision.findOne({
           where: {

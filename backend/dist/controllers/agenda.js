@@ -334,6 +334,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { id } = req.params;
         const proponente = yield proponentes_1.default.findByPk(id);
+        console.log(id);
         if (!proponente) {
             return res.status(404).json({ message: 'Proponente no encontrado' });
         }
@@ -409,6 +410,7 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 id: l.id,
                 valor: l.nombre
             }));
+            console.log(municipios, arr);
         }
         else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
             const derechoshumanos = yield comisions_1.default.findOne({
