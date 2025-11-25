@@ -585,6 +585,8 @@ export class DetalleComisionComponent implements OnInit {
 
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+    this.documentos['docPunto'] = null;
+    this.formPunto.reset();
   }
 
 
