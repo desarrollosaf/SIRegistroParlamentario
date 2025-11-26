@@ -10,6 +10,7 @@ import sequelize from "../database/registrocomisiones";
 
 import PuntosOrden from "./puntos_ordens";
 import TipoIntervencion from "./tipo_intervencions";
+import Agenda from "./agendas";
 
 
 class Intervencion extends Model {
@@ -95,4 +96,6 @@ Intervencion.init(
 );
 
 Intervencion.belongsTo(TipoIntervencion, { foreignKey: 'id_tipo_intervencion', as: 'tipointerven' });
+Intervencion.belongsTo(PuntosOrden, { foreignKey: 'id_punto', as: 'punto' });
+Intervencion.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
 export default Intervencion;

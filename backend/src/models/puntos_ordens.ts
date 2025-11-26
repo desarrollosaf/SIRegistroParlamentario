@@ -11,6 +11,7 @@ import sequelize from "../database/registrocomisiones";
 import TipoCategoriaIniciativas from "./tipo_categoria_iniciativas";
 import Proponentes from "./proponentes";
 import PuntosPresenta from "./puntos_presenta";
+import Agenda from "./agendas";
 
 
 
@@ -112,4 +113,5 @@ PuntosOrden.init(
 PuntosOrden.hasMany(PuntosPresenta, {
   foreignKey: 'id_punto', as: 'presentan'
 });
+PuntosOrden.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
 export default PuntosOrden;
