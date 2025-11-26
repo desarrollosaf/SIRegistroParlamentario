@@ -8,7 +8,7 @@ router.get("/api/eventos/geteventos/", geteventos );
 router.get("/api/eventos/getevento/:id", getevento );
 router.post("/api/eventos/actasistencia/", actualizar );
 router.get("/api/eventos/catalogos/", catalogos );
-router.get("/api/eventos/gettipos/", getTiposPuntos );
+router.post("/api/eventos/gettipos/", getTiposPuntos );
 router.post("/api/eventos/savepunto/:id",upload.single("documento"), guardarpunto );
 router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );

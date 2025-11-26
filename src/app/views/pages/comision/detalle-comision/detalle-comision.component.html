@@ -3,7 +3,7 @@
     <div class="col-md-12 stretch-card">
         <div class="card">
             <div class="card-body">
-                
+
                 <div class="text-center mb-4">
                     <h6 class="card-title fw-bold text-uppercase d-inline-block mb-2"
                         style="color: #800048; letter-spacing: 1.5px; border-bottom: 3px solid #800048; padding-bottom: 8px;">
@@ -223,14 +223,14 @@
                                                     <div class="col-md-6">
                                                         <label class="form-label">Proponente</label>
                                                         <ng-select [items]="slctProponentes" bindLabel="valor"
-                                                            bindValue="id" formControlName="proponente"
+                                                            bindValue="id" formControlName="proponente" [multiple]="true"
                                                             placeholder="Selecciona" (change)="getTipoP($event)">
                                                         </ng-select>
                                                     </div>
 
                                                     <div class="col-12">
                                                         <label class="form-label">Presenta</label>
-                                                        <ng-select [items]="slcPresenta" bindLabel="valor"
+                                                        <ng-select [items]="slcPresenta" bindLabel="valor" [multiple]="true"
                                                             [multiple]="true" bindValue="id" formControlName="presenta"
                                                             placeholder="Selecciona">
                                                         </ng-select>
@@ -238,7 +238,7 @@
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Tipo</label>
-                                                        <ng-select [items]="slcTipo" bindLabel="valor" bindValue="id"
+                                                        <ng-select [items]="slcTipo" bindLabel="valor" bindValue="id" [multiple]="true"
                                                             formControlName="tipo" placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>

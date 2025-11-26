@@ -423,7 +423,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
-  cargarTiposParaPunto(punto: any, idProponente: number): void {
+  cargarTiposParaPunto(punto: any, idProponente: any): void {
     this._eventoService.getTipo(idProponente).subscribe({
       next: (response: any) => {
         punto.tiposDisponibles = response.tipos || [];
@@ -688,8 +688,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   getTipoP(id?: any): void {
     this.formPunto.get('tipo')?.setValue(null);
     this.formPunto.get('presenta')?.setValue(null);
-    this._eventoService.getTipo(id.id).subscribe({
+    console.log(id);
+    this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
+        console.log(response);
         this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
           ...item,
           id: String(item.id)

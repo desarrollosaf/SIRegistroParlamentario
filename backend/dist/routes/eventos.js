@@ -11,7 +11,7 @@ router.get("/api/eventos/geteventos/", agenda_1.geteventos);
 router.get("/api/eventos/getevento/:id", agenda_1.getevento);
 router.post("/api/eventos/actasistencia/", agenda_1.actualizar);
 router.get("/api/eventos/catalogos/", agenda_1.catalogos);
-router.get("/api/eventos/gettipos/", agenda_1.getTiposPuntos);
+router.post("/api/eventos/gettipos/", agenda_1.getTiposPuntos);
 router.post("/api/eventos/savepunto/:id", multer_1.default.single("documento"), agenda_1.guardarpunto);
 router.get("/api/eventos/getpuntos/:id", agenda_1.getpuntos);
 router.post("/api/eventos/actualizarPunto/:id", multer_1.default.single("documento"), agenda_1.actualizarPunto);
