@@ -3,7 +3,14 @@
     <div class="col-md-12 stretch-card">
         <div class="card">
             <div class="card-body">
-                <h6 class="card-title">Registro de Sesión</h6>
+                <div class="text-center mb-4">
+                    <h6 class="card-title fw-bold text-uppercase d-inline-block"
+                        style="color: #800048; letter-spacing: 1.5px; border-bottom: 3px solid #800048; padding-bottom: 8px;">
+                        <i class="mdi mdi-file-document-outline me-2"></i>
+                        {{this.tituloC}}
+                    </h6>
+                </div>
+                <br>
 
                 <div class="wizard-container">
                     <ul class="nav nav-pills mb-3 mb-sm-4 justify-content-center flex-wrap">
@@ -315,9 +322,9 @@
 
                                                                 <div class="col-12">
                                                                     <label class="form-label">Presenta</label>
-                                                                    <ng-select [items]="punto.presentaDisponibles" bindLabel="valor"
-                                                                        [multiple]="true" bindValue="id"
-                                                                        formControlName="presenta"
+                                                                    <ng-select [items]="punto.presentaDisponibles"
+                                                                        bindLabel="valor" [multiple]="true"
+                                                                        bindValue="id" formControlName="presenta"
                                                                         placeholder="Selecciona uno o varios"
                                                                         [closeOnSelect]="false">
                                                                     </ng-select>

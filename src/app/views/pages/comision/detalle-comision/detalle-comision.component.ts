@@ -91,6 +91,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionado: any = null;
   listaIntervenciones: any;
   // tiposIntervencion:any;
+  tituloC: '';
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
@@ -295,6 +296,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
+        console.log(response.titulo);
+        this.tituloC = response.titulo
         this.integrantes = response.integrantes || [];
         this.dividirEnColumnas();
       },
