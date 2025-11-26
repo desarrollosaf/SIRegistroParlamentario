@@ -54,6 +54,10 @@ export const routes: Routes = [
       path: 'agenda-comision',
        loadChildren: () => import('./views/pages/comision/comision.route')
       },
+      {
+      path: 'legislatura',
+       loadChildren: () => import('./views/pages/legislatura/legislatura.route')
+      },
     ]
   },
   {
