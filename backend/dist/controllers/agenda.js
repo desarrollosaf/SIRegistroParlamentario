@@ -74,7 +74,7 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.geteventos = geteventos;
 const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b, _c;
     try {
         const { id } = req.params;
         const evento = yield agendas_1.default.findOne({
@@ -86,6 +86,29 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         if (!evento) {
             return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        let titulo = "";
+        if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {
+            titulo = (_b = evento.descripcion) !== null && _b !== void 0 ? _b : "";
+        }
+        else {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            if (comisionIds.length === 0) {
+                titulo = "";
+            }
+            else {
+                const comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
         }
         const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
@@ -118,11 +141,12 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 msg: "Evento con asistencias existentes",
                 evento,
                 integrantes: resultados,
+                titulo
             });
         }
         const listadoDiputados = [];
         let bandera = 1;
-        if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {
+        if (((_c = evento.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre) === "Sesión") {
             const legislatura = yield legislaturas_1.default.findOne({
                 order: [["fecha_inicio", "DESC"]],
             });
@@ -216,6 +240,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             msg: "Evento generado correctamente",
             evento,
             integrantes: resultados,
+            titulo
         });
     }
     catch (error) {
@@ -1054,7 +1079,7 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 var _a, _b, _c;
                 return ({
                     id: d.diputado.id,
-                    name: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
                 });
             });
         }

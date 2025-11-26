@@ -83,6 +83,28 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
+    let titulo = "";
+
+    if (evento.tipoevento?.nombre === "Sesión") {
+      titulo = evento.descripcion ?? "";
+    } else {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+      if (comisionIds.length === 0) {
+        titulo = "";
+      } else {
+        const comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["nombre"],
+          raw: true
+        });
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+    }
 
     const asistenciasExistentes = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
@@ -128,6 +150,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         msg: "Evento con asistencias existentes",
         evento,
         integrantes: resultados,
+        titulo
       });
     }
 
@@ -249,6 +272,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       msg: "Evento generado correctamente",
       evento,
       integrantes: resultados,
+      titulo
     });
   } catch (error) {
     console.error("Error obteniendo evento:", error);
@@ -1186,7 +1210,7 @@ export const catalogossave = async (req: Request, res: Response) => {
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
-              name: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
     }
 
