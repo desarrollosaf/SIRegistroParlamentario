@@ -1,5 +1,5 @@
 
-import { Component, inject, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -41,7 +41,12 @@ interface Votante {
   templateUrl: './detalle-comision.component.html',
   styleUrl: './detalle-comision.component.scss'
 })
-export class DetalleComisionComponent implements OnInit {
+export class DetalleComisionComponent implements OnInit, OnDestroy {
+
+  private segPlanoInterval: any = null;
+  private segPlanoActivo: boolean = false;
+  private readonly SEGUNDO_PLANO_INTERVAL_MS = 3000;
+
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   step = 1;
   stepNames = [
@@ -123,6 +128,11 @@ export class DetalleComisionComponent implements OnInit {
   }
 
 
+  ngOnDestroy(): void {
+    console.log('Limpiando');
+    this.detenerSegPlano();
+  }
+
 
   nextStep() {
     if (this.step < 4) {
@@ -134,6 +144,7 @@ export class DetalleComisionComponent implements OnInit {
   prevStep() {
     if (this.step > 1) {
       this.step--;
+      this.cargarDatosSeccion(this.step);
     }
   }
 
@@ -147,15 +158,19 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   private cargarDatosSeccion(seccion: number): void {
+    this.detenerSegPlano();
+
     switch (seccion) {
       case 1:
         this.cargardatosAsistencia();
+        this.iniciarSegPlano();
         break;
       case 2:
         this.cargarOrdenDia();
         break;
       case 3:
         this.cargarDatosVotacion();
+        this.iniciarSegPlano();
         break;
       case 4:
         this.cargarDatosResumen();
@@ -163,6 +178,119 @@ export class DetalleComisionComponent implements OnInit {
     }
   }
 
+  // ============================================================
+  //ACTUALIXAR
+  // ============================================================
+  private iniciarSegPlano(): void {
+    if (this.segPlanoActivo) {
+      return;
+    }
+
+    const seccionNombre = this.step === 1 ? 'Asistencia' : 'Votaciones';
+    console.log(`Iniciando ${seccionNombre}`);
+    this.segPlanoActivo = true;
+
+    this.segPlanoInterval = setInterval(() => {
+      this.actualizarDatosAutomaticamente();
+    }, this.SEGUNDO_PLANO_INTERVAL_MS);
+  }
+
+  private detenerSegPlano(): void {
+    if (this.segPlanoInterval) {
+      console.log('Deteniendo');
+      clearInterval(this.segPlanoInterval);
+      this.segPlanoInterval = null;
+      this.segPlanoActivo = false;
+    }
+  }
+
+  private actualizarDatosAutomaticamente(): void {
+    if (this.step === 1) {
+      this.actualizarAsistenciaAutomaticamente();
+    } else if (this.step === 3 && this.puntoSeleccionadoVotacion && this.idpto) {
+      this.actualizarVotacionesAutomaticamente();
+    }
+  }
+
+  // ============================================================
+  //ACTUALIZA ASISTENCIA
+  // ============================================================
+
+  private actualizarAsistenciaAutomaticamente(): void {
+    this._eventoService.getEvento(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        const nuevosIntegrantes = response.integrantes || [];
+        if (this.hayaCambiosEnAsistencia(nuevosIntegrantes)) {
+          console.log('actualizada desde el servidor');
+          this.integrantes = nuevosIntegrantes;
+          this.dividirEnColumnas();
+        }
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al actualizar asistencia:', e);
+      }
+    });
+  }
+
+  private hayaCambiosEnAsistencia(nuevosIntegrantes: Integrante[]): boolean {
+    if (nuevosIntegrantes.length !== this.integrantes.length) {
+      return true;
+    }
+
+    for (let i = 0; i < nuevosIntegrantes.length; i++) {
+      const nuevoIntegrante = nuevosIntegrantes[i];
+      const integranteActual = this.integrantes.find(int => int.id_diputado === nuevoIntegrante.id_diputado);
+
+      if (!integranteActual || integranteActual.sentido_voto !== nuevoIntegrante.sentido_voto) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // ============================================================
+  //  ACTUALIZA VOTACIONES
+  // ============================================================
+
+  private actualizarVotacionesAutomaticamente(): void {
+    this._eventoService.getIntegrantesVotosPunto(this.idpto).subscribe({
+      next: (response: any) => {
+        const nuevosVotantes = response.integrantes || [];
+
+        if (this.hayaCambiosEnVotacion(nuevosVotantes)) {
+          console.log('actualizada desde el servidor');
+          this.votantes = nuevosVotantes;
+          this.dividirEnColumnasVotacion();
+
+        }
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al actualizar votaciones:', e);
+      }
+    });
+  }
+
+  private hayaCambiosEnVotacion(nuevosVotantes: Votante[]): boolean {
+    if (nuevosVotantes.length !== this.votantes.length) {
+      return true;
+    }
+
+    for (let i = 0; i < nuevosVotantes.length; i++) {
+      const nuevoVotante = nuevosVotantes[i];
+      const votanteActual = this.votantes.find(v => v.id_diputado === nuevoVotante.id_diputado);
+
+      if (!votanteActual || votanteActual.sentido !== nuevoVotante.sentido) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  //******************************************************************************************************************** */
+  //******************************************************************************************************************** */
+  //******************************************************************************************************************** */
 
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
@@ -585,6 +713,8 @@ export class DetalleComisionComponent implements OnInit {
 
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+    this.documentos['docPunto'] = null;
+    this.formPunto.reset();
   }
 
 
@@ -654,11 +784,17 @@ export class DetalleComisionComponent implements OnInit {
   }
 
   onPuntoVotacionChange(puntoId: any): void {
-
     if (puntoId.id) {
       this.cargarVotantes(puntoId.id);
+      if (this.segPlanoActivo && this.step === 3) {
+        console.log('onchange');
+        this.detenerSegPlano();
+        this.iniciarSegPlano();
+        // this.segPlanoActivo = true;
+      }
     }
   }
+
   private cargarVotantes(punto: any): void {
     // console.log(punto);
     this.idpto = punto;
@@ -729,6 +865,8 @@ export class DetalleComisionComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.puntoSeleccionadoVotacion = null;
+        // this.detenerSegPlano();
+
         const Toast = Swal.mixin({
           toast: true,
           position: 'top-end',

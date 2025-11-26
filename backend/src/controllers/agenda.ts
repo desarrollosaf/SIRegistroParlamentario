@@ -31,6 +31,11 @@ import MunicipiosAg from "../models/municipiosag";
 import { Secretarias } from "../models/secretarias";
 import CatFunDep from "../models/cat_fun_dep";
 import PuntosPresenta from "../models/puntos_presenta";
+import axios from "axios";
+import { es } from "date-fns/locale";
+import { format } from "date-fns";
+import NodeCache from 'node-cache';
+
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -694,23 +699,33 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
 export const saveintervencion = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-      const registros = body.id_diputado.map((diputadoId: string) => ({
-        id_punto: body.id_punto,
-        id_evento: body.id_evento,
-        id_diputado: diputadoId,
-        id_tipo_intervencion: body.id_tipo_intervencion,
-        mensaje: body.comentario,
-        tipo: body.tipo,
-        destacado: body.destacada,
-      }));
 
-      await Intervencion.bulkCreate(registros);
+    const registros = body.id_diputado.map((diputadoId: string) => ({
+      id_punto: body.id_punto,
+      id_evento: body.id_evento,
+      id_diputado: diputadoId,
+      id_tipo_intervencion: body.id_tipo_intervencion,
+      mensaje: body.comentario,
+      tipo: body.tipo,
+      destacado: body.destacada, 
+    }));
 
-      return res.status(200).json({
-        message: "Intervenciones guardadas correctamente",
-      });
+    const nuevasIntervenciones = await Intervencion.bulkCreate(registros, {
+      returning: true,
+    });
+
+    if (body.destacada == 1) {
+      for (const intervencion of nuevasIntervenciones) {
+        await enviarWhatsIntervencion(intervencion);
+      }
+    }
+
+    return res.status(200).json({
+      message: "Intervenciones guardadas correctamente",
+    });
+
   } catch (error: any) {
-    console.error("Error al guardar evento:", error);
+    console.error("Error al guardar intervenciones:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
@@ -1351,5 +1366,162 @@ export const updateAgenda = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
+const enviarWhatsIntervencion = async (intervencion: any) => {
+  try {
+   
+    const datos = await Intervencion.findOne({
+      where: { id: intervencion.id },
+      attributes: ['id', 'id_diputado', 'mensaje', 'id_punto', 'id_evento'],
+      include: [
+        {
+          model: PuntosOrden,
+          as: "punto",
+          attributes: ["nopunto", "punto"],
+          required: false
+        },
+        {
+          model: Agenda,
+          as: "evento",
+          attributes: ["descripcion", "fecha"],
+          required: false
+        }
+      ],
+      raw: false
+    });
+
+    if (!datos) return;
+
+   
+    const diputado = await Diputado.findOne({
+      where: { id: datos.id_diputado },
+      attributes: ["apaterno", "amaterno", "nombres"],
+      raw: true,
+    });
+
+    const nombreCompleto = diputado
+      ? [diputado.apaterno, diputado.amaterno, diputado.nombres]
+          .filter(Boolean)
+          .join(" ")
+      : "Diputado";
+
+
+    let titulo = "Intervención destacada";
+    
+    if (datos.punto) {
+      titulo = `del punto ${datos.punto.nopunto}.- ${datos.punto.punto}`;
+    } else if (datos.evento) {
+      const fechaFormateada = format(
+        new Date(datos.evento.fecha),
+        "d 'de' MMMM 'de' yyyy",
+        { locale: es }
+      );
+      titulo = `de la ${datos.evento.descripcion} (${fechaFormateada})`;
+    }
+
+ 
+    await axios.post(
+      "https://api.ultramsg.com/instance144598/messages/chat",
+      new URLSearchParams({
+        token: "ml56a7d6tn7ha7cc",
+        to: "+527222035605, +527224986377",
+        body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
+        priority: "1",
+        referenceId: "",
+        msgId: "",
+        mentions: ""
+      }),
+      {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        timeout: 5000 
+      }
+    );
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+      console.error("Timeout enviando WhatsApp");
+    } else {
+      console.error("Error enviando WhatsApp:", error);
+    }
+  }
+};
+
+
+
+export const enviarWhatsPunto = async (req: Request, res: Response) => {
+  try {
+
+    const { id } = req.params;
+
+    const datos = await PuntosOrden.findOne({
+      where: { id },
+      include: [
+        {
+          model: PuntosPresenta,
+          as: "presentan",
+          required: false
+        },
+        {
+          model: Agenda,
+          as: "evento",
+          attributes: ["descripcion", "fecha"],
+          required: false
+        }
+      ],
+      raw: false
+    });
+
+    if (!datos) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+
+    const nopunto = datos.nopunto ?? datos.nopunto ?? "";
+    const puntoTexto = datos.punto ?? datos.punto ?? "";
+    const tituloPunto = `${nopunto}.- ${puntoTexto}`;
+
+    const descripcion = datos.evento?.descripcion ?? "Sin descripción";
+
+    let fechaFormateada = "";
+    if (datos.evento?.fecha) {
+      fechaFormateada = format(new Date(datos.evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
+    }
+
+    const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
+    const params = {
+      token: "ml56a7d6tn7ha7cc",
+      to: "+527222035605",
+      body: mensaje,
+      priority: "1",
+      referenceId: "",
+      msgId: "",
+      mentions: ""
+    };
+
+    await axios.post(
+      "https://api.ultramsg.com/instance144598/messages/chat",
+      new URLSearchParams(params),
+      {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+      }
+    );
+
+    return res.status(200).json({
+      message: "WhatsApp enviado correctamente",
+      enviado: true
+    });
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+      console.error("Timeout enviando WhatsApp");
+    } else {
+      console.error("Error enviando WhatsApp:", error);
+    }
+    return res.status(500).json({ message: "Error enviando WhatsApp" });
+  }
+};
+
+
 
 

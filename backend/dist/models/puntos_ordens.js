@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 const puntos_presenta_1 = __importDefault(require("./puntos_presenta"));
+const agendas_1 = __importDefault(require("./agendas"));
 class PuntosOrden extends sequelize_1.Model {
 }
 PuntosOrden.init({
@@ -74,4 +75,5 @@ PuntosOrden.init({
 PuntosOrden.hasMany(puntos_presenta_1.default, {
     foreignKey: 'id_punto', as: 'presentan'
 });
+PuntosOrden.belongsTo(agendas_1.default, { foreignKey: 'id_evento', as: 'evento' });
 exports.default = PuntosOrden;

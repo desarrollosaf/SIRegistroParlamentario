@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -40,6 +40,9 @@ const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const secretarias_1 = require("../models/secretarias");
 const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
 const puntos_presenta_1 = __importDefault(require("../models/puntos_presenta"));
+const axios_1 = __importDefault(require("axios"));
+const locale_1 = require("date-fns/locale");
+const date_fns_1 = require("date-fns");
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -646,13 +649,20 @@ const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, functio
             tipo: body.tipo,
             destacado: body.destacada,
         }));
-        yield intervenciones_1.default.bulkCreate(registros);
+        const nuevasIntervenciones = yield intervenciones_1.default.bulkCreate(registros, {
+            returning: true,
+        });
+        if (body.destacada == 1) {
+            for (const intervencion of nuevasIntervenciones) {
+                yield enviarWhatsIntervencion(intervencion);
+            }
+        }
         return res.status(200).json({
             message: "Intervenciones guardadas correctamente",
         });
     }
     catch (error) {
-        console.error("Error al guardar evento:", error);
+        console.error("Error al guardar intervenciones:", error);
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 });
@@ -1204,3 +1214,127 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.updateAgenda = updateAgenda;
+const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const datos = yield intervenciones_1.default.findOne({
+            where: { id: intervencion.id },
+            attributes: ['id', 'id_diputado', 'mensaje', 'id_punto', 'id_evento'],
+            include: [
+                {
+                    model: puntos_ordens_1.default,
+                    as: "punto",
+                    attributes: ["nopunto", "punto"],
+                    required: false
+                },
+                {
+                    model: agendas_1.default,
+                    as: "evento",
+                    attributes: ["descripcion", "fecha"],
+                    required: false
+                }
+            ],
+            raw: false
+        });
+        if (!datos)
+            return;
+        const diputado = yield diputado_1.default.findOne({
+            where: { id: datos.id_diputado },
+            attributes: ["apaterno", "amaterno", "nombres"],
+            raw: true,
+        });
+        const nombreCompleto = diputado
+            ? [diputado.apaterno, diputado.amaterno, diputado.nombres]
+                .filter(Boolean)
+                .join(" ")
+            : "Diputado";
+        let titulo = "Intervención destacada";
+        if (datos.punto) {
+            titulo = `del punto ${datos.punto.nopunto}.- ${datos.punto.punto}`;
+        }
+        else if (datos.evento) {
+            const fechaFormateada = (0, date_fns_1.format)(new Date(datos.evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
+            titulo = `de la ${datos.evento.descripcion} (${fechaFormateada})`;
+        }
+        yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
+            token: "ml56a7d6tn7ha7cc",
+            to: "+527222035605, +527224986377",
+            body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
+            priority: "1",
+            referenceId: "",
+            msgId: "",
+            mentions: ""
+        }), {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            timeout: 5000
+        });
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error) && error.code === 'ECONNABORTED') {
+            console.error("Timeout enviando WhatsApp");
+        }
+        else {
+            console.error("Error enviando WhatsApp:", error);
+        }
+    }
+});
+const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+        const { id } = req.params;
+        const datos = yield puntos_ordens_1.default.findOne({
+            where: { id },
+            include: [
+                {
+                    model: puntos_presenta_1.default,
+                    as: "presentan",
+                    required: false
+                },
+                {
+                    model: agendas_1.default,
+                    as: "evento",
+                    attributes: ["descripcion", "fecha"],
+                    required: false
+                }
+            ],
+            raw: false
+        });
+        if (!datos) {
+            return res.status(404).json({ message: "Punto no encontrado" });
+        }
+        const nopunto = (_b = (_a = datos.nopunto) !== null && _a !== void 0 ? _a : datos.nopunto) !== null && _b !== void 0 ? _b : "";
+        const puntoTexto = (_d = (_c = datos.punto) !== null && _c !== void 0 ? _c : datos.punto) !== null && _d !== void 0 ? _d : "";
+        const tituloPunto = `${nopunto}.- ${puntoTexto}`;
+        const descripcion = (_f = (_e = datos.evento) === null || _e === void 0 ? void 0 : _e.descripcion) !== null && _f !== void 0 ? _f : "Sin descripción";
+        let fechaFormateada = "";
+        if ((_g = datos.evento) === null || _g === void 0 ? void 0 : _g.fecha) {
+            fechaFormateada = (0, date_fns_1.format)(new Date(datos.evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
+        }
+        const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
+        const params = {
+            token: "ml56a7d6tn7ha7cc",
+            to: "+527222035605",
+            body: mensaje,
+            priority: "1",
+            referenceId: "",
+            msgId: "",
+            mentions: ""
+        };
+        yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams(params), {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
+        return res.status(200).json({
+            message: "WhatsApp enviado correctamente",
+            enviado: true
+        });
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error) && error.code === 'ECONNABORTED') {
+            console.error("Timeout enviando WhatsApp");
+        }
+        else {
+            console.error("Error enviando WhatsApp:", error);
+        }
+        return res.status(500).json({ message: "Error enviando WhatsApp" });
+    }
+});
+exports.enviarWhatsPunto = enviarWhatsPunto;
