@@ -178,14 +178,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
-  //**************************************ACTUALO************************************************************************ */
+  // ============================================================
+  //ACTUALIXAR
+  // ============================================================
   private iniciarSegPlano(): void {
     if (this.segPlanoActivo) {
       return;
     }
 
     const seccionNombre = this.step === 1 ? 'Asistencia' : 'Votaciones';
-    console.log(`Iniciando ${seccionNombre} cada ${this.SEGUNDO_PLANO_INTERVAL_MS / 1000} segundos`);
+    console.log(`Iniciando ${seccionNombre}`);
     this.segPlanoActivo = true;
 
     this.segPlanoInterval = setInterval(() => {
@@ -211,7 +213,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   // ============================================================
-  //ASISTENCIA
+  //ACTUALIZA ASISTENCIA
   // ============================================================
 
   private actualizarAsistenciaAutomaticamente(): void {
@@ -248,7 +250,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   // ============================================================
-  //  VOTACIONES
+  //  ACTUALIZA VOTACIONES
   // ============================================================
 
   private actualizarVotacionesAutomaticamente(): void {
@@ -286,7 +288,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     return false;
   }
 
-
+  //******************************************************************************************************************** */
+  //******************************************************************************************************************** */
   //******************************************************************************************************************** */
 
   private cargardatosAsistencia(): void {
