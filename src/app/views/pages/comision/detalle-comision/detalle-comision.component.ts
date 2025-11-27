@@ -361,7 +361,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        // console.log(response);
+        console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         // this.slcPresenta = response.comisiones;
