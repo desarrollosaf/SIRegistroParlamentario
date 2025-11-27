@@ -408,8 +408,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
   try {
     const { body } = req;
     const  proponentes  = body;
-    // console.log(proponentes)
-    // return 500;
+    
     if (!proponentes || !Array.isArray(proponentes) || proponentes.length === 0) {
       return res.status(400).json({ message: 'Se requiere un arreglo de proponentes' });
     }
@@ -430,7 +429,6 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         joinTableAttributes: [] 
       });
       
-      // Agregar tipos con referencia al proponente
       tiposRelacionados.forEach((tipo: any) => {
         tiposConsolidados.push({
           ...tipo.toJSON(),
@@ -441,7 +439,6 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
 
       let dtSlctTemp: any = null;
 
-      // Toda tu lógica condicional
       if (proponente.valor === 'Diputadas y Diputados') {
         const legis = await Legislatura.findOne({
           order: [["fecha_inicio", "DESC"]],
@@ -460,7 +457,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           const dipss = dips
             .filter((d) => d.diputado)
             .map((item) => ({
-              id: item.diputado.id,
+              id: `${proponente.id}/${item.diputado.id}`, // 👈 Concatenado
+              id_original: item.diputado.id, // 👈 ID original
               valor: `${item.diputado.apaterno ?? ''} ${item.diputado.amaterno ?? ''} ${item.diputado.nombres ?? ''}`.trim(),
               proponente_id: proponente.id,
               proponente_valor: proponente.valor,
@@ -479,7 +477,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           });
           if (mesa) {
             dtSlctTemp = [{
-              id: mesa.id,
+              id: `${proponente.id}/${mesa.id}`,
+              id_original: mesa.id,
               valor: mesa.nombre,
               proponente_id: proponente.id,
               proponente_valor: proponente.valor,
@@ -500,7 +499,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           });
           if (mesa) {
             dtSlctTemp = [{
-              id: mesa.id,
+              id: `${proponente.id}/${mesa.id}`,
+              id_original: mesa.id,
               valor: mesa.nombre,
               proponente_id: proponente.id,
               proponente_valor: proponente.valor,
@@ -512,7 +512,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       } else if (proponente.valor === 'Secretarías del GEM') {
         const secretgem = await Secretarias.findAll();
         dtSlctTemp = secretgem.map(s => ({
-          id: s.id,
+          id: `${proponente.id}/${s.id}`,
+          id_original: s.id,
           valor: `${s.nombre} / ${s.titular}`,
           proponente_id: proponente.id,
           proponente_valor: proponente.valor,
@@ -528,7 +529,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         });
         if (gobernadora) {
           dtSlctTemp = [{
-            id: gobernadora.id,
+            id: `${proponente.id}/${gobernadora.id}`,
+            id_original: gobernadora.id,
             valor: gobernadora.nombre_titular,
             proponente_id: proponente.id,
             proponente_valor: proponente.valor,
@@ -539,7 +541,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       } else if (proponente.valor === 'Ayuntamientos') {
         const municipios = await MunicipiosAg.findAll();
         dtSlctTemp = municipios.map(l => ({
-          id: l.id,
+          id: `${proponente.id}/${l.id}`,
+          id_original: l.id,
           valor: l.nombre,
           proponente_id: proponente.id,
           proponente_valor: proponente.valor,
@@ -555,7 +558,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         });
         if (derechoshumanos) {
           dtSlctTemp = [{
-            id: derechoshumanos.id,
+            id: `${proponente.id}/${derechoshumanos.id}`,
+            id_original: derechoshumanos.id,
             valor: derechoshumanos.nombre,
             proponente_id: proponente.id,
             proponente_valor: proponente.valor,
@@ -572,7 +576,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         });
         if (tribunal) {
           dtSlctTemp = [{
-            id: tribunal.id,
+            id: `${proponente.id}/${tribunal.id}`,
+            id_original: tribunal.id,
             valor: tribunal.nombre_titular,
             proponente_id: proponente.id,
             proponente_valor: proponente.valor,
@@ -592,7 +597,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         });
         if (fiscalia) {
           dtSlctTemp = [{
-            id: fiscalia.id,
+            id: `${proponente.id}/${fiscalia.id}`,
+            id_original: fiscalia.id,
             valor: fiscalia.nombre_titular,
             proponente_id: proponente.id,
             proponente_valor: proponente.valor,
@@ -605,7 +611,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         if (idMesa) {
           const comi = await Comision.findAll({ where: { tipo_comision_id: idMesa.id } });
           dtSlctTemp = comi.map((item) => ({ 
-            id: item.id, 
+            id: `${proponente.id}/${item.id}`,
+            id_original: item.id,
             valor: item.nombre,
             proponente_id: proponente.id,
             proponente_valor: proponente.valor,
@@ -616,7 +623,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       } else if (proponente.valor === 'Municipios') {
         const municipios = await MunicipiosAg.findAll();
         dtSlctTemp = municipios.map(l => ({
-          id: l.id,
+          id: `${proponente.id}/${l.id}`,
+          id_original: l.id,
           valor: l.nombre,
           proponente_id: proponente.id,
           proponente_valor: proponente.valor,
@@ -632,7 +640,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           });
           if (mesa) {
             dtSlctTemp = [{
-              id: mesa.id,
+              id: `${proponente.id}/${mesa.id}`,
+              id_original: mesa.id,
               valor: mesa.nombre,
               proponente_id: proponente.id,
               proponente_valor: proponente.valor,
@@ -644,7 +653,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       } else if (proponente.valor === 'Grupo Parlamentario') {
         const partidos = await Partidos.findAll();
         dtSlctTemp = partidos.map(l => ({
-          id: l.id,
+          id: `${proponente.id}/${l.id}`,
+          id_original: l.id,
           valor: l.siglas,
           proponente_id: proponente.id,
           proponente_valor: proponente.valor,
@@ -654,7 +664,8 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
       } else if (proponente.valor === 'Legislatura') {
         const legislaturas = await Legislatura.findAll();
         dtSlctTemp = legislaturas.map(l => ({
-          id: l.id,
+          id: `${proponente.id}/${l.id}`,
+          id_original: l.id,
           valor: l.numero,
           proponente_id: proponente.id,
           proponente_valor: proponente.valor,
@@ -699,14 +710,32 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
+    
+    console.log(body);
 
-    const presenta = (body.presenta || "")
+  
+    const presentaArray = (body.presenta || "")
       .split(",")
-      .map((id: string) => id.trim())
-      .filter((id: string) => id.length > 0);
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0)
+      .map((item: string) => {
+        const [proponenteId, autorId] = item.split('/');
+        return {
+          proponenteId: parseInt(proponenteId),
+          autorId: autorId 
+        };
+      });
+
+
+    const proponentesIds = (body.proponente || "")
+      .split(",")
+      .map((id: string) => parseInt(id.trim()))
+      .filter((id: number) => !isNaN(id));
+
+    console.log('Presenta descompuesto:', presentaArray);
+    console.log('Proponentes IDs:', proponentesIds);
 
     const evento = await Agenda.findOne({ where: { id } });
-
     if (!evento) {
       return res.status(404).json({ message: "Evento no encontrado" });
     }
@@ -714,7 +743,6 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const puntonuevo = await PuntosOrden.create({
       id_evento: evento.id,
       nopunto: body.numpunto,
-      id_proponente: body.proponente,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
       path_doc: file ? `storage/puntos/${file.filename}` : null,
@@ -722,11 +750,11 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       observaciones: body.observaciones,
     });
 
-    for (const autorId of presenta) {
+    for (const item of presentaArray) {
       await PuntosPresenta.create({
         id_punto: puntonuevo.id,
-        id_tipo_presenta: body.proponente,
-        id_presenta: autorId
+        id_tipo_presenta: item.proponenteId,
+        id_presenta: item.autorId 
       });
     }
 
@@ -736,7 +764,10 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     });
   } catch (error: any) {
     console.error("Error al guardar el punto:", error);
-    return res.status(500).json({ message: "Error interno del servidor" });
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
   }
 };
 
@@ -751,7 +782,11 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           {
             model: PuntosPresenta,
             as: "presentan",
-            attributes: ["id", "id_presenta"],
+            attributes: [
+            "id",
+            ["id_tipo_presenta", "id_proponente"], 
+            "id_presenta"
+            ]
           },
         ],
       });
