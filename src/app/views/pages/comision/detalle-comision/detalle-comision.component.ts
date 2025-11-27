@@ -92,7 +92,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   listaIntervenciones: any;
   // tiposIntervencion:any;
   tituloC: '';
-  fechaC:'';
+  fechaC: '';
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
@@ -102,7 +102,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     private router: Router,
     private sanitizer: DomSanitizer,
     private modalService: NgbModal,
-     private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
@@ -377,139 +377,139 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   cargarPuntosRegistrados(): void {
-  this._eventoService.getPuntos(this.idComisionRuta).subscribe({
-    next: (response: any) => {
-      console.log('Response completo:', response);
-      this.listaPuntos = response.data || [];
-      this.listaPuntos = this.listaPuntos.map(punto => {
-        
-        // Extraer los id_proponente únicos del array presentan
-        let proponentesIds: number[] = [];
-        if (punto.presentan && Array.isArray(punto.presentan) && punto.presentan.length > 0) {
-          const idsRaw = punto.presentan
-            .map((p: any) => p.id_proponente)
-            .filter((id: any) => id !== null && id !== undefined && id !== '');
-          proponentesIds = [...new Set(idsRaw)].map(id => Number(id)).filter(id => !isNaN(id));
-        }
+    this._eventoService.getPuntos(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        console.log('Response completo:', response);
+        this.listaPuntos = response.data || [];
+        this.listaPuntos = this.listaPuntos.map(punto => {
 
-        // Extraer los id_presenta como STRINGS (pueden ser UUID o números)
-        const presentanIds = punto.presentan && Array.isArray(punto.presentan)
-          ? punto.presentan
+          // Extraer los id_proponente únicos del array presentan
+          let proponentesIds: number[] = [];
+          if (punto.presentan && Array.isArray(punto.presentan) && punto.presentan.length > 0) {
+            const idsRaw = punto.presentan
+              .map((p: any) => p.id_proponente)
+              .filter((id: any) => id !== null && id !== undefined && id !== '');
+            proponentesIds = [...new Set(idsRaw)].map(id => Number(id)).filter(id => !isNaN(id));
+          }
+
+          // Extraer los id_presenta como STRINGS (pueden ser UUID o números)
+          const presentanIds = punto.presentan && Array.isArray(punto.presentan)
+            ? punto.presentan
               .map((p: any) => {
                 // Convertir a string sin importar si es UUID o número
                 const id = p.id_presenta;
                 return id !== null && id !== undefined ? String(id) : null;
               })
               .filter((id: string | null) => id !== null && id !== '' && id !== 'null' && id !== 'undefined')
-          : [];
+            : [];
 
-        console.log('📋 Punto ID:', punto.id);
-        console.log('👥 Proponentes extraídos:', proponentesIds);
-        console.log('📄 Presentan extraídos (strings):', presentanIds);
-        console.log('🏷️ Tipo ID:', punto.id_tipo);
+          console.log('📋 Punto ID:', punto.id);
+          console.log('👥 Proponentes extraídos:', proponentesIds);
+          console.log('📄 Presentan extraídos (strings):', presentanIds);
+          console.log('🏷️ Tipo ID:', punto.id_tipo);
 
-        const puntoMapeado = {
-          ...punto,
-          tiposDisponibles: [],
-          presentaDisponibles: [],
-          form: this.fb.group({
-            id: [punto.id],
-            numpunto: [punto.nopunto],
-            proponente: [proponentesIds],
-            presenta: [presentanIds], // Array de strings (UUIDs o IDs)
-            tipo: [punto.id_tipo ? String(punto.id_tipo) : null], // String también
-            tribuna: [punto.tribuna],
-            punto: [punto.punto],
-            observaciones: [punto.observaciones]
-          })
-        };
+          const puntoMapeado = {
+            ...punto,
+            tiposDisponibles: [],
+            presentaDisponibles: [],
+            form: this.fb.group({
+              id: [punto.id],
+              numpunto: [punto.nopunto],
+              proponente: [proponentesIds],
+              presenta: [presentanIds], // Array de strings (UUIDs o IDs)
+              tipo: [punto.id_tipo ? String(punto.id_tipo) : null], // String también
+              tribuna: [punto.tribuna],
+              punto: [punto.punto],
+              observaciones: [punto.observaciones]
+            })
+          };
 
-        // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
-        if (proponentesIds.length > 0) {
-          console.log('🔄 Cargando tipos para proponentes:', proponentesIds);
-          this.cargarTiposParaPunto(puntoMapeado, proponentesIds);
-        } else {
-          console.warn('⚠️ No hay proponentes válidos para el punto:', punto.id);
-        }
+          // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
+          if (proponentesIds.length > 0) {
+            console.log('🔄 Cargando tipos para proponentes:', proponentesIds);
+            this.cargarTiposParaPunto(puntoMapeado, proponentesIds);
+          } else {
+            console.warn('⚠️ No hay proponentes válidos para el punto:', punto.id);
+          }
 
-        return puntoMapeado;
-      });
-      
-      console.log('✅ Lista de puntos procesada:', this.listaPuntos);
-    },
-    error: (e: HttpErrorResponse) => {
-      const msg = e.error?.msg || 'Error desconocido';
-      console.error('Error del servidor:', msg);
-    }
-  });
-  this.cdr.detectChanges();
+          return puntoMapeado;
+        });
+
+        console.log('✅ Lista de puntos procesada:', this.listaPuntos);
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+    this.cdr.detectChanges();
   }
 
 
- getTipoPParaPunto(event: any, punto: any): void {
-  // event ahora es un array de objetos seleccionados
-  if (event && Array.isArray(event) && event.length > 0) {
-    punto.form.get('tipo')?.setValue(null);
-    punto.form.get('presenta')?.setValue([]);
-    
-    // Extraer los IDs del array de objetos seleccionados
-    const idsProponentes = event.map(item => item.id);
-    console.log('IDs de proponentes seleccionados:', idsProponentes);
-    
-    this.cargarTiposParaPunto(punto, idsProponentes); // <- Pasar array de IDs
-  } else {
-    // Si no hay selección, limpiar
-    punto.tiposDisponibles = [];
-    punto.presentaDisponibles = [];
-  }
-}
+  getTipoPParaPunto(event: any, punto: any): void {
+    // event ahora es un array de objetos seleccionados
+    if (event && Array.isArray(event) && event.length > 0) {
+      punto.form.get('tipo')?.setValue(null);
+      punto.form.get('presenta')?.setValue([]);
 
-cargarTiposParaPunto(punto: any, proponentesIds: number[]): void {
-  if (!proponentesIds || !Array.isArray(proponentesIds) || proponentesIds.length === 0) {
-    console.error('❌ Array de proponentes vacío o inválido');
-    return;
-  }
+      // Extraer los IDs del array de objetos seleccionados
+      const idsProponentes = event.map(item => item.id);
+      console.log('IDs de proponentes seleccionados:', idsProponentes);
 
-  console.log('🚀 Proponentes IDs recibidos:', proponentesIds);
-  
-  // Construir el array de objetos como espera el servicio
-  // Necesitas buscar los objetos completos en slctProponentes
-  const proponentesObjetos = proponentesIds
-    .map(id => this.slctProponentes.find((p: any) => Number(p.id) === Number(id)))
-    .filter(p => p !== undefined);
-
-  console.log('🚀 Proponentes objetos construidos:', proponentesObjetos);
-
-  if (proponentesObjetos.length === 0) {
-    console.error('❌ No se encontraron objetos de proponentes en slctProponentes');
-    return;
-  }
-
-  this._eventoService.getTipo(proponentesObjetos).subscribe({
-    next: (response: any) => {
-      console.log('📦 Response getTipo:', response);
-      
-      // Asignar los datos
-      punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
-        ...tipo,
-        id: String(tipo.id)
-      }));
-
-      punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
-        ...item,
-        id: String(item.id)
-      }));
-
-      console.log('✅ Tipos asignados:', punto.tiposDisponibles.length);
-      console.log('✅ Presenta asignados:', punto.presentaDisponibles.length);
-    },
-    error: (e: HttpErrorResponse) => {
-      console.error('❌ Error al cargar tipos:', e);
+      this.cargarTiposParaPunto(punto, idsProponentes); // <- Pasar array de IDs
+    } else {
+      // Si no hay selección, limpiar
       punto.tiposDisponibles = [];
       punto.presentaDisponibles = [];
     }
-  });
-}
+  }
+
+  cargarTiposParaPunto(punto: any, proponentesIds: number[]): void {
+    if (!proponentesIds || !Array.isArray(proponentesIds) || proponentesIds.length === 0) {
+      console.error('❌ Array de proponentes vacío o inválido');
+      return;
+    }
+
+    console.log('🚀 Proponentes IDs recibidos:', proponentesIds);
+
+    // Construir el array de objetos como espera el servicio
+    // Necesitas buscar los objetos completos en slctProponentes
+    const proponentesObjetos = proponentesIds
+      .map(id => this.slctProponentes.find((p: any) => Number(p.id) === Number(id)))
+      .filter(p => p !== undefined);
+
+    console.log('🚀 Proponentes objetos construidos:', proponentesObjetos);
+
+    if (proponentesObjetos.length === 0) {
+      console.error('❌ No se encontraron objetos de proponentes en slctProponentes');
+      return;
+    }
+
+    this._eventoService.getTipo(proponentesObjetos).subscribe({
+      next: (response: any) => {
+        console.log('📦 Response getTipo:', response);
+
+        // Asignar los datos
+        punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
+          ...tipo,
+          id: String(tipo.id)
+        }));
+
+        punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id_original)
+        }));
+
+        console.log('✅ Tipos asignados:', punto.tiposDisponibles.length);
+        console.log('✅ Presenta asignados:', punto.presentaDisponibles.length);
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('❌ Error al cargar tipos:', e);
+        punto.tiposDisponibles = [];
+        punto.presentaDisponibles = [];
+      }
+    });
+  }
   triggerFileInput(index: number): void {
     const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
     if (fileInput) {

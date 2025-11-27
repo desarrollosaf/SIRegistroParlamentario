@@ -223,22 +223,23 @@
                                                     <div class="col-md-6">
                                                         <label class="form-label">Proponente</label>
                                                         <ng-select [items]="slctProponentes" bindLabel="valor"
-                                                            bindValue="id" formControlName="proponente" [multiple]="true"
-                                                            placeholder="Selecciona" (change)="getTipoP($event)">
+                                                            bindValue="id" formControlName="proponente"
+                                                            [multiple]="true" placeholder="Selecciona"
+                                                            (change)="getTipoP($event)">
                                                         </ng-select>
                                                     </div>
 
                                                     <div class="col-12">
                                                         <label class="form-label">Presenta</label>
-                                                        <ng-select [items]="slcPresenta" bindLabel="valor" [multiple]="true"
-                                                            [multiple]="true" bindValue="id" formControlName="presenta"
-                                                            placeholder="Selecciona">
+                                                        <ng-select [items]="slcPresenta" bindLabel="valor"
+                                                            [multiple]="true" [multiple]="true" bindValue="id"
+                                                            formControlName="presenta" placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
 
                                                     <div class="col-md-4">
                                                         <label class="form-label">Tipo</label>
-                                                        <ng-select [items]="slcTipo" bindLabel="valor" bindValue="id" 
+                                                        <ng-select [items]="slcTipo" bindLabel="valor" bindValue="id"
                                                             formControlName="tipo" placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
@@ -316,21 +317,18 @@
                                                                     <input type="text" class="form-control"
                                                                         formControlName="numpunto">
                                                                 </div>
-                                                               <div class="col-md-6">
-    <label class="form-label">Proponente</label>
-    <ng-select 
-        [items]="slctProponentes"
-        bindLabel="valor" 
-        bindValue="id"
-        [multiple]="true"
-        formControlName="proponente"
-        placeholder="Selecciona uno o varios"
-        [closeOnSelect]="false"
-        (change)="getTipoPParaPunto($event, punto)">
-    </ng-select>
-</div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Proponente</label>
+                                                                    <ng-select [items]="slctProponentes"
+                                                                        bindLabel="valor" bindValue="id"
+                                                                        [multiple]="true" formControlName="proponente"
+                                                                        placeholder="Selecciona uno o varios"
+                                                                        [closeOnSelect]="false"
+                                                                        (change)="getTipoPParaPunto($event, punto)">
+                                                                    </ng-select>
+                                                                </div>
 
-                                                               <!-- <div class="col-12">
+                                                                <!-- <div class="col-12">
     <label class="form-label">Presenta</label>
     <ng-select 
         [items]="punto.presentaDisponibles"
@@ -354,39 +352,36 @@
     </ng-select>
 </div> -->
 
-<div class="col-12">
-    <label class="form-label">Presenta</label>
-    <ng-select 
-        [items]="punto.presentaDisponibles"
-        bindLabel="valor"
-        bindValue="id"
-        [multiple]="true"
-        formControlName="presenta"
-        placeholder="Selecciona uno o varios"
-        [closeOnSelect]="false">
-    </ng-select>
-    <!-- Debug -->
-    <small class="text-muted d-block mt-1">
-        Disponibles: {{punto.presentaDisponibles?.length || 0}} | 
-        Seleccionados: {{punto.form.get('presenta')?.value | json}}
-    </small>
-</div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Presenta</label>
+                                                                    <ng-select [items]="punto.presentaDisponibles"
+                                                                        bindLabel="valor" bindValue="id"
+                                                                        [multiple]="true" formControlName="presenta"
+                                                                        placeholder="Selecciona uno o varios"
+                                                                        [closeOnSelect]="false">
+                                                                    </ng-select>
+                                                                   
+                                                                    <!-- <small class="text-muted d-block mt-1">
+                                                                        Disponibles: {{punto.presentaDisponibles?.length
+                                                                        || 0}} |
+                                                                        Seleccionados:
+                                                                        {{punto.form.get('presenta')?.value | json}}
+                                                                    </small> -->
+                                                                </div>
 
-<div class="col-md-6">
-    <label class="form-label">Tipo</label>
-    <ng-select 
-        [items]="punto.tiposDisponibles"
-        bindLabel="valor"
-        bindValue="id"
-        formControlName="tipo" 
-        placeholder="Selecciona">
-    </ng-select>
-    <!-- Debug -->
-    <small class="text-muted d-block mt-1">
-        Disponibles: {{punto.tiposDisponibles?.length || 0}} | 
-        Seleccionado: {{punto.form.get('tipo')?.value}}
-    </small>
-</div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Tipo</label>
+                                                                    <ng-select [items]="punto.tiposDisponibles"
+                                                                        bindLabel="valor" bindValue="id"
+                                                                        formControlName="tipo" placeholder="Selecciona">
+                                                                    </ng-select>
+                                                                    
+                                                                    <!-- <small class="text-muted d-block mt-1">
+                                                                        Disponibles: {{punto.tiposDisponibles?.length ||
+                                                                        0}} |
+                                                                        Seleccionado: {{punto.form.get('tipo')?.value}}
+                                                                    </small> -->
+                                                                </div>
                                                                 <div class="col-md-6">
                                                                     <label class="form-label">Tribuna</label>
                                                                     <ng-select [items]="slcTribunaDip"
