@@ -786,18 +786,20 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             as: "presentan",
             attributes: [
               [
-                Sequelize.fn('CONCAT', 
-                  Sequelize.col('id_tipo_presenta'), 
-                  '/', 
-                  Sequelize.col('id_presenta')
-                ), 
+                Sequelize.fn(
+                  'CONCAT',
+                  Sequelize.col('presentan.id_tipo_presenta'),
+                  '/',
+                  Sequelize.col('presentan.id_presenta')
+                ),
                 'id'
               ],
-              "id_tipo_presenta", 
-              "id_presenta"
+              "id_tipo_presenta",
+              "id_presenta",
+              ["id_tipo_presenta", "id_proponente"]
             ]
-          },
-        ],
+          }
+        ]
       });
       if (!puntos) {
         return res.status(404).json({ message: "Evento no encontrado" });
@@ -1715,13 +1717,11 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
   try {
     const { id } = req.params;
     
-    // 1. Obtener el punto
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
     }
 
-    // 2. Obtener el evento
     const evento = await Agenda.findOne({
       where: { id: punto.id_evento },
       include: [
@@ -1733,13 +1733,11 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
 
-    // 3. Obtener tema de votos
     let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
     if (!temavotos) {
       return res.status(404).json({ msg: "No hay votaciones para este punto" });
     }
 
-    // 4. Obtener los votos
     const votosRaw = await VotosPunto.findAll({
       where: { id_tema_punto_voto: temavotos.id },
       raw: true,
@@ -1779,17 +1777,15 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       partidos.map(p => [p.id, p])
     );
 
-    // Helper para convertir sentido numérico a texto
     const getSentidoTexto = (sentido: number): string => {
       switch (sentido) {
         case 1:
           return "A FAVOR";
         case 2:
           return "ABSTENCIÓN";
-        case 0:
         case 3:
           return "EN CONTRA";
-        default:
+        case 0:
           return "PENDIENTE";
       }
     };
@@ -1810,19 +1806,17 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       };
     });
 
-    // 5. Calcular totales por sentido de voto
     const totales = {
       favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
-      contra: votosConDetalles.filter(v => v.sentidoNumerico === 0 || v.sentidoNumerico === 3).length,
+      contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
       abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
       pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
     };
 
-    // 6. Crear el PDF
     const doc = new PDFDocument({ 
       size: 'LETTER', 
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
-      bufferPages: true // ⭐ IMPORTANTE: Habilitar buffer de páginas
+      bufferPages: true
     });
 
     const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
@@ -1866,60 +1860,67 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     doc.moveDown(1);
 
     // Resumen de Votación
-    doc.fontSize(12).font('Helvetica-Bold').text('RESUMEN DE VOTACIÓN');
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
     doc.moveDown(0.3);
 
-    // Crear tabla de resumen
     const tableTop = doc.y;
     const colWidths = [130, 100, 100, 100];
     const rowHeight = 25;
 
     // Encabezados de tabla
     doc.fontSize(10).font('Helvetica-Bold');
+
+    // A FAVOR - Azul
     doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
     doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
 
+    // EN CONTRA - Rojo
     doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
-    doc.text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+    doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
 
+    // ABSTENCIÓN - Naranja
     doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
-    doc.text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+    doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
 
+    // PENDIENTE - Gris
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
-    doc.text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
 
     // Valores de totales
     const valuesTop = tableTop + rowHeight;
-    doc.fontSize(14).font('Helvetica-Bold').fillColor('#000');
-    
-    doc.rect(50, valuesTop, colWidths[0], rowHeight).stroke('#000');
-    doc.text(totales.favor.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+    doc.fontSize(14).font('Helvetica-Bold');
 
-    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).stroke('#000');
-    doc.text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+    // A FAVOR
+    doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
 
-    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).stroke('#000');
-    doc.text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+    // EN CONTRA
+    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
 
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).stroke('#000');
-    doc.text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+    // ABSTENCIÓN
+    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+
+    // PENDIENTE
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
 
     doc.moveDown(3);
 
-    // Total de votos
+    // Total de votos - ALINEADO A LA IZQUIERDA
     const totalVotos = votosConDetalles.length;
     doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-    doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, { align: 'right' });
+    doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
     doc.moveDown(1.5);
 
-    // Detalle de Votación
-    doc.fontSize(12).font('Helvetica-Bold').text('DETALLE DE VOTACIÓN');
+    // Detalle de Votación - ALINEADO A LA IZQUIERDA
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN', 50, doc.y, { align: 'left' });
     doc.moveDown(0.5);
 
-    // Agrupar votos por sentido
     const votosPorSentido = {
       favor: votosConDetalles.filter(v => v.sentidoNumerico === 1),
-      contra: votosConDetalles.filter(v => v.sentidoNumerico === 0 || v.sentidoNumerico === 3),
+      contra: votosConDetalles.filter(v => v.sentidoNumerico === 3),
       abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2),
       pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
     };
@@ -1928,65 +1929,55 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     const crearTablaVotos = (titulo: string, votos: any[], color: string) => {
       if (votos.length === 0) return;
 
-      // Verificar si necesitamos nueva página
       if (doc.y > 650) {
         doc.addPage();
       }
 
+      // TÍTULO ALINEADO A LA IZQUIERDA
       doc.fontSize(11).font('Helvetica-Bold').fillColor(color);
-      doc.text(`${titulo} (${votos.length})`);
+      doc.text(`${titulo} (${votos.length})`, 50, doc.y, { align: 'left' });
       doc.moveDown(0.5);
 
-      // Encabezados de tabla
       const startY = doc.y;
       const colX = {
         no: 50,
         diputado: 80,
-        partido: 360,
-        sentido: 450
+        partido: 400
       };
 
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-      doc.rect(colX.no, startY, 520, 20).fillAndStroke('#e5e7eb', '#000');
-      doc.fillColor('#000');
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+      doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
+      doc.fillColor('#fff');
       doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
-      doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 270 });
-      doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 80 });
-      doc.text('SENTIDO', colX.sentido + 5, startY + 6, { width: 110 });
+      doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 310 });
+      doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 110 });
 
       let currentY = startY + 20;
 
-      // Ordenar por apellido
       const votosOrdenados = [...votos].sort((a, b) => 
         a.diputado.localeCompare(b.diputado)
       );
 
       votosOrdenados.forEach((voto, index) => {
-        // Nueva página si es necesario
         if (currentY > 720) {
           doc.addPage();
           currentY = 50;
           
-          // Repetir encabezados
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-          doc.rect(colX.no, currentY, 520, 20).fillAndStroke('#e5e7eb', '#000');
-          doc.fillColor('#000');
+          doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+          doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
+          doc.fillColor('#fff');
           doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
-          doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 270 });
-          doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 80 });
-          doc.text('SENTIDO', colX.sentido + 5, currentY + 6, { width: 110 });
+          doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 310 });
+          doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 110 });
           currentY += 20;
         }
 
-        // Alternar color de fila
-        const fillColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-        doc.rect(colX.no, currentY, 520, 18).fillAndStroke(fillColor, '#d1d5db');
+        doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
 
         doc.fontSize(8).font('Helvetica').fillColor('#000');
         doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
-        doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 270 });
-        doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 80 });
-        doc.text(voto.sentidoTexto, colX.sentido + 5, currentY + 5, { width: 110 });
+        doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 310 });
+        doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 110 });
 
         currentY += 18;
       });
@@ -2000,13 +1991,12 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     crearTablaVotos('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
     crearTablaVotos('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
 
-    // ⭐ AGREGAR PIE DE PÁGINA ANTES DE FINALIZAR
-    const range = doc.bufferedPageRange(); // { start: 0, count: totalPages }
+    // Agregar pie de página
+    const range = doc.bufferedPageRange();
     
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
       
-      // Pie de página
       doc.fontSize(8).font('Helvetica').fillColor('#666');
       doc.text(
         `Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`,
@@ -2016,7 +2006,7 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       );
     }
 
-    // ⭐ FINALIZAR EL PDF
+    // Finalizar el PDF
     doc.end();
 
     // Esperar a que termine de escribir
@@ -2028,7 +2018,6 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
   } catch (error: any) {
     console.error("Error al generar PDF:", error);
     
-    // Asegurarse de no enviar respuesta si ya se envió
     if (!res.headersSent) {
       return res.status(500).json({ 
         message: "Error al generar PDF de votación",
