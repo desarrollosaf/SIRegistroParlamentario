@@ -27,4 +27,5 @@ router.post("/api/eventos/saveagenda/", agenda_1.saveagenda);
 router.get("/api/eventos/getagenda/:id", agenda_1.getAgenda);
 router.post("/api/eventos/editagenda/:id", agenda_1.updateAgenda);
 router.post("/api/eventos/notificarpunto/:id", agenda_1.enviarWhatsPunto);
+router.get("/api/eventos/votacionpunto/:id", agenda_1.generarPDFVotacion);
 exports.default = router;
