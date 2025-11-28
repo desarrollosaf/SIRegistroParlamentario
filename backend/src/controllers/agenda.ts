@@ -22,7 +22,7 @@ import Intervencion from "../models/intervenciones";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
-import { tipo_cargo_comisions } from "../models/tipo_cargo_comisions";
+import TipoCargoComision, { tipo_cargo_comisions } from "../models/tipo_cargo_comisions";
 import TipoAutor from "../models/tipo_autors";
 import { comisiones } from "../models/init-models";
 import Municipios from "../models/municipios";
@@ -74,6 +74,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
   try {
     const { id } = req.params;
 
+    // 1. Obtener evento
     const evento = await Agenda.findOne({
       where: { id },
       include: [
@@ -85,9 +86,14 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-    let titulo = "";
 
-    if (evento.tipoevento?.nombre === "Sesión") {
+    // 2. Determinar tipo de evento
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+    const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
+
+    // 3. Obtener título según tipo de evento
+    let titulo = "";
+    if (esSesion) {
       titulo = evento.descripcion ?? "";
     } else {
       const anfitriones = await AnfitrionAgenda.findAll({
@@ -96,9 +102,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         raw: true
       });
       const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-      if (comisionIds.length === 0) {
-        titulo = "";
-      } else {
+      
+      if (comisionIds.length > 0) {
         const comisiones = await Comision.findAll({
           where: { id: comisionIds },
           attributes: ["nombre"],
@@ -108,174 +113,46 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       }
     }
 
+    // 4. Verificar si existen asistencias
     const asistenciasExistentes = await AsistenciaVoto.findAll({
-      where: { id_agenda: id },
-      raw: true,
-    });
-
-    if (asistenciasExistentes.length > 0) {
-
-      const asistenciasExistentes2 = Object.values(
-        asistenciasExistentes.reduce<Record<string, any>>((acc, curr) => {
-          if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
-          return acc;
-        }, {})
-      );
-
-      const resultados = await Promise.all(
-        asistenciasExistentes2.map(async (inte) => {
-          const diputado = await Diputado.findOne({
-            where: { id: inte.id_diputado },
-            attributes: ["apaterno", "amaterno", "nombres"],
-            raw: true,
-          });
-
-          const partido = await Partidos.findOne({
-            where: { id: inte.partido_dip },
-            attributes: ["siglas"],
-            raw: true,
-          });
-
-          const nombreCompletoDiputado = diputado
-            ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
-            : null;
-
-          return {
-            ...inte,
-            diputado: nombreCompletoDiputado,
-            partido: partido ? partido.siglas : null,
-          };
-        })
-      );
-
-      return res.status(200).json({
-        msg: "Evento con asistencias existentes",
-        evento,
-        integrantes: resultados,
-        titulo
-      });
-    }
-
-    const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; bandera: number }[] = [];
-    let bandera = 1;
-
-    if (evento.tipoevento?.nombre === "Sesión") {
-      const legislatura = await Legislatura.findOne({
-        order: [["fecha_inicio", "DESC"]],
-      });
-
-      if (legislatura) {
-        const diputados = await IntegranteLegislatura.findAll({
-          where: { legislatura_id: legislatura.id },
-          include: [{ model: Diputado, as: "diputado" }],
-        });
-
-        for (const inteLegis of diputados) {
-          if (inteLegis.diputado) {
-            listadoDiputados.push({
-              id_diputado: inteLegis.diputado.id,
-              id_partido: inteLegis.partido_id,
-              comision_dip_id: null,
-              bandera,
-            });
-          }
-        }
-      }
-    } else {
-      const comisiones = await AnfitrionAgenda.findAll({
-        where: { agenda_id: evento.id },
-      });
-
-      if (comisiones.length > 0) {
-        const comisionIds = comisiones.map((c) => c.autor_id);
-        const integrantes = await IntegranteComision.findAll({
-          where: { comision_id: comisionIds },
-          include: [
-            {
-              model: IntegranteLegislatura,
-              as: "integranteLegislatura",
-              include: [{ model: Diputado, as: "diputado" }],
-            },
-          ],
-        });
-
-        for (const comId of comisionIds) {
-          const deEstaComision = integrantes.filter(
-            (i) => i.comision_id === comId && i.integranteLegislatura?.diputado
-          );
-          for (const inte of deEstaComision) {
-            listadoDiputados.push({
-              id_diputado: inte.integranteLegislatura!.diputado!.id,
-              id_partido: inte.integranteLegislatura!.partido_id,
-              comision_dip_id: inte.comision_id,
-              bandera,
-            });
-          }
-          bandera++;
-        }
-      }
-    }
-
-    const mensaje = "PENDIENTE";
-    const timestamp = new Date();
-
-    const asistencias = listadoDiputados.map((diputado) => ({
-      sentido_voto: 0,
-      mensaje,
-      timestamp,
-      id_diputado: diputado.id_diputado,
-      partido_dip: diputado.id_partido,
-      comision_dip_id: diputado.comision_dip_id,
-      id_agenda: evento.id,
-    }));
-    await AsistenciaVoto.bulkCreate(asistencias);
-
-
-    const asistenciasRaw = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
       order: [['created_at', 'DESC']],
       raw: true,
     });
 
-    const nuevasAsistencias = Object.values(
-      asistenciasRaw.reduce<Record<string, any>>((acc, curr) => {
-        if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
-        return acc;
-      }, {})
-    );
+    // 5. Si NO existen asistencias, crearlas
+    if (asistenciasExistentes.length === 0) {
+      await crearAsistencias(evento, esSesion);
+      
+      // Volver a consultar las asistencias recién creadas
+      const asistenciasNuevas = await AsistenciaVoto.findAll({
+        where: { id_agenda: id },
+        order: [['created_at', 'DESC']],
+        raw: true,
+      });
 
-    const resultados = await Promise.all(
-      nuevasAsistencias.map(async (inte) => {
-        const diputado = await Diputado.findOne({
-          where: { id: inte.id_diputado },
-          attributes: ["apaterno", "amaterno", "nombres"],
-          raw: true,
-        });
+      const integrantes = await procesarAsistencias(asistenciasNuevas, esSesion);
+      
+      return res.status(200).json({
+        msg: "Asistencias creadas exitosamente",
+        evento,
+        integrantes,
+        titulo,
+        tipoEvento
+      });
+    }
 
-        const partido = await Partidos.findOne({
-          where: { id: inte.partido_dip },
-          attributes: ["siglas"],
-          raw: true,
-        });
-
-        const nombreCompletoDiputado = diputado
-          ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
-          : null;
-
-        return {
-          ...inte,
-          diputado: nombreCompletoDiputado,
-          partido: partido ? partido.siglas : null,
-        };
-      })
-    );
+    // 6. Si SÍ existen asistencias, procesarlas
+    const integrantes = await procesarAsistencias(asistenciasExistentes, esSesion);
 
     return res.status(200).json({
-      msg: "Evento generado correctamente",
+      msg: "Evento con asistencias existentes",
       evento,
-      integrantes: resultados,
-      titulo
+      integrantes,
+      titulo,
+      tipoEvento
     });
+
   } catch (error) {
     console.error("Error obteniendo evento:", error);
     return res.status(500).json({
@@ -284,6 +161,268 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     });
   }
 };
+
+// ========== FUNCIONES HELPER ==========
+
+/**
+ * Crea las asistencias iniciales para un evento
+ */
+async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
+  const listadoDiputados: { 
+    id_diputado: string; 
+    id_partido: string; 
+    comision_dip_id: string | null; 
+  }[] = [];
+
+  if (esSesion) {
+    // Para sesiones: todos los diputados de la legislatura actual
+    const legislatura = await Legislatura.findOne({
+      order: [["fecha_inicio", "DESC"]],
+    });
+
+    if (legislatura) {
+      const diputados = await IntegranteLegislatura.findAll({
+        where: { legislatura_id: legislatura.id },
+        include: [{ model: Diputado, as: "diputado" }],
+      });
+
+      for (const inteLegis of diputados) {
+        if (inteLegis.diputado) {
+          listadoDiputados.push({
+            id_diputado: inteLegis.diputado.id,
+            id_partido: inteLegis.partido_id,
+            comision_dip_id: null,
+          });
+        }
+      }
+    }
+  } else {
+    // Para comisiones: solo integrantes de las comisiones anfitrionas
+    const comisiones = await AnfitrionAgenda.findAll({
+      where: { agenda_id: evento.id },
+    });
+
+    if (comisiones.length > 0) {
+      const comisionIds = comisiones.map((c) => c.autor_id);
+      const integrantes = await IntegranteComision.findAll({
+        where: { comision_id: comisionIds },
+        include: [
+          {
+            model: IntegranteLegislatura,
+            as: "integranteLegislatura",
+            include: [{ model: Diputado, as: "diputado" }],
+          },
+        ],
+      });
+
+      for (const inte of integrantes) {
+        if (inte.integranteLegislatura?.diputado) {
+          listadoDiputados.push({
+            id_diputado: inte.integranteLegislatura.diputado.id,
+            id_partido: inte.integranteLegislatura.partido_id,
+            comision_dip_id: inte.comision_id,
+          });
+        }
+      }
+    }
+  }
+
+  // Crear asistencias en bulk
+  const mensaje = "PENDIENTE";
+  const timestamp = new Date();
+
+  const asistencias = listadoDiputados.map((diputado) => ({
+    sentido_voto: 0,
+    mensaje,
+    timestamp,
+    id_diputado: diputado.id_diputado,
+    partido_dip: diputado.id_partido,
+    comision_dip_id: diputado.comision_dip_id,
+    id_agenda: evento.id,
+  }));
+
+  await AsistenciaVoto.bulkCreate(asistencias);
+}
+
+/**
+ * Procesa las asistencias y las agrupa según el tipo de evento
+ */
+async function procesarAsistencias(asistencias: any[], esSesion: boolean): Promise<any> {
+  if (esSesion) {
+    // Para sesiones: lista plana sin duplicados
+    return await procesarAsistenciasSesion(asistencias);
+  } else {
+    // Para comisiones: agrupadas y ordenadas por cargo
+    return await procesarAsistenciasComisiones(asistencias);
+  }
+}
+
+/**
+ * Procesa asistencias para SESIONES (lista plana)
+ */
+async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
+  // Eliminar duplicados por id_diputado (mantener el más reciente)
+  const asistenciasSinDuplicados = Object.values(
+    asistencias.reduce<Record<string, any>>((acc, curr) => {
+      if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
+      return acc;
+    }, {})
+  );
+
+  const diputadoIds = [...new Set(asistenciasSinDuplicados.map(a => a.id_diputado).filter(Boolean))];
+  const partidoIds = [...new Set(asistenciasSinDuplicados.map(a => a.partido_dip).filter(Boolean))];
+
+  const [diputados, partidos] = await Promise.all([
+    Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true
+    }),
+    Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true
+    })
+  ]);
+
+  const diputadosMap = new Map(diputados.map((d: any) => [d.id, d]));
+  const partidosMap = new Map(partidos.map((p: any) => [p.id, p]));
+
+  return asistenciasSinDuplicados.map(inte => {
+    const diputado = diputadosMap.get(inte.id_diputado);
+    const partido = partidosMap.get(inte.partido_dip);
+
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    return {
+      ...inte,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+    };
+  });
+}
+
+/**
+ * Procesa asistencias para COMISIONES (agrupadas por comisión y ordenadas por cargo)
+ */
+async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]> {
+  const diputadoIds = [...new Set(asistencias.map(a => a.id_diputado).filter(Boolean))];
+  const partidoIds = [...new Set(asistencias.map(a => a.partido_dip).filter(Boolean))];
+  const comisionIds = [...new Set(asistencias.map(a => a.comision_dip_id).filter(Boolean))];
+
+  const [diputados, partidos, comisiones, integrantesLegislatura, integrantesComision] = await Promise.all([
+    Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true
+    }),
+    Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true
+    }),
+    comisionIds.length > 0 ? Comision.findAll({
+      where: { id: comisionIds },
+      attributes: ["id", "nombre", "importancia"],
+      raw: true
+    }) : [],
+    IntegranteLegislatura.findAll({
+      where: { diputado_id: diputadoIds },
+      attributes: ["id", "diputado_id"],
+      raw: true
+    }),
+    comisionIds.length > 0 ? IntegranteComision.findAll({
+      where: { comision_id: comisionIds },
+      include: [{
+        model: TipoCargoComision,
+        as: 'tipo_cargo',
+        attributes: ["valor", "nivel"]
+      }],
+      attributes: ["comision_id", "integrante_legislatura_id", "tipo_cargo_comision_id"]
+    }) : []
+  ]);
+
+  // Crear mapas
+  const diputadosMap = new Map(diputados.map((d: any) => [d.id, d]));
+  const partidosMap = new Map(partidos.map((p: any) => [p.id, p]));
+  const comisionesMap = new Map(comisiones.map((c: any) => [c.id, c]));
+  const integranteLegislaturaMap = new Map(
+    integrantesLegislatura.map((il: any) => [il.diputado_id, il.id])
+  );
+
+  const cargosMap = new Map();
+  integrantesComision.forEach((ic: any) => {
+    const data = ic.toJSON ? ic.toJSON() : ic;
+    const key = `${data.comision_id}-${data.integrante_legislatura_id}`;
+    cargosMap.set(key, { 
+      valor: data.tipo_cargo?.valor || null, 
+      nivel: data.tipo_cargo?.nivel || 999 
+    });
+  });
+
+  // Mapear asistencias con información completa
+  const resultados = asistencias.map(inte => {
+    const diputado = diputadosMap.get(inte.id_diputado);
+    const partido = partidosMap.get(inte.partido_dip);
+    const comision = inte.comision_dip_id ? comisionesMap.get(inte.comision_dip_id) : null;
+    
+    let cargo = null;
+    if (inte.comision_dip_id && inte.id_diputado) {
+      const integranteLegislaturaId = integranteLegislaturaMap.get(inte.id_diputado);
+      
+      if (integranteLegislaturaId) {
+        const key = `${inte.comision_dip_id}-${integranteLegislaturaId}`;
+        cargo = cargosMap.get(key);
+      }
+    }
+
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    return {
+      ...inte,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+      comision_id: inte.comision_dip_id,
+      comision_nombre: comision?.nombre || 'Sin comisión',
+      comision_importancia: comision?.importancia || 999,
+      cargo: cargo?.valor || null,
+      nivel_cargo: cargo?.nivel || 999
+    };
+  });
+
+  // Agrupar por comisión
+  const integrantesAgrupados = resultados.reduce((grupos, integrante) => {
+    const comisionNombre = integrante.comision_nombre;
+    
+    if (!grupos[comisionNombre]) {
+      grupos[comisionNombre] = {
+        comision_id: integrante.comision_id,
+        comision_nombre: comisionNombre,
+        importancia: integrante.comision_importancia,
+        integrantes: []
+      };
+    }
+    
+    grupos[comisionNombre].integrantes.push(integrante);
+    return grupos;
+  }, {} as Record<string, any>);
+
+  // Convertir a array y ordenar
+  const comisionesArray = Object.values(integrantesAgrupados).sort((a: any, b: any) => {
+    return a.importancia - b.importancia;
+  });
+
+  // Ordenar integrantes dentro de cada comisión por cargo
+  comisionesArray.forEach((comision: any) => {
+    comision.integrantes.sort((a: any, b: any) => a.nivel_cargo - b.nivel_cargo);
+  });
+
+  return comisionesArray;
+}
 
 export const actualizar = async (req: Request, res: Response): Promise<any> => {
     try {
