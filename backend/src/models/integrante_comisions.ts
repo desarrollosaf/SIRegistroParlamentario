@@ -1,8 +1,8 @@
-import { Model, DataTypes, CreationOptional, ForeignKey } from 'sequelize';
+import { Model, DataTypes, CreationOptional, ForeignKey, NonAttribute, Association } from 'sequelize';
 import sequelize from '../database/legislativoConnection';
 import Comision from './comisions';
 import IntegranteLegislatura from './integrante_legislaturas';
-// import TipoCargoComision from './tipo_cargo_comisions';
+import TipoCargoComision from './tipo_cargo_comisions';
 
 class IntegranteComision extends Model {
   declare id: string;
@@ -12,6 +12,17 @@ class IntegranteComision extends Model {
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
+
+  // Asociaciones
+  declare comision?: NonAttribute<Comision>;
+  declare integranteLegislatura?: NonAttribute<IntegranteLegislatura>;
+  declare tipo_cargo?: NonAttribute<TipoCargoComision>;
+
+  declare static associations: {
+    comision: Association<IntegranteComision, Comision>;
+    integranteLegislatura: Association<IntegranteComision, IntegranteLegislatura>;
+    tipo_cargo: Association<IntegranteComision, TipoCargoComision>;
+  };
 }
 
 // Inicialización
@@ -34,7 +45,7 @@ IntegranteComision.init(
       type: DataTypes.CHAR(36),
       allowNull: false,
     },
-      createdAt: {
+    createdAt: {
       field: 'created_at',
       type: DataTypes.DATE,
     },
@@ -51,23 +62,25 @@ IntegranteComision.init(
     sequelize,
     tableName: 'integrante_comisions',
     timestamps: true,
-    paranoid: true, 
+    paranoid: true,
+    underscored: true, // ⭐ Importante agregarlo
   }
 );
 
-// IntegranteComision.belongsTo(Comision, {
-//   foreignKey: 'comision_id',
-//   as: 'comision',
-// });
+// 🔗 Asociaciones
+IntegranteComision.belongsTo(Comision, {
+  foreignKey: 'comision_id',
+  as: 'comision',
+});
 
 IntegranteComision.belongsTo(IntegranteLegislatura, {
   foreignKey: 'integrante_legislatura_id',
   as: 'integranteLegislatura',
 });
 
-// IntegranteComision.belongsTo(TipoCargoComision, {
-//   foreignKey: 'tipo_cargo_comision_id',
-//   as: 'tipo_cargo_comision',
-// });
+IntegranteComision.belongsTo(TipoCargoComision, {
+  foreignKey: 'tipo_cargo_comision_id',
+  as: 'tipo_cargo',
+});
 
 export default IntegranteComision;

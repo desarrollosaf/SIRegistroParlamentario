@@ -1,73 +1,70 @@
-import { Model, DataTypes, Optional, Sequelize } from 'sequelize';
-import type { integrante_comisions, integrante_comisionsId } from './integrante_comisions';
+import {
+  Model,
+  DataTypes,
+  CreationOptional,
+  Association,
+  NonAttribute,
+  ForeignKey
+} from "sequelize";
 
-export interface tipo_cargo_comisionsAttributes {
-  id: string;
-  valor: string;
-  nivel: number;
-  created_at?: Date;
-  updated_at?: Date;
+import sequelize from "../database/registrocomisiones";
+import IntegranteComision from "./integrante_comisions";
+
+class TipoCargoComision extends Model {
+  declare id: string;
+  declare valor: string;
+  declare nivel: number;
+
+  // timestamps
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+
+  // Asociaciones
+  declare integrante_comisions?: NonAttribute<IntegranteComision[]>;
+
+  declare static associations: {
+    integrante_comisions: Association<TipoCargoComision, IntegranteComision>;
+  };
 }
 
-export type tipo_cargo_comisionsPk = "id";
-export type tipo_cargo_comisionsId = tipo_cargo_comisions[tipo_cargo_comisionsPk];
-export type tipo_cargo_comisionsOptionalAttributes = "created_at" | "updated_at";
-export type tipo_cargo_comisionsCreationAttributes = Optional<tipo_cargo_comisionsAttributes, tipo_cargo_comisionsOptionalAttributes>;
+TipoCargoComision.init(
+  {
+    id: {
+      type: DataTypes.CHAR(36),
+      allowNull: false,
+      primaryKey: true
+    },
+    valor: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    nivel: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
 
-export class tipo_cargo_comisions extends Model<tipo_cargo_comisionsAttributes, tipo_cargo_comisionsCreationAttributes> implements tipo_cargo_comisionsAttributes {
-  id!: string;
-  valor!: string;
-  nivel!: number;
-  created_at?: Date;
-  updated_at?: Date;
-
-  // Asociación hasMany
-  integrante_comisions!: integrante_comisions[];
-  getIntegrante_comisions!: Sequelize.HasManyGetAssociationsMixin<integrante_comisions>;
-  setIntegrante_comisions!: Sequelize.HasManySetAssociationsMixin<integrante_comisions, integrante_comisionsId>;
-  addIntegrante_comision!: Sequelize.HasManyAddAssociationMixin<integrante_comisions, integrante_comisionsId>;
-  addIntegrante_comisions!: Sequelize.HasManyAddAssociationsMixin<integrante_comisions, integrante_comisionsId>;
-  createIntegrante_comision!: Sequelize.HasManyCreateAssociationMixin<integrante_comisions>;
-  removeIntegrante_comision!: Sequelize.HasManyRemoveAssociationMixin<integrante_comisions, integrante_comisionsId>;
-  removeIntegrante_comisions!: Sequelize.HasManyRemoveAssociationsMixin<integrante_comisions, integrante_comisionsId>;
-  hasIntegrante_comision!: Sequelize.HasManyHasAssociationMixin<integrante_comisions, integrante_comisionsId>;
-  hasIntegrante_comisions!: Sequelize.HasManyHasAssociationsMixin<integrante_comisions, integrante_comisionsId>;
-  countIntegrante_comisions!: Sequelize.HasManyCountAssociationsMixin;
-
-  static initModel(sequelize: Sequelize): typeof tipo_cargo_comisions {
-    return tipo_cargo_comisions.init(
-      {
-        id: {
-          type: DataTypes.CHAR(36),
-          allowNull: false,
-          primaryKey: true
-        },
-        valor: {
-          type: DataTypes.STRING(255),
-          allowNull: false
-        },
-        nivel: {
-          type: DataTypes.INTEGER,
-          allowNull: false
-        },
-        created_at: DataTypes.DATE,
-        updated_at: DataTypes.DATE
-      },
-      {
-        sequelize,
-        tableName: 'tipo_cargo_comisions',
-        timestamps: true,
-        paranoid: false,
-        underscored: true,
-        indexes: [
-          {
-            name: "PRIMARY",
-            unique: true,
-            using: "BTREE",
-            fields: ['id']
-          }
-        ]
-      }
-    );
+    createdAt: {
+      type: DataTypes.DATE,
+      field: "created_at"
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      field: "updated_at"
+    }
+  },
+  {
+    sequelize,
+    tableName: "tipo_cargo_comisions",
+    timestamps: true,
+    paranoid: false,
+    underscored: true // usa snake_case
   }
-}
+);
+
+// 🔗 Asociación
+// TipoCargoComision.hasMany(IntegranteComision, {
+//   foreignKey: "id_tipo_cargo",
+//   as: "integrante_comisions"
+// });
+
+export default TipoCargoComision;
