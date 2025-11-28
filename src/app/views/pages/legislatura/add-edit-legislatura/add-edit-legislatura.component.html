@@ -1,0 +1,137 @@
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">{{ operacion }}</h6>
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="volver()">
+                        <i class="feather icon-arrow-left"></i> Volver
+                    </button>
+                </div>
+                <form [formGroup]="formLegislatura" (ngSubmit)="enviarDatos()" class="forms-sample">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white" style="background-color: #800048 !important;">
+                            <h5 class="mb-0"><i class="mdi mdi-information-outline me-2"></i>Información General</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">Número:*</label>
+                                        <input formControlName="numero_legislatura" type="text"
+                                            class="form-control input-simulado-disabled" placeholder="Ej: LXII"
+                                            [class.is-invalid]="formLegislatura.get('numero_legislatura')?.invalid && formLegislatura.get('numero_legislatura')?.touched" />
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('numero_legislatura')?.invalid && formLegislatura.get('numero_legislatura')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-9">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">Nombre de la Legislatura:*</label>
+                                        <input formControlName="nombre_legislatura" type="text"
+                                            class="form-control input-simulado-disabled"
+                                            placeholder="Ej: LXII Legislatura del Congreso del estado de México"
+                                            [class.is-invalid]="formLegislatura.get('nombre_legislatura')?.invalid && formLegislatura.get('nombre_legislatura')?.touched" />
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('nombre_legislatura')?.invalid && formLegislatura.get('nombre_legislatura')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white" style="background-color: #800048 !important;">
+                            <h5 class="mb-0"><i class="mdi mdi-calendar-range me-2"></i>Período de Funciones</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">
+                                            <i class="mdi mdi-calendar-start text-success"></i> Inicio de Funciones:*
+                                        </label>
+                                        <input formControlName="inicio_funciones" type="date"
+                                            class="form-control input-simulado-disabled"
+                                            [class.is-invalid]="formLegislatura.get('inicio_funciones')?.invalid && formLegislatura.get('inicio_funciones')?.touched" />
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('inicio_funciones')?.invalid && formLegislatura.get('inicio_funciones')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">
+                                            <i class="mdi mdi-calendar-end text-danger"></i> Término de Funciones:*
+                                        </label>
+                                        <input formControlName="termino_funciones" type="date"
+                                            class="form-control input-simulado-disabled"
+                                            [class.is-invalid]="formLegislatura.get('termino_funciones')?.invalid && formLegislatura.get('termino_funciones')?.touched" />
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('termino_funciones')?.invalid && formLegislatura.get('termino_funciones')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white" style="background-color: #800048 !important;">
+                            <h5 class="mb-0"><i class="mdi mdi-map-marker-multiple me-2"></i>Distritos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">
+                                            <i class="mdi mdi-numeric text-primary"></i> Distritos Uninominales:*
+                                        </label>
+                                        <input formControlName="distritos_uninominales" type="number"
+                                            class="form-control input-simulado-disabled" placeholder="Ej: 300" min="0"
+                                            [class.is-invalid]="formLegislatura.get('distritos_uninominales')?.invalid && formLegislatura.get('distritos_uninominales')?.touched" />
+                                        <small class="form-text text-muted">Representación por mayoría</small>
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('distritos_uninominales')?.invalid && formLegislatura.get('distritos_uninominales')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="mb-3">
+                                        <label class="form-label negri fw-bold">
+                                            <i class="mdi mdi-numeric text-info"></i> Distritos Plurinominales:*
+                                        </label>
+                                        <input formControlName="distritos_plurinominales" type="number"
+                                            class="form-control input-simulado-disabled" placeholder="Ej: 200" min="0"
+                                            [class.is-invalid]="formLegislatura.get('distritos_plurinominales')?.invalid && formLegislatura.get('distritos_plurinominales')?.touched" />
+                                        <small class="form-text text-muted">Representación proporcional</small>
+                                        <div class="invalid-feedback"
+                                            *ngIf="formLegislatura.get('distritos_plurinominales')?.invalid && formLegislatura.get('distritos_plurinominales')?.touched">
+                                            <small><i class="mdi mdi-alert-circle-outline"></i> Campo requerido</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <div style="display: flex; justify-content: center; gap: 15px;">
+                            <button type="submit" class="btn btn-primary px-5" [disabled]="formLegislatura.invalid"
+                                style="background-color: #800048; color: white; border: none;">
+                                <i class="mdi mdi-send me-2"></i>Guardar Legislatura
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

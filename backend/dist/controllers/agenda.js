@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -43,6 +43,9 @@ const puntos_presenta_1 = __importDefault(require("../models/puntos_presenta"));
 const axios_1 = __importDefault(require("axios"));
 const locale_1 = require("date-fns/locale");
 const date_fns_1 = require("date-fns");
+const pdfkit_1 = __importDefault(require("pdfkit"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const eventos = yield agendas_1.default.findAll({
@@ -74,7 +77,7 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.geteventos = geteventos;
 const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b, _c;
     try {
         const { id } = req.params;
         const evento = yield agendas_1.default.findOne({
@@ -86,6 +89,29 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         if (!evento) {
             return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        let titulo = "";
+        if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {
+            titulo = (_b = evento.descripcion) !== null && _b !== void 0 ? _b : "";
+        }
+        else {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            if (comisionIds.length === 0) {
+                titulo = "";
+            }
+            else {
+                const comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
         }
         const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
@@ -118,11 +144,12 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 msg: "Evento con asistencias existentes",
                 evento,
                 integrantes: resultados,
+                titulo
             });
         }
         const listadoDiputados = [];
         let bandera = 1;
-        if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {
+        if (((_c = evento.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre) === "Sesión") {
             const legislatura = yield legislaturas_1.default.findOne({
                 order: [["fecha_inicio", "DESC"]],
             });
@@ -216,6 +243,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             msg: "Evento generado correctamente",
             evento,
             integrantes: resultados,
+            titulo
         });
     }
     catch (error) {
@@ -337,7 +365,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { id } = req.params;
         const proponente = yield proponentes_1.default.findByPk(id);
-        console.log(id);
         if (!proponente) {
             return res.status(404).json({ message: 'Proponente no encontrado' });
         }
@@ -351,18 +378,26 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             if (legis) {
                 const dips = yield integrante_legislaturas_1.default.findAll({
                     where: { legislatura_id: legis.id },
-                    include: [{ model: diputado_1.default, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+                    include: [{
+                            model: diputado_1.default,
+                            as: 'diputado',
+                            attributes: ['id', 'apaterno', 'amaterno', 'nombres']
+                        }],
                 });
                 const dipss = dips
                     .filter((d) => d.diputado)
                     .map((item) => {
                     var _a, _b, _c;
                     return ({
-                        id: item.diputado.id,
+                        id: `${proponente.id}/${item.diputado.id}`, // 👈 Concatenado
+                        id_original: item.diputado.id, // 👈 ID original
                         valor: `${(_a = item.diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = item.diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = item.diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim(),
+                        proponente_id: proponente.id,
+                        proponente_valor: proponente.valor,
+                        tipo: 'diputado'
                     });
                 });
-                arr.dtSlct = dipss;
+                dtSlctTemp = dipss;
             }
         }
         else if (proponente.valor === 'Mesa Directiva en turno') {
@@ -372,8 +407,16 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     where: { tipo_comision_id: idMesa.id },
                     order: [['created_at', 'DESC']],
                 });
-                if (mesa)
-                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
+                if (mesa) {
+                    dtSlctTemp = [{
+                            id: `${proponente.id}/${mesa.id}`,
+                            id_original: mesa.id,
+                            valor: mesa.nombre,
+                            proponente_id: proponente.id,
+                            proponente_valor: proponente.valor,
+                            tipo: 'comision'
+                        }];
+                }
             }
         }
         else if (proponente.valor === 'Junta de Coordinación Politica') {
@@ -386,15 +429,27 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     },
                     order: [['created_at', 'DESC']],
                 });
-                if (mesa)
-                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
+                if (mesa) {
+                    dtSlctTemp = [{
+                            id: `${proponente.id}/${mesa.id}`,
+                            id_original: mesa.id,
+                            valor: mesa.nombre,
+                            proponente_id: proponente.id,
+                            proponente_valor: proponente.valor,
+                            tipo: 'comision'
+                        }];
+                }
             }
         }
         else if (proponente.valor === 'Secretarías del GEM') {
             const secretgem = yield secretarias_1.Secretarias.findAll();
-            arr.dtSlct = secretgem.map(s => ({
-                id: s.id,
-                valor: `${s.nombre} / ${s.titular}`
+            dtSlctTemp = secretgem.map(s => ({
+                id: `${proponente.id}/${s.id}`,
+                id_original: s.id,
+                valor: `${s.nombre} / ${s.titular}`,
+                proponente_id: proponente.id,
+                proponente_valor: proponente.valor,
+                tipo: 'secretaria'
             }));
         }
         else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
@@ -413,7 +468,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 id: l.id,
                 valor: l.nombre
             }));
-            console.log(municipios, arr);
         }
         else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
             const derechoshumanos = yield comisions_1.default.findOne({
@@ -422,8 +476,16 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 },
                 order: [['created_at', 'DESC']],
             });
-            if (derechoshumanos)
-                arr.dtSlct = { id: derechoshumanos.id, valor: derechoshumanos.nombre };
+            if (derechoshumanos) {
+                dtSlctTemp = [{
+                        id: `${proponente.id}/${derechoshumanos.id}`,
+                        id_original: derechoshumanos.id,
+                        valor: derechoshumanos.nombre,
+                        proponente_id: proponente.id,
+                        proponente_valor: proponente.valor,
+                        tipo: 'comision'
+                    }];
+            }
         }
         else if (proponente.valor === 'Tribunal Superior de Justicia') {
             const tribunal = yield cat_fun_dep_1.default.findOne({
@@ -432,8 +494,16 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     vigente: 1
                 },
             });
-            if (tribunal)
-                arr.dtSlct = { id: tribunal.id, valor: tribunal.nombre_titular };
+            if (tribunal) {
+                dtSlctTemp = [{
+                        id: `${proponente.id}/${tribunal.id}`,
+                        id_original: tribunal.id,
+                        valor: tribunal.nombre_titular,
+                        proponente_id: proponente.id,
+                        proponente_valor: proponente.valor,
+                        tipo: 'funcionario'
+                    }];
+            }
         }
         else if (proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
             proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
@@ -443,25 +513,40 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     vigente: 1
                 },
             });
-            if (fiscalia)
-                arr.dtSlct = { id: fiscalia.id, valor: fiscalia.nombre_titular };
+            if (fiscalia) {
+                dtSlctTemp = [{
+                        id: `${proponente.id}/${fiscalia.id}`,
+                        id_original: fiscalia.id,
+                        valor: fiscalia.nombre_titular,
+                        proponente_id: proponente.id,
+                        proponente_valor: proponente.valor,
+                        tipo: 'funcionario'
+                    }];
+            }
         }
         else if (proponente.valor === 'Comisiones Legislativas') {
             const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
             if (idMesa) {
                 const comi = yield comisions_1.default.findAll({ where: { tipo_comision_id: idMesa.id } });
-                const comisiones = comi.map((item) => ({ id: item.id, valor: item.nombre }));
-                arr.dtSlct = comisiones;
+                dtSlctTemp = comi.map((item) => ({
+                    id: `${proponente.id}/${item.id}`,
+                    id_original: item.id,
+                    valor: item.nombre,
+                    proponente_id: proponente.id,
+                    proponente_valor: proponente.valor,
+                    tipo: 'comision'
+                }));
             }
-        }
-        else if (proponente.valor === 'Comisión instaladora') {
-            // no acciones extra aparte de tipos
         }
         else if (proponente.valor === 'Municipios') {
             const municipios = yield municipiosag_1.default.findAll();
-            arr.dtSlct = municipios.map(l => ({
-                id: l.id,
-                valor: l.nombre
+            dtSlctTemp = municipios.map(l => ({
+                id: `${proponente.id}/${l.id}`,
+                id_original: l.id,
+                valor: l.nombre,
+                proponente_id: proponente.id,
+                proponente_valor: proponente.valor,
+                tipo: 'municipio'
             }));
         }
         else if (proponente.valor === 'Diputación Permanente') {
@@ -471,48 +556,93 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     where: { tipo_comision_id: idMesa.id },
                     order: [['created_at', 'DESC']],
                 });
-                if (mesa)
-                    arr.dtSlct = { id: mesa.id, valor: mesa.nombre };
+                if (mesa) {
+                    dtSlctTemp = [{
+                            id: `${proponente.id}/${mesa.id}`,
+                            id_original: mesa.id,
+                            valor: mesa.nombre,
+                            proponente_id: proponente.id,
+                            proponente_valor: proponente.valor,
+                            tipo: 'comision'
+                        }];
+                }
             }
-        }
-        else if (proponente.valor === 'Cámara de Diputados del H. Congreso de la Unión' ||
-            proponente.valor === 'Cámara de Senadores del H. Congreso de la Unión') {
-            // no actions extra
         }
         else if (proponente.valor === 'Grupo Parlamentario') {
             const partidos = yield partidos_1.default.findAll();
-            arr.dtSlct = partidos.map(l => ({
-                id: l.id,
-                valor: l.siglas
+            dtSlctTemp = partidos.map(l => ({
+                id: `${proponente.id}/${l.id}`,
+                id_original: l.id,
+                valor: l.siglas,
+                proponente_id: proponente.id,
+                proponente_valor: proponente.valor,
+                tipo: 'partido'
             }));
         }
         else if (proponente.valor === 'Legislatura') {
             const legislaturas = yield legislaturas_1.default.findAll();
-            arr.dtSlct = legislaturas.map(l => ({
-                id: l.id,
-                valor: l.numero
+            dtSlctTemp = legislaturas.map(l => ({
+                id: `${proponente.id}/${l.id}`,
+                id_original: l.id,
+                valor: l.numero,
+                proponente_id: proponente.id,
+                proponente_valor: proponente.valor,
+                tipo: 'legislatura'
             }));
         }
+        if (dtSlctTemp) {
+            if (Array.isArray(dtSlctTemp)) {
+                dtSlctConsolidado.push(...dtSlctTemp);
+            }
+            else {
+                dtSlctConsolidado.push(dtSlctTemp);
+            }
+        }
         const combo = yield admin_cats_1.default.findAll({ where: { id_presenta: proponente.id } });
-        arr.combo = combo;
-        arr.tipoCombo = proponente;
-        return res.json(arr);
+        combo.forEach((c) => {
+            combosConsolidados.push(Object.assign(Object.assign({}, c.toJSON()), { proponente_id: proponente.id, proponente_valor: proponente.valor }));
+        });
     }
-    catch (error) {
-        console.error('Error en getTiposPuntos:', error);
-        return res.status(500).json({ message: 'Error al obtener tipos de puntos', error: error.message });
+    finally {
     }
+    return res.json({
+        dtSlct: dtSlctConsolidado,
+        tipos: tiposConsolidados,
+        combos: combosConsolidados
+    });
 });
 exports.getTiposPuntos = getTiposPuntos;
+try { }
+catch (error) {
+    console.error('Error en getTiposPuntos:', error);
+    return res.status(500).json({
+        message: 'Error al obtener tipos de puntos',
+    });
+}
+;
 const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        const presenta = (body.presenta || "")
+        console.log(body);
+        const presentaArray = (body.presenta || "")
             .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id.length > 0);
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+            .map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return {
+                proponenteId: parseInt(proponenteId),
+                autorId: autorId
+            };
+        });
+        const proponentesIds = (body.proponente || "")
+            .split(",")
+            .map((id) => parseInt(id.trim()))
+            .filter((id) => !isNaN(id));
+        console.log('Presenta descompuesto:', presentaArray);
+        console.log('Proponentes IDs:', proponentesIds);
         const evento = yield agendas_1.default.findOne({ where: { id } });
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
@@ -520,18 +650,17 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const puntonuevo = yield puntos_ordens_1.default.create({
             id_evento: evento.id,
             nopunto: body.numpunto,
-            id_proponente: body.proponente,
             id_tipo: body.tipo,
             tribuna: body.tribuna,
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
         });
-        for (const autorId of presenta) {
+        for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
                 id_punto: puntonuevo.id,
-                id_tipo_presenta: body.proponente,
-                id_presenta: autorId
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId
             });
         }
         return res.status(201).json({
@@ -541,7 +670,10 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
     catch (error) {
         console.error("Error al guardar el punto:", error);
-        return res.status(500).json({ message: "Error interno del servidor" });
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
     }
 });
 exports.guardarpunto = guardarpunto;
@@ -555,9 +687,17 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: puntos_presenta_1.default,
                     as: "presentan",
-                    attributes: ["id", "id_presenta"],
-                },
-            ],
+                    attributes: [
+                        [
+                            sequelize_2.Sequelize.fn('CONCAT', sequelize_2.Sequelize.col('presentan.id_tipo_presenta'), '/', sequelize_2.Sequelize.col('presentan.id_presenta')),
+                            'id'
+                        ],
+                        "id_tipo_presenta",
+                        "id_presenta",
+                        ["id_tipo_presenta", "id_proponente"]
+                    ]
+                }
+            ]
         });
         if (!puntos) {
             return res.status(404).json({ message: "Evento no encontrado" });
@@ -1056,7 +1196,7 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 var _a, _b, _c;
                 return ({
                     id: d.diputado.id,
-                    name: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
                 });
             });
         }
@@ -1338,3 +1478,243 @@ const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.enviarWhatsPunto = enviarWhatsPunto;
+const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const { id } = req.params;
+        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        if (!punto) {
+            return res.status(404).json({ msg: "Punto no encontrado" });
+        }
+        const evento = yield agendas_1.default.findOne({
+            where: { id: punto.id_evento },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        let temavotos = yield temas_puntos_votos_1.default.findOne({ where: { id_punto: id } });
+        if (!temavotos) {
+            return res.status(404).json({ msg: "No hay votaciones para este punto" });
+        }
+        const votosRaw = yield votos_punto_1.default.findAll({
+            where: { id_tema_punto_voto: temavotos.id },
+            raw: true,
+        });
+        const votosUnicos = Object.values(votosRaw.reduce((acc, curr) => {
+            if (!curr.id_diputado)
+                return acc;
+            acc[curr.id_diputado] = curr;
+            return acc;
+        }, {}));
+        if (votosUnicos.length === 0) {
+            return res.status(404).json({ msg: "No hay votos registrados" });
+        }
+        const diputadoIds = votosUnicos.map(v => v.id_diputado).filter(Boolean);
+        const diputados = yield diputado_1.default.findAll({
+            where: { id: diputadoIds },
+            attributes: ["id", "apaterno", "amaterno", "nombres"],
+            raw: true,
+        });
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+        const partidoIds = votosUnicos.map(v => v.id_partido).filter(Boolean);
+        const partidos = yield partidos_1.default.findAll({
+            where: { id: partidoIds },
+            attributes: ["id", "siglas"],
+            raw: true,
+        });
+        const partidosMap = new Map(partidos.map(p => [p.id, p]));
+        const getSentidoTexto = (sentido) => {
+            switch (sentido) {
+                case 1:
+                    return "A FAVOR";
+                case 2:
+                    return "ABSTENCIÓN";
+                case 3:
+                    return "EN CONTRA";
+                case 0:
+                    return "PENDIENTE";
+            }
+        };
+        const votosConDetalles = votosUnicos.map((voto) => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(voto.id_diputado);
+            const partido = partidosMap.get(voto.id_partido);
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : "Sin nombre";
+            return Object.assign(Object.assign({}, voto), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido", sentidoTexto: getSentidoTexto(voto.sentido), sentidoNumerico: voto.sentido });
+        });
+        const totales = {
+            favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
+            contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
+            abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
+            pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
+        };
+        const doc = new pdfkit_1.default({
+            size: 'LETTER',
+            margins: { top: 50, bottom: 50, left: 50, right: 50 },
+            bufferPages: true
+        });
+        const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
+        const outputPath = path_1.default.join(__dirname, '../../storage/pdfs', fileName);
+        const dir = path_1.default.dirname(outputPath);
+        if (!fs_1.default.existsSync(dir)) {
+            fs_1.default.mkdirSync(dir, { recursive: true });
+        }
+        const writeStream = fs_1.default.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        doc.pipe(res);
+        // ===== DISEÑO DEL PDF =====
+        // Encabezado
+        doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+        doc.moveDown(1);
+        // Información del Evento
+        doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+        doc.moveDown(0.3);
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Tipo: ${((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) || 'N/A'}`);
+        doc.text(`Sede: ${((_b = evento.sede) === null || _b === void 0 ? void 0 : _b.sede) || 'N/A'}`);
+        doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
+        doc.moveDown(1);
+        // Información del Punto
+        doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
+        doc.moveDown(0.3);
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Número: ${punto.nopunto || 'N/A'}`);
+        doc.text(`Descripción: ${punto.punto || 'N/A'}`, { width: 500 });
+        doc.moveDown(1);
+        // Resumen de Votación
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
+        doc.moveDown(0.3);
+        const tableTop = doc.y;
+        const colWidths = [130, 100, 100, 100];
+        const rowHeight = 25;
+        // Encabezados de tabla
+        doc.fontSize(10).font('Helvetica-Bold');
+        // A FAVOR - Azul
+        doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
+        doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+        // EN CONTRA - Rojo
+        doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
+        doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+        // ABSTENCIÓN - Naranja
+        doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
+        doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+        // PENDIENTE - Gris
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
+        doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
+        // Valores de totales
+        const valuesTop = tableTop + rowHeight;
+        doc.fontSize(14).font('Helvetica-Bold');
+        // A FAVOR
+        doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+        // EN CONTRA
+        doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+        // ABSTENCIÓN
+        doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+        // PENDIENTE
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+        doc.moveDown(3);
+        // Total de votos - ALINEADO A LA IZQUIERDA
+        const totalVotos = votosConDetalles.length;
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
+        doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
+        doc.moveDown(1.5);
+        // Detalle de Votación - ALINEADO A LA IZQUIERDA
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN', 50, doc.y, { align: 'left' });
+        doc.moveDown(0.5);
+        const votosPorSentido = {
+            favor: votosConDetalles.filter(v => v.sentidoNumerico === 1),
+            contra: votosConDetalles.filter(v => v.sentidoNumerico === 3),
+            abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2),
+            pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
+        };
+        // Función para crear tabla de votos
+        const crearTablaVotos = (titulo, votos, color) => {
+            if (votos.length === 0)
+                return;
+            if (doc.y > 650) {
+                doc.addPage();
+            }
+            // TÍTULO ALINEADO A LA IZQUIERDA
+            doc.fontSize(11).font('Helvetica-Bold').fillColor(color);
+            doc.text(`${titulo} (${votos.length})`, 50, doc.y, { align: 'left' });
+            doc.moveDown(0.5);
+            const startY = doc.y;
+            const colX = {
+                no: 50,
+                diputado: 80,
+                partido: 400
+            };
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+            doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
+            doc.fillColor('#fff');
+            doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
+            doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 310 });
+            doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 110 });
+            let currentY = startY + 20;
+            const votosOrdenados = [...votos].sort((a, b) => a.diputado.localeCompare(b.diputado));
+            votosOrdenados.forEach((voto, index) => {
+                if (currentY > 720) {
+                    doc.addPage();
+                    currentY = 50;
+                    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+                    doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
+                    doc.fillColor('#fff');
+                    doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
+                    doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 310 });
+                    doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 110 });
+                    currentY += 20;
+                }
+                doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
+                doc.fontSize(8).font('Helvetica').fillColor('#000');
+                doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
+                doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 310 });
+                doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 110 });
+                currentY += 18;
+            });
+            doc.moveDown(1.5);
+        };
+        // Crear tablas por cada sentido
+        crearTablaVotos('A FAVOR', votosPorSentido.favor, '#1e40af');
+        crearTablaVotos('EN CONTRA', votosPorSentido.contra, '#dc2626');
+        crearTablaVotos('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
+        crearTablaVotos('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
+        // Agregar pie de página
+        const range = doc.bufferedPageRange();
+        for (let i = 0; i < range.count; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8).font('Helvetica').fillColor('#666');
+            doc.text(`Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`, 50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
+        }
+        // Finalizar el PDF
+        doc.end();
+        // Esperar a que termine de escribir
+        yield new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+    }
+    catch (error) {
+        console.error("Error al generar PDF:", error);
+        if (!res.headersSent) {
+            return res.status(500).json({
+                message: "Error al generar PDF de votación",
+                error: error.message
+            });
+        }
+    }
+});
+exports.generarPDFVotacion = generarPDFVotacion;

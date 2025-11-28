@@ -1,5 +1,5 @@
 
-import { Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -91,6 +91,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionado: any = null;
   listaIntervenciones: any;
   // tiposIntervencion:any;
+  tituloC: '';
+  fechaC: '';
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
@@ -99,7 +101,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     private aRouter: ActivatedRoute,
     private router: Router,
     private sanitizer: DomSanitizer,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private cdr: ChangeDetectorRef
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
@@ -295,6 +298,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
+        console.log(response);
+        this.tituloC = response.titulo;
+        this.fechaC = response.evento.fecha
         this.integrantes = response.integrantes || [];
         this.dividirEnColumnas();
       },
@@ -355,7 +361,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        // console.log(response);
+        console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         // this.slcPresenta = response.comisiones;
@@ -373,11 +379,34 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
+        console.log('Response completo:', response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
+
+          // Extraer los id_proponente únicos del array presentan
+          let proponentesIds: number[] = [];
+          if (punto.presentan && Array.isArray(punto.presentan) && punto.presentan.length > 0) {
+            const idsRaw = punto.presentan
+              .map((p: any) => p.id_proponente)
+              .filter((id: any) => id !== null && id !== undefined && id !== '');
+            proponentesIds = [...new Set(idsRaw)].map(id => Number(id)).filter(id => !isNaN(id));
+          }
+
+          // Extraer los id_presenta como STRINGS (pueden ser UUID o números)
           const presentanIds = punto.presentan && Array.isArray(punto.presentan)
-            ? punto.presentan.map((p: any) => String(p.id_presenta))
+            ? punto.presentan
+              .map((p: any) => {
+                // Convertir a string sin importar si es UUID o número
+                const id = p.id_presenta;
+                return id !== null && id !== undefined ? String(id) : null;
+              })
+              .filter((id: string | null) => id !== null && id !== '' && id !== 'null' && id !== 'undefined')
             : [];
+
+          console.log('📋 Punto ID:', punto.id);
+          console.log('👥 Proponentes extraídos:', proponentesIds);
+          console.log('📄 Presentan extraídos (strings):', presentanIds);
+          console.log('🏷️ Tipo ID:', punto.id_tipo);
 
           const puntoMapeado = {
             ...punto,
@@ -386,55 +415,101 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             form: this.fb.group({
               id: [punto.id],
               numpunto: [punto.nopunto],
-              proponente: [punto.id_proponente ? Number(punto.id_proponente) : null],
-              presenta: [presentanIds],
-              tipo: [punto.id_tipo ? Number(punto.id_tipo) : null],
+              proponente: [proponentesIds],
+              presenta: [presentanIds], // Array de strings (UUIDs o IDs)
+              tipo: [punto.id_tipo ? String(punto.id_tipo) : null], // String también
               tribuna: [punto.tribuna],
               punto: [punto.punto],
               observaciones: [punto.observaciones]
             })
           };
-          if (punto.id_proponente) {
-            this.cargarTiposParaPunto(puntoMapeado, punto.id_proponente);
+
+          // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
+          if (proponentesIds.length > 0) {
+            console.log('🔄 Cargando tipos para proponentes:', proponentesIds);
+            this.cargarTiposParaPunto(puntoMapeado, proponentesIds);
+          } else {
+            console.warn('⚠️ No hay proponentes válidos para el punto:', punto.id);
           }
 
           return puntoMapeado;
         });
+
+        console.log('✅ Lista de puntos procesada:', this.listaPuntos);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
       }
     });
+    this.cdr.detectChanges();
   }
 
 
   getTipoPParaPunto(event: any, punto: any): void {
-    if (event && event.id) {
+    // event ahora es un array de objetos seleccionados
+    if (event && Array.isArray(event) && event.length > 0) {
       punto.form.get('tipo')?.setValue(null);
       punto.form.get('presenta')?.setValue([]);
-      this.cargarTiposParaPunto(punto, event.id);
+
+      // Extraer los IDs del array de objetos seleccionados
+      const idsProponentes = event.map(item => item.id);
+      console.log('IDs de proponentes seleccionados:', idsProponentes);
+
+      this.cargarTiposParaPunto(punto, idsProponentes); // <- Pasar array de IDs
+    } else {
+      // Si no hay selección, limpiar
+      punto.tiposDisponibles = [];
+      punto.presentaDisponibles = [];
     }
   }
 
+  cargarTiposParaPunto(punto: any, proponentesIds: number[]): void {
+    if (!proponentesIds || !Array.isArray(proponentesIds) || proponentesIds.length === 0) {
+      console.error('❌ Array de proponentes vacío o inválido');
+      return;
+    }
 
-  cargarTiposParaPunto(punto: any, idProponente: number): void {
-    this._eventoService.getTipo(idProponente).subscribe({
+    console.log('🚀 Proponentes IDs recibidos:', proponentesIds);
+
+    // Construir el array de objetos como espera el servicio
+    // Necesitas buscar los objetos completos en slctProponentes
+    const proponentesObjetos = proponentesIds
+      .map(id => this.slctProponentes.find((p: any) => Number(p.id) === Number(id)))
+      .filter(p => p !== undefined);
+
+    console.log('🚀 Proponentes objetos construidos:', proponentesObjetos);
+
+    if (proponentesObjetos.length === 0) {
+      console.error('❌ No se encontraron objetos de proponentes en slctProponentes');
+      return;
+    }
+
+    this._eventoService.getTipo(proponentesObjetos).subscribe({
       next: (response: any) => {
-        punto.tiposDisponibles = response.tipos || [];
+        console.log('📦 Response getTipo:', response);
+
+        // Asignar los datos
+        punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
+          ...tipo,
+          id: String(tipo.id)
+        }));
+
         punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
           ...item,
-          id: String(item.id)
+          id: String(item.id_original)
         }));
+
+        console.log('✅ Tipos asignados:', punto.tiposDisponibles.length);
+        console.log('✅ Presenta asignados:', punto.presentaDisponibles.length);
       },
       error: (e: HttpErrorResponse) => {
-        console.error('Error al cargar tipos para punto:', e);
+        console.error('❌ Error al cargar tipos:', e);
         punto.tiposDisponibles = [];
         punto.presentaDisponibles = [];
       }
     });
   }
-
   triggerFileInput(index: number): void {
     const fileInput = document.getElementById(`fileInput${index}`) as HTMLInputElement;
     if (fileInput) {
@@ -683,8 +758,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   getTipoP(id?: any): void {
     this.formPunto.get('tipo')?.setValue(null);
     this.formPunto.get('presenta')?.setValue(null);
-    this._eventoService.getTipo(id.id).subscribe({
+    console.log(id);
+    this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
+        console.log(response);
         this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
           ...item,
           id: String(item.id)
