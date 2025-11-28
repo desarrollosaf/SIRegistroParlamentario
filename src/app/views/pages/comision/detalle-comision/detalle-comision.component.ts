@@ -403,11 +403,6 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               .filter((id: string | null) => id !== null && id !== '' && id !== 'null' && id !== 'undefined')
             : [];
 
-          console.log('📋 Punto ID:', punto.id);
-          console.log('👥 Proponentes extraídos:', proponentesIds);
-          console.log('📄 Presentan extraídos (strings):', presentanIds);
-          console.log('🏷️ Tipo ID:', punto.id_tipo);
-
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -426,16 +421,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
           if (proponentesIds.length > 0) {
-            console.log('🔄 Cargando tipos para proponentes:', proponentesIds);
             this.cargarTiposParaPunto(puntoMapeado, proponentesIds);
           } else {
-            console.warn('⚠️ No hay proponentes válidos para el punto:', punto.id);
           }
 
           return puntoMapeado;
         });
-
-        console.log('✅ Lista de puntos procesada:', this.listaPuntos);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -454,8 +445,6 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
       // Extraer los IDs del array de objetos seleccionados
       const idsProponentes = event.map(item => item.id);
-      console.log('IDs de proponentes seleccionados:', idsProponentes);
-
       this.cargarTiposParaPunto(punto, idsProponentes); // <- Pasar array de IDs
     } else {
       // Si no hay selección, limpiar
@@ -466,28 +455,21 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   cargarTiposParaPunto(punto: any, proponentesIds: number[]): void {
     if (!proponentesIds || !Array.isArray(proponentesIds) || proponentesIds.length === 0) {
-      console.error('❌ Array de proponentes vacío o inválido');
+      console.error('proponentes vacío o inválido');
       return;
     }
 
-    console.log('🚀 Proponentes IDs recibidos:', proponentesIds);
-
-    // Construir el array de objetos como espera el servicio
-    // Necesitas buscar los objetos completos en slctProponentes
     const proponentesObjetos = proponentesIds
       .map(id => this.slctProponentes.find((p: any) => Number(p.id) === Number(id)))
       .filter(p => p !== undefined);
 
-    console.log('🚀 Proponentes objetos construidos:', proponentesObjetos);
 
     if (proponentesObjetos.length === 0) {
-      console.error('❌ No se encontraron objetos de proponentes en slctProponentes');
       return;
     }
 
     this._eventoService.getTipo(proponentesObjetos).subscribe({
       next: (response: any) => {
-        console.log('📦 Response getTipo:', response);
 
         // Asignar los datos
         punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
@@ -499,12 +481,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           ...item,
           id: String(item.id_original)
         }));
-
-        console.log('✅ Tipos asignados:', punto.tiposDisponibles.length);
-        console.log('✅ Presenta asignados:', punto.presentaDisponibles.length);
       },
       error: (e: HttpErrorResponse) => {
-        console.error('❌ Error al cargar tipos:', e);
+        console.error('Error al cargar tipos:', e);
         punto.tiposDisponibles = [];
         punto.presentaDisponibles = [];
       }
