@@ -35,14 +35,14 @@
                             </ng-template>
                         </ngx-datatable-column>
 
-                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            prop="fecha" name="Fecha">
+                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" prop="fecha"
+                            name="Fecha">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 <strong>Fecha:</strong> {{ row.fecha | date:'dd/MM/yyyy' }}<br>
                                 <strong>Hora:</strong> {{ row.fecha | date:'HH:mm:ss' }}
                             </ng-template>
                         </ngx-datatable-column>
-                        
+
                         <ngx-datatable-column [headerClass]="'text-center'" [sortable]="true"
                             [cellClass]="'text-center'" prop="sede" name="Sede">
                             <ng-template let-row="row" ngx-datatable-cell-template>
@@ -67,14 +67,20 @@
                                         <i class="bi bi-arrow-right-circle"></i>
                                     </a>
 
-                                    <a class="btn btn-primary action-btn" routerLink="/agenda-comision/edit/{{ row.id }}"
-                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Editar ">
+                                    <a class="btn btn-primary action-btn"
+                                        routerLink="/agenda-comision/edit/{{ row.id }}" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="Editar ">
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
-                                    <a class="btn btn-danger action-btn" routerLink="/"
-                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar">
+                                    <a class="btn btn-danger action-btn" routerLink="/" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="Eliminar">
                                         <i class="bi bi-trash"></i>
+                                    </a>
+
+                                    <a class="btn btn-info action-btn" data-bs-toggle="tooltip" data-bs-placement="top"
+                                        title="Integrantes" (click)="verificarIntegrantes(row.id)">
+                                        <i class="bi bi-person-exclamation"></i>
                                     </a>
                                 </div>
 
@@ -86,3 +92,224 @@
         </div>
     </div>
 </div>
+
+
+
+
+<ng-template #xlModal let-modal>
+    <div class="modal-header bg-primary text-white">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-people-fill me-2 fs-4"></i>
+            <h5 class="modal-title mb-0">Gestión de Integrantes</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="modal.close('by: close icon')"
+            aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+        <div class="text-center mb-4" *ngIf="!mostrarFormulario">
+            <button class="btn btn-primary btn-lg shadow-sm" (click)="mostrarFormulario = true">
+                <i class="bi bi-plus-circle-fill me-2"></i>
+                Agregar Nuevo Integrante
+            </button>
+        </div>
+        <div *ngIf="mostrarFormulario" class="animate-fade-in mb-4">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-plus-fill me-2"></i>Formulario de Registro
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+
+                    <form [formGroup]="integranteForm">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-primary">
+                                <!-- <i class="bi bi-bookmark-fill me-2"></i>Tipo -->
+                            </label>
+                            <div class="btn-group w-100 shadow-sm" role="group">
+                                <input type="radio" class="btn-check" name="tipo" id="radioLegislatura"
+                                    value="legislatura" [(ngModel)]="tipoSeleccionado"
+                                    [ngModelOptions]="{standalone: true}" (change)="onTipoChange()"
+                                    [disabled]="!legislaturaDisponible" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="radioLegislatura"
+                                    [class.disabled]="!legislaturaDisponible">
+                                    <i class="bi bi-bank2 me-2"></i>Sesión
+                                </label>
+
+                                <input type="radio" class="btn-check" name="tipo" id="radioComision" value="comision"
+                                    [(ngModel)]="tipoSeleccionado" [ngModelOptions]="{standalone: true}"
+                                    (change)="onTipoChange()" [disabled]="!comisionDisponible" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="radioComision"
+                                    [class.disabled]="!comisionDisponible">
+                                    <i class="bi bi-diagram-3 me-2"></i>Comisión
+                                </label>
+                            </div>
+                            <div class="form-text text-muted mt-2" *ngIf="tipoEstaBloqueo">
+                                <i class="bi bi-info-circle me-1"></i>
+                                El tipo está determinado por el evento seleccionado: <strong>{{ tipoEventoAgenda
+                                    }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div [class]="tipoSeleccionado === 'legislatura' ? 'col-md-6' : 'col-md-6'">
+                                <label for="selectDiputado" class="form-label fw-bold">
+                                    <i class="bi bi-person-badge me-1"></i>Diputado
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select shadow-sm" id="selectDiputado" formControlName="diputadoId"
+                                    [class.is-invalid]="diputadoInvalid">
+                                    <option value="">Seleccione un diputado</option>
+                                    <option *ngFor="let diputado of slctDiputados" [value]="diputado.id">
+                                        {{ diputado.nombre }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" *ngIf="diputadoInvalid">
+                                    Por favor seleccione un diputado
+                                </div>
+                            </div>
+                            <div [class]="tipoSeleccionado === 'legislatura' ? 'col-md-6' : 'col-md-6'">
+                                <label for="selectPartido" class="form-label fw-bold">
+                                    <i class="bi bi-flag-fill me-1"></i>Partido
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select shadow-sm" id="selectPartido" formControlName="partidoId"
+                                    [class.is-invalid]="partidoInvalid">
+                                    <option value="">Seleccione un partido</option>
+                                    <option *ngFor="let partido of slctPartidos" [value]="partido.id">
+                                        {{ partido.siglas }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" *ngIf="partidoInvalid">
+                                    Por favor seleccione un partido
+                                </div>
+                            </div>
+
+                            <ng-container *ngIf="tipoSeleccionado === 'comision'">
+                                <div class="col-md-6">
+                                    <label for="selectComision" class="form-label fw-bold">
+                                        <i class="bi bi-diagram-3-fill me-1"></i>Comisión
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select shadow-sm" id="selectComision"
+                                        formControlName="comisionId" [class.is-invalid]="comisionInvalid">
+                                        <option value="">Seleccione una comisión</option>
+                                        <option *ngFor="let comision of slctComisiones" [value]="comision.id">
+                                            {{ comision.nombre }}
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback" *ngIf="comisionInvalid">
+                                        Por favor seleccione una comisión
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="inputCargo" class="form-label fw-bold">
+                                        <i class="bi bi-award-fill me-1"></i>Cargo
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control shadow-sm" id="inputCargo"
+                                        formControlName="cargo" [class.is-invalid]="cargoInvalid"
+                                        placeholder="Ej: Presidente, Secretario, Vocal, etc.">
+                                    <div class="invalid-feedback" *ngIf="cargoInvalid">
+                                        Por favor especifique el cargo
+                                    </div>
+                                </div>
+                            </ng-container>
+
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-success shadow-sm flex-fill"
+                                (click)="agregarIntegrante()" [disabled]="integranteForm.invalid">
+                                <i class="bi bi-check-circle-fill me-2"></i>Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill"
+                                (click)="cancelarFormulario()">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 text-primary">
+                        <i class="bi bi-list-check me-2"></i>Integrantes Registrados
+                    </h6>
+                    <span class="badge bg-primary rounded-pill">{{ integrantes.length }}</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive table-scroll">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Nombre</th>
+                                <th class="border-0">Partido</th>
+                                <th class="border-0" *ngIf="tipoEventoAgenda === 'Comisión'">Comisión</th>
+                                <th class="border-0" *ngIf="tipoEventoAgenda === 'Comisión'">Cargo</th>
+                                <th class="border-0 text-center" style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let integrante of integrantes; let i = index" [class.table-light]="i % 2 === 0">
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center">
+                                        <div
+                                            class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                        <strong>{{ integrante.diputado }}</strong>
+                                    </div>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge bg-success badge-fixed">
+                                        {{ integrante.partido }}
+                                    </span>
+                                </td>
+                                <td class="align-middle" *ngIf="tipoEventoAgenda === 'Comisión'">
+                                    {{ integrante.comision || '-' }}
+                                </td>
+                                <td class="align-middle" *ngIf="tipoEventoAgenda === 'Comisión'">
+                                    {{ integrante.cargo || '-' }}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <!-- <button class="btn btn-sm btn-outline-danger"
+                                        (click)="eliminarIntegrante(integrante.id)" data-bs-toggle="tooltip"
+                                        title="Eliminar integrante">
+                                        <i class="bi bi-trash"></i>
+                                    </button> -->
+                                    <button class="btn-delete-animated" (click)="eliminarIntegrante(integrante.id)"
+                                        title="Eliminar integrante">
+                                        <i class="bi bi-trash-fill icon-trash"></i>
+                                        <i class="bi bi-x-lg icon-x"></i>
+                                        <span class="btn-text">Eliminar</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="integrantes.length === 0">
+                                <td [attr.colspan]="tipoEventoAgenda === 'Comisión' ? 5 : 3"
+                                    class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay integrantes registrados</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary shadow-sm" (click)="modal.close('by: close button')">
+            <i class="bi bi-x-lg me-2"></i>Cerrar
+        </button>
+    </div>
+</ng-template>

@@ -354,6 +354,10 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           raw: true,
         });
 
+        const partidos = await Partidos.findAll({
+          attributes: ['id', 'siglas'],
+          raw: true,
+        });
 
         const comisiones = await Comision.findAll({
           attributes: ['id', 'nombre'],
@@ -396,7 +400,8 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray,
-            tipointer: tipointer
+            tipointer: tipointer,
+            partidos:partidos
 
         });
 

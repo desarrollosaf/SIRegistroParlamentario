@@ -302,6 +302,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha
         this.integrantes = response.integrantes || [];
+        console.log(this.integrantes);
         this.dividirEnColumnas();
       },
       error: (e: HttpErrorResponse) => {

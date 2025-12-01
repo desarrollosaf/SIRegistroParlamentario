@@ -36,3 +36,192 @@
 .btn-group-actions.mid .action-btn {
   padding: 6px 8px !important;
 }
+
+
+
+
+
+
+
+/* Animación de entrada */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Avatar circular */
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Mejorar hover en tabla */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+/* Estilos para los botones de radio */
+.btn-check:checked + .btn-outline-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Sombras suaves */
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+/* Card hover effect */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Mejorar selects */
+.form-select:focus,
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.table-scroll {
+  max-height: 300px;    /* Ajusta como necesites */
+  overflow-y: auto;
+}
+
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.badge-fixed {
+    display: inline-block;
+    min-width: 80px;      /* Ajusta el ancho deseado */
+    text-align: center;
+    padding: 0.45rem 0.6rem; /* Tamaño uniforme */
+    font-size: 0.85rem;   /* Igual tamaño de texto */
+}
+
+
+
+
+
+
+
+
+/* Botón eliminar animado - VERSIÓN COMPACTA */
+.btn-delete-animated {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 90px;      /* Reducido de 110px */
+    height: 32px;         /* Reducido de 38px */
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;   /* Reducido de 8px */
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;      /* Reducido de 14px */
+    position: relative;
+    overflow: hidden;
+    transition: all 300ms ease;
+
+    &:hover {
+        background-color: #bb2d3b;
+        box-shadow: 0 3px 6px rgba(220, 53, 69, 0.3);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    .btn-text {
+        font-size: 12px;    /* Reducido de 14px */
+        padding: 0 6px;     /* Reducido de 8px */
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: all 500ms ease;
+        z-index: 2;
+    }
+
+    .icon-trash {
+        position: absolute;
+        font-size: 1.8em;   /* Reducido de 2.2em */
+        left: 50%;
+        transform: translateX(-50%) rotate(0deg);
+        color: #941e2a;
+        transition: all 500ms ease;
+        z-index: 1;
+        opacity: 0;
+    }
+
+    .icon-x {
+        position: absolute;
+        font-size: 1.1em;   /* Reducido de 1.4em */
+        right: 10px;        /* Reducido de 12px */
+        color: #fff;
+        transition: all 500ms ease;
+        z-index: 3;
+    }
+
+    &:hover .icon-x {
+        transform: translateX(-70px);  /* Ajustado */
+        opacity: 0;
+    }
+
+    &:hover .icon-trash {
+        opacity: 1;
+        transform: translateX(-50%) rotate(15deg);
+    }
+
+    &:hover .btn-text {
+        transform: translateX(200px);
+        opacity: 0;
+    }
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+    .btn-delete-animated {
+        min-width: 80px;
+        height: 30px;
+        font-size: 11px;
+
+        .btn-text {
+            font-size: 11px;
+        }
+
+        .icon-trash {
+            font-size: 1.5em;
+        }
+
+        .icon-x {
+            font-size: 1em;
+        }
+    }
+}
