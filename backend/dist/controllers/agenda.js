@@ -442,6 +442,10 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'valor'],
             raw: true,
         });
+        const partidos = yield partidos_1.default.findAll({
+            attributes: ['id', 'siglas'],
+            raw: true,
+        });
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', 'nombre'],
             raw: true,
@@ -479,7 +483,8 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray,
-            tipointer: tipointer
+            tipointer: tipointer,
+            partidos: partidos
         });
     }
     catch (error) {
