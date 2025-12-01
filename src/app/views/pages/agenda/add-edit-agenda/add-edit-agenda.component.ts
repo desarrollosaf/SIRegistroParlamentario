@@ -125,11 +125,11 @@ export class AddEditAgendaComponent {
 
         this.getSelect();
 
-        if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
-          setTimeout(() => {
+        this.getSelect(() => {
+          if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
             this.setAnfitriones(response.anfitrion_agendas);
-          }, 500);
-        }
+          }
+        });
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -151,33 +151,42 @@ export class AddEditAgendaComponent {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
+
+
   setAnfitriones(anfitrionesData: any[]) {
-    const agrupados = anfitrionesData.reduce((acc: any, item: any) => {
-      if (!acc[item.tipo_autor_id]) {
-        acc[item.tipo_autor_id] = [];
-      }
-      acc[item.tipo_autor_id].push(item.autor_id);
-      return acc;
-    }, {});
     this.itemsTabla = [];
 
-    Object.keys(agrupados).forEach(tipoAutorId => {
-      const tipoAutorObj = this.tipoAutor.find(t => t.id === tipoAutorId);
-      if (!tipoAutorObj) return;
+    anfitrionesData.forEach((anfitrion: any) => {
 
-      const autoresIds = agrupados[tipoAutorId];
-      const autoresFiltrados = this.autoresPorTipo[tipoAutorId] || [];
+      const tipoAutorObj = this.tipoAutor.find(t => t.id === anfitrion.tipo_autor_id);
 
-      const autoresArray = autoresIds
-        .map((autorId: string) => autoresFiltrados.find((a: any) => a.id === autorId))
-        .filter((a: any) => a !== undefined);
+      if (!tipoAutorObj) {
+        return;
+      }
 
-      if (autoresArray.length > 0) {
-        this.itemsTabla.push({
-          tipoAutorId: tipoAutorId,
-          tipoAutorNombre: tipoAutorObj.name,
-          autores: autoresArray
-        });
+      const autoresFiltrados = this.autoresPorTipo[anfitrion.tipo_autor_id] || [];
+
+      const autor = autoresFiltrados.find((a: any) => a.id === anfitrion.autor_id);
+
+      if (autor) {
+        const existe = this.itemsTabla.some(item =>
+          item.tipoAutorId === anfitrion.tipo_autor_id &&
+          item.autores.length === 1 &&
+          item.autores[0].id === autor.id
+        );
+
+        if (!existe) {
+          this.itemsTabla.push({
+            tipoAutorId: anfitrion.tipo_autor_id,
+            tipoAutorNombre: tipoAutorObj.name,
+            autores: [autor] 
+          });
+          
+        } else {
+          console.log('Anfitrión duplicado, no se agregó');
+        }
+      } else {
+        console.warn(`No se encontró el autor con ID: ${anfitrion.autor_id}`);
       }
     });
   }
@@ -350,9 +359,11 @@ export class AddEditAgendaComponent {
     this.autoresSeleccionados = null;
   }
 
-  getSelect() {
+
+  getSelect(callback?: () => void) {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
+
         this.sedesSelect = response.sedes || [];
         this.tipoEventoSelect = response.tipoevento || [];
         this.tipoAutor = response.tipoAutores || [];
@@ -393,6 +404,10 @@ export class AddEditAgendaComponent {
         if (tipoDiputadoPermId) this.tiposMultiples.push(tipoDiputadoPermId);
         if (tipoOtroId) this.tiposMultiples.push(tipoOtroId);
         if (tipoComiteId) this.tiposMultiples.push(tipoComiteId);
+
+        if (callback) {
+          callback();
+        }
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -400,6 +415,9 @@ export class AddEditAgendaComponent {
       }
     });
   }
+
+
+
 
   agregarFila() {
     if (!this.tipoAutorSeleccionado) {

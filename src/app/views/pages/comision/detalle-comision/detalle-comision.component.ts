@@ -45,7 +45,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   private segPlanoInterval: any = null;
   private segPlanoActivo: boolean = false;
-  private readonly SEGUNDO_PLANO_INTERVAL_MS = 3000;
+  private readonly SEGUNDO_PLANO_INTERVAL_MS = 5000;
 
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   step = 1;
