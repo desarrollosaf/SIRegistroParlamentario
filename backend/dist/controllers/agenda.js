@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addDipLista = exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -2016,11 +2016,38 @@ const addDipLista = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
-        console.error("Error en gestionIntegrantes:", error);
+        console.error("Error en guardar el nuevo diputado :", error);
         return res.status(500).json({
-            msg: "Error al agregar integrante",
+            msg: "Error en guardar el nuevo diputado",
             error: error.message
         });
     }
 });
 exports.addDipLista = addDipLista;
+const Eliminarlista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const integrante = yield asistencia_votos_1.default.findOne({
+            where: { id }
+        });
+        if (!integrante) {
+            return res.status(404).json({
+                msg: "El diputado no existe en la lista",
+                estatus: 404
+            });
+        }
+        yield integrante.destroy();
+        return res.json({
+            msg: "Diputado eliminado de la lista correctamente",
+            estatus: 200
+        });
+    }
+    catch (error) {
+        console.error("Error en Eliminarlista:", error);
+        return res.status(500).json({
+            msg: "Error al eliminar integrante",
+            error: error.message
+        });
+    }
+});
+exports.Eliminarlista = Eliminarlista;

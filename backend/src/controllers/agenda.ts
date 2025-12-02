@@ -2332,11 +2332,38 @@ export const addDipLista = async (req: Request, res: Response): Promise<any> => 
     });
 
   } catch (error) {
-    console.error("Error en gestionIntegrantes:", error);
+    console.error("Error en guardar el nuevo diputado :", error);
     return res.status(500).json({ 
-      msg: "Error al agregar integrante",
+      msg: "Error en guardar el nuevo diputado",
       error: (error as Error).message 
     });
   }
 };
 
+export const Eliminarlista = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const integrante = await AsistenciaVoto.findOne({
+      where: { id }
+    });
+
+    if (!integrante) {
+      return res.status(404).json({
+        msg: "El diputado no existe en la lista",
+        estatus: 404
+      });
+    }
+    await integrante.destroy();
+    return res.json({
+      msg: "Diputado eliminado de la lista correctamente",
+      estatus: 200
+    });
+
+  } catch (error) {
+    console.error("Error en Eliminarlista:", error);
+    return res.status(500).json({
+      msg: "Error al eliminar integrante",
+      error: (error as Error).message
+    });
+  }
+};
