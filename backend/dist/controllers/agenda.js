@@ -34,6 +34,7 @@ const intervenciones_1 = __importDefault(require("../models/intervenciones"));
 const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const sequelize_2 = require("sequelize");
+const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
@@ -77,9 +78,10 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.geteventos = geteventos;
 const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b;
     try {
         const { id } = req.params;
+        // 1. Obtener evento
         const evento = yield agendas_1.default.findOne({
             where: { id },
             include: [
@@ -90,8 +92,12 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!evento) {
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
+        // 2. Determinar tipo de evento
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
+        // 3. Obtener título según tipo de evento
         let titulo = "";
-        if (((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión") {
+        if (esSesion) {
             titulo = (_b = evento.descripcion) !== null && _b !== void 0 ? _b : "";
         }
         else {
@@ -101,10 +107,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 raw: true
             });
             const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-            if (comisionIds.length === 0) {
-                titulo = "";
-            }
-            else {
+            if (comisionIds.length > 0) {
                 const comisiones = yield comisions_1.default.findAll({
                     where: { id: comisionIds },
                     attributes: ["nombre"],
@@ -113,43 +116,59 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 titulo = comisiones.map(c => c.nombre).join(", ");
             }
         }
+        // 4. Verificar si existen asistencias
         const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
+            order: [['created_at', 'DESC']],
             raw: true,
         });
-        if (asistenciasExistentes.length > 0) {
-            const asistenciasExistentes2 = Object.values(asistenciasExistentes.reduce((acc, curr) => {
-                if (!acc[curr.id_diputado])
-                    acc[curr.id_diputado] = curr;
-                return acc;
-            }, {}));
-            const resultados = yield Promise.all(asistenciasExistentes2.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b, _c;
-                const diputado = yield diputado_1.default.findOne({
-                    where: { id: inte.id_diputado },
-                    attributes: ["apaterno", "amaterno", "nombres"],
-                    raw: true,
-                });
-                const partido = yield partidos_1.default.findOne({
-                    where: { id: inte.partido_dip },
-                    attributes: ["siglas"],
-                    raw: true,
-                });
-                const nombreCompletoDiputado = diputado
-                    ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
-                    : null;
-                return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: partido ? partido.siglas : null });
-            })));
+        // 5. Si NO existen asistencias, crearlas
+        if (asistenciasExistentes.length === 0) {
+            yield crearAsistencias(evento, esSesion);
+            // Volver a consultar las asistencias recién creadas
+            const asistenciasNuevas = yield asistencia_votos_1.default.findAll({
+                where: { id_agenda: id },
+                order: [['created_at', 'DESC']],
+                raw: true,
+            });
+            const integrantes = yield procesarAsistencias(asistenciasNuevas, esSesion);
             return res.status(200).json({
-                msg: "Evento con asistencias existentes",
+                msg: "Asistencias creadas exitosamente",
                 evento,
-                integrantes: resultados,
-                titulo
+                integrantes,
+                titulo,
+                tipoEvento
             });
         }
+        // 6. Si SÍ existen asistencias, procesarlas
+        const integrantes = yield procesarAsistencias(asistenciasExistentes, esSesion);
+        return res.status(200).json({
+            msg: "Evento con asistencias existentes",
+            evento,
+            integrantes,
+            titulo,
+            tipoEvento
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo evento:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener el evento",
+            error: error.message,
+        });
+    }
+});
+exports.getevento = getevento;
+// ========== FUNCIONES HELPER ==========
+/**
+ * Crea las asistencias iniciales para un evento
+ */
+function crearAsistencias(evento, esSesion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const listadoDiputados = [];
-        let bandera = 1;
-        if (((_c = evento.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre) === "Sesión") {
+        if (esSesion) {
+            // Para sesiones: todos los diputados de la legislatura actual
             const legislatura = yield legislaturas_1.default.findOne({
                 order: [["fecha_inicio", "DESC"]],
             });
@@ -164,13 +183,13 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             id_diputado: inteLegis.diputado.id,
                             id_partido: inteLegis.partido_id,
                             comision_dip_id: null,
-                            bandera,
                         });
                     }
                 }
             }
         }
         else {
+            // Para comisiones: solo integrantes de las comisiones anfitrionas
             const comisiones = yield anfitrion_agendas_1.default.findAll({
                 where: { agenda_id: evento.id },
             });
@@ -186,20 +205,18 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         },
                     ],
                 });
-                for (const comId of comisionIds) {
-                    const deEstaComision = integrantes.filter((i) => { var _a; return i.comision_id === comId && ((_a = i.integranteLegislatura) === null || _a === void 0 ? void 0 : _a.diputado); });
-                    for (const inte of deEstaComision) {
+                for (const inte of integrantes) {
+                    if ((_a = inte.integranteLegislatura) === null || _a === void 0 ? void 0 : _a.diputado) {
                         listadoDiputados.push({
                             id_diputado: inte.integranteLegislatura.diputado.id,
                             id_partido: inte.integranteLegislatura.partido_id,
                             comision_dip_id: inte.comision_id,
-                            bandera,
                         });
                     }
-                    bandera++;
                 }
             }
         }
+        // Crear asistencias en bulk
         const mensaje = "PENDIENTE";
         const timestamp = new Date();
         const asistencias = listadoDiputados.map((diputado) => ({
@@ -212,49 +229,159 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             id_agenda: evento.id,
         }));
         yield asistencia_votos_1.default.bulkCreate(asistencias);
-        const asistenciasRaw = yield asistencia_votos_1.default.findAll({
-            where: { id_agenda: id },
-            order: [['created_at', 'DESC']],
-            raw: true,
-        });
-        const nuevasAsistencias = Object.values(asistenciasRaw.reduce((acc, curr) => {
+    });
+}
+/**
+ * Procesa las asistencias y las agrupa según el tipo de evento
+ */
+function procesarAsistencias(asistencias, esSesion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (esSesion) {
+            // Para sesiones: lista plana sin duplicados
+            return yield procesarAsistenciasSesion(asistencias);
+        }
+        else {
+            // Para comisiones: agrupadas y ordenadas por cargo
+            return yield procesarAsistenciasComisiones(asistencias);
+        }
+    });
+}
+/**
+ * Procesa asistencias para SESIONES (lista plana)
+ */
+function procesarAsistenciasSesion(asistencias) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Eliminar duplicados por id_diputado (mantener el más reciente)
+        const asistenciasSinDuplicados = Object.values(asistencias.reduce((acc, curr) => {
             if (!acc[curr.id_diputado])
                 acc[curr.id_diputado] = curr;
             return acc;
         }, {}));
-        const resultados = yield Promise.all(nuevasAsistencias.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
+        const diputadoIds = [...new Set(asistenciasSinDuplicados.map(a => a.id_diputado).filter(Boolean))];
+        const partidoIds = [...new Set(asistenciasSinDuplicados.map(a => a.partido_dip).filter(Boolean))];
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true
+            })
+        ]);
+        const diputadosMap = new Map(diputados.map((d) => [d.id, d]));
+        const partidosMap = new Map(partidos.map((p) => [p.id, p]));
+        return asistenciasSinDuplicados.map(inte => {
             var _a, _b, _c;
-            const diputado = yield diputado_1.default.findOne({
-                where: { id: inte.id_diputado },
-                attributes: ["apaterno", "amaterno", "nombres"],
-                raw: true,
-            });
-            const partido = yield partidos_1.default.findOne({
-                where: { id: inte.partido_dip },
-                attributes: ["siglas"],
-                raw: true,
-            });
+            const diputado = diputadosMap.get(inte.id_diputado);
+            const partido = partidosMap.get(inte.partido_dip);
             const nombreCompletoDiputado = diputado
                 ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
                 : null;
-            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: partido ? partido.siglas : null });
-        })));
-        return res.status(200).json({
-            msg: "Evento generado correctamente",
-            evento,
-            integrantes: resultados,
-            titulo
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null });
         });
-    }
-    catch (error) {
-        console.error("Error obteniendo evento:", error);
-        return res.status(500).json({
-            msg: "Ocurrió un error al obtener el evento",
-            error: error.message,
+    });
+}
+/**
+ * Procesa asistencias para COMISIONES (agrupadas por comisión y ordenadas por cargo)
+ */
+function procesarAsistenciasComisiones(asistencias) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const diputadoIds = [...new Set(asistencias.map(a => a.id_diputado).filter(Boolean))];
+        const partidoIds = [...new Set(asistencias.map(a => a.partido_dip).filter(Boolean))];
+        const comisionIds = [...new Set(asistencias.map(a => a.comision_dip_id).filter(Boolean))];
+        const [diputados, partidos, comisiones, integrantesLegislatura, integrantesComision] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true
+            }),
+            comisionIds.length > 0 ? comisions_1.default.findAll({
+                where: { id: comisionIds },
+                attributes: ["id", "nombre", "importancia"],
+                raw: true
+            }) : [],
+            integrante_legislaturas_1.default.findAll({
+                where: { diputado_id: diputadoIds },
+                attributes: ["id", "diputado_id"],
+                raw: true
+            }),
+            comisionIds.length > 0 ? integrante_comisions_1.default.findAll({
+                where: { comision_id: comisionIds },
+                include: [{
+                        model: tipo_cargo_comisions_1.default,
+                        as: 'tipo_cargo',
+                        attributes: ["valor", "nivel"]
+                    }],
+                attributes: ["comision_id", "integrante_legislatura_id", "tipo_cargo_comision_id"]
+            }) : []
+        ]);
+        // Crear mapas
+        const diputadosMap = new Map(diputados.map((d) => [d.id, d]));
+        const partidosMap = new Map(partidos.map((p) => [p.id, p]));
+        const comisionesMap = new Map(comisiones.map((c) => [c.id, c]));
+        const integranteLegislaturaMap = new Map(integrantesLegislatura.map((il) => [il.diputado_id, il.id]));
+        const cargosMap = new Map();
+        integrantesComision.forEach((ic) => {
+            var _a, _b;
+            const data = ic.toJSON ? ic.toJSON() : ic;
+            const key = `${data.comision_id}-${data.integrante_legislatura_id}`;
+            cargosMap.set(key, {
+                valor: ((_a = data.tipo_cargo) === null || _a === void 0 ? void 0 : _a.valor) || null,
+                nivel: ((_b = data.tipo_cargo) === null || _b === void 0 ? void 0 : _b.nivel) || 999
+            });
         });
-    }
-});
-exports.getevento = getevento;
+        // Mapear asistencias con información completa
+        const resultados = asistencias.map(inte => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(inte.id_diputado);
+            const partido = partidosMap.get(inte.partido_dip);
+            const comision = inte.comision_dip_id ? comisionesMap.get(inte.comision_dip_id) : null;
+            let cargo = null;
+            if (inte.comision_dip_id && inte.id_diputado) {
+                const integranteLegislaturaId = integranteLegislaturaMap.get(inte.id_diputado);
+                if (integranteLegislaturaId) {
+                    const key = `${inte.comision_dip_id}-${integranteLegislaturaId}`;
+                    cargo = cargosMap.get(key);
+                }
+            }
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : null;
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null, comision_id: inte.comision_dip_id, comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || 'Sin comisión', comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999 });
+        });
+        // Agrupar por comisión
+        const integrantesAgrupados = resultados.reduce((grupos, integrante) => {
+            const comisionNombre = integrante.comision_nombre;
+            if (!grupos[comisionNombre]) {
+                grupos[comisionNombre] = {
+                    comision_id: integrante.comision_id,
+                    comision_nombre: comisionNombre,
+                    importancia: integrante.comision_importancia,
+                    integrantes: []
+                };
+            }
+            grupos[comisionNombre].integrantes.push(integrante);
+            return grupos;
+        }, {});
+        // Convertir a array y ordenar
+        const comisionesArray = Object.values(integrantesAgrupados).sort((a, b) => {
+            return a.importancia - b.importancia;
+        });
+        // Ordenar integrantes dentro de cada comisión por cargo
+        comisionesArray.forEach((comision) => {
+            comision.integrantes.sort((a, b) => a.nivel_cargo - b.nivel_cargo);
+        });
+        return comisionesArray;
+    });
+}
 const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
@@ -315,6 +442,10 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'valor'],
             raw: true,
         });
+        const partidos = yield partidos_1.default.findAll({
+            attributes: ['id', 'siglas'],
+            raw: true,
+        });
         const comisiones = yield comisions_1.default.findAll({
             attributes: ['id', 'nombre'],
             raw: true,
@@ -352,7 +483,8 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray,
-            tipointer: tipointer
+            tipointer: tipointer,
+            partidos: partidos
         });
     }
     catch (error) {

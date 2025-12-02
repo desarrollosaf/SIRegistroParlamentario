@@ -45,7 +45,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   private segPlanoInterval: any = null;
   private segPlanoActivo: boolean = false;
-  private readonly SEGUNDO_PLANO_INTERVAL_MS = 3000;
+  private readonly SEGUNDO_PLANO_INTERVAL_MS = 5000;
 
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   step = 1;
@@ -302,6 +302,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha
         this.integrantes = response.integrantes || [];
+        console.log(this.integrantes);
         this.dividirEnColumnas();
       },
       error: (e: HttpErrorResponse) => {
