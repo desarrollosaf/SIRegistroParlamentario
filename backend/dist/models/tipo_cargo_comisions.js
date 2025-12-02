@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
+const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
 class TipoCargoComision extends sequelize_1.Model {
 }
 TipoCargoComision.init({
@@ -30,7 +30,7 @@ TipoCargoComision.init({
         field: "updated_at"
     }
 }, {
-    sequelize: registrocomisiones_1.default,
+    sequelize: legislativoConnection_1.default,
     tableName: "tipo_cargo_comisions",
     timestamps: true,
     paranoid: false,
