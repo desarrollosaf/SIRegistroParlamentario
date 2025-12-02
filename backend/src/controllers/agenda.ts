@@ -2208,6 +2208,101 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
   }
 };
 
+export const gestionIntegrantes = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
 
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+
+    let cargos: any[] = [];
+    let comisiones: any[] = [];
+
+    if (!esSesion) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds }, 
+          attributes: ['id', 'nombre'],
+          raw: true,
+        });
+      }
+
+      cargos = await TipoCargoComision.findAll({
+        attributes: ['id', 'valor', 'nivel'],
+        order: [['nivel', 'ASC']], 
+        raw: true,
+      });
+    }
+
+    const partidos = await Partidos.findAll({
+      attributes: ['id', 'siglas'],
+      raw: true,
+    });
+
+    const legislatura = await Legislatura.findOne({
+      order: [["fecha_inicio", "DESC"]],
+    });
+
+    let diputadosArray: { id: string; nombre: string }[] = [];
+
+    if (legislatura) {
+      const diputados = await IntegranteLegislatura.findAll({
+        where: { legislatura_id: legislatura.id },
+        paranoid: false, 
+        include: [
+          {
+            model: Diputado,
+            as: "diputado",
+            paranoid: false, 
+            attributes: ["id", "nombres", "apaterno", "amaterno"],
+          },
+        ],
+      });
+
+      diputadosArray = diputados
+        .filter(d => d.diputado)
+        .map(d => ({
+          id: d.diputado.id,
+          nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+        }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre)); 
+    }
+
+    console.log(diputadosArray.length); 
+
+    return res.json({
+      diputados: diputadosArray,
+      partidos: partidos,
+      cargos: cargos,
+      comisiones: comisiones,
+      esSesion: esSesion 
+    });
+
+  } catch (error) {
+    console.error("Error en gestionIntegrantes:", error);
+    return res.status(500).json({ 
+      msg: "Error al obtener integrantes",
+      error: (error as Error).message 
+    });
+  }
+};
 
 

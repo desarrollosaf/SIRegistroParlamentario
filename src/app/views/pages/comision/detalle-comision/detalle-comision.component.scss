@@ -1017,3 +1017,123 @@
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Estilos para el título de comisión (rojito)
+.comision-titulo {
+  padding: 0.75rem 0;
+  border-bottom: 3px solid #dc3545;
+  margin-bottom: 1rem;
+  
+  h5 {
+    color: #dc3545 !important;
+    font-size: 1.25rem;
+    
+    i {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.comision-header-rojo {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.1);
+  
+  h5 {
+    margin: 0;
+    color: #dc3545 !important;
+    
+    i {
+      color: #dc3545;
+    }
+  }
+}
+
+.comision-header-institucional {
+  padding: 0.75rem 0;
+  border-bottom: 3px solid #800048;
+  margin-bottom: 1rem;
+  
+  h5 {
+    margin: 0;
+    color: #800048 !important;
+    font-size: 1.25rem;
+    
+    i {
+      color: #800048;
+    }
+  }
+}
+
+// Estilos para contadores simples (sin cards, sin fondo)
+.contadores-institucionales {
+  padding: 0.5rem 0;
+  
+  .contador-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.95rem;
+    color: #800048;
+    
+    i {
+      font-size: 1.1rem;
+      color: #800048;
+    }
+    
+    span {
+      color: #800048;
+    }
+    
+    .badge {
+      background-color: #800048;
+      color: white;
+      font-size: 0.9rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 576px) {
+  .comision-header-institucional {
+    h5 {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .contadores-institucionales {
+    .contador-item {
+      font-size: 0.85rem;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      i {
+        font-size: 1rem;
+      }
+      
+      .badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+      }
+    }
+  }
+}
