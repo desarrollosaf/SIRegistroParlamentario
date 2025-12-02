@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -1905,3 +1905,90 @@ const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.generarPDFVotacion = generarPDFVotacion;
+const gestionIntegrantes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        let cargos = [];
+        let comisiones = [];
+        if (!esSesion) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ['id', 'nombre'],
+                    raw: true,
+                });
+            }
+            cargos = yield tipo_cargo_comisions_1.default.findAll({
+                attributes: ['id', 'valor', 'nivel'],
+                order: [['nivel', 'ASC']],
+                raw: true,
+            });
+        }
+        const partidos = yield partidos_1.default.findAll({
+            attributes: ['id', 'siglas'],
+            raw: true,
+        });
+        const legislatura = yield legislaturas_1.default.findOne({
+            order: [["fecha_inicio", "DESC"]],
+        });
+        let diputadosArray = [];
+        if (legislatura) {
+            const diputados = yield integrante_legislaturas_1.default.findAll({
+                where: { legislatura_id: legislatura.id },
+                paranoid: false,
+                include: [
+                    {
+                        model: diputado_1.default,
+                        as: "diputado",
+                        paranoid: false,
+                        attributes: ["id", "nombres", "apaterno", "amaterno"],
+                    },
+                ],
+            });
+            diputadosArray = diputados
+                .filter(d => d.diputado)
+                .map(d => {
+                var _a, _b, _c;
+                return ({
+                    id: d.diputado.id,
+                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                });
+            })
+                .sort((a, b) => a.nombre.localeCompare(b.nombre));
+        }
+        console.log(diputadosArray.length);
+        return res.json({
+            diputados: diputadosArray,
+            partidos: partidos,
+            cargos: cargos,
+            comisiones: comisiones,
+            esSesion: esSesion
+        });
+    }
+    catch (error) {
+        console.error("Error en gestionIntegrantes:", error);
+        return res.status(500).json({
+            msg: "Error al obtener integrantes",
+            error: error.message
+        });
+    }
+});
+exports.gestionIntegrantes = gestionIntegrantes;

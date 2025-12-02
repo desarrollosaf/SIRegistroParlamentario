@@ -7,7 +7,7 @@ import {
   ForeignKey
 } from "sequelize";
 
-import sequelize from "../database/registrocomisiones";
+import sequelize from "../database/legislativoConnection";
 import IntegranteComision from "./integrante_comisions";
 
 class TipoCargoComision extends Model {
