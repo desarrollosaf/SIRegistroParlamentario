@@ -8,7 +8,6 @@
                     <ng-container>
                         <i class="arrow-right-circle"></i> Agregar
                     </ng-container>
-
                 </button>
                 <br><br>
                 <div class="row">
@@ -59,9 +58,7 @@
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Detalles">
                             <ng-template let-row="row" ngx-datatable-cell-template>
-
                                 <div class="btn-group-actions mid">
-
                                     <a class="btn btn-secondary action-btn" routerLink="detalle-comision/{{ row.id }}"
                                         data-bs-toggle="tooltip" data-bs-placement="top" title="Ir">
                                         <i class="bi bi-arrow-right-circle"></i>
@@ -83,7 +80,6 @@
                                         <i class="bi bi-person-exclamation"></i>
                                     </a>
                                 </div>
-
                             </ng-template>
                         </ngx-datatable-column>
                     </ngx-datatable>
@@ -93,9 +89,7 @@
     </div>
 </div>
 
-
-
-
+<!-- MODAL -->
 <ng-template #xlModal let-modal>
     <div class="modal-header bg-primary text-white">
         <div class="d-flex align-items-center">
@@ -107,12 +101,15 @@
     </div>
 
     <div class="modal-body">
+        <!-- BOTÓN AGREGAR -->
         <div class="text-center mb-4" *ngIf="!mostrarFormulario">
             <button class="btn btn-primary btn-lg shadow-sm" (click)="mostrarFormulario = true">
                 <i class="bi bi-plus-circle-fill me-2"></i>
                 Agregar Nuevo Integrante
             </button>
         </div>
+
+        <!-- FORMULARIO -->
         <div *ngIf="mostrarFormulario" class="animate-fade-in mb-4">
             <div class="card shadow-sm border-primary">
                 <div class="card-header bg-primary text-white">
@@ -121,12 +118,9 @@
                     </h6>
                 </div>
                 <div class="card-body p-4">
-
                     <form [formGroup]="integranteForm">
+                        <!-- Radio Buttons Tipo -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-primary">
-                                <!-- <i class="bi bi-bookmark-fill me-2"></i>Tipo -->
-                            </label>
                             <div class="btn-group w-100 shadow-sm" role="group">
                                 <input type="radio" class="btn-check" name="tipo" id="radioLegislatura"
                                     value="legislatura" [(ngModel)]="tipoSeleccionado"
@@ -147,12 +141,12 @@
                             </div>
                             <div class="form-text text-muted mt-2" *ngIf="tipoEstaBloqueo">
                                 <i class="bi bi-info-circle me-1"></i>
-                                El tipo está determinado por el evento seleccionado: <strong>{{ tipoEventoAgenda
-                                    }}</strong>
+                                El tipo está determinado por el evento: <strong>{{ tipoEventoAgenda }}</strong>
                             </div>
                         </div>
 
                         <div class="row g-3">
+                            <!-- Diputado -->
                             <div [class]="tipoSeleccionado === 'legislatura' ? 'col-md-6' : 'col-md-6'">
                                 <label for="selectDiputado" class="form-label fw-bold">
                                     <i class="bi bi-person-badge me-1"></i>Diputado
@@ -169,6 +163,8 @@
                                     Por favor seleccione un diputado
                                 </div>
                             </div>
+
+                            <!-- Partido -->
                             <div [class]="tipoSeleccionado === 'legislatura' ? 'col-md-6' : 'col-md-6'">
                                 <label for="selectPartido" class="form-label fw-bold">
                                     <i class="bi bi-flag-fill me-1"></i>Partido
@@ -186,7 +182,9 @@
                                 </div>
                             </div>
 
+                            <!-- SOLO PARA COMISIÓN -->
                             <ng-container *ngIf="tipoSeleccionado === 'comision'">
+                                <!-- Comisión -->
                                 <div class="col-md-6">
                                     <label for="selectComision" class="form-label fw-bold">
                                         <i class="bi bi-diagram-3-fill me-1"></i>Comisión
@@ -204,22 +202,27 @@
                                     </div>
                                 </div>
 
+                                <!-- Cargo -->
                                 <div class="col-md-6">
                                     <label for="inputCargo" class="form-label fw-bold">
                                         <i class="bi bi-award-fill me-1"></i>Cargo
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" class="form-control shadow-sm" id="inputCargo"
-                                        formControlName="cargo" [class.is-invalid]="cargoInvalid"
-                                        placeholder="Ej: Presidente, Secretario, Vocal, etc.">
+                                    <select class="form-select shadow-sm" id="selctCargo" formControlName="cargo"
+                                        [class.is-invalid]="cargoInvalid">
+                                        <option value="">Seleccione un cargo</option>
+                                        <option *ngFor="let cargo of slctCargo" [value]="cargo.id">
+                                            {{ cargo.valor }}
+                                        </option>
+                                    </select>
                                     <div class="invalid-feedback" *ngIf="cargoInvalid">
                                         Por favor especifique el cargo
                                     </div>
                                 </div>
                             </ng-container>
-
                         </div>
 
+                        <!-- Botones -->
                         <div class="d-flex gap-2 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-success shadow-sm flex-fill"
                                 (click)="agregarIntegrante()" [disabled]="integranteForm.invalid">
@@ -235,7 +238,8 @@
             </div>
         </div>
 
-        <div class="card shadow-sm">
+        <!-- TABLA PARA SESIÓN -->
+        <div *ngIf="!esComision" class="card shadow-sm">
             <div class="card-header bg-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 text-primary">
@@ -251,39 +255,23 @@
                             <tr>
                                 <th class="border-0">Nombre</th>
                                 <th class="border-0">Partido</th>
-                                <th class="border-0" *ngIf="tipoEventoAgenda === 'Comisión'">Comisión</th>
-                                <th class="border-0" *ngIf="tipoEventoAgenda === 'Comisión'">Cargo</th>
-                                <th class="border-0 text-center" style="width: 100px;">Acciones</th>
+                                <th class="border-0 text-center" style="width: 120px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let integrante of integrantes; let i = index" [class.table-light]="i % 2 === 0">
                                 <td class="align-middle">
                                     <div class="d-flex align-items-center">
-                                        <div
-                                            class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                        <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
                                             <i class="bi bi-person-fill"></i>
                                         </div>
                                         <strong>{{ integrante.diputado }}</strong>
                                     </div>
                                 </td>
                                 <td class="align-middle">
-                                    <span class="badge bg-success badge-fixed">
-                                        {{ integrante.partido }}
-                                    </span>
-                                </td>
-                                <td class="align-middle" *ngIf="tipoEventoAgenda === 'Comisión'">
-                                    {{ integrante.comision || '-' }}
-                                </td>
-                                <td class="align-middle" *ngIf="tipoEventoAgenda === 'Comisión'">
-                                    {{ integrante.cargo || '-' }}
+                                    <span class="badge bg-success badge-fixed">{{ integrante.partido }}</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <!-- <button class="btn btn-sm btn-outline-danger"
-                                        (click)="eliminarIntegrante(integrante.id)" data-bs-toggle="tooltip"
-                                        title="Eliminar integrante">
-                                        <i class="bi bi-trash"></i>
-                                    </button> -->
                                     <button class="btn-delete-animated" (click)="eliminarIntegrante(integrante.id)"
                                         title="Eliminar integrante">
                                         <i class="bi bi-trash-fill icon-trash"></i>
@@ -293,8 +281,7 @@
                                 </td>
                             </tr>
                             <tr *ngIf="integrantes.length === 0">
-                                <td [attr.colspan]="tipoEventoAgenda === 'Comisión' ? 5 : 3"
-                                    class="text-center text-muted py-4">
+                                <td colspan="3" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
                                     <p class="mb-0">No hay integrantes registrados</p>
                                 </td>
@@ -302,6 +289,92 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- TABLAS PARA COMISIONES (múltiples comisiones) -->
+        <div *ngIf="esComision">
+            <!-- Contador general -->
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Total general de integrantes:</strong> {{ contarTotalGeneral() }}
+            </div>
+
+            <!-- Iterar sobre cada comisión -->
+            <div *ngFor="let comision of listaComisiones; let isLast = last" class="mb-5">
+                
+                <!-- Encabezado de la comisión -->
+                <div class="comision-header-institucional mb-3">
+                    <h5 class="fw-bold">
+                        <i class="bi bi-building me-2"></i>
+                        {{ comision.nombre }}
+                    </h5>
+                </div>
+
+                <!-- Contador de la comisión -->
+                <div class="contadores-institucionales mb-3">
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <div class="contador-item">
+                            <i class="bi bi-people-fill me-2"></i>
+                            <span class="fw-semibold">Total:</span>
+                            <span class="badge ms-1">{{ contarIntegrantesComision(comision.integrantes) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de integrantes de esta comisión -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive table-scroll">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0">Nombre</th>
+                                        <th class="border-0">Partido</th>
+                                        <th class="border-0">Cargo</th>
+                                        <th class="border-0 text-center" style="width: 120px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let integrante of comision.integrantes; let i = index" [class.table-light]="i % 2 === 0">
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+                                                <strong>{{ integrante.diputado }}</strong>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge bg-success badge-fixed">{{ integrante.partido }}</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            {{ integrante.cargo || '-' }}
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <button class="btn-delete-animated" 
+                                                    (click)="eliminarIntegrante(integrante.id, comision.id)"
+                                                    title="Eliminar integrante">
+                                                <i class="bi bi-trash-fill icon-trash"></i>
+                                                <i class="bi bi-x-lg icon-x"></i>
+                                                <span class="btn-text">Eliminar</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="comision.integrantes.length === 0">
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                            <p class="mb-0">No hay integrantes en esta comisión</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Separador entre comisiones -->
+                <hr *ngIf="!isLast" class="my-5 border-2" style="border-color: #800048;">
             </div>
         </div>
 
