@@ -425,65 +425,85 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
 }
 
 export const actualizar = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { body } = req
-      
-        const votos = await AsistenciaVoto.findAll({
-          where: {
-            id_agenda: body.idagenda,
-            id_diputado: body.iddiputado,
-          },
-        });
-
-        if (votos && votos.length > 0) {
-          let nuevoSentido;
-          let nuevoMensaje;
-          
-          switch (body.sentido) {
-            case 1:
-              nuevoSentido = 1;
-              nuevoMensaje = "ASISTENCIA";
-              break;
-            case 2:
-              nuevoSentido = 2;
-              nuevoMensaje = "ASISTENCIA ZOOM";
-              break;
-            case 0:
-              nuevoSentido = 0;
-              nuevoMensaje = "PENDIENTE";
-              break;
-            default:
-              break;
-          }
-
-          await AsistenciaVoto.update(
-            {
-              sentido_voto: nuevoSentido,
-              mensaje: nuevoMensaje,
-            },
-            {
-              where: {
-                id_agenda: body.idagenda,
-                id_diputado: body.iddiputado,
-              }
-            }
-          );
-
-          return res.status(200).json({
-            msg: `${votos.length} registro(s) actualizado(s) correctamente`,
-            estatus: 200
-          });
-        } else {
-          return res.status(404).json({
-            msg: "No se encontró el registro de asistencia para este diputado y agenda",
-          });
-        }
-
-    } catch (error) {
-        console.error('Error al generar consulta:', error);
-        return res.status(500).json({ msg: 'Error interno del servidor' });
+  try {
+    const { body } = req;
+    if (!body.id) {
+      return res.status(400).json({
+        msg: "El campo 'id' es requerido",
+        estatus: 400
+      });
     }
-}
+
+    if (body.sentido === undefined || body.sentido === null) {
+      return res.status(400).json({
+        msg: "El campo 'sentido' es requerido",
+        estatus: 400
+      });
+    }
+    const voto = await AsistenciaVoto.findOne({
+      where: {
+        id: body.id,
+      },
+    });
+
+    if (!voto) {
+      return res.status(404).json({
+        msg: "No se encontró el registro de asistencia",
+        estatus: 404
+      });
+    }
+
+    let nuevoSentido: number;
+    let nuevoMensaje: string;
+
+    switch (body.sentido) {
+      case 1:
+        nuevoSentido = 1;
+        nuevoMensaje = "ASISTENCIA";
+        break;
+      case 2:
+        nuevoSentido = 2;
+        nuevoMensaje = "ASISTENCIA ZOOM";
+        break;
+      case 0:
+        nuevoSentido = 0;
+        nuevoMensaje = "PENDIENTE";
+        break;
+      default:
+        return res.status(400).json({
+          msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (ASISTENCIA) o 2 (ASISTENCIA ZOOM)",
+          estatus: 400
+        });
+    }
+
+
+    await AsistenciaVoto.update(
+      {
+        sentido_voto: nuevoSentido,
+        mensaje: nuevoMensaje,
+      },
+      {
+        where: {
+          id: body.id,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      msg: "Registro actualizado correctamente",
+      estatus: 200,
+
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar asistencia:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      estatus: 500,
+      error: (error as Error).message 
+    });
+  }
+};
 
 
 export const catalogos = async (req: Request, res: Response): Promise<any> => {
@@ -964,23 +984,37 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
-    const presenta = (body.presenta || "")
+
+    console.log(body);
+    return 500 
+    const presentaArray = (body.presenta || "")
       .split(",")
-      .map((id: string) => id.trim())
-      .filter((id: string) => id.length > 0);
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0)
+      .map((item: string) => {
+        const [proponenteId, autorId] = item.split('/');
+        return {
+          proponenteId: parseInt(proponenteId),
+          autorId: autorId 
+        };
+      });
+    const proponentesIds = (body.proponente || "")
+      .split(",")
+      .map((id: string) => parseInt(id.trim()))
+      .filter((id: number) => !isNaN(id));
+
+    console.log('Presenta descompuesto:', presentaArray);
+    console.log('Proponentes IDs:', proponentesIds);
 
     const punto = await PuntosOrden.findOne({ where: { id } });
-
     if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
 
     const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
 
-
     await punto.update({
       nopunto: body.numpunto ?? punto.nopunto,
-      id_proponente: body.proponente ?? punto.id_proponente,
       id_tipo: body.tipo ?? punto.id_tipo,
       tribuna: body.tribuna ?? punto.tribuna,
       path_doc: nuevoPath,
@@ -993,12 +1027,11 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       where: { id_punto: punto.id }
     });
 
-
-    for (const autorId of presenta) {
+    for (const item of presentaArray) {
       await PuntosPresenta.create({
-        id_punto: punto.id,             
-        id_tipo_presenta: body.proponente,      
-        id_presenta: autorId               
+        id_punto: punto.id,
+        id_tipo_presenta: item.proponenteId, 
+        id_presenta: item.autorId
       });
     }
 
@@ -1006,9 +1039,13 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       message: "Punto actualizado correctamente",
       data: punto,
     });
+
   } catch (error: any) {
     console.error("Error al actualizar el punto:", error);
-    return res.status(500).json({ message: "Error interno del servidor" });
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
   }
 };
 

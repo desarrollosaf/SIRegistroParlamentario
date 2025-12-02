@@ -385,54 +385,70 @@ function procesarAsistenciasComisiones(asistencias) {
 const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        const votos = yield asistencia_votos_1.default.findAll({
+        if (!body.id) {
+            return res.status(400).json({
+                msg: "El campo 'id' es requerido",
+                estatus: 400
+            });
+        }
+        if (body.sentido === undefined || body.sentido === null) {
+            return res.status(400).json({
+                msg: "El campo 'sentido' es requerido",
+                estatus: 400
+            });
+        }
+        const voto = yield asistencia_votos_1.default.findOne({
             where: {
-                id_agenda: body.idagenda,
-                id_diputado: body.iddiputado,
+                id: body.id,
             },
         });
-        if (votos && votos.length > 0) {
-            let nuevoSentido;
-            let nuevoMensaje;
-            switch (body.sentido) {
-                case 1:
-                    nuevoSentido = 1;
-                    nuevoMensaje = "ASISTENCIA";
-                    break;
-                case 2:
-                    nuevoSentido = 2;
-                    nuevoMensaje = "ASISTENCIA ZOOM";
-                    break;
-                case 0:
-                    nuevoSentido = 0;
-                    nuevoMensaje = "PENDIENTE";
-                    break;
-                default:
-                    break;
-            }
-            yield asistencia_votos_1.default.update({
-                sentido_voto: nuevoSentido,
-                mensaje: nuevoMensaje,
-            }, {
-                where: {
-                    id_agenda: body.idagenda,
-                    id_diputado: body.iddiputado,
-                }
-            });
-            return res.status(200).json({
-                msg: `${votos.length} registro(s) actualizado(s) correctamente`,
-                estatus: 200
-            });
-        }
-        else {
+        if (!voto) {
             return res.status(404).json({
-                msg: "No se encontró el registro de asistencia para este diputado y agenda",
+                msg: "No se encontró el registro de asistencia",
+                estatus: 404
             });
         }
+        let nuevoSentido;
+        let nuevoMensaje;
+        switch (body.sentido) {
+            case 1:
+                nuevoSentido = 1;
+                nuevoMensaje = "ASISTENCIA";
+                break;
+            case 2:
+                nuevoSentido = 2;
+                nuevoMensaje = "ASISTENCIA ZOOM";
+                break;
+            case 0:
+                nuevoSentido = 0;
+                nuevoMensaje = "PENDIENTE";
+                break;
+            default:
+                return res.status(400).json({
+                    msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (ASISTENCIA) o 2 (ASISTENCIA ZOOM)",
+                    estatus: 400
+                });
+        }
+        yield asistencia_votos_1.default.update({
+            sentido_voto: nuevoSentido,
+            mensaje: nuevoMensaje,
+        }, {
+            where: {
+                id: body.id,
+            },
+        });
+        return res.status(200).json({
+            msg: "Registro actualizado correctamente",
+            estatus: 200,
+        });
     }
     catch (error) {
-        console.error('Error al generar consulta:', error);
-        return res.status(500).json({ msg: 'Error interno del servidor' });
+        console.error('Error al actualizar asistencia:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            estatus: 500,
+            error: error.message
+        });
     }
 });
 exports.actualizar = actualizar;
@@ -868,15 +884,30 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getpuntos = getpuntos;
 const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     try {
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        const presenta = (body.presenta || "")
+        console.log(body);
+        return 500;
+        const presentaArray = (body.presenta || "")
             .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id.length > 0);
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+            .map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return {
+                proponenteId: parseInt(proponenteId),
+                autorId: autorId
+            };
+        });
+        const proponentesIds = (body.proponente || "")
+            .split(",")
+            .map((id) => parseInt(id.trim()))
+            .filter((id) => !isNaN(id));
+        console.log('Presenta descompuesto:', presentaArray);
+        console.log('Proponentes IDs:', proponentesIds);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
@@ -884,22 +915,21 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
         yield punto.update({
             nopunto: (_a = body.numpunto) !== null && _a !== void 0 ? _a : punto.nopunto,
-            id_proponente: (_b = body.proponente) !== null && _b !== void 0 ? _b : punto.id_proponente,
-            id_tipo: (_c = body.tipo) !== null && _c !== void 0 ? _c : punto.id_tipo,
-            tribuna: (_d = body.tribuna) !== null && _d !== void 0 ? _d : punto.tribuna,
+            id_tipo: (_b = body.tipo) !== null && _b !== void 0 ? _b : punto.id_tipo,
+            tribuna: (_c = body.tribuna) !== null && _c !== void 0 ? _c : punto.tribuna,
             path_doc: nuevoPath,
-            punto: (_e = body.punto) !== null && _e !== void 0 ? _e : punto.punto,
-            observaciones: (_f = body.observaciones) !== null && _f !== void 0 ? _f : punto.observaciones,
+            punto: (_d = body.punto) !== null && _d !== void 0 ? _d : punto.punto,
+            observaciones: (_e = body.observaciones) !== null && _e !== void 0 ? _e : punto.observaciones,
             editado: 1,
         });
         yield puntos_presenta_1.default.destroy({
             where: { id_punto: punto.id }
         });
-        for (const autorId of presenta) {
+        for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
                 id_punto: punto.id,
-                id_tipo_presenta: body.proponente,
-                id_presenta: autorId
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId
             });
         }
         return res.status(200).json({
@@ -909,7 +939,10 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     catch (error) {
         console.error("Error al actualizar el punto:", error);
-        return res.status(500).json({ message: "Error interno del servidor" });
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
     }
 });
 exports.actualizarPunto = actualizarPunto;
