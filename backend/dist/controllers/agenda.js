@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.addDipLista = exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -183,6 +183,7 @@ function crearAsistencias(evento, esSesion) {
                             id_diputado: inteLegis.diputado.id,
                             id_partido: inteLegis.partido_id,
                             comision_dip_id: null,
+                            cargo_dip_id: null,
                         });
                     }
                 }
@@ -211,6 +212,7 @@ function crearAsistencias(evento, esSesion) {
                             id_diputado: inte.integranteLegislatura.diputado.id,
                             id_partido: inte.integranteLegislatura.partido_id,
                             comision_dip_id: inte.comision_id,
+                            cargo_dip_id: inte.tipo_cargo_comision_id
                         });
                     }
                 }
@@ -227,6 +229,7 @@ function crearAsistencias(evento, esSesion) {
             partido_dip: diputado.id_partido,
             comision_dip_id: diputado.comision_dip_id,
             id_agenda: evento.id,
+            id_cargo_dip: diputado.cargo_dip_id
         }));
         yield asistencia_votos_1.default.bulkCreate(asistencias);
     });
@@ -1992,3 +1995,32 @@ const gestionIntegrantes = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.gestionIntegrantes = gestionIntegrantes;
+const addDipLista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const mensaje = "PENDIENTE";
+        const timestamp = new Date();
+        const asistencia = yield asistencia_votos_1.default.create({
+            sentido_voto: 0,
+            mensaje,
+            timestamp,
+            id_diputado: body.id_diputado,
+            partido_dip: body.id_partido,
+            comision_dip_id: body.comision_dip_id,
+            id_agenda: body.id_agenda,
+            id_cargo_dip: body.id_cargo_dip
+        });
+        return res.json({
+            msg: "Diputado agregado correctamente",
+            estatus: 200,
+        });
+    }
+    catch (error) {
+        console.error("Error en gestionIntegrantes:", error);
+        return res.status(500).json({
+            msg: "Error al agregar integrante",
+            error: error.message
+        });
+    }
+});
+exports.addDipLista = addDipLista;

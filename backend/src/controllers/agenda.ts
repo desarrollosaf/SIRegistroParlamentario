@@ -172,6 +172,7 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
     id_diputado: string; 
     id_partido: string; 
     comision_dip_id: string | null; 
+    cargo_dip_id: string | null; 
   }[] = [];
 
   if (esSesion) {
@@ -192,6 +193,7 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
             id_diputado: inteLegis.diputado.id,
             id_partido: inteLegis.partido_id,
             comision_dip_id: null,
+            cargo_dip_id: null,
           });
         }
       }
@@ -221,6 +223,7 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
             id_diputado: inte.integranteLegislatura.diputado.id,
             id_partido: inte.integranteLegislatura.partido_id,
             comision_dip_id: inte.comision_id,
+            cargo_dip_id: inte.tipo_cargo_comision_id
           });
         }
       }
@@ -239,6 +242,7 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
     partido_dip: diputado.id_partido,
     comision_dip_id: diputado.comision_dip_id,
     id_agenda: evento.id,
+    id_cargo_dip: diputado.cargo_dip_id
   }));
 
   await AsistenciaVoto.bulkCreate(asistencias);
@@ -2305,4 +2309,34 @@ export const gestionIntegrantes = async (req: Request, res: Response): Promise<a
   }
 };
 
+export const addDipLista = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    const mensaje = "PENDIENTE";
+    const timestamp = new Date();
+
+    const asistencia = await AsistenciaVoto.create({
+      sentido_voto: 0,
+      mensaje,
+      timestamp,
+      id_diputado: body.id_diputado,
+      partido_dip: body.id_partido,
+      comision_dip_id: body.comision_dip_id,
+      id_agenda: body.id_agenda,
+      id_cargo_dip: body.id_cargo_dip 
+    });
+
+    return res.json({
+      msg: "Diputado agregado correctamente",
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error("Error en gestionIntegrantes:", error);
+    return res.status(500).json({ 
+      msg: "Error al agregar integrante",
+      error: (error as Error).message 
+    });
+  }
+};
 
