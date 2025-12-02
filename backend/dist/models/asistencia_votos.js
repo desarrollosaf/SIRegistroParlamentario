@@ -9,9 +9,10 @@ class AsistenciaVoto extends sequelize_1.Model {
 }
 AsistenciaVoto.init({
     id: {
-        type: sequelize_1.DataTypes.CHAR(36),
+        type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
+        autoIncrement: true
     },
     sentido_voto: {
         type: sequelize_1.DataTypes.INTEGER,
@@ -35,6 +36,10 @@ AsistenciaVoto.init({
         allowNull: false,
     },
     comision_dip_id: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: true,
+    },
+    id_cargo_dip: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
