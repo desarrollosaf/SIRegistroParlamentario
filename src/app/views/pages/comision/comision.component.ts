@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, TemplateRef } from '@angular/core';
+import { Component, inject, signal, ViewChild, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
 import { Router, RouterLink, RouterModule } from '@angular/router';
@@ -18,6 +18,7 @@ interface Integrante {
   partido_dip: string;
   partido: string;
   comision_dip_id?: string;
+  comision?: string;
   cargo?: string;
 }
 
@@ -31,6 +32,7 @@ interface Integrante {
 export class ComisionComponent {
   private _eventoService = inject(EventoService);
   private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
   
   originalData = signal<any[]>([]);
   temp = signal<any[]>([]);
@@ -40,8 +42,16 @@ export class ComisionComponent {
   filteredCount = signal<number>(0);
   loading = signal<boolean>(true);
   modalRef: NgbModalRef;
+  
+  // Para SESIÓN
   integrantes: any[] = [];
+  
+  // Para COMISIÓN (múltiples comisiones)
+  esComision: boolean = false;
+  listaComisiones: any[] = [];
+  
   tipoEventoAgenda: string = '';
+  idAgendaActual: string = '';
   
   @ViewChild('xlModal', { static: true }) xlModal!: TemplateRef<any>;
   @ViewChild('table') table: DatatableComponent;
@@ -51,8 +61,8 @@ export class ComisionComponent {
   slctDiputados: any[] = [];
   slctPartidos: any[] = [];
   slctComisiones: any[] = [];
-  
-  // Reactive Form
+  slctCargo: any[] = [];
+
   integranteForm!: FormGroup;
 
   constructor(private ngZone: NgZone, private modalService: NgbModal) {
@@ -78,9 +88,7 @@ export class ComisionComponent {
     });
   }
 
-
   onTipoChange() {
-    console.log('entro aqui?=');
     const comisionControl = this.integranteForm.get('comisionId');
     const cargoControl = this.integranteForm.get('cargo');
 
@@ -104,7 +112,6 @@ export class ComisionComponent {
     return this.tipoEventoAgenda !== '';
   }
 
-
   get legislaturaDisponible(): boolean {
     if (this.tipoEventoAgenda === '') return true;
     return this.tipoEventoAgenda === 'Sesión';
@@ -115,14 +122,15 @@ export class ComisionComponent {
     return this.tipoEventoAgenda === 'Comisión';
   }
 
-  abrirModal() {
-    this._eventoService.getCatalogos().subscribe({
+  abrirModal(idAgenda: any) {
+    this._eventoService.getIntegrantesEvento(idAgenda).subscribe({
       next: (response: any) => {
-        console.log(response);
+        console.log('Catálogos:', response);
         this.slctDiputados = response.diputados;
         this.slctPartidos = response.partidos;
         this.slctComisiones = response.comisiones;
-
+        this.slctCargo = response.cargos;
+        
         this.modalRef = this.modalService.open(this.xlModal, { 
           size: 'xl',
           backdrop: 'static',
@@ -147,59 +155,76 @@ export class ComisionComponent {
       }
     });
   }
+agregarIntegrante() {
+  this.integranteForm.markAllAsTouched();
 
-  agregarIntegrante() {
-    this.integranteForm.markAllAsTouched();
-
-    if (this.integranteForm.invalid) {
-      this.mostrarAdvertencia('Por favor complete todos los campos obligatorios');
-      return;
-    }
-
-    const formValue = this.integranteForm.value;
-    
-    // Obtener nombres para la vista
-    const diputado = this.slctDiputados.find(d => d.id === formValue.diputadoId);
-    const partido = this.slctPartidos.find(p => p.id === formValue.partidoId);
-    const comision = this.slctComisiones.find(c => c.id === formValue.comisionId);
-    let nuevoIntegrante: any;
-
-    if (this.tipoSeleccionado === 'legislatura') {
-      nuevoIntegrante = {
-        id: Math.max(...this.integrantes.map(i => i.id || 0), 0) + 1,
-        id_diputado: formValue.diputadoId,
-        diputado: diputado?.nombre || '',
-        partido_dip: formValue.partidoId,
-        partido: partido?.siglas || ''
-      };
-    } else {
-      nuevoIntegrante = {
-        id: Math.max(...this.integrantes.map(i => i.id || 0), 0) + 1,
-        id_diputado: formValue.diputadoId,
-        diputado: diputado?.nombre || '',
-        partido_dip: formValue.partidoId,
-        partido: partido?.siglas || '',
-        comision_dip_id: formValue.comisionId,
-        comision: comision?.nombre || '',
-        cargo: formValue.cargo
-      };
-    }
-
-    console.log('Guardando integrante:', {
-      tipo: this.tipoSeleccionado,
-      data: formValue,
-      integrante: nuevoIntegrante
-    });
-
-    this.integrantes.push(nuevoIntegrante);
-    
-    console.log('Integrantes actualizados:', this.integrantes);
-
-    this.mostrarExito('Integrante agregado exitosamente');
-    this.cancelarFormulario();
+  if (this.integranteForm.invalid) {
+    this.mostrarAdvertencia('Por favor complete todos los campos obligatorios');
+    return;
   }
 
+  const formValue = this.integranteForm.value;
+  
+  // Obtener datos de los selects
+  const diputado = this.slctDiputados.find(d => d.id === formValue.diputadoId);
+  const partido = this.slctPartidos.find(p => p.id === formValue.partidoId);
+  const comision = this.slctComisiones.find(c => c.id === formValue.comisionId);
+  const cargo = this.slctCargo.find(c => c.id === formValue.cargo);
 
+  let nuevoIntegrante: any;
+
+  if (this.esComision) {
+    // MODO COMISIÓN: Agregar a la comisión seleccionada
+    nuevoIntegrante = {
+      id: Date.now(), // ID temporal único
+      id_diputado: formValue.diputadoId,
+      diputado: diputado?.nombre || '',
+      partido_dip: formValue.partidoId,
+      partido: partido?.siglas || '',
+      comision_dip_id: formValue.comisionId,
+      comision: comision?.nombre || '',
+      cargo: cargo?.valor || formValue.cargo
+    };
+
+    // Encontrar la comisión y agregar el integrante
+    const comisionIndex = this.listaComisiones.findIndex(c => c.id === formValue.comisionId);
+    if (comisionIndex !== -1) {
+      this.listaComisiones[comisionIndex].integrantes.push(nuevoIntegrante);
+      
+      // Recalcular columnas
+      const mitad = Math.ceil(this.listaComisiones[comisionIndex].integrantes.length / 2);
+      this.listaComisiones[comisionIndex].columna1 = this.listaComisiones[comisionIndex].integrantes.slice(0, mitad);
+      this.listaComisiones[comisionIndex].columna2 = this.listaComisiones[comisionIndex].integrantes.slice(mitad);
+    }
+  } else {
+    // MODO SESIÓN: Agregar a la lista general
+    nuevoIntegrante = {
+      id: Date.now(),
+      id_diputado: formValue.diputadoId,
+      diputado: diputado?.nombre || '',
+      partido_dip: formValue.partidoId,
+      partido: partido?.siglas || ''
+    };
+    
+    this.integrantes.push(nuevoIntegrante);
+  }
+
+  console.log('Integrante agregado:', nuevoIntegrante);
+  
+  // Aquí harías el POST al backend
+  // this._eventoService.saveIntegrante(this.idAgendaActual, nuevoIntegrante).subscribe(...)
+
+
+
+
+
+
+
+
+  this.mostrarExito('Integrante agregado exitosamente');
+  this.cancelarFormulario();
+  this.cdr.detectChanges();
+}
   cancelarFormulario() {
     this.mostrarFormulario = false;
   
@@ -253,7 +278,7 @@ export class ComisionComponent {
     });
   }
 
-  eliminarIntegrante(id: number) {
+  eliminarIntegrante(id: number, comisionId?: string) {
     Swal.fire({
       title: '¿Está seguro?',
       text: "Esta acción eliminará al integrante",
@@ -265,8 +290,28 @@ export class ComisionComponent {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.integrantes = this.integrantes.filter(i => i.id !== id);
+        if (this.esComision && comisionId) {
+          // Eliminar de una comisión específica
+          const comisionIndex = this.listaComisiones.findIndex(c => c.id === comisionId);
+          if (comisionIndex !== -1) {
+            this.listaComisiones[comisionIndex].integrantes = 
+              this.listaComisiones[comisionIndex].integrantes.filter((i: any) => i.id !== id);
+            
+            // Recalcular columnas
+            const mitad = Math.ceil(this.listaComisiones[comisionIndex].integrantes.length / 2);
+            this.listaComisiones[comisionIndex].columna1 = this.listaComisiones[comisionIndex].integrantes.slice(0, mitad);
+            this.listaComisiones[comisionIndex].columna2 = this.listaComisiones[comisionIndex].integrantes.slice(mitad);
+          }
+        } else {
+          // Eliminar de sesión
+          this.integrantes = this.integrantes.filter(i => i.id !== id);
+        }
+        
+        // Aquí harías el DELETE al backend
+        // this._eventoService.deleteIntegrante(id).subscribe(...)
+        
         this.mostrarExito('Integrante eliminado correctamente');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -275,25 +320,50 @@ export class ComisionComponent {
     this._eventoService.getEvento(id).subscribe({
       next: (response: any) => {
         console.log('Respuesta completa:', response);
-  
-        if (response.integrantes && response.integrantes.length > 0) {
-          this.integrantes = response.integrantes || [];
-          this.tipoEventoAgenda = response.evento.tipoevento.nombre;
-          if (this.tipoEventoAgenda === 'Comisión') {
+        this.idAgendaActual = id;
+        this.tipoEventoAgenda = response.evento.tipoevento.nombre;
+        
+        // DETECTAR SI ES COMISIÓN O SESIÓN
+        if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
+          const primerElemento = response.integrantes[0];
+          
+          if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
+            // ES COMISIÓN
+            this.esComision = true;
             this.tipoSeleccionado = 'comision';
-          } else if (this.tipoEventoAgenda === 'Sesión') {
+            
+            this.listaComisiones = response.integrantes.map((comision: any) => ({
+              id: comision.comision_id,
+              nombre: comision.comision_nombre,
+              importancia: comision.importancia,
+              integrantes: comision.integrantes || [],
+              columna1: [],
+              columna2: []
+            }));
+            
+            // Dividir en columnas cada comisión
+            this.listaComisiones.forEach(comision => {
+              const mitad = Math.ceil(comision.integrantes.length / 2);
+              comision.columna1 = comision.integrantes.slice(0, mitad);
+              comision.columna2 = comision.integrantes.slice(mitad);
+            });
+
+            console.log('ES COMISIÓN - Lista de comisiones:', this.listaComisiones);
+          } else {
+            // ES SESIÓN
+            this.esComision = false;
             this.tipoSeleccionado = 'legislatura';
+            this.integrantes = response.integrantes || [];
+            console.log('ES SESIÓN - Integrantes:', this.integrantes);
           }
-          
-          this.onTipoChange();
-          
-          console.log('Tipo evento:', this.tipoEventoAgenda);
-          console.log('Tipo seleccionado:', this.tipoSeleccionado);
-          
-          this.abrirModal();
         } else {
-          this.mostrarAdvertencia('No se encontraron integrantes.');
+          // No hay integrantes
+          this.esComision = false;
+          this.integrantes = [];
         }
+        
+        this.onTipoChange();
+        this.abrirModal(id);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -303,6 +373,23 @@ export class ComisionComponent {
     });
   }
 
+  contarIntegrantesSesion(): number {
+    return this.integrantes.length;
+  }
+
+  contarTotalGeneral(): number {
+    if (!this.listaComisiones || this.listaComisiones.length === 0) {
+      return 0;
+    }
+    return this.listaComisiones.reduce((total, comision) => {
+      return total + comision.integrantes.length;
+    }, 0);
+  }
+
+ 
+  contarIntegrantesComision(integrantes: any[]): number {
+    return integrantes.length;
+  }
 
   get diputadoInvalid() {
     const control = this.integranteForm.get('diputadoId');
@@ -324,7 +411,6 @@ export class ComisionComponent {
     return control?.invalid && control?.touched && this.tipoSeleccionado === 'comision';
   }
 
- 
   private mostrarExito(mensaje: string) {
     const Toast = Swal.mixin({
       toast: true,
@@ -378,7 +464,6 @@ export class ComisionComponent {
       title: mensaje
     });
   }
-
 
   getEventos() {
     this._eventoService.getEventos().subscribe({
