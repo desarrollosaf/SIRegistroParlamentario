@@ -32,165 +32,390 @@
                         <div class="card-body">
                             <div [ngSwitch]="step">
                                 <div *ngSwitchCase="1">
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-6 col-sm-6 col-lg-3">
-                                            <div class="card stats-card stats-total">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon me-3">
-                                                            <i class="bi bi-people-fill"></i>
+                                    <!-- CASO 1: ES SESIÓN (estructura actual) -->
+                                    <div *ngIf="!esComision">
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-total">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-people-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Total</p>
+                                                                <h3 class="mb-0 fw-bold">{{ integrantes.length }}</h3>
+                                                            </div>
                                                         </div>
-                                                        <div class="flex-grow-1">
-                                                            <p class="text-muted mb-1 small">Total</p>
-                                                            <h3 class="mb-0 fw-bold">{{ integrantes.length }}</h3>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-presente">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-check-circle-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Presente</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(1) }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-remota">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-camera-video-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Remota</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(2) }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-ausente">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-x-circle-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Pendiente</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(0) }}</h3>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="col-6 col-sm-6 col-lg-3">
-                                            <div class="card stats-card stats-presente">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon me-3">
-                                                            <i class="bi bi-check-circle-fill"></i>
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <p class="text-muted mb-1 small">Presente</p>
-                                                            <h3 class="mb-0 fw-bold">{{ contarAsistencias(1) }}</h3>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div
+                                            class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-sm-4 gap-3">
+                                            <h5 class="mb-0">Lista de Asistencia</h5>
                                         </div>
 
-                                        <div class="col-6 col-sm-6 col-lg-3">
-                                            <div class="card stats-card stats-remota">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon me-3">
-                                                            <i class="bi bi-camera-video-fill"></i>
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <p class="text-muted mb-1 small">Remota</p>
-                                                            <h3 class="mb-0 fw-bold">{{ contarAsistencias(2) }}</h3>
-                                                        </div>
-                                                    </div>
+                                        <div class="row g-3">
+                                            <div class="col-12 col-lg-6">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover mb-0">
+                                                        <tbody>
+                                                            <tr *ngFor="let integrante of columna1"
+                                                                [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
+                                                                <td class="align-middle py-3">
+                                                                    <div class="fw-medium mb-1">{{ integrante.diputado
+                                                                        }}</div>
+                                                                    <small class="text-muted d-block">{{
+                                                                        integrante.partido }}</small>
+                                                                </td>
+                                                                <td class="align-middle text-end py-3"
+                                                                    style="width: 140px;">
+                                                                    <div class="btn-group btn-group-sm d-flex"
+                                                                        role="group">
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-success flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 1"
+                                                                            (click)="marcarAsistencia(integrante, 1)"
+                                                                            title="Presente">
+                                                                            <i class="bi bi-check-lg"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-info flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 2"
+                                                                            (click)="marcarAsistencia(integrante, 2)"
+                                                                            title="Remota">
+                                                                            <i class="bi bi-display"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-warning flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 0"
+                                                                            (click)="marcarAsistencia(integrante, 0)"
+                                                                            title="Pendiente">
+                                                                            <i class="bi bi-hourglass-split"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <div class="col-6 col-sm-6 col-lg-3">
-                                            <div class="card stats-card stats-ausente">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon me-3">
-                                                            <i class="bi bi-x-circle-fill"></i>
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <p class="text-muted mb-1 small">Pendiente</p>
-                                                            <h3 class="mb-0 fw-bold">{{ contarAsistencias(0) }}</h3>
-                                                        </div>
-                                                    </div>
+                                            <div class="col-12 col-lg-6">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover mb-0">
+                                                        <tbody>
+                                                            <tr *ngFor="let integrante of columna2"
+                                                                [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
+                                                                <td class="align-middle py-3">
+                                                                    <div class="fw-medium mb-1">{{ integrante.diputado
+                                                                        }}</div>
+                                                                    <small class="text-muted d-block">{{
+                                                                        integrante.partido }}</small>
+                                                                </td>
+                                                                <td class="align-middle text-end py-3"
+                                                                    style="width: 140px;">
+                                                                    <div class="btn-group btn-group-sm d-flex"
+                                                                        role="group">
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-success flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 1"
+                                                                            (click)="marcarAsistencia(integrante, 1)"
+                                                                            title="Presente">
+                                                                            <i class="bi bi-check-lg"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-info flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 2"
+                                                                            (click)="marcarAsistencia(integrante, 2)"
+                                                                            title="Remota">
+                                                                            <i class="bi bi-display"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-warning flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 0"
+                                                                            (click)="marcarAsistencia(integrante, 0)"
+                                                                            title="Pendiente">
+                                                                            <i class="bi bi-hourglass-split"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div
-                                        class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-sm-4 gap-3">
-                                        <h5 class="mb-0">Lista de Asistencia</h5>
+                                    <!-- CASO 2: ES COMISIÓN (múltiples listas) -->
+                                    <div *ngIf="esComision">
+
+                                        <!-- CONTADOR GENERAL (arriba con estilos fancy) -->
+                                        <div class="row g-3 mb-5">
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-total">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-people-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Total General</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarTotalGeneral() }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-presente">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-check-circle-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Presente</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(1)
+                                                                    }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-remota">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-camera-video-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Remota</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(2)
+                                                                    }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-6 col-lg-3">
+                                                <div class="card stats-card stats-ausente">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-x-circle-fill"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Pendiente</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(0)
+                                                                    }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Iterar sobre cada comisión -->
+                                        <div *ngFor="let comision of listaComisiones; let isLast = last" class="mb-5">
+
+                                            <!-- Encabezado de la comisión-->
+                                            <div class="comision-header-institucional mb-3">
+                                                <h5 class="fw-bold">
+                                                    <i class="bi bi-building me-2"></i>
+                                                    {{ comision.nombre }}
+                                                </h5>
+                                            </div>
+
+                                            <!-- CONTADORES SIMPLES -->
+                                            <div class="contadores-institucionales mb-3">
+                                                <div class="d-flex flex-wrap gap-3 align-items-center">
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-people-fill me-2"></i>
+                                                        <span class="fw-semibold">Total:</span>
+                                                        <span class="badge ms-1">{{ comision.integrantes.length
+                                                            }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                                        <span class="fw-semibold">Presente:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarAsistenciasComision(comision.integrantes, 1) }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-camera-video-fill me-2"></i>
+                                                        <span class="fw-semibold">Remota:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarAsistenciasComision(comision.integrantes, 2) }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-hourglass-split me-2"></i>
+                                                        <span class="fw-semibold">Pendiente:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarAsistenciasComision(comision.integrantes, 0) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Lista de integrantes de esta comisión -->
+                                            <div class="row g-3">
+                                                <div class="col-12 col-lg-6">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <tbody>
+                                                                <tr *ngFor="let integrante of comision.columna1"
+                                                                    [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
+                                                                    <td class="align-middle py-3">
+                                                                        <div class="fw-medium mb-1">{{
+                                                                            integrante.diputado }}</div>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.cargo }}</small>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.partido }}</small>
+                                                                    </td>
+                                                                    <td class="align-middle text-end py-3"
+                                                                        style="width: 140px;">
+                                                                        <div class="btn-group btn-group-sm d-flex"
+                                                                            role="group">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-success flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 1"
+                                                                                (click)="marcarAsistenciaComision(integrante, 1, integrante.id)"
+                                                                                title="Presente">
+                                                                                <i class="bi bi-check-lg"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-info flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 2"
+                                                                                (click)="marcarAsistenciaComision(integrante, 2, integrante.id)"
+                                                                                title="Remota">
+                                                                                <i class="bi bi-display"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-warning flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 0"
+                                                                                (click)="marcarAsistenciaComision(integrante, 0, integrante.id)"
+                                                                                title="Pendiente">
+                                                                                <i class="bi bi-hourglass-split"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-lg-6">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <tbody>
+                                                                <tr *ngFor="let integrante of comision.columna2"
+                                                                    [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
+                                                                    <td class="align-middle py-3">
+                                                                        <div class="fw-medium mb-1">{{
+                                                                            integrante.diputado }}</div>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.cargo }}</small>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.partido }}</small>
+                                                                    </td>
+                                                                    <td class="align-middle text-end py-3"
+                                                                        style="width: 140px;">
+                                                                        <div class="btn-group btn-group-sm d-flex"
+                                                                            role="group">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-success flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 1"
+                                                                                (click)="marcarAsistenciaComision(integrante, 1, integrante.id)"
+                                                                                title="Presente">
+                                                                                <i class="bi bi-check-lg"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-info flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 2"
+                                                                                (click)="marcarAsistenciaComision(integrante, 2, integrante.id)"
+                                                                                title="Remota">
+                                                                                <i class="bi bi-display"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-warning flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 0"
+                                                                                (click)="marcarAsistenciaComision(integrante, 0, integrante.id)"
+                                                                                title="Pendiente">
+                                                                                <i class="bi bi-hourglass-split"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Separador entre comisiones -->
+                                            <hr *ngIf="!isLast" class="my-5 border-2" style="border-color: #800048;">
+                                        </div>
                                     </div>
 
-                                    <div class="row g-3">
-                                        <div class="col-12 col-lg-6">
-                                            <div class="table-responsive">
-                                                <table class="table table-hover mb-0">
-                                                    <tbody>
-                                                        <tr *ngFor="let integrante of columna1"
-                                                            [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
-                                                            <td class="align-middle py-3">
-                                                                <div class="fw-medium mb-1">{{ integrante.diputado }}
-                                                                </div>
-                                                                <small class="text-muted d-block">{{ integrante.partido
-                                                                    }}</small>
-                                                            </td>
-                                                            <td class="align-middle text-end py-3"
-                                                                style="width: 140px;">
-                                                                <div class="btn-group btn-group-sm d-flex" role="group">
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-success flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 1"
-                                                                        (click)="marcarAsistencia(integrante, 1)"
-                                                                        title="Presente">
-                                                                        <i class="bi bi-check-lg"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-info flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 2"
-                                                                        (click)="marcarAsistencia(integrante, 2)"
-                                                                        title="Remota">
-                                                                        <i class="bi bi-display"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-warning flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 0"
-                                                                        (click)="marcarAsistencia(integrante, 0)"
-                                                                        title="Pendiente">
-                                                                        <i class="bi bi-hourglass-split"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-lg-6">
-                                            <div class="table-responsive">
-                                                <table class="table table-hover mb-0">
-                                                    <tbody>
-                                                        <tr *ngFor="let integrante of columna2"
-                                                            [ngClass]="getClaseAsistencia(integrante.sentido_voto)">
-                                                            <td class="align-middle py-3">
-                                                                <div class="fw-medium mb-1">{{ integrante.diputado }}
-                                                                </div>
-                                                                <small class="text-muted d-block">{{ integrante.partido
-                                                                    }}</small>
-                                                            </td>
-                                                            <td class="align-middle text-end py-3"
-                                                                style="width: 140px;">
-                                                                <div class="btn-group btn-group-sm d-flex" role="group">
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-success flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 1"
-                                                                        (click)="marcarAsistencia(integrante, 1)"
-                                                                        title="Presente">
-                                                                        <i class="bi bi-check-lg"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-info flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 2"
-                                                                        (click)="marcarAsistencia(integrante, 2)"
-                                                                        title="Remota">
-                                                                        <i class="bi bi-display"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-warning flex-fill"
-                                                                        [class.active]="integrante.sentido_voto === 0"
-                                                                        (click)="marcarAsistencia(integrante, 0)"
-                                                                        title="Pendiente">
-                                                                        <i class="bi bi-hourglass-split"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
+
                                 </div>
 
                                 <!-- PASO 2 -->
