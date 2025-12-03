@@ -27,5 +27,5 @@ router.post("/api/eventos/notificarpunto/:id", enviarWhatsPunto );
 router.get("/api/eventos/votacionpunto/:id", generarPDFVotacion );
 router.get("/api/eventos/gestionintegrantes/:id", gestionIntegrantes );
 router.post("/api/eventos/agregardipasistencia/", addDipLista );
-router.post("/api/eventos/deleteintlista/:id", Eliminarlista );
+router.get("/api/eventos/deleteintlista/:id", Eliminarlista );
 export default router
