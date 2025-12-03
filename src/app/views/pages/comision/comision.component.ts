@@ -315,6 +315,7 @@ export class ComisionComponent {
         }
 
         // DELETE al backend
+        console.log(id);
         this._eventoService.deleteDiputadoComisionSesion(id).subscribe({
           next: (response: any) => {
             this.mostrarExito('Integrante eliminado correctamente');

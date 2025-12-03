@@ -856,6 +856,13 @@
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
                                                                         </button>
+                                                                         <button type="button"
+                                                                            class="btn btn-outline-secondary flex-fill"
+                                                                            [class.active]="votante.sentido === 0"
+                                                                            (click)="marcarVotacion(votante, 0)"
+                                                                            title="Pendiente">
+                                                                            <i class="bi bi-hourglass-split"></i>
+                                                                        </button>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -900,6 +907,13 @@
                                                                             (click)="marcarVotacion(votante, 3)"
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
+                                                                        </button>
+                                                                            <button type="button"
+                                                                            class="btn btn-outline-secondary flex-fill"
+                                                                            [class.active]="votante.sentido === 0"
+                                                                            (click)="marcarVotacion(votante, 0)"
+                                                                            title="Pendiente">
+                                                                            <i class="bi bi-hourglass-split"></i>
                                                                         </button>
                                                                     </div>
                                                                 </td>
