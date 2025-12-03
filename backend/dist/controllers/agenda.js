@@ -1234,7 +1234,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
 const actualizarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        if (!body.idpunto || !body.iddiputado || body.sentido === undefined) {
+        if (!body.idpunto || !body.id || body.sentido === undefined) {
             return res.status(400).json({
                 msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
             });
@@ -1276,8 +1276,7 @@ const actualizarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function*
             mensaje: nuevoMensaje,
         }, {
             where: {
-                id_tema_punto_voto: temavotos.id,
-                id_diputado: body.iddiputado,
+                id: body.id,
             }
         });
         if (cantidadActualizada === 0) {
