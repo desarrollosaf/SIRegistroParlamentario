@@ -1234,13 +1234,13 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
 const actualizarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        if (!body.idpunto || !body.iddiputado || body.sentido === undefined) {
+        if (!body.id || body.sentido === undefined) {
             return res.status(400).json({
                 msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
             });
         }
         const temavotos = yield temas_puntos_votos_1.default.findOne({
-            where: { id_punto: body.idpunto }
+            where: { id: body.id }
         });
         if (!temavotos) {
             return res.status(404).json({
@@ -1275,10 +1275,7 @@ const actualizarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function*
             sentido: nuevoSentido,
             mensaje: nuevoMensaje,
         }, {
-            where: {
-                id_tema_punto_voto: temavotos.id,
-                id_diputado: body.iddiputado,
-            }
+            where: { id: body.id }
         });
         if (cantidadActualizada === 0) {
             return res.status(404).json({
