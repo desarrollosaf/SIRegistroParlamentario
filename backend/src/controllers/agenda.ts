@@ -1415,14 +1415,14 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
   try {
     const { body } = req;
 
-    if (!body.id || body.sentido === undefined) {
+    if (!body.idpunto || !body.id|| body.sentido === undefined) {
       return res.status(400).json({
         msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
       });
     }
 
     const temavotos = await TemasPuntosVotos.findOne({ 
-      where: { id: body.id } 
+      where: { id_punto: body.idpunto } 
     });
 
     if (!temavotos) {
@@ -1463,7 +1463,9 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
         mensaje: nuevoMensaje,
       },
       {
-        where: { id: body.id } 
+        where: {
+          id: body.id,
+        }
       }
     );
 
