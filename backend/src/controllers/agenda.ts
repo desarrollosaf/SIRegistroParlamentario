@@ -1444,6 +1444,9 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
         nuevoMensaje = "ABSTENCIÓN";
         break;
       case 0:
+        nuevoSentido = 0;
+        nuevoMensaje = "PENDIENTE";
+        break;
       case 3:
         nuevoSentido = 3;
         nuevoMensaje = "EN CONTRA";

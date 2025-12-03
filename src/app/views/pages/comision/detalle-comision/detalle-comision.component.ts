@@ -996,6 +996,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         // console.log(response);
         this.votantes = response.integrantes || [];
+        console.log( this.votantes);
         this.dividirEnColumnasVotacion();
       },
       error: (e: HttpErrorResponse) => {
