@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path';
 import eventos from "../routes/eventos";
 import user from "../routes/user";
+import diputados from "../routes/diputados";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 
@@ -30,6 +31,7 @@ class Server {
     router(){
        this.app.use(eventos);
        this.app.use(user);
+       this.app.use(diputados);
 
     }
 
@@ -54,7 +56,8 @@ class Server {
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/gettipos/'
+                '/api/eventos/gettipos/',
+                '/api/diputados/cargo/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
