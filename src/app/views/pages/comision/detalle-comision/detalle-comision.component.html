@@ -418,7 +418,7 @@
 
                                 </div>
 
-                                <!-- PASO 2 -->
+                                <!-- PASO 2 - ORDEN DEL DIA (sin cambios) -->
                                 <div *ngSwitchCase="2">
                                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                                         <h5 class="mb-0"></h5>
@@ -553,30 +553,6 @@
                                                                     </ng-select>
                                                                 </div>
 
-                                                                <!-- <div class="col-12">
-    <label class="form-label">Presenta</label>
-    <ng-select 
-        [items]="punto.presentaDisponibles"
-        bindLabel="valor" 
-        bindValue="id"
-        [multiple]="true"
-        formControlName="presenta"
-        placeholder="Selecciona uno o varios"
-        [closeOnSelect]="false">
-    </ng-select>
-</div>
-
-                                                                <div class="col-md-6">
-    <label class="form-label">Tipo</label>
-    <ng-select 
-        [items]="punto.tiposDisponibles"
-        bindLabel="valor" 
-        bindValue="id"
-        formControlName="tipo" 
-        placeholder="Selecciona">
-    </ng-select>
-</div> -->
-
                                                                 <div class="col-12">
                                                                     <label class="form-label">Presenta</label>
                                                                     <ng-select [items]="punto.presentaDisponibles"
@@ -685,7 +661,7 @@
                                     </div>
                                 </div>
 
-                                <!-- PASO 3 -->
+                                <!-- PASO 3 - VOTACIONES -->
                                 <div *ngSwitchCase="3">
 
                                     <div class="mb-4">
@@ -718,7 +694,9 @@
                                         </div>
                                     </div>
                                     <br>
-                                    <div *ngIf="puntoSeleccionadoVotacion" class="fade-in">
+
+                                    <!-- CASO SESIÓN: VOTACIONES SIMPLES -->
+                                    <div *ngIf="puntoSeleccionadoVotacion && !esComision" class="fade-in">
                                         <div class="row g-2 mb-3 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total-votacion p-1">
@@ -856,7 +834,7 @@
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
                                                                         </button>
-                                                                         <button type="button"
+                                                                        <button type="button"
                                                                             class="btn btn-outline-secondary flex-fill"
                                                                             [class.active]="votante.sentido === 0"
                                                                             (click)="marcarVotacion(votante, 0)"
@@ -908,7 +886,7 @@
                                                                             title="En Contra">
                                                                             <i class="bi bi-hand-thumbs-down-fill"></i>
                                                                         </button>
-                                                                            <button type="button"
+                                                                        <button type="button"
                                                                             class="btn btn-outline-secondary flex-fill"
                                                                             [class.active]="votante.sentido === 0"
                                                                             (click)="marcarVotacion(votante, 0)"
@@ -922,6 +900,286 @@
                                                     </table>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- CASO COMISIÓN: VOTACIONES POR COMISIÓN -->
+                                    <div *ngIf="puntoSeleccionadoVotacion && esComision" class="fade-in">
+                                        <!-- CONTADOR GENERAL -->
+                                        <div class="row g-2 mb-5 small-cards justify-content-center">
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-total-votacion p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-people-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Total</p>
+                                                                <h5 class="mb-0 fw-bold">{{
+                                                                    contarTotalGeneralVotacion() }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-favor p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hand-thumbs-up-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">A Favor</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotacionesGeneral(1)
+                                                                    }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-abstencion p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-dash-circle-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Abstención</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotacionesGeneral(2)
+                                                                    }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-contra p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hand-thumbs-down-fill"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">En Contra</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotacionesGeneral(3)
+                                                                    }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6 col-sm-4 col-md-2">
+                                                <div class="card stats-card stats-pendiente p-1">
+                                                    <div class="card-body p-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-2"><i
+                                                                    class="bi bi-hourglass-split"></i></div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-0 small">Pendientes</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarVotacionesGeneral(0)
+                                                                    }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones de acciones -->
+                                        <div
+                                            class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-clipboard-check me-2"></i>
+                                                Registro de Votos por Comisión
+                                            </h5>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
+                                                    <i class="bi bi-check-circle-fill me-1"></i> Terminar
+                                                </button>
+                                                <button class="btn btn-warning btn-sm" (click)="reiniciarVotacion()">
+                                                    <i class="bi bi-arrow-clockwise me-1"></i> Reiniciar
+                                                </button>
+                                                <button class="btn btn-light btn-sm" (click)="imprimirVotacion()">
+                                                    <i class="bi bi-printer-fill me-1"></i> Imprimir
+                                                </button>
+                                                <button class="btn btn-success btn-sm" (click)="imprimirVotacion()">
+                                                    <i class="bi bi-whatsapp me-1"></i> Notificar
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Iterar sobre cada comisión -->
+                                        <div *ngFor="let comision of listaComisionesVotacion; let isLast = last"
+                                            class="mb-5">
+
+                                            <!-- Encabezado de la comisión-->
+                                            <div class="comision-header-institucional mb-3">
+                                                <h5 class="fw-bold">
+                                                    <i class="bi bi-building me-2"></i>
+                                                    {{ comision.nombre }}
+                                                </h5>
+                                            </div>
+
+                                            <!-- CONTADORES SIMPLES POR COMISIÓN -->
+                                            <div class="contadores-institucionales mb-3">
+                                                <div class="d-flex flex-wrap gap-3 align-items-center">
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-people-fill me-2"></i>
+                                                        <span class="fw-semibold">Total:</span>
+                                                        <span class="badge ms-1">{{ comision.integrantes.length
+                                                            }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-hand-thumbs-up-fill me-2"></i>
+                                                        <span class="fw-semibold">A Favor:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarVotacionesComision(comision.integrantes, 1) }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-dash-circle-fill me-2"></i>
+                                                        <span class="fw-semibold">Abstención:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarVotacionesComision(comision.integrantes, 2) }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-hand-thumbs-down-fill me-2"></i>
+                                                        <span class="fw-semibold">En Contra:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarVotacionesComision(comision.integrantes, 3) }}</span>
+                                                    </div>
+
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-hourglass-split me-2"></i>
+                                                        <span class="fw-semibold">Pendiente:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarVotacionesComision(comision.integrantes, 0) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Lista de votantes de esta comisión -->
+                                            <div class="row g-3">
+                                                <div class="col-12 col-lg-6">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <tbody>
+                                                                <tr *ngFor="let integrante of comision.columna1"
+                                                                    [ngClass]="getClaseVotacion(integrante.sentido)">
+                                                                    <td class="align-middle py-3">
+                                                                        <div class="fw-medium mb-1">{{
+                                                                            integrante.diputado }}</div>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.cargo }}</small>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.partido }}</small>
+                                                                    </td>
+                                                                    <td class="align-middle text-end py-3"
+                                                                        style="width: 180px;">
+                                                                        <div class="btn-group btn-group-sm d-flex"
+                                                                            role="group">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-success flex-fill"
+                                                                                [class.active]="integrante.sentido === 1"
+                                                                                (click)="marcarVotacionComision(integrante, 1, integrante.id)"
+                                                                                title="A Favor">
+                                                                                <i
+                                                                                    class="bi bi-hand-thumbs-up-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-warning flex-fill"
+                                                                                [class.active]="integrante.sentido === 2"
+                                                                                (click)="marcarVotacionComision(integrante, 2, integrante.id)"
+                                                                                title="Abstención">
+                                                                                <i class="bi bi-dash-circle-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-danger flex-fill"
+                                                                                [class.active]="integrante.sentido === 3"
+                                                                                (click)="marcarVotacionComision(integrante, 3, integrante.id)"
+                                                                                title="En Contra">
+                                                                                <i
+                                                                                    class="bi bi-hand-thumbs-down-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary flex-fill"
+                                                                                [class.active]="integrante.sentido === 0"
+                                                                                (click)="marcarVotacionComision(integrante, 0, integrante.id)"
+                                                                                title="Pendiente">
+                                                                                <i class="bi bi-hourglass-split"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 col-lg-6">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <tbody>
+                                                                <tr *ngFor="let integrante of comision.columna2"
+                                                                    [ngClass]="getClaseVotacion(integrante.sentido)">
+                                                                    <td class="align-middle py-3">
+                                                                        <div class="fw-medium mb-1">{{
+                                                                            integrante.diputado }}</div>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.cargo }}</small>
+                                                                        <small class="text-muted d-block">{{
+                                                                            integrante.partido }}</small>
+                                                                    </td>
+                                                                    <td class="align-middle text-end py-3"
+                                                                        style="width: 180px;">
+                                                                        <div class="btn-group btn-group-sm d-flex"
+                                                                            role="group">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-success flex-fill"
+                                                                                [class.active]="integrante.sentido === 1"
+                                                                                (click)="marcarVotacionComision(integrante, 1, integrante.id)"
+                                                                                title="A Favor">
+                                                                                <i
+                                                                                    class="bi bi-hand-thumbs-up-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-warning flex-fill"
+                                                                                [class.active]="integrante.sentido === 2"
+                                                                                (click)="marcarVotacionComision(integrante, 2, integrante.id)"
+                                                                                title="Abstención">
+                                                                                <i class="bi bi-dash-circle-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-danger flex-fill"
+                                                                                [class.active]="integrante.sentido === 3"
+                                                                                (click)="marcarVotacionComision(integrante, 3, integrante.id)"
+                                                                                title="En Contra">
+                                                                                <i
+                                                                                    class="bi bi-hand-thumbs-down-fill"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary flex-fill"
+                                                                                [class.active]="integrante.sentido === 0"
+                                                                                (click)="marcarVotacionComision(integrante, 0, integrante.id)"
+                                                                                title="Pendiente">
+                                                                                <i class="bi bi-hourglass-split"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Separador entre comisiones -->
+                                            <hr *ngIf="!isLast" class="my-5 border-2" style="border-color: #800048;">
                                         </div>
                                     </div>
 
