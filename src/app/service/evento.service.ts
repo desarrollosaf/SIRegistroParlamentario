@@ -80,6 +80,12 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/gestionintegrantes/${id}`)
   }
 
-  
+  addDiputadoComisionSesion(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/agregardipasistencia/`,data)
+  }
+
+   deleteDiputadoComisionSesion(id: any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deleteintlista/${id}`)
+  }
   
 }
