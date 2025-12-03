@@ -17,6 +17,7 @@ const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const eventos_1 = __importDefault(require("../routes/eventos"));
 const user_1 = __importDefault(require("../routes/user"));
+const diputados_1 = __importDefault(require("../routes/diputados"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 class Server {
@@ -36,12 +37,13 @@ class Server {
     router() {
         this.app.use(eventos_1.default);
         this.app.use(user_1.default);
+        this.app.use(diputados_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
             origin: function (origin, callback) {
-                const allowedOrigins = ['http://localhost:4200'];
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx'];
                 if (!origin || allowedOrigins.includes(origin)) {
                     callback(null, true);
                 }
@@ -56,7 +58,8 @@ class Server {
         this.app.use((req, res, next) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/gettipos/'
+                '/api/eventos/gettipos/',
+                '/api/diputados/cargo/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
