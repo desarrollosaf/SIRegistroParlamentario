@@ -567,7 +567,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        // console.log(response);
+        console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         // this.slcPresenta = response.comisiones;
@@ -585,7 +585,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log('Response completo:', response);
+        console.log('Response completo:', response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -603,12 +603,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             ? punto.presentan
               .map((p: any) => {
                 // Convertir a string sin importar si es UUID o número
-                const id = p.id_presenta;
+                const id = p.id; //id_presenta
                 return id !== null && id !== undefined ? String(id) : null;
               })
               .filter((id: string | null) => id !== null && id !== '' && id !== 'null' && id !== 'undefined')
             : [];
 
+            console.log(presentanIds);
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -673,17 +674,19 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this._eventoService.getTipo(proponentesObjetos).subscribe({
       next: (response: any) => {
-
+console.log('estos son los RESPONSE presneta: ', response);
         // Asignar los datos
         punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
           ...tipo,
           id: String(tipo.id)
         }));
-
+        // AQUI ABAJO CAMBIE id_original por id
         punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
           ...item,
-          id: String(item.id_original)
+          id: String(item.id) 
         }));
+
+        console.log('estos son los presneta: ', punto.presentaDisponibles);
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar tipos:', e);
@@ -702,6 +705,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   guardarCambiosPunto(punto: any) {
+
     const formData = new FormData();
     Object.entries(punto.form.value).forEach(([key, value]) => {
       formData.append(key, value as string);
@@ -710,6 +714,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (punto.nuevoDocumento) {
       formData.append('documento', punto.nuevoDocumento);
     }
+
+    formData.forEach((valor, clave) => {
+      console.log(clave, valor);
+    });
 
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
@@ -939,16 +947,17 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   getTipoP(id?: any): void {
     this.formPunto.get('tipo')?.setValue(null);
     this.formPunto.get('presenta')?.setValue(null);
-    // console.log(id);
+
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
-        // console.log(response);
+        console.log('response de los presenta y tipo de crear: ' , response);
         this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
           ...item,
           id: String(item.id)
         }));
 
         this.slcTipo = response.tipos || [];
+        console.log('presenta11 ' , this.slcPresenta);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
