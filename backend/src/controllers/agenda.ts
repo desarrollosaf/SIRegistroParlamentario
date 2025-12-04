@@ -956,9 +956,6 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
-
-    console.log(body);
-    return 500 
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -2583,7 +2580,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       return res.status(404).json({ msg: "No hay votos registrados" });
     }
 
-    
+
     // Obtener diputados
     const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
     const diputados = await Diputado.findAll({

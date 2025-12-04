@@ -867,8 +867,6 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(body);
-        return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
