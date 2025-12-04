@@ -40,7 +40,7 @@ class Server {
        this.app.use(express.json())
        this.app.use(cors({
            origin: function (origin, callback) {
-                const allowedOrigins = ['http://localhost:4200'];
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx'];
                 if (!origin || allowedOrigins.includes(origin) ) {
                     callback(null, true);
                 } else {
