@@ -13,16 +13,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cargoDiputados = void 0;
-const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
+const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const sequelize_1 = require("sequelize");
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
-        const diputados = yield asistencia_votos_1.default.findAll({
+        const diputados = yield votos_punto_1.default.findAll({
             where: {
-                comision_dip_id: {
+                id_comision_dip: {
                     [sequelize_1.Op.ne]: null
                 }
             }
@@ -35,7 +35,7 @@ const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function*
             });
             const comision = yield integrante_comisions_1.default.findOne({
                 where: {
-                    comision_id: dips.comision_dip_id,
+                    comision_id: dips.id_comision_dip,
                     integrante_legislatura_id: integrante === null || integrante === void 0 ? void 0 : integrante.id
                 }
             });
