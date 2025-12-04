@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize"
 
-const sequelizeCuestionarios = new Sequelize('congreso_bd', 'congreso_backup', 'qvoMCK4aGaVffBY5Z95g', {
-    host: '160.153.180.105',
+const sequelizeCuestionarios = new Sequelize('adminleg', 'root', '', {
+    host: 'localhost',
     dialect: 'mysql',
     define: {
         freezeTableName: true 

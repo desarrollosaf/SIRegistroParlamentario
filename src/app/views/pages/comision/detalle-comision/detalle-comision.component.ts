@@ -1,4 +1,3 @@
-
 import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common';
@@ -62,6 +61,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionadoVotacion: number | null = null; // solo guardará el id
   listaPuntosVotacion: any[] = [];
   idpto: any;
+  listaComisionesVotacion: any[] = []; // Para votaciones de comisiones
   //VOTACION
   integrantes: Integrante[] = [];
   columna1: Integrante[] = [];
@@ -297,16 +297,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    // Revisar cada comisión
+    // Revisar
     for (let i = 0; i < nuevasComisiones.length; i++) {
       const nuevaComision = nuevasComisiones[i];
       const comisionActual = this.listaComisiones.find(c => c.id === nuevaComision.comision_id);
 
       if (!comisionActual) {
-        return true; // Nueva comisión
+        return true; // Nueva
       }
 
-      // Revisar si cambió el número de integrantes
+      // Revisar número de integrantes
       if (nuevaComision.integrantes.length !== comisionActual.integrantes.length) {
         return true;
       }
@@ -335,13 +335,46 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private actualizarVotacionesAutomaticamente(): void {
     this._eventoService.getIntegrantesVotosPunto(this.idpto).subscribe({
       next: (response: any) => {
-        const nuevosVotantes = response.integrantes || [];
+        if (this.esComision) {
+          // CASO COMISIÓN: Actualizar lista de comisiones
+          const nuevasComisionesVotacion = response.integrantes || [];
 
-        if (this.hayaCambiosEnVotacion(nuevosVotantes)) {
-          console.log('actualizada desde el servidor');
-          this.votantes = nuevosVotantes;
-          this.dividirEnColumnasVotacion();
+          if (Array.isArray(nuevasComisionesVotacion) && nuevasComisionesVotacion.length > 0) {
+            const primerElemento = nuevasComisionesVotacion[0];
 
+            if (primerElemento.comision_id && primerElemento.integrantes) {
+              if (this.hayaCambiosEnComisionesVotacion(nuevasComisionesVotacion)) {
+                console.log('Votaciones de comisiones actualizadas desde el servidor');
+
+                this.listaComisionesVotacion = nuevasComisionesVotacion.map((comision: any) => ({
+                  id: comision.comision_id,
+                  nombre: comision.comision_nombre,
+                  importancia: comision.importancia,
+                  integrantes: comision.integrantes || [],
+                  columna1: [],
+                  columna2: []
+                }));
+
+                // Dividir en columnas cada comisión
+                this.listaComisionesVotacion.forEach(comision => {
+                  const mitad = Math.ceil(comision.integrantes.length / 2);
+                  comision.columna1 = comision.integrantes.slice(0, mitad);
+                  comision.columna2 = comision.integrantes.slice(mitad);
+                });
+
+                this.cdr.detectChanges();
+              }
+            }
+          }
+        } else {
+          // CASO SESIÓN: Actualizar lista normal
+          const nuevosVotantes = response.integrantes || [];
+          if (this.hayaCambiosEnVotacion(nuevosVotantes)) {
+            console.log('Votaciones actualizadas desde el servidor');
+            this.votantes = nuevosVotantes;
+            this.dividirEnColumnasVotacion();
+            this.cdr.detectChanges();
+          }
         }
       },
       error: (e: HttpErrorResponse) => {
@@ -367,6 +400,38 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  private hayaCambiosEnComisionesVotacion(nuevasComisionesVotacion: any[]): boolean {
+    if (nuevasComisionesVotacion.length !== this.listaComisionesVotacion.length) {
+      return true;
+    }
+
+    for (let i = 0; i < nuevasComisionesVotacion.length; i++) {
+      const nuevaComision = nuevasComisionesVotacion[i];
+      const comisionActual = this.listaComisionesVotacion.find(c => c.id === nuevaComision.comision_id);
+
+      if (!comisionActual) {
+        return true;
+      }
+
+      if (nuevaComision.integrantes.length !== comisionActual.integrantes.length) {
+        return true;
+      }
+
+      for (let j = 0; j < nuevaComision.integrantes.length; j++) {
+        const nuevoIntegrante = nuevaComision.integrantes[j];
+        const integranteActual = comisionActual.integrantes.find(
+          (int: any) => int.id_diputado === nuevoIntegrante.id_diputado
+        );
+
+        if (!integranteActual || integranteActual.sentido !== nuevoIntegrante.sentido) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   //******************************************************************************************************************** */
   //******************************************************************************************************************** */
   //******************************************************************************************************************** */
@@ -376,7 +441,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        console.log('Respuesta completa:', response);
+        // console.log('Respuesta completa:', response);
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
 
@@ -464,7 +529,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   marcarAsistencia(integrante: any, sentido: number): void {
     integrante.sentido_voto = sentido;
-    console.log(integrante);
+    // console.log(integrante);
     this.guardarSentidoVoto(integrante.id, sentido, this.idComisionRuta);
   }
 
@@ -502,7 +567,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset();
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         // this.slcPresenta = response.comisiones;
@@ -520,7 +585,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        console.log('Response completo:', response);
+        // console.log('Response completo:', response);
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -582,8 +647,6 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (event && Array.isArray(event) && event.length > 0) {
       punto.form.get('tipo')?.setValue(null);
       punto.form.get('presenta')?.setValue([]);
-
-      // Extraer los IDs del array de objetos seleccionados
       const idsProponentes = event.map(item => item.id);
       this.cargarTiposParaPunto(punto, idsProponentes); 
     } else {
@@ -776,12 +839,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       idpunto: this.puntoSeleccionado?.id || null,
       idagenda: this.idComisionRuta
     }
-    console.log(datos);
+    // console.log(datos);
 
 
     this._eventoService.getIntervenciones(datos).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.listaIntervenciones = response.data || [];
       },
       error: (e: HttpErrorResponse) => {
@@ -876,10 +939,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   getTipoP(id?: any): void {
     this.formPunto.get('tipo')?.setValue(null);
     this.formPunto.get('presenta')?.setValue(null);
-    console.log(id);
+    // console.log(id);
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
-        console.log(response);
+        // console.log(response);
         this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
           ...item,
           id: String(item.id)
@@ -927,9 +990,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
-    formData.forEach((valor, clave) => {
-      console.log(clave, valor);
-    });
+
+    // formData.forEach((valor, clave) => {
+    //   console.log(clave, valor);
+    // });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
@@ -982,7 +1046,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (puntoId.id) {
       this.cargarVotantes(puntoId.id);
       if (this.segPlanoActivo && this.step === 3) {
-        console.log('onchange');
+        // console.log('onchange');
         this.detenerSegPlano();
         this.iniciarSegPlano();
       }
@@ -990,14 +1054,44 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   private cargarVotantes(punto: any): void {
-    // console.log(punto);
     this.idpto = punto;
     this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
       next: (response: any) => {
-        // console.log(response);
-        this.votantes = response.integrantes || [];
-        console.log( this.votantes);
-        this.dividirEnColumnasVotacion();
+        // console.log('Respuesta votantes:', response);
+        
+        // Verificar si es comisión o sesión
+        if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
+          const primerElemento = response.integrantes[0];
+
+          if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
+            // ES COMISIÓN
+            // console.log('ES COMISIÓN - Cargando votaciones por comisión');
+            this.listaComisionesVotacion = response.integrantes.map((comision: any) => ({
+              id: comision.comision_id,
+              nombre: comision.comision_nombre,
+              importancia: comision.importancia,
+              integrantes: comision.integrantes || [],
+              columna1: [],
+              columna2: []
+            }));
+
+            // Dividir en columnas cada comisión
+            this.listaComisionesVotacion.forEach(comision => {
+              const mitad = Math.ceil(comision.integrantes.length / 2);
+              comision.columna1 = comision.integrantes.slice(0, mitad);
+              comision.columna2 = comision.integrantes.slice(mitad);
+            });
+
+          } else {
+            // ES SESIÓN
+            // console.log('ES SESIÓN - Cargando votaciones normal');
+            this.votantes = response.integrantes || [];
+            this.dividirEnColumnasVotacion();
+          }
+        } else {
+          this.votantes = [];
+          this.listaComisionesVotacion = [];
+        }
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar votantes:', e);
@@ -1015,16 +1109,60 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     return this.votantes.filter(v => v.sentido === tipo).length;
   }
 
+  // Métodos para comisiones en votación
+  contarVotacionesComision(integrantes: any[], tipo: number): number {
+    return integrantes.filter(i => i.sentido === tipo).length;
+  }
+
+  contarTotalGeneralVotacion(): number {
+    if (!this.listaComisionesVotacion || this.listaComisionesVotacion.length === 0) {
+      return 0;
+    }
+    return this.listaComisionesVotacion.reduce((total, comision) => {
+      return total + comision.integrantes.length;
+    }, 0);
+  }
+
+  contarVotacionesGeneral(tipo: number): number {
+    if (!this.listaComisionesVotacion || this.listaComisionesVotacion.length === 0) {
+      return 0;
+    }
+    return this.listaComisionesVotacion.reduce((total, comision) => {
+      const count = comision.integrantes.filter((i: any) => i.sentido === tipo).length;
+      return total + count;
+    }, 0);
+  }
+
   marcarVotacion(votante: Votante, sentido: number): void {
     votante.sentido = sentido;
+
     const datos = {
       idpunto: this.idpto,
-      iddiputado: votante.id_diputado,
+      id: votante.id,
       sentido: votante.sentido
     }
     this._eventoService.saveVotacion(datos).subscribe({
       next: (response: any) => {
         // console.log(response);
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al votar:', e);
+      }
+    });
+  }
+
+  marcarVotacionComision(integrante: any, sentido: number, comisionId: string): void {
+    integrante.sentido = sentido;
+    const datos = {
+      idpunto: this.idpto,
+      id: integrante.id,
+      sentido: integrante.sentido
+    }
+
+
+    this._eventoService.saveVotacion(datos).subscribe({
+      next: (response: any) => {
+        this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al votar:', e);
@@ -1094,16 +1232,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         }
         this._eventoService.reinicioVotacion(datos).subscribe({
           next: (response: any) => {
-            // console.log(response);
-            this.votantes.forEach(v => v.sentido = 0);
-            this.dividirEnColumnasVotacion();
+            // Reiniciar según el tipo
+            if (this.esComision && this.listaComisionesVotacion.length > 0) {
+              this.listaComisionesVotacion.forEach(comision => {
+                comision.integrantes.forEach((v: any) => v.sentido = 0);
+                const mitad = Math.ceil(comision.integrantes.length / 2);
+                comision.columna1 = comision.integrantes.slice(0, mitad);
+                comision.columna2 = comision.integrantes.slice(mitad);
+              });
+            } else {
+              this.votantes.forEach(v => v.sentido = 0);
+              this.dividirEnColumnasVotacion();
+            }
+            this.cdr.detectChanges();
           },
           error: (e: HttpErrorResponse) => {
-            console.error('Error al cargar votantes:', e);
+            console.error('Error al reiniciar votación:', e);
           }
         });
-
-
 
         const Toast = Swal.mixin({
           toast: true,
