@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Agenda from '../models/agendas';
 import Sedes from "../models/sedes";
 import AsistenciaVoto from "../models/asistencia_votos";
+import VotosPunto from "../models/votos_punto";
 import IntegranteComision from "../models/integrante_comisions";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import { Op } from "sequelize";
@@ -9,9 +10,9 @@ import { Op } from "sequelize";
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
     console.log('holi')
-    const diputados = await AsistenciaVoto.findAll({
+    const diputados = await VotosPunto.findAll({
         where: {
-            comision_dip_id: {
+            id_comision_dip: {
                 [Op.ne]: null
             }
         }
@@ -25,7 +26,7 @@ export const cargoDiputados = async (req: Request, res: Response): Promise<Respo
        });
        const comision = await IntegranteComision.findOne({
             where: {
-                comision_id: dips.comision_dip_id,
+                comision_id: dips.id_comision_dip,
                 integrante_legislatura_id: integrante?.id
             }
        })
