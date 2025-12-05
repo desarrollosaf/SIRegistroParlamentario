@@ -1067,8 +1067,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   getTipoP(id?: any): void {
-    this.formPunto.get('tipo')?.setValue(null);
-    this.formPunto.get('presenta')?.setValue(null);
+    // this.formPunto.get('tipo')?.setValue(null);
+    // this.formPunto.get('presenta')?.setValue(null);
 
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
