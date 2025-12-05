@@ -91,7 +91,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionado: any = null;
   listaIntervenciones: any;
   // tiposIntervencion:any;
+  agendaPunto: '';
+  isUpdatingAll: boolean = false;
   tituloC: '';
+  idEvento: '';
   fechaC: '';
   esComision: boolean = false; //C
   listaComisiones: any[] = []; //C
@@ -441,7 +444,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta completa:', response);
+        // console.log('Respuesta completa:', response.evento.id);
+        this.idEvento = response.evento.id;
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
 
@@ -532,6 +536,76 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // console.log(integrante);
     this.guardarSentidoVoto(integrante.id, sentido, this.idComisionRuta);
   }
+
+
+async marcarTodosAsistencia(sentido: number): Promise<void> {
+  this.isUpdatingAll = true;
+  this.cdr.detectChanges();
+  
+  // Pequeña pausa para que el spinner se muestre
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  const datos = {
+    id: this.idEvento,
+    sentido: sentido
+  }
+
+  console.log(datos);
+
+  try {
+    const response: any = await this._eventoService.ActualizarTodosVotos(datos).toPromise();
+    
+    // ACTUALIZACIÓN OPTIMISTA: Actualizar la UI inmediatamente sin esperar al servidor
+    if (this.esComision) {
+      // Actualizar todas las comisiones localmente
+      this.listaComisiones.forEach(comision => {
+        comision.integrantes.forEach((integrante: any) => {
+          integrante.sentido_voto = sentido;
+        });
+        // Actualizar columnas
+        const mitad = Math.ceil(comision.integrantes.length / 2);
+        comision.columna1 = comision.integrantes.slice(0, mitad);
+        comision.columna2 = comision.integrantes.slice(mitad);
+      });
+    } else {
+      // Actualizar lista normal de sesión
+      this.integrantes.forEach(integrante => {
+        integrante.sentido_voto = sentido;
+      });
+      this.dividirEnColumnas();
+    }
+    
+    this.cdr.detectChanges();
+    
+    // Toast de éxito
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: "success",
+      title: "Asistencias actualizadas correctamente"
+    });
+    
+  } catch (e: any) {
+    const msg = e.error?.msg || 'Error desconocido';
+    console.error('Error del servidor:', msg);
+    
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: msg,
+      timer: 3000
+    });
+  } finally {
+    this.isUpdatingAll = false;
+    this.cdr.detectChanges();
+  }
+}
+
 
   guardarSentidoVoto(idIntegrante: string, sentido: number, idAgenda: string): void {
     const datos = {
@@ -1053,6 +1127,7 @@ console.log('estos son los RESPONSE presneta: ', response);
 
   onPuntoVotacionChange(puntoId: any): void {
     if (puntoId.id) {
+      this.agendaPunto = puntoId.id;
       this.cargarVotantes(puntoId.id);
       if (this.segPlanoActivo && this.step === 3) {
         // console.log('onchange');
@@ -1141,6 +1216,26 @@ console.log('estos son los RESPONSE presneta: ', response);
       return total + count;
     }, 0);
   }
+
+
+
+  marcarTodosVotos(sentido: number): void {
+    const datos = {
+      idpunto: this.idpto,
+      sentido: this.agendaPunto
+    }
+
+    console.log(datos);
+    this._eventoService.saveVotacion(datos).subscribe({
+      next: (response: any) => {
+        // console.log(response);
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al votar:', e);
+      }
+    });
+  }
+
 
   marcarVotacion(votante: Votante, sentido: number): void {
     votante.sentido = sentido;

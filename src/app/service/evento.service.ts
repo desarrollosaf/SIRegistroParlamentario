@@ -10,10 +10,12 @@ export class EventoService {
 
   private myAppUrl: string;
   private myAPIUrl: string;
+  private myAPIUrl1: string;
   private http = inject( HttpClient );
   constructor() {
     this.myAppUrl = enviroment.endpoint;
     this.myAPIUrl ='api/eventos';
+    this.myAPIUrl1 ='api/diputados';
   }
 
 
@@ -88,4 +90,10 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deleteintlista/${id}`)
   }
   
+  ActualizarTodosVotos(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/acttodosasistencia/`,data)
+  }
+
+
+
 }
