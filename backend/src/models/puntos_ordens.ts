@@ -102,6 +102,11 @@ PuntosOrden.init(
       allowNull: false,
       defaultValue: 0,
     },
+    se_turna_comision: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,
