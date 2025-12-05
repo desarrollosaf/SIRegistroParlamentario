@@ -66,6 +66,11 @@ PuntosOrden.init({
         allowNull: false,
         defaultValue: 0,
     },
+    se_turna_comision: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: 0,
+    },
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: "puntos_ordens",
