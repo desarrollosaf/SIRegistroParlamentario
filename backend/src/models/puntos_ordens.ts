@@ -12,6 +12,7 @@ import TipoCategoriaIniciativas from "./tipo_categoria_iniciativas";
 import Proponentes from "./proponentes";
 import PuntosPresenta from "./puntos_presenta";
 import Agenda from "./agendas";
+import PuntosComisiones from "./puntos_comisiones";
 
 
 
@@ -114,4 +115,8 @@ PuntosOrden.hasMany(PuntosPresenta, {
   foreignKey: 'id_punto', as: 'presentan'
 });
 PuntosOrden.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
+
+PuntosOrden.hasMany(PuntosComisiones, {
+  foreignKey: 'id_punto', as: 'turnocomision'
+});
 export default PuntosOrden;
