@@ -34,6 +34,15 @@
                                 <div *ngSwitchCase="1">
                                     <!-- CASO 1: ES SESIÓN (estructura actual) -->
                                     <div *ngIf="!esComision">
+                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando asistencias...</p>
+                                            </div>
+                                        </div>
                                         <div class="row g-3 mb-4">
                                             <div class="col-6 col-sm-6 col-lg-3">
                                                 <div class="card stats-card stats-total">
@@ -51,7 +60,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(1)">
                                                 <div class="card stats-card stats-presente">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -67,7 +76,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -83,7 +92,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(0)">
                                                 <div class="card stats-card stats-ausente">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -199,7 +208,15 @@
 
                                     <!-- CASO 2: ES COMISIÓN (múltiples listas) -->
                                     <div *ngIf="esComision">
-
+                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando asistencias...</p>
+                                            </div>
+                                        </div>
                                         <!-- CONTADOR GENERAL (arriba con estilos fancy) -->
                                         <div class="row g-3 mb-5">
                                             <div class="col-6 col-sm-6 col-lg-3">
@@ -218,7 +235,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(1)">
                                                 <div class="card stats-card stats-presente">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -235,7 +252,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -252,7 +269,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(0)">
                                                 <div class="card stats-card stats-ausente">
                                                     <div class="card-body p-2">
                                                         <div class="d-flex align-items-center">
@@ -697,6 +714,19 @@
 
                                     <!-- CASO SESIÓN: VOTACIONES SIMPLES -->
                                     <div *ngIf="puntoSeleccionadoVotacion && !esComision" class="fade-in">
+                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
+                                            </div>
+                                        </div>
+
+
+
+
                                         <div class="row g-2 mb-3 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total-votacion p-1">
@@ -713,7 +743,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(1)">
                                                 <div class="card stats-card stats-favor p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -728,7 +758,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(2)">
                                                 <div class="card stats-card stats-abstencion p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -743,7 +773,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(3)">
                                                 <div class="card stats-card stats-contra p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -758,7 +788,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(0)">
                                                 <div class="card stats-card stats-pendiente p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -905,6 +935,15 @@
 
                                     <!-- CASO COMISIÓN: VOTACIONES POR COMISIÓN -->
                                     <div *ngIf="puntoSeleccionadoVotacion && esComision" class="fade-in">
+                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
+                                            </div>
+                                        </div>
                                         <!-- CONTADOR GENERAL -->
                                         <div class="row g-2 mb-5 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
@@ -923,7 +962,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(1)">
                                                 <div class="card stats-card stats-favor p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -939,7 +978,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(2)">
                                                 <div class="card stats-card stats-abstencion p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -955,7 +994,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(3)">
                                                 <div class="card stats-card stats-contra p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
@@ -971,7 +1010,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-6 col-sm-4 col-md-2">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosVotos(0)">
                                                 <div class="card stats-card stats-pendiente p-1">
                                                     <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">

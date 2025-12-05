@@ -91,7 +91,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionado: any = null;
   listaIntervenciones: any;
   // tiposIntervencion:any;
+  agendaPunto: '';
+  isUpdatingAsistencia: boolean = false;
+  isUpdatingVotacion: boolean = false;
   tituloC: '';
+  idEvento: '';
   fechaC: '';
   esComision: boolean = false; //C
   listaComisiones: any[] = []; //C
@@ -441,7 +445,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta completa:', response);
+        // console.log('Respuesta completa:', response.evento.id);
+        this.idEvento = response.evento.id;
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
 
@@ -533,6 +538,76 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.guardarSentidoVoto(integrante.id, sentido, this.idComisionRuta);
   }
 
+
+  async marcarTodosAsistencia(sentido: number): Promise<void> {
+    this.isUpdatingAsistencia = true;
+    this.cdr.detectChanges();
+
+    // Pequeña pausa para que el spinner se muestre
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const datos = {
+      id: this.idEvento,
+      sentido: sentido
+    }
+
+    console.log(datos);
+
+    try {
+      const response: any = await this._eventoService.ActualizarTodosAsistencia(datos).toPromise();
+
+      // ACTUALIZACIÓN OPTIMISTA: Actualizar la UI inmediatamente sin esperar al servidor
+      if (this.esComision) {
+        // Actualizar todas las comisiones localmente
+        this.listaComisiones.forEach(comision => {
+          comision.integrantes.forEach((integrante: any) => {
+            integrante.sentido_voto = sentido;
+          });
+          // Actualizar columnas
+          const mitad = Math.ceil(comision.integrantes.length / 2);
+          comision.columna1 = comision.integrantes.slice(0, mitad);
+          comision.columna2 = comision.integrantes.slice(mitad);
+        });
+      } else {
+        // Actualizar lista normal de sesión
+        this.integrantes.forEach(integrante => {
+          integrante.sentido_voto = sentido;
+        });
+        this.dividirEnColumnas();
+      }
+
+      this.cdr.detectChanges();
+
+      // Toast de éxito
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Asistencias actualizadas correctamente"
+      });
+
+    } catch (e: any) {
+      const msg = e.error?.msg || 'Error desconocido';
+      console.error('Error del servidor:', msg);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: msg,
+        timer: 3000
+      });
+    } finally {
+      this.isUpdatingAsistencia = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+
   guardarSentidoVoto(idIntegrante: string, sentido: number, idAgenda: string): void {
     const datos = {
       id: idIntegrante,
@@ -609,7 +684,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               .filter((id: string | null) => id !== null && id !== '' && id !== 'null' && id !== 'undefined')
             : [];
 
-            console.log(presentanIds);
+          console.log(presentanIds);
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -618,8 +693,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               id: [punto.id],
               numpunto: [punto.nopunto],
               proponente: [proponentesIds],
-              presenta: [presentanIds], 
-              tipo: [punto.id_tipo ? String(punto.id_tipo) : null], 
+              presenta: [presentanIds],
+              tipo: [punto.id_tipo ? String(punto.id_tipo) : null],
               tribuna: [punto.tribuna],
               punto: [punto.punto],
               observaciones: [punto.observaciones]
@@ -649,7 +724,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto.form.get('tipo')?.setValue(null);
       punto.form.get('presenta')?.setValue([]);
       const idsProponentes = event.map(item => item.id);
-      this.cargarTiposParaPunto(punto, idsProponentes); 
+      this.cargarTiposParaPunto(punto, idsProponentes);
     } else {
       // Si no hay selección, limpiar
       punto.tiposDisponibles = [];
@@ -674,7 +749,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this._eventoService.getTipo(proponentesObjetos).subscribe({
       next: (response: any) => {
-console.log('estos son los RESPONSE presneta: ', response);
+        console.log('estos son los RESPONSE presneta: ', response);
         // Asignar los datos
         punto.tiposDisponibles = (response.tipos || []).map((tipo: any) => ({
           ...tipo,
@@ -683,7 +758,7 @@ console.log('estos son los RESPONSE presneta: ', response);
         // AQUI ABAJO CAMBIE id_original por id
         punto.presentaDisponibles = (response.dtSlct || []).map((item: any) => ({
           ...item,
-          id: String(item.id) 
+          id: String(item.id)
         }));
 
         console.log('estos son los presneta: ', punto.presentaDisponibles);
@@ -950,14 +1025,14 @@ console.log('estos son los RESPONSE presneta: ', response);
 
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
-        console.log('response de los presenta y tipo de crear: ' , response);
+        console.log('response de los presenta y tipo de crear: ', response);
         this.slcPresenta = (response.dtSlct || []).map((item: any) => ({
           ...item,
           id: String(item.id)
         }));
 
         this.slcTipo = response.tipos || [];
-        console.log('presenta11 ' , this.slcPresenta);
+        console.log('presenta11 ', this.slcPresenta);
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -1053,6 +1128,7 @@ console.log('estos son los RESPONSE presneta: ', response);
 
   onPuntoVotacionChange(puntoId: any): void {
     if (puntoId.id) {
+      this.agendaPunto = puntoId.id;
       this.cargarVotantes(puntoId.id);
       if (this.segPlanoActivo && this.step === 3) {
         // console.log('onchange');
@@ -1067,7 +1143,7 @@ console.log('estos son los RESPONSE presneta: ', response);
     this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
       next: (response: any) => {
         // console.log('Respuesta votantes:', response);
-        
+
         // Verificar si es comisión o sesión
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
           const primerElemento = response.integrantes[0];
@@ -1141,6 +1217,77 @@ console.log('estos son los RESPONSE presneta: ', response);
       return total + count;
     }, 0);
   }
+
+
+
+  async marcarTodosVotos(sentido: number): Promise<void> {
+    this.isUpdatingVotacion = true;
+    this.cdr.detectChanges();
+
+    // Pequeña pausa para que el spinner se muestre
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const datos = {
+      idpunto: this.agendaPunto,
+      sentido: sentido
+    }
+
+    console.log(datos);
+
+    try {
+      const response: any = await this._eventoService.ActualizarTodosVotos(datos).toPromise();
+
+      // ACTUALIZACIÓN OPTIMISTA: Actualizar la UI inmediatamente
+      if (this.esComision) {
+        // Actualizar todas las comisiones localmente
+        this.listaComisionesVotacion.forEach(comision => {
+          comision.integrantes.forEach((integrante: any) => {
+            integrante.sentido = sentido;
+          });
+          // Actualizar columnas
+          const mitad = Math.ceil(comision.integrantes.length / 2);
+          comision.columna1 = comision.integrantes.slice(0, mitad);
+          comision.columna2 = comision.integrantes.slice(mitad);
+        });
+      } else {
+        // Actualizar lista normal de sesión
+        this.votantes.forEach(votante => {
+          votante.sentido = sentido;
+        });
+        this.dividirEnColumnasVotacion();
+      }
+
+      this.cdr.detectChanges();
+
+      // Toast de éxito
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Votaciones actualizadas correctamente"
+      });
+
+    } catch (e: any) {
+      const msg = e.error?.msg || 'Error desconocido';
+      console.error('Error del servidor:', msg);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: msg,
+        timer: 3000
+      });
+    } finally {
+      this.isUpdatingVotacion = false;
+      this.cdr.detectChanges();
+    }
+  }
+
 
   marcarVotacion(votante: Votante, sentido: number): void {
     votante.sentido = sentido;
