@@ -774,7 +774,8 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(body);
+        // console.log(body);
+        // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -790,7 +791,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             .split(",")
             .map((id) => parseInt(id.trim()))
             .filter((id) => !isNaN(id));
-        const turnocomision = (body.id_comison || "")
+        const turnocomision = (body.id_comision || "")
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id.length > 0);
@@ -893,7 +894,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             .split(",")
             .map((id) => parseInt(id.trim()))
             .filter((id) => !isNaN(id));
-        const turnocomision = (body.id_comison || "")
+        const turnocomision = (body.id_comision || "")
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id.length > 0);

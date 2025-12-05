@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import PuntosComisiones from "../models/puntos_comisiones";
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
@@ -849,7 +850,8 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    console.log(body);
+    // console.log(body);
+    // return 500;
 
   
     const presentaArray = (body.presenta || "")
@@ -870,8 +872,10 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       .map((id: string) => parseInt(id.trim()))
       .filter((id: number) => !isNaN(id));
 
-    console.log('Presenta descompuesto:', presentaArray);
-    console.log('Proponentes IDs:', proponentesIds);
+    const turnocomision = (body.id_comision || "")
+      .split(",")
+      .map((id: string) => id.trim()) 
+      .filter((id: string) => id.length > 0);
 
     const evento = await Agenda.findOne({ where: { id } });
     if (!evento) {
@@ -886,6 +890,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
+      se_turna_comision: body.se_turna_comision,
     });
 
     for (const item of presentaArray) {
@@ -895,6 +900,14 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         id_presenta: item.autorId 
       });
     }
+
+    for (const item of turnocomision) {
+      await PuntosComisiones.create({
+        id_punto: puntonuevo.id,
+        id_comision: item,
+      });
+    }
+
 
     return res.status(201).json({
       message: "Punto creado correctamente",
@@ -934,7 +947,8 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
               "id_presenta",
               ["id_tipo_presenta", "id_proponente"]
             ]
-          }
+          },
+          { model: PuntosComisiones, as: "turnocomision", attributes: ["id", "id_punto","id_comision"] },
         ]
       });
       if (!puntos) {
@@ -972,8 +986,11 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       .map((id: string) => parseInt(id.trim()))
       .filter((id: number) => !isNaN(id));
 
-    console.log('Presenta descompuesto:', presentaArray);
-    console.log('Proponentes IDs:', proponentesIds);
+    const turnocomision = (body.id_comision || "")
+      .split(",")
+      .map((id: string) => id.trim()) 
+      .filter((id: string) => id.length > 0);
+
 
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
@@ -990,6 +1007,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       punto: body.punto ?? punto.punto,
       observaciones: body.observaciones ?? punto.observaciones,
       editado: 1,
+      se_turna_comision: body.se_turna_comision,
     });
 
     await PuntosPresenta.destroy({
@@ -1001,6 +1019,16 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         id_punto: punto.id,
         id_tipo_presenta: item.proponenteId, 
         id_presenta: item.autorId
+      });
+    }
+    await PuntosComisiones.destroy({
+      where: { id_punto: punto.id }
+    });
+
+     for (const item of turnocomision) {
+      await PuntosComisiones.create({
+        id_punto: punto.id,
+        id_comision: item,
       });
     }
 
@@ -2869,3 +2897,455 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
   }
 };
+
+
+export const generarPDFAsistencia = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params; // ID del evento (Agenda)
+    
+    // Obtener información del evento
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+
+    // Determinar tipo de evento
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+
+    // Obtener asistencias
+    const asistenciasRaw = await AsistenciaVoto.findAll({
+      where: { id_agenda: id },
+      raw: true,
+    });
+
+    if (asistenciasRaw.length === 0) {
+      return res.status(404).json({ msg: "No hay asistencias registradas para este evento" });
+    }
+
+    // Obtener diputados
+    const diputadoIds = asistenciasRaw.map(a => a.id_diputado).filter(Boolean);
+    const diputados = await Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true,
+    });
+    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+
+    // Obtener partidos
+    const partidoIds = asistenciasRaw.map(a => a.id_partido).filter(Boolean);
+    const partidos = await Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true,
+    });
+    const partidosMap = new Map(partidos.map(p => [p.id, p]));
+
+    // Obtener comisiones y cargos (solo si es comisión)
+    let comisionesMap = new Map();
+    let cargosMap = new Map();
+    
+    if (!esSesion) {
+      const comisionIds = asistenciasRaw.map(a => a.id_comision_dip).filter(Boolean);
+      if (comisionIds.length > 0) {
+        const comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre", "importancia"],
+          raw: true,
+        });
+        comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+      }
+
+      const cargoIds = asistenciasRaw.map(a => a.id_cargo_dip).filter(Boolean);
+      if (cargoIds.length > 0) {
+        const cargos = await TipoCargoComision.findAll({
+          where: { id: cargoIds },
+          attributes: ["id", "valor", "nivel"],
+          raw: true,
+        });
+        cargosMap = new Map(cargos.map(c => [c.id, c]));
+      }
+    }
+
+    const getAsistenciaTexto = (asistencia: number): string => {
+      switch (asistencia) {
+        case 1: return "ASISTIÓ";
+        case 2: return "FALTA";
+        case 3: return "RETARDO";
+        case 4: return "JUSTIFICÓ";
+        case 0: return "PENDIENTE";
+        default: return "PENDIENTE";
+      }
+    };
+
+    // Mapear asistencias con detalles
+    const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
+      const diputado = diputadosMap.get(asistencia.id_diputado);
+      const partido = partidosMap.get(asistencia.id_partido);
+      const comision = comisionesMap.get(asistencia.id_comision_dip);
+      const cargo = cargosMap.get(asistencia.id_cargo_dip);
+      
+      const nombreCompletoDiputado = diputado
+        ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+        : "Sin nombre";
+      
+      return {
+        ...asistencia,
+        diputado: nombreCompletoDiputado,
+        partido: partido?.siglas || "Sin partido",
+        comision_nombre: comision?.nombre || null,
+        comision_importancia: comision?.importancia || 999,
+        cargo_nombre: cargo?.valor || null,
+        nivel_cargo: cargo?.nivel || 999,
+        asistenciaTexto: getAsistenciaTexto(asistencia.asistencia),
+        asistenciaNumerico: asistencia.asistencia
+      };
+    });
+
+    // Calcular totales
+    const totales = {
+      asistio: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
+      falta: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
+      retardo: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 3).length,
+      justifico: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 4).length,
+      pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
+    };
+
+    // Crear PDF
+    const doc = new PDFDocument({ 
+      size: 'LETTER', 
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      bufferPages: true
+    });
+
+    const fileName = `asistencia-evento-${id}-${Date.now()}.pdf`;
+    const outputPath = path.join(__dirname, '../../storage/pdfs', fileName);
+
+    const dir = path.dirname(outputPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const writeStream = fs.createWriteStream(outputPath);
+    doc.pipe(writeStream);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    doc.pipe(res);
+
+    // ===== DISEÑO DEL PDF =====
+
+    // Encabezado
+    doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    doc.moveDown(1);
+
+    // Información del Evento
+    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+    doc.moveDown(0.3);
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Tipo: ${evento.tipoevento?.nombre || 'N/A'}`);
+    doc.text(`Sede: ${evento.sede?.sede || 'N/A'}`);
+    doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
+    doc.text(`Descripción: ${evento.descripcion || 'N/A'}`, { width: 500 });
+    doc.moveDown(1);
+
+    // Resumen de Asistencia
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
+    doc.moveDown(0.3);
+
+    const tableTop = doc.y;
+    const colWidths = [100, 80, 80, 90, 80];
+    const rowHeight = 25;
+
+    // Encabezados de tabla
+    doc.fontSize(9).font('Helvetica-Bold');
+
+    // ASISTIÓ
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
+    doc.fillColor('#fff').text('ASISTIÓ', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+
+    // FALTA
+    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
+    doc.fillColor('#fff').text('FALTA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+
+    // RETARDO
+    doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
+    doc.fillColor('#fff').text('RETARDO', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+
+    // JUSTIFICÓ
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#3b82f6', '#000');
+    doc.fillColor('#fff').text('JUSTIFICÓ', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
+
+    // PENDIENTE
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#6b7280', '#000');
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 8, { width: colWidths[4] - 10, align: 'center' });
+
+    // Valores de totales
+    const valuesTop = tableTop + rowHeight;
+    doc.fontSize(14).font('Helvetica-Bold');
+
+    // Valores
+    doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.asistio.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.falta.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.retardo.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.justifico.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 5, { width: colWidths[4] - 10, align: 'center' });
+
+    doc.moveDown(3);
+
+    const totalDiputados = asistenciasConDetalles.length;
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
+    doc.text(`TOTAL DE DIPUTADOS: ${totalDiputados}`, 50, doc.y, { align: 'left' });
+    doc.moveDown(1.5);
+
+    // ===== DETALLE DE ASISTENCIA SEGÚN TIPO DE EVENTO =====
+    
+    if (esSesion) {
+      // ===== SESIÓN: Lista plana ordenada alfabéticamente =====
+      generarDetalleSesionAsistencia(doc, asistenciasConDetalles);
+    } else {
+      // ===== COMISIÓN: Agrupado por comisión y ordenado por cargo =====
+      generarDetalleComisionAsistencia(doc, asistenciasConDetalles);
+    }
+
+    // Agregar pie de página
+    const range = doc.bufferedPageRange();
+    
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
+      
+      doc.fontSize(8).font('Helvetica').fillColor('#666');
+      doc.text(
+        `Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`,
+        50,
+        doc.page.height - 30,
+        { align: 'center', width: doc.page.width - 100 }
+      );
+    }
+
+    doc.end();
+
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+  } catch (error: any) {
+    console.error("Error al generar PDF de asistencia:", error);
+    
+    if (!res.headersSent) {
+      return res.status(500).json({ 
+        message: "Error al generar PDF de asistencia",
+        error: error.message 
+      });
+    }
+  }
+};
+
+function generarDetalleSesionAsistencia(doc: any, asistencias: any[]) {
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA');
+  doc.moveDown(0.5);
+
+  // Ordenar alfabéticamente por apellido paterno
+  const asistenciasOrdenadas = [...asistencias].sort((a, b) => 
+    a.diputado.localeCompare(b.diputado)
+  );
+
+  // Crear tabla
+  const startY = doc.y;
+  const colX = {
+    numero: 50,
+    diputado: 80,
+    partido: 380,
+    asistencia: 450
+  };
+
+  // Encabezados
+  doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
+  doc.text('#', colX.numero, startY);
+  doc.text('DIPUTADO', colX.diputado, startY);
+  doc.text('PARTIDO', colX.partido, startY);
+  doc.text('ASISTENCIA', colX.asistencia, startY);
+  
+  doc.moveDown(0.3);
+  doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+  doc.moveDown(0.3);
+
+  // Filas de datos
+  doc.fontSize(9).font('Helvetica');
+  
+  asistenciasOrdenadas.forEach((asist, index) => {
+    const currentY = doc.y;
+
+    // Verificar si necesitamos nueva página
+    if (currentY > 700) {
+      doc.addPage();
+      
+      // Re-dibujar encabezados en nueva página
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
+      doc.text('#', colX.numero, doc.y);
+      doc.text('DIPUTADO', colX.diputado, doc.y);
+      doc.text('PARTIDO', colX.partido, doc.y);
+      doc.text('ASISTENCIA', colX.asistencia, doc.y);
+      
+      doc.moveDown(0.3);
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown(0.3);
+      
+      doc.fontSize(9).font('Helvetica');
+    }
+
+    const rowY = doc.y;
+
+    // Número
+    doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
+    
+    // Diputado
+    doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 290 });
+    
+    // Partido
+    doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
+    
+    // Asistencia con color
+    const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
+    doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 90 });
+
+    doc.moveDown(0.8);
+  });
+}
+
+function generarDetalleComisionAsistencia(doc: any, asistencias: any[]) {
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN');
+  doc.moveDown(0.5);
+
+  // Agrupar por comisión
+  const asistenciasPorComision = asistencias.reduce((acc, asist) => {
+    const comisionKey = asist.comision_nombre || 'Sin Comisión';
+    if (!acc[comisionKey]) {
+      acc[comisionKey] = {
+        nombre: comisionKey,
+        importancia: asist.comision_importancia || 999,
+        asistencias: []
+      };
+    }
+    acc[comisionKey].asistencias.push(asist);
+    return acc;
+  }, {} as Record<string, any>);
+
+  // Ordenar comisiones por importancia
+  const comisionesOrdenadas = Object.values(asistenciasPorComision).sort(
+    (a: any, b: any) => a.importancia - b.importancia
+  );
+
+  comisionesOrdenadas.forEach((comision: any) => {
+    // Título de comisión
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
+    doc.text(comision.nombre.toUpperCase(), 50, doc.y);
+    doc.moveDown(0.3);
+
+    // Ordenar por nivel de cargo (menor número = más importante)
+    const asistenciasOrdenadas = [...comision.asistencias].sort(
+      (a: any, b: any) => a.nivel_cargo - b.nivel_cargo
+    );
+
+    // Tabla de asistencias
+    const colX = {
+      numero: 50,
+      cargo: 80,
+      diputado: 180,
+      partido: 400,
+      asistencia: 470
+    };
+
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
+    doc.text('#', colX.numero, doc.y);
+    doc.text('CARGO', colX.cargo, doc.y);
+    doc.text('DIPUTADO', colX.diputado, doc.y);
+    doc.text('PARTIDO', colX.partido, doc.y);
+    doc.text('ASISTENCIA', colX.asistencia, doc.y);
+    
+    doc.moveDown(0.2);
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.2);
+
+    doc.fontSize(8).font('Helvetica');
+
+    asistenciasOrdenadas.forEach((asist: any, index: number) => {
+      const currentY = doc.y;
+
+      // Verificar si necesitamos nueva página
+      if (currentY > 700) {
+        doc.addPage();
+        
+        // Re-dibujar título de comisión
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
+        doc.text(`${comision.nombre.toUpperCase()} (continuación)`, 50, doc.y);
+        doc.moveDown(0.3);
+        
+        // Re-dibujar encabezados
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
+        doc.text('#', colX.numero, doc.y);
+        doc.text('CARGO', colX.cargo, doc.y);
+        doc.text('DIPUTADO', colX.diputado, doc.y);
+        doc.text('PARTIDO', colX.partido, doc.y);
+        doc.text('ASISTENCIA', colX.asistencia, doc.y);
+        
+        doc.moveDown(0.2);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(0.2);
+        
+        doc.fontSize(8).font('Helvetica');
+      }
+
+      const rowY = doc.y;
+
+      // Número
+      doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
+      
+      // Cargo
+      doc.fillColor('#000').text(asist.cargo_nombre || 'N/A', colX.cargo, rowY, { width: 90 });
+      
+      // Diputado
+      doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 210 });
+      
+      // Partido
+      doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
+      
+      // Asistencia con color
+      const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
+      doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 80 });
+
+      doc.moveDown(0.7);
+    });
+
+    doc.moveDown(0.5);
+  });
+}
+
+function getColorAsistencia(asistencia: number): string {
+  switch (asistencia) {
+    case 1: return '#22c55e'; // Verde - ASISTIÓ
+    case 2: return '#dc2626'; // Rojo - FALTA
+    case 3: return '#f59e0b'; // Naranja - RETARDO
+    case 4: return '#3b82f6'; // Azul - JUSTIFICÓ
+    case 0: return '#6b7280'; // Gris - PENDIENTE
+    default: return '#6b7280';
+  }
+}
