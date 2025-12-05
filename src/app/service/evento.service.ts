@@ -90,10 +90,15 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deleteintlista/${id}`)
   }
   
-  ActualizarTodosVotos(data: any): Observable<string> {
+  ActualizarTodosAsistencia(data: any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/acttodosasistencia/`,data)
   }
 
+   ActualizarTodosVotos(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/acttodosvotos/`,data)
+  }
 
+// 
+// 
 
 }

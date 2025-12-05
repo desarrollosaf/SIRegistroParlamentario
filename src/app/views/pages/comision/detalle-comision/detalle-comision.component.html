@@ -34,7 +34,7 @@
                                 <div *ngSwitchCase="1">
                                     <!-- CASO 1: ES SESIÓN (estructura actual) -->
                                     <div *ngIf="!esComision">
-                                          <div *ngIf="isUpdatingAll" class="spinner-overlay">
+                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
                                             <div class="spinner-container">
                                                 <div class="spinner-border text-primary" role="status"
                                                     style="width: 3rem; height: 3rem;">
@@ -208,7 +208,7 @@
 
                                     <!-- CASO 2: ES COMISIÓN (múltiples listas) -->
                                     <div *ngIf="esComision">
-                                        <div *ngIf="isUpdatingAll" class="spinner-overlay">
+                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
                                             <div class="spinner-container">
                                                 <div class="spinner-border text-primary" role="status"
                                                     style="width: 3rem; height: 3rem;">
@@ -714,6 +714,19 @@
 
                                     <!-- CASO SESIÓN: VOTACIONES SIMPLES -->
                                     <div *ngIf="puntoSeleccionadoVotacion && !esComision" class="fade-in">
+                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
+                                            </div>
+                                        </div>
+
+
+
+
                                         <div class="row g-2 mb-3 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total-votacion p-1">
@@ -922,6 +935,15 @@
 
                                     <!-- CASO COMISIÓN: VOTACIONES POR COMISIÓN -->
                                     <div *ngIf="puntoSeleccionadoVotacion && esComision" class="fade-in">
+                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
+                                            <div class="spinner-container">
+                                                <div class="spinner-border text-primary" role="status"
+                                                    style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Actualizando...</span>
+                                                </div>
+                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
+                                            </div>
+                                        </div>
                                         <!-- CONTADOR GENERAL -->
                                         <div class="row g-2 mb-5 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
