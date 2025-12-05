@@ -720,7 +720,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               punto: [punto.punto],
               observaciones: [punto.observaciones],
               se_turna_comision: [punto.se_turna_comision || false], // <-- NUEVO
-              id_comision: [punto.id_comision || []] // <-- NUEVO (array vacío por defecto)
+              id_comision: [punto.turnocomision || []] // <-- NUEVO (array vacío por defecto)
             })
           };
 
