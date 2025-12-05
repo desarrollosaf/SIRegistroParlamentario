@@ -768,8 +768,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   getTipoPParaPunto(event: any, punto: any): void {
     if (event && Array.isArray(event) && event.length > 0) {
-      punto.form.get('tipo')?.setValue(null);
-      punto.form.get('presenta')?.setValue([]);
+      // punto.form.get('tipo')?.setValue(null);
+      // punto.form.get('presenta')?.setValue([]);
       const idsProponentes = event.map(item => item.id);
       this.cargarTiposParaPunto(punto, idsProponentes);
     } else {
