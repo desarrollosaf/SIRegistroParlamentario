@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbAccordionModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -79,6 +79,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcPresenta: any;
   slcTipo: any;
   slcTipIntervencion: any;
+  slcComisiones: any; // <-- NUEVO CAMPO
 
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
@@ -113,6 +114,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
 
+    // MODIFICADO: Agregar los nuevos campos al formulario
     this.formPunto = this.fb.group({
       numpunto: [''],
       proponente: [''],
@@ -120,7 +122,22 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       tipo: [''],
       tribuna: [''],
       punto: [''],
-      observaciones: ['']
+      observaciones: [''],
+      se_turna_comision: [false], 
+      id_comision: [[]] 
+    });
+
+    // NUEVO: Suscribirse a cambios de se_turna_comision para manejar validaciones
+    this.formPunto.get('se_turna_comision')?.valueChanges.subscribe((value: boolean) => {
+      const comisionControl = this.formPunto.get('id_comision');
+      if (value === true) {
+        // Validar que el array tenga al menos 1 elemento
+        comisionControl?.setValidators([Validators.required, Validators.minLength(1)]);
+      } else {
+        comisionControl?.clearValidators();
+        comisionControl?.setValue([]); // Limpiar con array vacío
+      }
+      comisionControl?.updateValueAndValidity();
     });
 
     this.formIntervencion = this.fb.group({
@@ -639,13 +656,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   private cargarOrdenDia(): void {
     this.mostrarFormularioPunto = false;
-    this.formPunto.reset();
+    this.formPunto.reset({
+      se_turna_comision: false 
+    });
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
-        // this.slcPresenta = response.comisiones;
+        this.slcComisiones = response.comisiones; 
         this.slcTipIntervencion = response.tipointer;
         this.cargarPuntosRegistrados();
       },
@@ -685,6 +704,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             : [];
 
           console.log(presentanIds);
+          
+          // MODIFICADO: Agregar campos del switch de comisión al form de cada punto
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -697,9 +718,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               tipo: [punto.id_tipo ? String(punto.id_tipo) : null],
               tribuna: [punto.tribuna],
               punto: [punto.punto],
-              observaciones: [punto.observaciones]
+              observaciones: [punto.observaciones],
+              se_turna_comision: [punto.se_turna_comision || false], // <-- NUEVO
+              id_comision: [punto.id_comision || []] // <-- NUEVO (array vacío por defecto)
             })
           };
+
+          // NUEVO: Suscribirse a cambios en cada form de punto
+          puntoMapeado.form.get('se_turna_comision')?.valueChanges.subscribe((value: boolean) => {
+            const comisionControl = puntoMapeado.form.get('id_comision');
+            if (value === true) {
+              // Validar que el array tenga al menos 1 elemento
+              comisionControl?.setValidators([Validators.required, Validators.minLength(1)]);
+            } else {
+              comisionControl?.clearValidators();
+              comisionControl?.setValue([]); // Limpiar con array vacío
+            }
+            comisionControl?.updateValueAndValidity();
+          });
 
           // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
           if (proponentesIds.length > 0) {
@@ -778,7 +814,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
-
+  //CAMBIO PUNTO
   guardarCambiosPunto(punto: any) {
 
     const formData = new FormData();
@@ -1056,10 +1092,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
     this.documentos['docPunto'] = null;
-    this.formPunto.reset();
+    this.formPunto.reset({
+      se_turna_comision: false // <-- Resetear a false cuando se cierra
+    });
   }
 
-
+//GUARDA PUNTO
   guardarPunto() {
     if (this.formPunto.invalid) {
       this.formPunto.markAllAsTouched();
@@ -1075,9 +1113,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
 
-    // formData.forEach((valor, clave) => {
-    //   console.log(clave, valor);
-    // });
+    formData.forEach((valor, clave) => {
+      console.log(clave, valor);
+    });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
@@ -1097,7 +1135,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
 
         this.documentos['docPunto'] = null;
-        this.formPunto.reset();
+        this.formPunto.reset({
+          se_turna_comision: false
+        });
         this.mostrarFormularioPunto = false;
         this.cargarPuntosRegistrados();
       },

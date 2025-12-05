@@ -27,22 +27,23 @@
                             </a>
                         </li>
                     </ul>
-
+                    <div *ngIf="isUpdatingAsistencia || isUpdatingVotacion" class="spinner-overlay">
+                        <div class="spinner-container">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Actualizando...</span>
+                            </div>
+                            <p class="mt-3 text-white fw-bold">
+                                {{ isUpdatingAsistencia ? 'Actualizando asistencias...' : 'Actualizando votaciones...'
+                                }}
+                            </p>
+                        </div>
+                    </div>
                     <div class="card">
                         <div class="card-body">
                             <div [ngSwitch]="step">
                                 <div *ngSwitchCase="1">
                                     <!-- CASO 1: ES SESIÓN (estructura actual) -->
                                     <div *ngIf="!esComision">
-                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
-                                            <div class="spinner-container">
-                                                <div class="spinner-border text-primary" role="status"
-                                                    style="width: 3rem; height: 3rem;">
-                                                    <span class="visually-hidden">Actualizando...</span>
-                                                </div>
-                                                <p class="mt-3 text-white fw-bold">Actualizando asistencias...</p>
-                                            </div>
-                                        </div>
                                         <div class="row g-3 mb-4">
                                             <div class="col-6 col-sm-6 col-lg-3">
                                                 <div class="card stats-card stats-total">
@@ -208,15 +209,6 @@
 
                                     <!-- CASO 2: ES COMISIÓN (múltiples listas) -->
                                     <div *ngIf="esComision">
-                                        <div *ngIf="isUpdatingAsistencia" class="spinner-overlay">
-                                            <div class="spinner-container">
-                                                <div class="spinner-border text-primary" role="status"
-                                                    style="width: 3rem; height: 3rem;">
-                                                    <span class="visually-hidden">Actualizando...</span>
-                                                </div>
-                                                <p class="mt-3 text-white fw-bold">Actualizando asistencias...</p>
-                                            </div>
-                                        </div>
                                         <!-- CONTADOR GENERAL (arriba con estilos fancy) -->
                                         <div class="row g-3 mb-5">
                                             <div class="col-6 col-sm-6 col-lg-3">
@@ -435,7 +427,7 @@
 
                                 </div>
 
-                                <!-- PASO 2 - ORDEN DEL DIA (sin cambios) -->
+                                <!-- PASO 2 - ORDEN DEL DIA -->
                                 <div *ngSwitchCase="2">
                                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                                         <h5 class="mb-0"></h5>
@@ -512,6 +504,42 @@
                                                                 </button>
                                                             </div>
                                                         </div>
+                                                    </div>
+
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-semibold">¿Se turna a comisión?</label>
+                                                        <div class="d-flex gap-3">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio" 
+                                                                    formControlName="se_turna_comision" 
+                                                                    [value]="true" 
+                                                                    id="turnaComisionSi">
+                                                                <label class="form-check-label" for="turnaComisionSi">
+                                                                    Sí
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio" 
+                                                                    formControlName="se_turna_comision" 
+                                                                    [value]="false" 
+                                                                    id="turnaComisionNo">
+                                                                <label class="form-check-label" for="turnaComisionNo">
+                                                                    No
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12" *ngIf="formPunto.get('se_turna_comision')?.value === true">
+                                                        <label class="form-label">Comisión <span class="text-danger">*</span></label>
+                                                        <ng-select [items]="slcComisiones" 
+                                                            bindLabel="nombre" 
+                                                            bindValue="id"
+                                                            [multiple]="true"
+                                                            formControlName="id_comision" 
+                                                            placeholder="Selecciona una o más comisiones"
+                                                            [closeOnSelect]="false">
+                                                        </ng-select>
                                                     </div>
 
                                                     <div class="col-12">
@@ -593,6 +621,42 @@
                                                                         bindLabel="nombre" bindValue="id"
                                                                         formControlName="tribuna"
                                                                         placeholder="Selecciona">
+                                                                    </ng-select>
+                                                                </div>
+
+                                                                <div class="col-12">
+                                                                    <label class="form-label fw-semibold">¿Se turna a comisión?</label>
+                                                                    <div class="d-flex gap-3">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="radio" 
+                                                                                formControlName="se_turna_comision" 
+                                                                                [value]="true" 
+                                                                                [id]="'turnaComisionSi_' + i">
+                                                                            <label class="form-check-label" [for]="'turnaComisionSi_' + i">
+                                                                                Sí
+                                                                            </label>
+                                                                        </div>
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="radio" 
+                                                                                formControlName="se_turna_comision" 
+                                                                                [value]="false" 
+                                                                                [id]="'turnaComisionNo_' + i">
+                                                                            <label class="form-check-label" [for]="'turnaComisionNo_' + i">
+                                                                                No
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-12" *ngIf="punto.form.get('se_turna_comision')?.value === true">
+                                                                    <label class="form-label">Comisión <span class="text-danger">*</span></label>
+                                                                    <ng-select [items]="slcComisiones" 
+                                                                        bindLabel="nombre" 
+                                                                        bindValue="id"
+                                                                        [multiple]="true"
+                                                                        formControlName="id_comision" 
+                                                                        placeholder="Selecciona una o más comisiones"
+                                                                        [closeOnSelect]="false">
                                                                     </ng-select>
                                                                 </div>
 
@@ -714,19 +778,6 @@
 
                                     <!-- CASO SESIÓN: VOTACIONES SIMPLES -->
                                     <div *ngIf="puntoSeleccionadoVotacion && !esComision" class="fade-in">
-                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
-                                            <div class="spinner-container">
-                                                <div class="spinner-border text-primary" role="status"
-                                                    style="width: 3rem; height: 3rem;">
-                                                    <span class="visually-hidden">Actualizando...</span>
-                                                </div>
-                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
-                                            </div>
-                                        </div>
-
-
-
-
                                         <div class="row g-2 mb-3 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total-votacion p-1">
@@ -935,15 +986,6 @@
 
                                     <!-- CASO COMISIÓN: VOTACIONES POR COMISIÓN -->
                                     <div *ngIf="puntoSeleccionadoVotacion && esComision" class="fade-in">
-                                        <div *ngIf="isUpdatingVotacion" class="spinner-overlay">
-                                            <div class="spinner-container">
-                                                <div class="spinner-border text-primary" role="status"
-                                                    style="width: 3rem; height: 3rem;">
-                                                    <span class="visually-hidden">Actualizando...</span>
-                                                </div>
-                                                <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
-                                            </div>
-                                        </div>
                                         <!-- CONTADOR GENERAL -->
                                         <div class="row g-2 mb-5 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
