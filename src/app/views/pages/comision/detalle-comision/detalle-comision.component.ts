@@ -1504,35 +1504,70 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
  
-    this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
-      next: (response: any) => {
+    if(tipo == 2){
+    
+      this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
+        next: (response: any) => {
 
-        Swal.close(); 
-        Swal.fire({
-          toast: true, 
-          position: 'top-end',
-          icon: 'success',
-          title: 'Notificación enviada correctamente',
-          timer: 3000,
-          showConfirmButton: false
-        });
-      },
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
 
-      error: (e: HttpErrorResponse) => {
-        console.error('Error al notificar:', e);
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
 
-        Swal.close();
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo enviar la notificación',
-          toast: true,
-          position: 'top-end',
-          timer: 3000,
-          showConfirmButton: false
-        });
-      }
-    });
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+
+    }else{
+      this._eventoService.notificarWhatsAsistencia(this.idComisionRuta).subscribe({
+        next: (response: any) => {
+
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
+
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+
   }
 
 

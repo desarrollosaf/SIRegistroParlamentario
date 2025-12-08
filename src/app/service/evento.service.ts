@@ -103,5 +103,9 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/enviarvotacionpunto/${id}`)
   }
 
+  notificarWhatsAsistencia(id:any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/notasintenciapdf/${id}`)
+  }
+
 
 }
