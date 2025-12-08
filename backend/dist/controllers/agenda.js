@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.generarPDFVotacion = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -2447,8 +2447,7 @@ exports.enviarWhatsVotacionPDF = enviarWhatsVotacionPDF;
 const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const { id } = req.params; // ID del evento (Agenda)
-        // Obtener información del evento
+        const { id } = req.params;
         const evento = yield agendas_1.default.findOne({
             where: { id },
             include: [
@@ -2459,9 +2458,7 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (!evento) {
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
-        // Determinar tipo de evento
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
-        // Obtener asistencias
         const asistenciasRaw = yield asistencia_votos_1.default.findAll({
             where: { id_agenda: id },
             raw: true,
@@ -2477,19 +2474,19 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
             raw: true,
         });
         const diputadosMap = new Map(diputados.map(d => [d.id, d]));
-        // Obtener partidos
-        const partidoIds = asistenciasRaw.map(a => a.id_partido).filter(Boolean);
+        // Obtener partidos - CAMPO CORREGIDO: partido_dip
+        const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
         const partidos = yield partidos_1.default.findAll({
             where: { id: partidoIds },
             attributes: ["id", "siglas"],
             raw: true,
         });
         const partidosMap = new Map(partidos.map(p => [p.id, p]));
-        // Obtener comisiones y cargos (solo si es comisión)
         let comisionesMap = new Map();
         let cargosMap = new Map();
         if (!esSesion) {
-            const comisionIds = asistenciasRaw.map(a => a.id_comision_dip).filter(Boolean);
+            // CAMPO CORREGIDO: comision_dip_id
+            const comisionIds = asistenciasRaw.map(a => a.comision_dip_id).filter(Boolean);
             if (comisionIds.length > 0) {
                 const comisiones = yield comisions_1.default.findAll({
                     where: { id: comisionIds },
@@ -2508,8 +2505,8 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 cargosMap = new Map(cargos.map(c => [c.id, c]));
             }
         }
-        const getAsistenciaTexto = (asistencia) => {
-            switch (asistencia) {
+        const getAsistenciaTexto = (sentido) => {
+            switch (sentido) {
                 case 1: return "ASISTIÓ";
                 case 2: return "FALTA";
                 case 3: return "RETARDO";
@@ -2518,19 +2515,20 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 default: return "PENDIENTE";
             }
         };
-        // Mapear asistencias con detalles
+        // Mapear asistencias con detalles - CAMPOS CORREGIDOS
         const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
             var _a, _b, _c;
             const diputado = diputadosMap.get(asistencia.id_diputado);
-            const partido = partidosMap.get(asistencia.id_partido);
-            const comision = comisionesMap.get(asistencia.id_comision_dip);
+            const partido = partidosMap.get(asistencia.partido_dip); // CORREGIDO
+            const comision = comisionesMap.get(asistencia.comision_dip_id); // CORREGIDO
             const cargo = cargosMap.get(asistencia.id_cargo_dip);
             const nombreCompletoDiputado = diputado
                 ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
                 : "Sin nombre";
-            return Object.assign(Object.assign({}, asistencia), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido", comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || null, comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo_nombre: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999, asistenciaTexto: getAsistenciaTexto(asistencia.asistencia), asistenciaNumerico: asistencia.asistencia });
+            return Object.assign(Object.assign({}, asistencia), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido", comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || null, comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo_nombre: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999, asistenciaTexto: getAsistenciaTexto(asistencia.sentido_voto), asistenciaNumerico: asistencia.sentido_voto // CORREGIDO
+             });
         });
-        // Calcular totales
+        // Calcular totales - CAMPO CORREGIDO
         const totales = {
             asistio: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
             falta: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
@@ -2789,3 +2787,251 @@ function getColorAsistencia(asistencia) {
         default: return '#6b7280';
     }
 }
+// ===== FUNCIÓN PARA ENVIAR POR WHATSAPP =====
+const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const asistenciasRaw = yield asistencia_votos_1.default.findAll({
+            where: { id_agenda: id },
+            raw: true,
+        });
+        if (asistenciasRaw.length === 0) {
+            return res.status(404).json({ msg: "No hay asistencias registradas para este evento" });
+        }
+        // Obtener diputados
+        const diputadoIds = asistenciasRaw.map(a => a.id_diputado).filter(Boolean);
+        const diputados = yield diputado_1.default.findAll({
+            where: { id: diputadoIds },
+            attributes: ["id", "apaterno", "amaterno", "nombres"],
+            raw: true,
+        });
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+        // Obtener partidos - CAMPO CORREGIDO
+        const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
+        const partidos = yield partidos_1.default.findAll({
+            where: { id: partidoIds },
+            attributes: ["id", "siglas"],
+            raw: true,
+        });
+        const partidosMap = new Map(partidos.map(p => [p.id, p]));
+        let comisionesMap = new Map();
+        let cargosMap = new Map();
+        if (!esSesion) {
+            // CAMPO CORREGIDO
+            const comisionIds = asistenciasRaw.map(a => a.comision_dip_id).filter(Boolean);
+            if (comisionIds.length > 0) {
+                const comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre", "importancia"],
+                    raw: true,
+                });
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            }
+            const cargoIds = asistenciasRaw.map(a => a.id_cargo_dip).filter(Boolean);
+            if (cargoIds.length > 0) {
+                const cargos = yield tipo_cargo_comisions_1.default.findAll({
+                    where: { id: cargoIds },
+                    attributes: ["id", "valor", "nivel"],
+                    raw: true,
+                });
+                cargosMap = new Map(cargos.map(c => [c.id, c]));
+            }
+        }
+        const getAsistenciaTexto = (sentido) => {
+            switch (sentido) {
+                case 1: return "ASISTIÓ";
+                case 2: return "FALTA";
+                case 3: return "RETARDO";
+                case 4: return "JUSTIFICÓ";
+                case 0: return "PENDIENTE";
+                default: return "PENDIENTE";
+            }
+        };
+        // Mapear asistencias con detalles - CAMPOS CORREGIDOS
+        const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(asistencia.id_diputado);
+            const partido = partidosMap.get(asistencia.partido_dip); // CORREGIDO
+            const comision = comisionesMap.get(asistencia.comision_dip_id); // CORREGIDO
+            const cargo = cargosMap.get(asistencia.id_cargo_dip);
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : "Sin nombre";
+            return Object.assign(Object.assign({}, asistencia), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido", comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || null, comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo_nombre: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999, asistenciaTexto: getAsistenciaTexto(asistencia.sentido_voto), asistenciaNumerico: asistencia.sentido_voto // CORREGIDO
+             });
+        });
+        // Calcular totales
+        const totales = {
+            asistio: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
+            falta: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
+            retardo: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 3).length,
+            justifico: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 4).length,
+            pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
+        };
+        // Crear PDF
+        const doc = new pdfkit_1.default({
+            size: 'LETTER',
+            margins: { top: 50, bottom: 50, left: 50, right: 50 },
+            bufferPages: true
+        });
+        const fileName = `asistencia-evento-${id}-${Date.now()}.pdf`;
+        const outputPath = path_1.default.join(__dirname, '../../storage/pdfs', fileName);
+        const dir = path_1.default.dirname(outputPath);
+        if (!fs_1.default.existsSync(dir)) {
+            fs_1.default.mkdirSync(dir, { recursive: true });
+        }
+        const writeStream = fs_1.default.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+        // ===== DISEÑO DEL PDF =====
+        // Encabezado
+        doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+        doc.moveDown(1);
+        // Información del Evento
+        doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+        doc.moveDown(0.3);
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Tipo: ${((_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) || 'N/A'}`);
+        doc.text(`Sede: ${((_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede) || 'N/A'}`);
+        doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
+        doc.text(`Descripción: ${evento.descripcion || 'N/A'}`, { width: 500 });
+        doc.moveDown(1);
+        // Resumen de Asistencia
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
+        doc.moveDown(0.3);
+        const tableTop = doc.y;
+        const colWidths = [100, 80, 80, 90, 80];
+        const rowHeight = 25;
+        // Encabezados de tabla
+        doc.fontSize(9).font('Helvetica-Bold');
+        doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
+        doc.fillColor('#fff').text('ASISTIÓ', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
+        doc.fillColor('#fff').text('FALTA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
+        doc.fillColor('#fff').text('RETARDO', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#3b82f6', '#000');
+        doc.fillColor('#fff').text('JUSTIFICÓ', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#6b7280', '#000');
+        doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 8, { width: colWidths[4] - 10, align: 'center' });
+        // Valores de totales
+        const valuesTop = tableTop + rowHeight;
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.asistio.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.falta.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.retardo.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.justifico.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 5, { width: colWidths[4] - 10, align: 'center' });
+        doc.moveDown(3);
+        const totalDiputados = asistenciasConDetalles.length;
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
+        doc.text(`TOTAL DE DIPUTADOS: ${totalDiputados}`, 50, doc.y, { align: 'left' });
+        doc.moveDown(1.5);
+        // Detalle de asistencia según tipo
+        if (esSesion) {
+            generarDetalleSesionAsistencia(doc, asistenciasConDetalles);
+        }
+        else {
+            generarDetalleComisionAsistencia(doc, asistenciasConDetalles);
+        }
+        // Agregar pie de página
+        const range = doc.bufferedPageRange();
+        for (let i = 0; i < range.count; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8).font('Helvetica').fillColor('#666');
+            doc.text(`Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`, 50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
+        }
+        doc.end();
+        // Esperar a que el PDF se genere completamente
+        yield new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+        console.log('PDF de asistencia generado exitosamente en:', outputPath);
+        // ===== ENVIAR POR WHATSAPP =====
+        // Preparar mensaje de texto
+        let fechaFormateada = "";
+        if (evento.fecha) {
+            fechaFormateada = (0, date_fns_1.format)(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
+        }
+        const mensajeTexto = `*ASISTENCIA - ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'Evento'}*\n\n` +
+            `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
+            `*Sede:* ${((_e = evento.sede) === null || _e === void 0 ? void 0 : _e.sede) || 'N/A'}\n` +
+            `*Fecha:* ${fechaFormateada}\n\n` +
+            `*Resumen:*\n` +
+            `Asistio: ${totales.asistio}\n` +
+            `Falta: ${totales.falta}\n` +
+            `Retardo: ${totales.retardo}\n` +
+            `Justifico: ${totales.justifico}\n` +
+            `Pendiente: ${totales.pendiente}\n\n` +
+            `Total de diputados: ${totalDiputados}\n\n` +
+            `Adjunto PDF con detalle completo`;
+        // Verificar que el archivo existe
+        if (!fs_1.default.existsSync(outputPath)) {
+            throw new Error('El archivo PDF no se generó correctamente');
+        }
+        // Leer el archivo y convertirlo a base64
+        const pdfBuffer = fs_1.default.readFileSync(outputPath);
+        const base64PDF = pdfBuffer.toString('base64');
+        console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
+        console.log('Enviando PDF por WhatsApp...');
+        // Enviar documento usando base64
+        const params = {
+            token: 'ml56a7d6tn7ha7cc',
+            to: '+527222035605',
+            filename: fileName,
+            document: base64PDF,
+            caption: mensajeTexto
+        };
+        const whatsappResponse = yield axios_1.default.post('https://api.ultramsg.com/instance144598/messages/document', new URLSearchParams(params), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            timeout: 60000,
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
+        });
+        console.log('Respuesta de WhatsApp API:', whatsappResponse.data);
+        return res.status(200).json({
+            message: "PDF de asistencia generado y enviado por WhatsApp correctamente",
+            enviado: true,
+            archivo: fileName,
+            totales,
+            whatsappResponse: whatsappResponse.data
+        });
+    }
+    catch (error) {
+        console.error("Error completo al generar y enviar PDF de asistencia:", error);
+        if (axios_1.default.isAxiosError(error)) {
+            console.error("Error de Axios:", {
+                message: error.message,
+                code: error.code,
+                response: (_f = error.response) === null || _f === void 0 ? void 0 : _f.data
+            });
+        }
+        return res.status(500).json({
+            message: "Error al generar y enviar PDF de asistencia por WhatsApp",
+            error: error.message,
+            details: axios_1.default.isAxiosError(error) ? (_g = error.response) === null || _g === void 0 ? void 0 : _g.data : undefined
+        });
+    }
+});
+exports.enviarWhatsAsistenciaPDF = enviarWhatsAsistenciaPDF;
