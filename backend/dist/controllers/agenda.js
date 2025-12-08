@@ -2900,10 +2900,19 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         if (evento.fecha) {
             fechaFormateada = (0, date_fns_1.format)(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
         }
+        let infoComisiones = "";
+        if (!esSesion) {
+            const comisionesUnicas = [...new Set(asistenciasConDetalles
+                    .map(a => a.comision_nombre)
+                    .filter(nombre => nombre && nombre !== 'Sin Comisión'))].sort();
+            if (comisionesUnicas.length > 0) {
+                infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+            }
+        }
         const mensajeTexto = `*ASISTENCIA - ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'Evento'}*\n\n` +
             `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
             `*Sede:* ${((_e = evento.sede) === null || _e === void 0 ? void 0 : _e.sede) || 'N/A'}\n` +
-            `*Fecha:* ${fechaFormateada}\n\n` +
+            `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
             `*Resumen:*\n` +
             `Asistencia: ${totales.asistencia}\n` +
             `Asistencia Zoom: ${totales.asistenciaZoom}\n` +
