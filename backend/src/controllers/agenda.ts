@@ -1945,7 +1945,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605",
+      to: "+527222035605, +527224986377",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -2850,7 +2850,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // Enviar documento usando base64
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: '+527222035605',
+      to: "+527222035605, +527224986377",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -3531,7 +3531,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: '+527222035605',
+      to: "+527222035605, +527224986377",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto

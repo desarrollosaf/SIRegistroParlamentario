@@ -1683,7 +1683,7 @@ const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
         const params = {
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605",
+            to: "+527222035605, +527224986377",
             body: mensaje,
             priority: "1",
             referenceId: "",
@@ -2405,7 +2405,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         // Enviar documento usando base64
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: '+527222035605',
+            to: "+527222035605, +527224986377",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
@@ -2919,7 +2919,7 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         console.log('Enviando PDF por WhatsApp...');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: '+527222035605',
+            to: "+527222035605, +527224986377",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
