@@ -3508,10 +3508,23 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
     }
 
+    let infoComisiones = "";
+    if (!esSesion) {
+      const comisionesUnicas = [...new Set(
+        asistenciasConDetalles
+          .map(a => a.comision_nombre)
+          .filter(nombre => nombre && nombre !== 'Sin Comisión')
+      )].sort();
+
+      if (comisionesUnicas.length > 0) {
+        infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+      }
+    }
+
     const mensajeTexto = `*ASISTENCIA - ${evento.tipoevento?.nombre || 'Evento'}*\n\n` +
       `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
       `*Sede:* ${evento.sede?.sede || 'N/A'}\n` +
-      `*Fecha:* ${fechaFormateada}\n\n` +
+      `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
       `*Resumen:*\n` +
       `Asistencia: ${totales.asistencia}\n` +
       `Asistencia Zoom: ${totales.asistenciaZoom}\n` +
