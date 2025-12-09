@@ -2262,6 +2262,16 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       }
     };
 
+    const getColorSentido = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return '#22c55e'; // Verde - A FAVOR
+        case 3: return '#dc2626'; // Rojo - EN CONTRA
+        case 2: return '#f59e0b'; // Amarillo - ABSTENCIÓN
+        case 0: return '#6b7280'; // Gris - PENDIENTE
+        default: return '#6b7280';
+      }
+    };
+
     // Mapear votos con detalles
     const votosConDetalles = votosRaw.map((voto) => {
       const diputado = diputadosMap.get(voto.id_diputado);
@@ -2320,7 +2330,7 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     doc.pipe(res);
 
     // Ruta de la imagen de fondo
-    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva.jpg");
 
     // Función para dibujar fondo de página
     const drawBackground = () => {
@@ -2385,8 +2395,8 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     // Encabezados de tabla
     doc.fontSize(11).font('Helvetica-Bold');
 
-    // A FAVOR - Azul
-    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
+    // A FAVOR - Verde
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
     doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
     // EN CONTRA - Rojo
@@ -2401,8 +2411,8 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
     doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    // TOTAL - Gris
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#6b7280', '#000');
+    // TOTAL - Azul
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#1e40af', '#000');
     doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 7, { width: colWidths[4] - 10, align: 'center' });
 
     // Valores de totales
@@ -2431,9 +2441,9 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     // ===== DETALLE DE VOTACIÓN SEGÚN TIPO DE EVENTO =====
     
     if (esSesion) {
-      generarDetalleSesion(doc, votosConDetalles, drawBackground);
+      generarDetalleSesion(doc, votosConDetalles, drawBackground, getColorSentido);
     } else {
-      generarDetalleComision(doc, votosConDetalles, drawBackground);
+      generarDetalleComision(doc, votosConDetalles, drawBackground, getColorSentido);
     }
 
     doc.end();
@@ -2455,82 +2465,65 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
   }
 };
 
-function generarDetalleSesion(doc: any, votos: any[], drawBackground: () => void) {
-
+function generarDetalleSesion(doc: any, votos: any[], drawBackground: () => void, getColorSentido: (sentido: number) => string) {
+  // TÍTULO CENTRADO
   doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN', { align: 'center' });
   doc.moveDown(0.5);
 
-  const votosPorSentido = {
-    favor: votos.filter(v => v.sentidoNumerico === 1),
-    contra: votos.filter(v => v.sentidoNumerico === 3),
-    abstencion: votos.filter(v => v.sentidoNumerico === 2),
-    pendiente: votos.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
-  };
+  // Ordenar alfabéticamente
+  const votosOrdenados = [...votos].sort((a, b) => 
+    a.diputado.localeCompare(b.diputado, 'es')
+  );
 
-  const crearTablaSesion = (titulo: string, votosLista: any[], color: string) => {
-    if (votosLista.length === 0) return;
+  const startY = doc.y;
+  const colX = { no: 50, diputado: 75, partido: 390, sentido: 455 };
 
-    if (doc.y > 650) {
+  // Encabezado guinda #96134b
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+  doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b', '#000');
+  doc.fillColor('#fff');
+  doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+  doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 305 });
+  doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 60 });
+  doc.text('SENTIDO', colX.sentido + 3, startY + 6, { width: 85 });
+
+  let currentY = startY + 20;
+
+  votosOrdenados.forEach((voto, index) => {
+    if (currentY > 700) {
       doc.addPage();
       drawBackground();
-      doc.y = 106;
+      currentY = 106;
+      
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+      doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b', '#000');
+      doc.fillColor('#fff');
+      doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+      doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 305 });
+      doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 60 });
+      doc.text('SENTIDO', colX.sentido + 3, currentY + 6, { width: 85 });
+      currentY += 20;
     }
 
-    doc.fontSize(11).font('Helvetica-Bold').fillColor(color);
-    doc.text(`${titulo} (${votosLista.length})`, 50, doc.y, { align: 'left' });
-    doc.moveDown(0.5);
+    doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
 
-    const startY = doc.y;
-    const colX = { no: 50, diputado: 80, partido: 400 };
+    doc.fontSize(8).font('Helvetica').fillColor('#000');
+    doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+    doc.text(voto.diputado, colX.diputado + 3, currentY + 5, { width: 305, ellipsis: true });
+    doc.text(voto.partido, colX.partido + 3, currentY + 5, { width: 60 });
+    
+    // Sentido con color
+    doc.fillColor(getColorSentido(voto.sentidoNumerico));
+    doc.text(voto.sentidoTexto, colX.sentido + 3, currentY + 5, { width: 85 });
 
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-    doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
-    doc.fillColor('#fff');
-    doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
-    doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 310 });
-    doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 110 });
+    currentY += 18;
+  });
 
-    let currentY = startY + 20;
-
-    const votosOrdenados = [...votosLista].sort((a, b) => 
-      a.diputado.localeCompare(b.diputado, 'es')
-    );
-
-    votosOrdenados.forEach((voto, index) => {
-      if (currentY > 700) {
-        doc.addPage();
-        drawBackground();
-        currentY = 106;
-        
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-        doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
-        doc.fillColor('#fff');
-        doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
-        doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 310 });
-        doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 110 });
-        currentY += 20;
-      }
-
-      doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
-
-      doc.fontSize(8).font('Helvetica').fillColor('#000');
-      doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
-      doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 310 });
-      doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 110 });
-
-      currentY += 18;
-    });
-
-    doc.moveDown(1.5);
-  };
-
-  crearTablaSesion('A FAVOR', votosPorSentido.favor, '#1e40af');
-  crearTablaSesion('EN CONTRA', votosPorSentido.contra, '#dc2626');
-  crearTablaSesion('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
-  crearTablaSesion('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
+  doc.moveDown(1.5);
 }
 
-function generarDetalleComision(doc: any, votos: any[], drawBackground: () => void) {
+function generarDetalleComision(doc: any, votos: any[], drawBackground: () => void, getColorSentido: (sentido: number) => string) {
+  // TÍTULO CENTRADO
   doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN POR COMISIÓN', { align: 'center' });
   doc.moveDown(0.5);
 
@@ -2560,87 +2553,66 @@ function generarDetalleComision(doc: any, votos: any[], drawBackground: () => vo
       doc.y = 106;
     }
 
-    // Título de la comisión
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#2563eb');
+    // Título de la comisión en NEGRO
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
     doc.text(`${comision.nombre.toUpperCase()}`, 50, doc.y, { align: 'left' });
     doc.moveDown(0.5);
 
     // Ordenar votos por nivel de cargo
     const votosOrdenados = [...comision.votos].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
 
-    const votosPorSentido = {
-      favor: votosOrdenados.filter(v => v.sentidoNumerico === 1),
-      contra: votosOrdenados.filter(v => v.sentidoNumerico === 3),
-      abstencion: votosOrdenados.filter(v => v.sentidoNumerico === 2),
-      pendiente: votosOrdenados.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
-    };
+    const startY = doc.y;
+    const colX = { no: 50, diputado: 75, cargo: 310, partido: 410, sentido: 465 };
 
-    const crearTablaComision = (titulo: string, votosLista: any[], color: string) => {
-      if (votosLista.length === 0) return;
+    // Encabezado guinda #96134b
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+    doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b', '#000');
+    doc.fillColor('#fff');
+    doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+    doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 225 });
+    doc.text('CARGO', colX.cargo + 3, startY + 6, { width: 90 });
+    doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 50 });
+    doc.text('SENTIDO', colX.sentido + 3, startY + 6, { width: 75 });
 
-      if (doc.y > 650) {
+    let currentY = startY + 20;
+
+    votosOrdenados.forEach((voto, index) => {
+      if (currentY > 700) {
         doc.addPage();
         drawBackground();
-        doc.y = 106;
+        currentY = 106;
+        
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
+        doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
+        currentY += 25;
+        
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+        doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b', '#000');
+        doc.fillColor('#fff');
+        doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+        doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 225 });
+        doc.text('CARGO', colX.cargo + 3, currentY + 6, { width: 90 });
+        doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 50 });
+        doc.text('SENTIDO', colX.sentido + 3, currentY + 6, { width: 75 });
+        currentY += 20;
       }
 
-      doc.fontSize(10).font('Helvetica-Bold').fillColor(color);
-      doc.text(`  ${titulo} (${votosLista.length})`, 50, doc.y, { align: 'left' });
-      doc.moveDown(0.3);
+      doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
 
-      const startY = doc.y;
-      const colX = { no: 50, diputado: 80, cargo: 300, partido: 420 };
+      doc.fontSize(8).font('Helvetica').fillColor('#000');
+      doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+      doc.text(voto.diputado, colX.diputado + 3, currentY + 5, { width: 225, ellipsis: true });
+      doc.text(voto.cargo || 'Sin cargo', colX.cargo + 3, currentY + 5, { width: 90, ellipsis: true });
+      doc.text(voto.partido, colX.partido + 3, currentY + 5, { width: 50 });
 
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-      doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
-      doc.fillColor('#fff');
-      doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
-      doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 210 });
-      doc.text('CARGO', colX.cargo + 5, startY + 6, { width: 110 });
-      doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 90 });
+      // Sentido con color
+      doc.fillColor(getColorSentido(voto.sentidoNumerico));
+      doc.text(voto.sentidoTexto, colX.sentido + 3, currentY + 5, { width: 75 });
 
-      let currentY = startY + 20;
+      currentY += 18;
+    });
 
-      votosLista.forEach((voto, index) => {
-        if (currentY > 700) {
-          doc.addPage();
-          drawBackground();
-          currentY = 106;
-          
-          doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb');
-          doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
-          currentY += 25;
-          
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-          doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
-          doc.fillColor('#fff');
-          doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
-          doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 210 });
-          doc.text('CARGO', colX.cargo + 5, currentY + 6, { width: 110 });
-          doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 90 });
-          currentY += 20;
-        }
-
-        doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
-
-        doc.fontSize(8).font('Helvetica').fillColor('#000');
-        doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
-        doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 210 });
-        doc.text(voto.cargo || 'Sin cargo', colX.cargo + 5, currentY + 5, { width: 110 });
-        doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 90 });
-
-        currentY += 18;
-      });
-
-      doc.moveDown(0.8);
-    };
-
-    crearTablaComision('A FAVOR', votosPorSentido.favor, '#1e40af');
-    crearTablaComision('EN CONTRA', votosPorSentido.contra, '#dc2626');
-    crearTablaComision('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
-    crearTablaComision('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
-
-    doc.moveDown(1);
+    doc.moveDown(1.5);
   });
 }
 
@@ -2734,6 +2706,16 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       }
     };
 
+    const getColorSentido = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return '#22c55e'; // Verde - A FAVOR
+        case 3: return '#dc2626'; // Rojo - EN CONTRA
+        case 2: return '#f59e0b'; // Amarillo - ABSTENCIÓN
+        case 0: return '#6b7280'; // Gris - PENDIENTE
+        default: return '#6b7280';
+      }
+    };
+
     // Mapear votos con detalles
     const votosConDetalles = votosRaw.map((voto) => {
       const diputado = diputadosMap.get(voto.id_diputado);
@@ -2853,8 +2835,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // Encabezados de tabla
     doc.fontSize(11).font('Helvetica-Bold');
 
-    // A FAVOR - Azul
-    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
+    // A FAVOR - Verde
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
     doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
     // EN CONTRA - Rojo
@@ -2869,8 +2851,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
     doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    // TOTAL - Gris
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#6b7280', '#000');
+    // TOTAL - Azul
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#1e40af', '#000');
     doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 7, { width: colWidths[4] - 10, align: 'center' });
 
     // Valores de totales
@@ -2898,9 +2880,9 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     // Detalle de votación según tipo
     if (esSesion) {
-      generarDetalleSesion(doc, votosConDetalles, drawBackground);
+      generarDetalleSesion(doc, votosConDetalles, drawBackground, getColorSentido);
     } else {
-      generarDetalleComision(doc, votosConDetalles, drawBackground);
+      generarDetalleComision(doc, votosConDetalles, drawBackground, getColorSentido);
     }
 
     doc.end();
@@ -2995,6 +2977,9 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
   }
 };
+
+
+//////////////////////////////////
 
 export const generarPDFAsistencia = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -3356,7 +3341,7 @@ function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBack
     }
 
     // Título de la comisión
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb');
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
     doc.text(comision.nombre.toUpperCase(), 50, doc.y, { align: 'left' });
     doc.moveDown(0.5);
 
@@ -3386,7 +3371,7 @@ function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBack
         
         currentY = 106; // Empezar después del fondo
         
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb');
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
         doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
         
         currentY += 25;
@@ -3432,8 +3417,6 @@ function getColorAsistencia(asistencia: number): string {
     default: return '#f59e0b';
   }
 }
-
-// ===== FUNCIÓN PARA ENVIAR POR WHATSAPP =====
 
 export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Promise<any> => {
   try {
