@@ -1668,7 +1668,7 @@ const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void
         }
         yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377",
+            to: "+527222035605, +527224986377, +527151605569",
             body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
             priority: "1",
             referenceId: "",
@@ -1723,7 +1723,7 @@ const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
         const params = {
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377",
+            to: "+527222035605, +527224986377, +527151605569",
             body: mensaje,
             priority: "1",
             referenceId: "",
@@ -2486,10 +2486,20 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         if (evento.fecha) {
             fechaFormateada = (0, date_fns_1.format)(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
         }
+        // Obtener listado de comisiones únicas si NO es sesión
+        let infoComisiones = "";
+        if (!esSesion) {
+            const comisionesUnicas = [...new Set(votosConDetalles
+                    .map(v => v.comision_nombre)
+                    .filter(nombre => nombre && nombre !== 'Sin comisión'))].sort();
+            if (comisionesUnicas.length > 0) {
+                infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+            }
+        }
         const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
             `*Punto:* ${punto.punto || 'N/A'}\n` +
             `*Evento:* ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'N/A'}\n` +
-            `*Fecha:* ${fechaFormateada}\n\n` +
+            `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
             `*Resultados:*\n` +
             `A favor: ${totales.favor}\n` +
             `En contra: ${totales.contra}\n` +
@@ -2509,7 +2519,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         // Enviar documento usando base64
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: "+527222035605, +527224986377",
+            to: "+527222035605, +527224986377, +527151605569",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
@@ -3082,7 +3092,7 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         console.log('Enviando PDF por WhatsApp...');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: "+527222035605, +527224986377",
+            to: "+527222035605, +527224986377, +527151605569",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
