@@ -2653,10 +2653,8 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         doc.pipe(res);
-
         // Ruta de la imagen de fondo
         const bgPath = path_1.default.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
-
         // Función para dibujar fondo de página
         const drawBackground = () => {
             doc.image(bgPath, 0, 0, {
