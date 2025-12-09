@@ -22,7 +22,7 @@ import Intervencion from "../models/intervenciones";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
-import TipoCargoComision, { tipo_cargo_comisions } from "../models/tipo_cargo_comisions";
+import TipoCargoComision from "../models/tipo_cargo_comisions";
 import TipoAutor from "../models/tipo_autors";
 import { comisiones } from "../models/init-models";
 import Municipios from "../models/municipios";
@@ -38,6 +38,8 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
+
+
 
 
 
@@ -80,10 +82,10 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
       }
     );
 
+
     const eventosConComisiones = [];
 
     for (const evento of eventos) {
-     
       const anfitriones = await AnfitrionAgenda.findAll({
         where: { agenda_id: evento.id },
         attributes: ["autor_id"],
@@ -1417,7 +1419,7 @@ async function obtenerResultadosVotacionOptimizado(
         raw: true,
       });
       cargosMap = new Map(
-        cargos.map(c => [c.id, c])
+        cargos.map(c => [c.id, c] )
       );
     }
   }
