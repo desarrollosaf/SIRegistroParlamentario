@@ -1874,9 +1874,6 @@ const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, funct
         doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
         doc.moveDown(3);
         const totalVotos = votosConDetalles.length;
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-        doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
-        doc.moveDown(1.5);
         // ===== DETALLE DE VOTACIÓN SEGÚN TIPO DE EVENTO =====
         if (esSesion) {
             // ===== SESIÓN: Lista plana ordenada alfabéticamente =====
@@ -2151,6 +2148,19 @@ const addDipLista = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             id_agenda: body.id_agenda,
             id_cargo_dip: body.id_cargo_dip
         });
+        const temavotos = yield temas_puntos_votos_1.default.findAll({
+            where: { id_evento: body.id_agenda }
+        });
+        for (const tema of temavotos) {
+            yield tema.createVotospunto({
+                sentido: 0,
+                mensaje,
+                id_diputado: body.id_diputado,
+                id_partido: body.id_partido,
+                id_comision_dip: body.comision_dip_id,
+                id_cargo_dip: body.id_cargo_dip
+            });
+        }
         return res.json({
             msg: "Diputado agregado correctamente",
             estatus: 200,
@@ -2168,18 +2178,30 @@ exports.addDipLista = addDipLista;
 const Eliminarlista = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const integrante = yield asistencia_votos_1.default.findOne({
-            where: { id }
-        });
+        const integrante = yield asistencia_votos_1.default.findOne({ where: { id } });
         if (!integrante) {
             return res.status(404).json({
                 msg: "El diputado no existe en la lista",
                 estatus: 404
             });
         }
+        const temas = yield temas_puntos_votos_1.default.findAll({
+            where: { id_evento: integrante.id_agenda },
+            attributes: ["id"]
+        });
+        const temasIds = temas.map(t => t.id);
+        if (temasIds.length > 0) {
+            yield votos_punto_1.default.destroy({
+                where: {
+                    id_diputado: integrante.id_diputado,
+                    id_comision_dip: integrante.comision_dip_id,
+                    id_tema_punto_voto: temasIds
+                }
+            });
+        }
         yield integrante.destroy();
         return res.json({
-            msg: "Diputado eliminado de la lista correctamente",
+            msg: "Diputado y votos correspondientes eliminados correctamente",
             estatus: 200
         });
     }
@@ -2353,9 +2375,6 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
         doc.moveDown(3);
         const totalVotos = votosConDetalles.length;
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-        doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
-        doc.moveDown(1.5);
         // Detalle de votación según tipo
         if (esSesion) {
             generarDetalleSesion(doc, votosConDetalles);
@@ -2530,6 +2549,7 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
             asistenciaZoom: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
             pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
         };
+        const totalDiputados = asistenciasConDetalles.length;
         // Crear PDF
         const doc = new pdfkit_1.default({
             size: 'LETTER',
@@ -2547,67 +2567,90 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         doc.pipe(res);
+        // Ruta de la imagen de fondo
+        const bgPath = path_1.default.join(__dirname, "../assets/hojacartacampaniasalud2.jpg");
+        // Función para dibujar fondo de página
+        const drawBackground = () => {
+            doc.image(bgPath, 0, 0, {
+                width: doc.page.width,
+                height: doc.page.height,
+            });
+            doc.y = 106; // Fijar posición inicial después del fondo
+        };
+        // Dibujar fondo en la primera página
+        drawBackground();
         // ===== DISEÑO DEL PDF =====
         // Encabezado
         doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
         doc.moveDown(0.5);
-        doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+        doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
         doc.moveDown(1);
         // Información del Evento
-        doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+        doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
         doc.moveDown(0.3);
-        doc.fontSize(10).font('Helvetica');
-        doc.text(`Tipo: ${((_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) || 'N/A'}`);
-        doc.text(`Sede: ${((_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede) || 'N/A'}`);
-        doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
-        doc.text(`Descripción: ${evento.descripcion || 'N/A'}`, { width: 500 });
+        // Tipo
+        doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
+        doc.fontSize(11).font('Helvetica').text(((_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) || 'N/A');
+        // Sede
+        doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
+        doc.fontSize(11).font('Helvetica').text(((_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede) || 'N/A');
+        // Fecha
+        doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+        doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+        // Descripción (justificada)
+        doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+        doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
         doc.moveDown(1);
         // Resumen de Asistencia
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
         doc.moveDown(0.3);
         const tableTop = doc.y;
-        const colWidths = [170, 170, 140];
+        const colWidths = [120, 120, 120, 100];
         const rowHeight = 25;
         // Encabezados de tabla
-        doc.fontSize(9).font('Helvetica-Bold');
+        doc.fontSize(11).font('Helvetica-Bold');
         // ASISTENCIA - Verde
         doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
-        doc.fillColor('#fff').text('ASISTENCIA', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+        doc.fillColor('#fff').text('ASISTENCIA', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
         // ASISTENCIA ZOOM - Azul
         doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#3b82f6', '#000');
-        doc.fillColor('#fff').text('ASISTENCIA ZOOM', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+        doc.fillColor('#fff').text('ASISTENCIA ZOOM', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
         // PENDIENTE - Amarillo
         doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
-        doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
-        // Valores de totales
+        doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
+        // TOTAL - Gris
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
+        doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
+        // Valores
         const valuesTop = tableTop + rowHeight;
-        doc.fontSize(14).font('Helvetica-Bold');
+        doc.fontSize(11).font('Helvetica-Bold');
         doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
-        doc.fillColor('#000').text(totales.asistencia.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+        doc.fillColor('#000').text(totales.asistencia.toString(), 55, valuesTop + 7, { width: colWidths[0] - 10, align: 'center' });
         doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
-        doc.fillColor('#000').text(totales.asistenciaZoom.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+        doc.fillColor('#000').text(totales.asistenciaZoom.toString(), 50 + colWidths[0] + 5, valuesTop + 7, { width: colWidths[1] - 10, align: 'center' });
         doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
-        doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
-        doc.moveDown(3);
-        const totalDiputados = asistenciasConDetalles.length;
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-        doc.text(`TOTAL DE DIPUTADOS: ${totalDiputados}`, 50, doc.y, { align: 'left' });
-        doc.moveDown(1.5);
+        doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 7, { width: colWidths[2] - 10, align: 'center' });
+        doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+        doc.fillColor('#000').text(totalDiputados.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
+        doc.moveDown(2);
+        doc.x = doc.page.margins.left;
         // ===== DETALLE DE ASISTENCIA SEGÚN TIPO DE EVENTO =====
         if (esSesion) {
-            generarDetalleSesionAsistencia(doc, asistenciasConDetalles);
+            generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
         }
         else {
-            generarDetalleComisionAsistencia(doc, asistenciasConDetalles);
+            generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground);
         }
-        // Agregar pie de página
+        doc.end();
+        // Esperar a que se generen todas las páginas
+        yield new Promise((resolve) => setTimeout(resolve, 100));
+        // DESPUÉS agregar pie de página a TODAS las páginas ya generadas
         const range = doc.bufferedPageRange();
         for (let i = 0; i < range.count; i++) {
             doc.switchToPage(i);
             doc.fontSize(8).font('Helvetica').fillColor('#666');
             doc.text(`Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`, 50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
         }
-        doc.end();
         yield new Promise((resolve, reject) => {
             writeStream.on('finish', resolve);
             writeStream.on('error', reject);
@@ -2624,115 +2667,128 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.generarPDFAsistencia = generarPDFAsistencia;
-function generarDetalleSesionAsistencia(doc, asistencias) {
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA');
+function generarDetalleSesionAsistencia(doc, asistencias, drawBackground) {
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA', { align: 'center' });
     doc.moveDown(0.5);
-    const asistenciasOrdenadas = [...asistencias].sort((a, b) => a.diputado.localeCompare(b.diputado));
+    // Ordenar alfabéticamente
+    const asistenciasOrdenadas = [...asistencias].sort((a, b) => a.diputado.localeCompare(b.diputado, 'es'));
     const startY = doc.y;
-    const colX = {
-        numero: 50,
-        diputado: 80,
-        partido: 380,
-        asistencia: 450
-    };
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
-    doc.text('#', colX.numero, startY);
-    doc.text('DIPUTADO', colX.diputado, startY);
-    doc.text('PARTIDO', colX.partido, startY);
-    doc.text('ASISTENCIA', colX.asistencia, startY);
-    doc.moveDown(0.3);
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.3);
-    doc.fontSize(9).font('Helvetica');
+    const colX = { no: 50, diputado: 75, partido: 390, asistencia: 455 };
+    // Encabezado con estilo de votaciones
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+    doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b');
+    doc.fillColor('#fff');
+    doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+    doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 305 });
+    doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 60 });
+    doc.text('ASISTENCIA', colX.asistencia + 3, startY + 6, { width: 85 });
+    let currentY = startY + 20;
     asistenciasOrdenadas.forEach((asist, index) => {
-        const currentY = doc.y;
         if (currentY > 700) {
             doc.addPage();
-            doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
-            doc.text('#', colX.numero, doc.y);
-            doc.text('DIPUTADO', colX.diputado, doc.y);
-            doc.text('PARTIDO', colX.partido, doc.y);
-            doc.text('ASISTENCIA', colX.asistencia, doc.y);
-            doc.moveDown(0.3);
-            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-            doc.moveDown(0.3);
-            doc.fontSize(9).font('Helvetica');
+            drawBackground(); // Dibujar fondo en nueva página
+            currentY = 106; // Posición inicial después del fondo
+            // Re-dibujar encabezado
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+            doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b');
+            doc.fillColor('#fff');
+            doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+            doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 305 });
+            doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 60 });
+            doc.text('ASISTENCIA', colX.asistencia + 3, currentY + 6, { width: 85 });
+            currentY += 20;
         }
-        const rowY = doc.y;
-        doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
-        doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 290 });
-        doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
+        // Borde de fila
+        doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
+        doc.fontSize(8).font('Helvetica').fillColor('#000');
+        doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+        doc.text(asist.diputado, colX.diputado + 3, currentY + 5, { width: 305, ellipsis: true });
+        doc.text(asist.partido, colX.partido + 3, currentY + 5, { width: 60 });
+        // Asistencia con color
         const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
-        doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 90 });
-        doc.moveDown(0.8);
+        doc.fillColor(colorAsistencia);
+        doc.text(asist.asistenciaTexto, colX.asistencia + 3, currentY + 5, { width: 85 });
+        currentY += 18;
     });
+    doc.moveDown(1.5);
 }
-function generarDetalleComisionAsistencia(doc, asistencias) {
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN');
+function generarDetalleComisionAsistencia(doc, asistencias, drawBackground) {
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN', { align: 'center' });
     doc.moveDown(0.5);
-    const asistenciasPorComision = asistencias.reduce((acc, asist) => {
-        const comisionKey = asist.comision_nombre || 'Sin Comisión';
-        if (!acc[comisionKey]) {
-            acc[comisionKey] = {
-                nombre: comisionKey,
-                importancia: asist.comision_importancia || 999,
+    // Agrupar por comisión
+    const asistenciasPorComision = asistencias.reduce((grupos, asist) => {
+        const comision = asist.comision_nombre || 'Sin comisión';
+        if (!grupos[comision]) {
+            grupos[comision] = {
+                nombre: comision,
+                importancia: asist.comision_importancia,
                 asistencias: []
             };
         }
-        acc[comisionKey].asistencias.push(asist);
-        return acc;
+        grupos[comision].asistencias.push(asist);
+        return grupos;
     }, {});
+    // Ordenar comisiones por importancia
     const comisionesOrdenadas = Object.values(asistenciasPorComision).sort((a, b) => a.importancia - b.importancia);
     comisionesOrdenadas.forEach((comision) => {
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
-        doc.text(comision.nombre.toUpperCase(), 50, doc.y);
-        doc.moveDown(0.3);
+        // Verificar espacio para título + tabla (necesita al menos 100px)
+        if (doc.y > 650) {
+            doc.addPage();
+            drawBackground(); // Dibujar fondo en nueva página
+            doc.y = 106; // Posición inicial después del fondo
+        }
+        // Título de la comisión
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb');
+        doc.text(comision.nombre.toUpperCase(), 50, doc.y, { align: 'left' });
+        doc.moveDown(0.5);
+        // Ordenar asistencias por nivel de cargo
         const asistenciasOrdenadas = [...comision.asistencias].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
-        const colX = {
-            numero: 50,
-            cargo: 80,
-            diputado: 180,
-            partido: 400,
-            asistencia: 470
-        };
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-        doc.text('#', colX.numero, doc.y);
-        doc.text('CARGO', colX.cargo, doc.y);
-        doc.text('DIPUTADO', colX.diputado, doc.y);
-        doc.text('PARTIDO', colX.partido, doc.y);
-        doc.text('ASISTENCIA', colX.asistencia, doc.y);
-        doc.moveDown(0.2);
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown(0.2);
-        doc.fontSize(8).font('Helvetica');
+        const startY = doc.y;
+        const colX = { no: 50, diputado: 75, cargo: 310, partido: 410, asistencia: 465 };
+        // Encabezado con estilo de votaciones
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+        doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b');
+        doc.fillColor('#fff');
+        doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+        doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 225 });
+        doc.text('CARGO', colX.cargo + 3, startY + 6, { width: 90 });
+        doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 50 });
+        doc.text('ASISTENCIA', colX.asistencia + 3, startY + 6, { width: 75 });
+        let currentY = startY + 20;
         asistenciasOrdenadas.forEach((asist, index) => {
-            const currentY = doc.y;
+            // Verificar espacio para nueva fila
             if (currentY > 700) {
                 doc.addPage();
-                doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
-                doc.text(`${comision.nombre.toUpperCase()} (continuación)`, 50, doc.y);
-                doc.moveDown(0.3);
-                doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-                doc.text('#', colX.numero, doc.y);
-                doc.text('CARGO', colX.cargo, doc.y);
-                doc.text('DIPUTADO', colX.diputado, doc.y);
-                doc.text('PARTIDO', colX.partido, doc.y);
-                doc.text('ASISTENCIA', colX.asistencia, doc.y);
-                doc.moveDown(0.2);
-                doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-                doc.moveDown(0.2);
-                doc.fontSize(8).font('Helvetica');
+                drawBackground(); // Dibujar fondo en nueva página
+                currentY = 106; // Empezar después del fondo
+                doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb');
+                doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
+                currentY += 25;
+                // Re-dibujar encabezado
+                doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+                doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b');
+                doc.fillColor('#fff');
+                doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+                doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 225 });
+                doc.text('CARGO', colX.cargo + 3, currentY + 6, { width: 90 });
+                doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 50 });
+                doc.text('ASISTENCIA', colX.asistencia + 3, currentY + 6, { width: 75 });
+                currentY += 20;
             }
-            const rowY = doc.y;
-            doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
-            doc.fillColor('#000').text(asist.cargo_nombre || 'N/A', colX.cargo, rowY, { width: 90 });
-            doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 210 });
-            doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
+            // Borde de fila
+            doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
+            doc.fontSize(8).font('Helvetica').fillColor('#000');
+            doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+            doc.text(asist.diputado, colX.diputado + 3, currentY + 5, { width: 225, ellipsis: true });
+            doc.text(asist.cargo_nombre || 'Sin cargo', colX.cargo + 3, currentY + 5, { width: 90, ellipsis: true });
+            doc.text(asist.partido, colX.partido + 3, currentY + 5, { width: 50 });
+            // Asistencia con color
             const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
-            doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 80 });
-            doc.moveDown(0.7);
+            doc.fillColor(colorAsistencia);
+            doc.text(asist.asistenciaTexto, colX.asistencia + 3, currentY + 5, { width: 75 });
+            currentY += 18;
         });
-        doc.moveDown(0.5);
+        doc.moveDown(1.5);
     });
 }
 function getColorAsistencia(asistencia) {
@@ -2874,9 +2930,6 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
         doc.moveDown(3);
         const totalDiputados = asistenciasConDetalles.length;
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-        doc.text(`TOTAL DE DIPUTADOS: ${totalDiputados}`, 50, doc.y, { align: 'left' });
-        doc.moveDown(1.5);
         if (esSesion) {
             generarDetalleSesionAsistencia(doc, asistenciasConDetalles);
         }
