@@ -1160,8 +1160,14 @@ exports.getvotacionpunto = getvotacionpunto;
 function obtenerListadoDiputados(evento) {
     return __awaiter(this, void 0, void 0, function* () {
         const listadoDiputados = [];
+        const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
+            where: { valor: "Diputado Asociado" }
+        });
         const diputados = yield asistencia_votos_1.default.findAll({
-            where: { id_agenda: evento.id },
+            where: {
+                id_agenda: evento.id,
+                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
+            }
         });
         for (const inteLegis of diputados) {
             listadoDiputados.push({
@@ -1176,8 +1182,14 @@ function obtenerListadoDiputados(evento) {
 }
 function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
     return __awaiter(this, void 0, void 0, function* () {
+        const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
+            where: { valor: "Diputado Asociado" }
+        });
         const votosRaw = yield votos_punto_1.default.findAll({
-            where: { id_tema_punto_voto: idTemaPuntoVoto },
+            where: {
+                id_tema_punto_voto: idTemaPuntoVoto,
+                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
+            },
             raw: true,
         });
         if (votosRaw.length === 0) {
@@ -2288,8 +2300,13 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         if (!temavotos) {
             return res.status(404).json({ msg: "No hay votaciones para este punto" });
         }
+        const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
+            where: { valor: "Diputado Asociado" }
+        });
         const votosRaw = yield votos_punto_1.default.findAll({
-            where: { id_tema_punto_voto: temavotos.id },
+            where: { id_tema_punto_voto: temavotos.id,
+                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
+            },
             raw: true,
         });
         if (votosRaw.length === 0) {
@@ -2520,6 +2537,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         const params = {
             token: 'ml56a7d6tn7ha7cc',
             to: "+527222035605, +527224986377, +527151605569",
+            // to: "+527222035605, +527224986377,",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
