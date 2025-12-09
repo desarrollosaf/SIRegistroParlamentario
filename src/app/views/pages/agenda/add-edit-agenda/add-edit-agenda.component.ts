@@ -330,7 +330,7 @@ export class AddEditAgendaComponent {
             if (result.isConfirmed) {
               this.limpiarFormulario();
             } else {
-              this.router.navigate(['/agenda-comision']);
+              this.router.navigate(['/agenda-comision/sesiones']);
             }
           });
         },
