@@ -49,6 +49,23 @@ const path_1 = __importDefault(require("path"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { id } = req.params;
+        console.log(id);
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        let whereTipoEvento;
+        if (id === '1') {
+            whereTipoEvento = { id: uuidSesion };
+        }
+        else if (id === '0') {
+            whereTipoEvento = {
+                id: {
+                    [sequelize_1.Op.ne]: uuidSesion
+                }
+            };
+        }
+        else {
+            whereTipoEvento = {};
+        }
         const eventos = yield agendas_1.default.findAll({
             include: [
                 {
@@ -59,13 +76,36 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 {
                     model: tipo_eventos_1.default,
                     as: "tipoevento",
-                    attributes: ["id", "nombre"]
+                    attributes: ["id", "nombre"],
+                    where: whereTipoEvento
                 }
             ],
+            order: [['fecha', 'DESC']]
         });
+        const eventosConComisiones = [];
+        for (const evento of eventos) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            let titulo = '';
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
+            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
+                titulo }));
+        }
         return res.status(200).json({
             msg: "listoooo :v ",
-            citas: eventos
+            citas: eventosConComisiones
         });
     }
     catch (error) {
@@ -2624,8 +2664,10 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         doc.pipe(res);
+
         // Ruta de la imagen de fondo
         const bgPath = path_1.default.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+
         // Función para dibujar fondo de página
         const drawBackground = () => {
             doc.image(bgPath, 0, 0, {
