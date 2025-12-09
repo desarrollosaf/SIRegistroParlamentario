@@ -205,11 +205,11 @@ export class AddEditAgendaComponent {
         cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.router.navigate(['/agenda-comision']);
+          this.router.navigate(['/agenda-comision/sesiones']);
         }
       });
     } else {
-      this.router.navigate(['/agenda-comision']);
+      this.router.navigate(['/agenda-comision/sesiones']);
     }
   }
 
@@ -305,7 +305,7 @@ export class AddEditAgendaComponent {
             showConfirmButton: false,
             timer: 2000
           });
-          this.router.navigate(['/agenda-comision']);
+          this.router.navigate(['/agenda-comision/sesiones']);
 
         },
         error: (e: HttpErrorResponse) => {

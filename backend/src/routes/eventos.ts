@@ -4,7 +4,7 @@ import  upload  from "../controllers/multer";
 const router = Router();
 
 
-router.get("/api/eventos/geteventos/", geteventos );
+router.get("/api/eventos/geteventos/:id", geteventos );
 router.get("/api/eventos/getevento/:id", getevento );
 router.post("/api/eventos/actasistencia/", actualizar );
 router.get("/api/eventos/catalogos/", catalogos );
