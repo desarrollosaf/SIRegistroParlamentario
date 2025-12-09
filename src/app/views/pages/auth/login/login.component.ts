@@ -48,7 +48,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/agenda-comision';
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/agenda-comision/sesiones';
 
   }
 
