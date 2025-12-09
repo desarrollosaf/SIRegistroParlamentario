@@ -40,6 +40,7 @@ import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
 
 
+
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
@@ -1300,9 +1301,16 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
 async function obtenerListadoDiputados(evento: any) {
   const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null }[] = [];
   
-  const diputados = await AsistenciaVoto.findAll({
-        where: { id_agenda: evento.id },
-  });
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const diputados = await AsistenciaVoto.findAll({
+      where: {
+        id_agenda: evento.id,
+        id_cargo_dip: { [Op.ne]: dipasociados!.id }
+      }
+    });
     for (const inteLegis of diputados) {
             listadoDiputados.push({
             id_diputado: inteLegis.id_diputado,
@@ -1342,9 +1350,16 @@ async function obtenerResultadosVotacionOptimizado(
   idTemaPuntoVoto: string,
   tipoEvento: 'sesion' | 'comision'
 ): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
-  
+    
+  const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+  });
+
   const votosRaw = await VotosPunto.findAll({
-    where: { id_tema_punto_voto: idTemaPuntoVoto },
+    where: { 
+      id_tema_punto_voto: idTemaPuntoVoto,
+      id_cargo_dip: { [Op.ne]: dipasociados!.id }
+    },
     raw: true,
   });
   
@@ -2699,9 +2714,13 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     if (!temavotos) {
       return res.status(404).json({ msg: "No hay votaciones para este punto" });
     }
-
+    const dipasociados = await TipoCargoComision.findOne({
+        where: { valor: "Diputado Asociado" }
+    });
     const votosRaw = await VotosPunto.findAll({
-      where: { id_tema_punto_voto: temavotos.id },
+      where: { id_tema_punto_voto: temavotos.id,
+         id_cargo_dip: { [Op.ne]: dipasociados!.id }
+      },
       raw: true,
     });
 
@@ -3002,6 +3021,7 @@ if (!esSesion) {
     const params = {
       token: 'ml56a7d6tn7ha7cc',
       to: "+527222035605, +527224986377, +527151605569",
+      // to: "+527222035605, +527224986377,",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
