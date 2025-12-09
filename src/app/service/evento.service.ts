@@ -19,8 +19,8 @@ export class EventoService {
   }
 
 
-  getEventos(): Observable<any> {
-    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/`)
+  getEventos(tipo: String): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/${tipo}`)
   }
 
   getEvento(id: String): Observable<any> {

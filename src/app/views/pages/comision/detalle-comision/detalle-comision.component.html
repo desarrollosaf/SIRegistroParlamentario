@@ -523,7 +523,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-12">
+                                                    <div class="col-12" *ngIf="!esComision">
                                                         <label class="form-label fw-semibold">¿Se turna a comisión?</label>
                                                         <div class="d-flex gap-3">
                                                             <div class="form-check">
@@ -547,7 +547,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-12" *ngIf="formPunto.get('se_turna_comision')?.value === true">
+                                                    <div class="col-12" *ngIf="formPunto.get('se_turna_comision')?.value === true && !esComision">
                                                         <label class="form-label">Comisión <span class="text-danger">*</span></label>
                                                         <ng-select [items]="slcComisiones" 
                                                             bindLabel="nombre" 
@@ -641,7 +641,7 @@
                                                                     </ng-select>
                                                                 </div>
 
-                                                                <div class="col-12">
+                                                                <div class="col-12" *ngIf="!esComision">
                                                                     <label class="form-label fw-semibold">¿Se turna a comisión?</label>
                                                                     <div class="d-flex gap-3">
                                                                         <div class="form-check">
@@ -665,7 +665,7 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-12" *ngIf="punto.form.get('se_turna_comision')?.value === true">
+                                                                <div class="col-12" *ngIf="punto.form.get('se_turna_comision')?.value === true && !esComision">
                                                                     <label class="form-label">Comisión <span class="text-danger">*</span></label>
                                                                     <ng-select [items]="slcComisiones" 
                                                                         bindLabel="nombre" 

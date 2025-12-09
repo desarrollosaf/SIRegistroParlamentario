@@ -51,7 +51,7 @@ export const routes: Routes = [
        loadChildren: () => import('./views/pages/agenda/agenda.route')
       },
       {
-      path: 'agenda-comision',
+       path: 'agenda-comision/:tipo',
        loadChildren: () => import('./views/pages/comision/comision.route')
       },
       {

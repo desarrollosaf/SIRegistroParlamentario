@@ -4,7 +4,7 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="card-title">Agenda</h6>
-                <button class="btn btn-sm btn-primary me-2" [routerLink]="['/agenda-comision/add']">
+                <button class="btn btn-sm btn-primary me-2" [routerLink]="['add']">
                     <ng-container>
                         <i class="arrow-right-circle"></i> Agregar
                     </ng-container>
@@ -52,8 +52,10 @@
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
                             prop="tipoevento" name="Tipo evento">
                             <ng-template let-row="row" ngx-datatable-cell-template>
-                                {{row.tipoevento.nombre}}
+                                {{row.tipoevento.nombre}}<br>
+                                {{row.titulo}}
                             </ng-template>
+                           
                         </ngx-datatable-column>
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Detalles">
@@ -62,10 +64,10 @@
                                     <a class="btn btn-secondary action-btn" routerLink="detalle-comision/{{ row.id }}"
                                         data-bs-toggle="tooltip" data-bs-placement="top" title="Ir">
                                         <i class="bi bi-arrow-right-circle"></i>
-                                    </a>
+                                    </a> 
 
                                     <a class="btn btn-primary action-btn"
-                                        routerLink="/agenda-comision/edit/{{ row.id }}" data-bs-toggle="tooltip"
+                                        routerLink="edit/{{ row.id }}" data-bs-toggle="tooltip"
                                         data-bs-placement="top" title="Editar ">
                                         <i class="bi bi-pencil"></i>
                                     </a>
