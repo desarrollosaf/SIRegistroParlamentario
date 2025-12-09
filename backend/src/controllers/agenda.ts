@@ -1937,7 +1937,7 @@ const enviarWhatsIntervencion = async (intervencion: any) => {
       "https://api.ultramsg.com/instance144598/messages/chat",
       new URLSearchParams({
         token: "ml56a7d6tn7ha7cc",
-        to: "+527222035605, +527224986377",
+        to: "+527222035605, +527224986377, +527151605569",
         body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
         priority: "1",
         referenceId: "",
@@ -2002,7 +2002,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605, +527224986377",
+      to: "+527222035605, +527224986377, +527151605569",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -2960,17 +2960,31 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
     }
 
-    const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
-      `*Punto:* ${punto.punto || 'N/A'}\n` +
-      `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
-      `*Fecha:* ${fechaFormateada}\n\n` +
-      `*Resultados:*\n` +
-      `A favor: ${totales.favor}\n` +
-      `En contra: ${totales.contra}\n` +
-      `Abstencion: ${totales.abstencion}\n` +
-      `Pendiente: ${totales.pendiente}\n\n` +
-      `Total de votos: ${totalVotos}\n\n` +
-      `Adjunto PDF con detalle completo`;
+    // Obtener listado de comisiones únicas si NO es sesión
+let infoComisiones = "";
+if (!esSesion) {
+  const comisionesUnicas = [...new Set(
+    votosConDetalles
+      .map(v => v.comision_nombre)
+      .filter(nombre => nombre && nombre !== 'Sin comisión')
+  )].sort();
+
+  if (comisionesUnicas.length > 0) {
+    infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+  }
+}
+
+  const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+  `*Punto:* ${punto.punto || 'N/A'}\n` +
+  `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
+  `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
+  `*Resultados:*\n` +
+  `A favor: ${totales.favor}\n` +
+  `En contra: ${totales.contra}\n` +
+  `Abstencion: ${totales.abstencion}\n` +
+  `Pendiente: ${totales.pendiente}\n\n` +
+  `Total de votos: ${totalVotos}\n\n` +
+  `Adjunto PDF con detalle completo`;
 
     // Verificar que el archivo existe
     if (!fs.existsSync(outputPath)) {
@@ -2987,7 +3001,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // Enviar documento usando base64
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+527222035605, +527224986377",
+      to: "+527222035605, +527224986377, +527151605569",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -3739,7 +3753,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+527222035605, +527224986377",
+      to: "+527222035605, +527224986377, +527151605569",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
