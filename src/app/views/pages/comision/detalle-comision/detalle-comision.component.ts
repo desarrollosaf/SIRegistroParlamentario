@@ -123,8 +123,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       tribuna: [''],
       punto: [''],
       observaciones: [''],
-      se_turna_comision: [false], 
-      id_comision: [[]] 
+      se_turna_comision: [false], // <-- NUEVO
+      id_comision: [[]] // <-- NUEVO (array vacío para multi-select)
     });
 
     // NUEVO: Suscribirse a cambios de se_turna_comision para manejar validaciones
@@ -657,14 +657,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargarOrdenDia(): void {
     this.mostrarFormularioPunto = false;
     this.formPunto.reset({
-      se_turna_comision: false 
+      se_turna_comision: false // <-- Establecer valor por defecto
     });
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response);
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
-        this.slcComisiones = response.comisiones; 
+        this.slcComisiones = response.comisiones; // <-- CARGAR COMISIONES
         this.slcTipIntervencion = response.tipointer;
         this.cargarPuntosRegistrados();
       },
@@ -705,7 +705,18 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           console.log(presentanIds);
           
-          // MODIFICADO: Agregar campos del switch de comisión al form de cada punto
+          // Extraer los id_comision del array turnocomision
+          let comisionesIds: string[] = [];
+          if (punto.turnocomision && Array.isArray(punto.turnocomision) && punto.turnocomision.length > 0) {
+            comisionesIds = punto.turnocomision
+              .map((tc: any) => tc.id_comision)
+              .filter((id: any) => id !== null && id !== undefined);
+          }
+
+          // Determinar si se turna a comisión basado en si hay comisiones
+          const seTurnaComision = comisionesIds.length > 0;
+          
+    
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -719,12 +730,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               tribuna: [punto.tribuna],
               punto: [punto.punto],
               observaciones: [punto.observaciones],
-              se_turna_comision: [punto.se_turna_comision || false], // <-- NUEVO
-              id_comision: [punto.id_comision || []] // <-- NUEVO (array vacío por defecto)
+              se_turna_comision: [seTurnaComision],
+              id_comision: [comisionesIds] 
             })
           };
 
-          // NUEVO: Suscribirse a cambios en cada form de punto
+          // Suscribirse a cambios en cada form de punto
           puntoMapeado.form.get('se_turna_comision')?.valueChanges.subscribe((value: boolean) => {
             const comisionControl = puntoMapeado.form.get('id_comision');
             if (value === true) {
@@ -757,8 +768,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   getTipoPParaPunto(event: any, punto: any): void {
     if (event && Array.isArray(event) && event.length > 0) {
-      punto.form.get('tipo')?.setValue(null);
-      punto.form.get('presenta')?.setValue([]);
+      // punto.form.get('tipo')?.setValue(null);
+      // punto.form.get('presenta')?.setValue([]);
       const idsProponentes = event.map(item => item.id);
       this.cargarTiposParaPunto(punto, idsProponentes);
     } else {
@@ -814,7 +825,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
-  //CAMBIO PUNTO
+
   guardarCambiosPunto(punto: any) {
 
     const formData = new FormData();
@@ -826,9 +837,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', punto.nuevoDocumento);
     }
 
-    formData.forEach((valor, clave) => {
-      console.log(clave, valor);
-    });
+    // formData.forEach((valor, clave) => {
+    //   console.log(clave, valor);
+    // });
 
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
@@ -1056,8 +1067,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   getTipoP(id?: any): void {
-    this.formPunto.get('tipo')?.setValue(null);
-    this.formPunto.get('presenta')?.setValue(null);
+    // this.formPunto.get('tipo')?.setValue(null);
+    // this.formPunto.get('presenta')?.setValue(null);
 
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
@@ -1097,7 +1108,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-//GUARDA PUNTO
+
   guardarPunto() {
     if (this.formPunto.invalid) {
       this.formPunto.markAllAsTouched();
@@ -1113,9 +1124,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
 
-    formData.forEach((valor, clave) => {
-      console.log(clave, valor);
-    });
+    // formData.forEach((valor, clave) => {
+    //   console.log(clave, valor);
+    // });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
@@ -1479,9 +1490,87 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
+  notificarWhats(tipo: number): void {
+    console.log(tipo);
+
+ 
+    Swal.fire({
+      position: 'center',
+      icon: 'info',
+      title: 'Enviando notificación',
+      text: 'Espere mientras se procesa la solicitud',
+      showConfirmButton: false,
+      allowOutsideClick: false
+    });
+
+ 
+    if(tipo == 2){
+    
+      this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
+        next: (response: any) => {
+
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
+
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+
+    }else{
+      this._eventoService.notificarWhatsAsistencia(this.idComisionRuta).subscribe({
+        next: (response: any) => {
+
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
+
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+
+  }
 
 
-  //este es opcional
   private cargarDatosResumen(): void {
 
   }

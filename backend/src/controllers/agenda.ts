@@ -42,25 +42,82 @@ import PuntosComisiones from "../models/puntos_comisiones";
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
+    const { id } = req.params;
+    console.log(id)
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+
+    let whereTipoEvento;
+
+    if (id === '1') {
+      whereTipoEvento = { id: uuidSesion };
+    } else if (id === '0') {
+      whereTipoEvento = {
+        id: {
+          [Op.ne]: uuidSesion 
+        }
+      };
+    } else {
+      whereTipoEvento = {};
+    }
+
     const eventos = await Agenda.findAll(
       {
         include: [
-        {
-          model: Sedes,
-          as: "sede",
-          attributes: ["id", "sede"]
-        },
-        {
-          model: TipoEventos,
-          as: "tipoevento",
-          attributes: ["id", "nombre"]
-        }
-      ],  
+          {
+            model: Sedes,
+            as: "sede",
+            attributes: ["id", "sede"]
+          },
+          {
+            model: TipoEventos,
+            as: "tipoevento",
+            attributes: ["id", "nombre"],
+            where: whereTipoEvento
+          }
+        ],
+        order: [['fecha', 'DESC']]  
       }
     );
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+     
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
     return res.status(200).json({
       msg: "listoooo :v ",
-      citas: eventos
+      citas: eventosConComisiones
     });
   } catch (error) {
     console.error("Error obteniendo eventos:", error);
@@ -3115,8 +3172,10 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     doc.pipe(res);
 
+
     // Ruta de la imagen de fondo
     const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+
 
     // Función para dibujar fondo de página
     const drawBackground = () => {
