@@ -2608,7 +2608,7 @@ const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         doc.pipe(res);
         // Ruta de la imagen de fondo ../assets/hojacartacampaniasalud2.jpg
-        const bgPath = path_1.default.join(__dirname, "");
+        const bgPath = path_1.default.join(__dirname, "../assets/hojacartacampaniasalud2.jpg");
         // Función para dibujar fondo de página
         const drawBackground = () => {
             doc.image(bgPath, 0, 0, {

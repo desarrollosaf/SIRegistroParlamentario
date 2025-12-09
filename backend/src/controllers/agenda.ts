@@ -3120,7 +3120,7 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     doc.pipe(res);
 
     // Ruta de la imagen de fondo ../assets/hojacartacampaniasalud2.jpg
-    const bgPath = path.join(__dirname, "");
+    const bgPath = path.join(__dirname, "../assets/hojacartacampaniasalud2.jpg");
 
     // Función para dibujar fondo de página
     const drawBackground = () => {
