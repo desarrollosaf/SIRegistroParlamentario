@@ -1448,14 +1448,19 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const idPermanente = yield tipo_comisions_1.default.findOne({
             where: { valor: 'Diputación Permanente' }
         });
-        let permanente = {};
+        let permanente = [];
         if (idPermanente) {
             const dips = yield comisions_1.default.findAll({
                 where: { tipo_comision_id: idPermanente.id },
-                attributes: ['id', ['nombre', 'name']]
+                attributes: ['id', 'nombre']
             });
-            permanente = Object.fromEntries(dips.map(item => [item.id, item.nombre]));
+            permanente = dips.map(item => ({
+                id: item.id,
+                name: item.nombre
+            }));
         }
+        // console.log("holaaa:1",permanente)
+        // return 500;
         const legisla = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
@@ -1477,7 +1482,7 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 var _a, _b, _c;
                 return ({
                     id: d.diputado.id,
-                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+                    name: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
                 });
             });
         }
