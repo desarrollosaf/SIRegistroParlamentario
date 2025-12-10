@@ -22,7 +22,6 @@ import Intervencion from "../models/intervenciones";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
-import TipoCargoComision from "../models/tipo_cargo_comisions";
 import TipoAutor from "../models/tipo_autors";
 import { comisiones } from "../models/init-models";
 import Municipios from "../models/municipios";
@@ -38,6 +37,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
+import TipoCargoComision from "../models/tipo_cargo_comisions";
 
 
 
@@ -1310,7 +1310,6 @@ async function obtenerListadoDiputados(evento: any) {
     const diputados = await AsistenciaVoto.findAll({
       where: {
         id_agenda: evento.id,
-        id_cargo_dip: { [Op.ne]: dipasociados!.id }
       }
     });
     for (const inteLegis of diputados) {
@@ -1360,7 +1359,6 @@ async function obtenerResultadosVotacionOptimizado(
   const votosRaw = await VotosPunto.findAll({
     where: { 
       id_tema_punto_voto: idTemaPuntoVoto,
-      id_cargo_dip: { [Op.ne]: dipasociados!.id }
     },
     raw: true,
   });
@@ -2721,7 +2719,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
     const votosRaw = await VotosPunto.findAll({
       where: { id_tema_punto_voto: temavotos.id,
-         id_cargo_dip: { [Op.ne]: dipasociados!.id }
       },
       raw: true,
     });
@@ -3023,7 +3020,7 @@ if (!esSesion) {
     const params = {
       token: 'ml56a7d6tn7ha7cc',
       to: "+527222035605, +527224986377, +527151605569",
-      // to: "+527222035605, +527224986377,",
+      // to: "+527222035605,",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto

@@ -33,7 +33,6 @@ const intervenciones_1 = __importDefault(require("../models/intervenciones"));
 const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const sequelize_2 = require("sequelize");
-const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const tipo_autors_1 = __importDefault(require("../models/tipo_autors"));
 const otros_autores_1 = __importDefault(require("../models/otros_autores"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
@@ -47,6 +46,7 @@ const pdfkit_1 = __importDefault(require("pdfkit"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
+const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1166,7 +1166,6 @@ function obtenerListadoDiputados(evento) {
         const diputados = yield asistencia_votos_1.default.findAll({
             where: {
                 id_agenda: evento.id,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             }
         });
         for (const inteLegis of diputados) {
@@ -1188,7 +1187,6 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
         const votosRaw = yield votos_punto_1.default.findAll({
             where: {
                 id_tema_punto_voto: idTemaPuntoVoto,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             },
             raw: true,
         });
@@ -2305,7 +2303,6 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         });
         const votosRaw = yield votos_punto_1.default.findAll({
             where: { id_tema_punto_voto: temavotos.id,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             },
             raw: true,
         });
@@ -2537,7 +2534,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         const params = {
             token: 'ml56a7d6tn7ha7cc',
             to: "+527222035605, +527224986377, +527151605569",
-            // to: "+527222035605, +527224986377,",
+            // to: "+527222035605,",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
