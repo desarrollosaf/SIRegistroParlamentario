@@ -1166,7 +1166,6 @@ function obtenerListadoDiputados(evento) {
         const diputados = yield asistencia_votos_1.default.findAll({
             where: {
                 id_agenda: evento.id,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             }
         });
         for (const inteLegis of diputados) {
@@ -1188,7 +1187,6 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
         const votosRaw = yield votos_punto_1.default.findAll({
             where: {
                 id_tema_punto_voto: idTemaPuntoVoto,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             },
             raw: true,
         });
@@ -2305,7 +2303,6 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         });
         const votosRaw = yield votos_punto_1.default.findAll({
             where: { id_tema_punto_voto: temavotos.id,
-                id_cargo_dip: { [sequelize_1.Op.ne]: dipasociados.id }
             },
             raw: true,
         });

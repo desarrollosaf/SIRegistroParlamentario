@@ -1310,7 +1310,6 @@ async function obtenerListadoDiputados(evento: any) {
     const diputados = await AsistenciaVoto.findAll({
       where: {
         id_agenda: evento.id,
-        id_cargo_dip: { [Op.ne]: dipasociados!.id }
       }
     });
     for (const inteLegis of diputados) {
@@ -1360,7 +1359,6 @@ async function obtenerResultadosVotacionOptimizado(
   const votosRaw = await VotosPunto.findAll({
     where: { 
       id_tema_punto_voto: idTemaPuntoVoto,
-      id_cargo_dip: { [Op.ne]: dipasociados!.id }
     },
     raw: true,
   });
@@ -2721,7 +2719,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
     const votosRaw = await VotosPunto.findAll({
       where: { id_tema_punto_voto: temavotos.id,
-         id_cargo_dip: { [Op.ne]: dipasociados!.id }
       },
       raw: true,
     });
