@@ -1678,25 +1678,41 @@ export const catalogossave = async (req: Request, res: Response) => {
     const idPermanente = await TipoComisions.findOne({
       where: { valor: 'Diputación Permanente' }
     });
+    
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
-    let permanente: Record<string, string> = {};
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
+
+    let permanente: SelectOption[] = [];
     if (idPermanente) {
       const dips = await Comision.findAll({
         where: { tipo_comision_id: idPermanente.id },
-        attributes: ['id', ['nombre', 'name']]
+        attributes: ['id', 'nombre']
       });
-
-      permanente = Object.fromEntries(
-        dips.map(item => [item.id, item.nombre])
-      );
+      
+      permanente = dips.map(item => ({
+        id: item.id,
+        name: item.nombre
+      }));
     }
-
+      // console.log("holaaa:1",permanente)
+      // return 500;
     const legisla = await Legislatura.findOne({
       order: [["fecha_inicio", "DESC"]],
     });
 
-    let diputadosArray: { id: string; nombre: string }[] = [];
+    let diputadosArray: { id: string; name: string }[] = [];
 
     if (legisla) {
       const diputados = await IntegranteLegislatura.findAll({
@@ -1713,7 +1729,7 @@ export const catalogossave = async (req: Request, res: Response) => {
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
-              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+              name: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
     }
 
