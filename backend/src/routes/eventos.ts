@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 const router = Router();
 
 
-router.get("/api/eventos/geteventos/", geteventos );
+router.get("/api/eventos/geteventos/:id", geteventos );
 router.get("/api/eventos/getevento/:id", getevento );
 router.post("/api/eventos/actasistencia/", actualizar );
 router.get("/api/eventos/catalogos/", catalogos );
@@ -30,4 +30,5 @@ router.post("/api/eventos/agregardipasistencia/", addDipLista );
 router.get("/api/eventos/deleteintlista/:id", Eliminarlista );
 router.get("/api/eventos/enviarvotacionpunto/:id", enviarWhatsVotacionPDF );
 router.get('/api/eventos/asintenciapdf/:id', generarPDFAsistencia);
+router.get('/api/eventos/notasintenciapdf/:id', enviarWhatsAsistenciaPDF);
 export default router

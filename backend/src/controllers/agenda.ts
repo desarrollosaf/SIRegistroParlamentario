@@ -22,7 +22,6 @@ import Intervencion from "../models/intervenciones";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
-import TipoCargoComision, { tipo_cargo_comisions } from "../models/tipo_cargo_comisions";
 import TipoAutor from "../models/tipo_autors";
 import { comisiones } from "../models/init-models";
 import Municipios from "../models/municipios";
@@ -38,29 +37,90 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
+import TipoCargoComision from "../models/tipo_cargo_comisions";
+
+
+
 
 
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
+    const { id } = req.params;
+    console.log(id)
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+
+    let whereTipoEvento;
+
+    if (id === '1') {
+      whereTipoEvento = { id: uuidSesion };
+    } else if (id === '0') {
+      whereTipoEvento = {
+        id: {
+          [Op.ne]: uuidSesion 
+        }
+      };
+    } else {
+      whereTipoEvento = {};
+    }
+
     const eventos = await Agenda.findAll(
       {
         include: [
-        {
-          model: Sedes,
-          as: "sede",
-          attributes: ["id", "sede"]
-        },
-        {
-          model: TipoEventos,
-          as: "tipoevento",
-          attributes: ["id", "nombre"]
-        }
-      ],  
+          {
+            model: Sedes,
+            as: "sede",
+            attributes: ["id", "sede"]
+          },
+          {
+            model: TipoEventos,
+            as: "tipoevento",
+            attributes: ["id", "nombre"],
+            where: whereTipoEvento
+          }
+        ],
+        order: [['fecha', 'DESC']]  
       }
     );
+
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
     return res.status(200).json({
       msg: "listoooo :v ",
-      citas: eventos
+      citas: eventosConComisiones
     });
   } catch (error) {
     console.error("Error obteniendo eventos:", error);
@@ -74,7 +134,7 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-
+    
     // 1. Obtener evento
     const evento = await Agenda.findOne({
       where: { id },
@@ -83,17 +143,19 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
       ],
     });
-
+    
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-
+    
     // 2. Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
     const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-
-    // 3. Obtener título según tipo de evento
+    
+    // 3. Obtener título y puntos según tipo de evento
     let titulo = "";
+    let puntos: any[] = []; // ✅ Declarar aquí, fuera del if/else
+    
     if (esSesion) {
       titulo = evento.descripcion ?? "";
     } else {
@@ -102,25 +164,45 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         attributes: ["autor_id"],
         raw: true
       });
-      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
       
-      if (comisionIds.length > 0) {
-        const comisiones = await Comision.findAll({
-          where: { id: comisionIds },
-          attributes: ["nombre"],
-          raw: true
+      if (anfitriones.length > 0) { // ✅ Validar antes de continuar
+        const puntosturnados = await PuntosComisiones.findAll({
+          where: { 
+            id_comision: anfitriones.map(a => a.autor_id),
+            id_punto_turno: null 
+          }
         });
-        titulo = comisiones.map(c => c.nombre).join(", ");
+        
+        if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
+          puntos = await PuntosOrden.findAll({
+            where: { 
+              id: puntosturnados.map(p => p.id_punto) 
+            },
+            attributes: ["id", "punto"],
+            raw: true
+          });
+        }
+        
+        const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+        
+        if (comisionIds.length > 0) {
+          const comisiones = await Comision.findAll({
+            where: { id: comisionIds },
+            attributes: ["nombre"],
+            raw: true
+          });
+          titulo = comisiones.map(c => c.nombre).join(", ");
+        }
       }
     }
-
+    
     // 4. Verificar si existen asistencias
     const asistenciasExistentes = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
       order: [['created_at', 'DESC']],
       raw: true,
     });
-
+    
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
       await crearAsistencias(evento, esSesion);
@@ -131,7 +213,6 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         order: [['created_at', 'DESC']],
         raw: true,
       });
-
       const integrantes = await procesarAsistencias(asistenciasNuevas, esSesion);
       
       return res.status(200).json({
@@ -139,21 +220,23 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         evento,
         integrantes,
         titulo,
-        tipoEvento
+        tipoEvento,
+        puntos
       });
     }
-
+    
     // 6. Si SÍ existen asistencias, procesarlas
     const integrantes = await procesarAsistencias(asistenciasExistentes, esSesion);
-
+    
     return res.status(200).json({
       msg: "Evento con asistencias existentes",
       evento,
       integrantes,
       titulo,
-      tipoEvento
+      tipoEvento, // ✅ Faltaba la coma aquí
+      puntos
     });
-
+    
   } catch (error) {
     console.error("Error obteniendo evento:", error);
     return res.status(500).json({
@@ -1243,9 +1326,15 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
 async function obtenerListadoDiputados(evento: any) {
   const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null }[] = [];
   
-  const diputados = await AsistenciaVoto.findAll({
-        where: { id_agenda: evento.id },
-  });
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const diputados = await AsistenciaVoto.findAll({
+      where: {
+        id_agenda: evento.id,
+      }
+    });
     for (const inteLegis of diputados) {
             listadoDiputados.push({
             id_diputado: inteLegis.id_diputado,
@@ -1285,9 +1374,15 @@ async function obtenerResultadosVotacionOptimizado(
   idTemaPuntoVoto: string,
   tipoEvento: 'sesion' | 'comision'
 ): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
-  
+    
+  const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+  });
+
   const votosRaw = await VotosPunto.findAll({
-    where: { id_tema_punto_voto: idTemaPuntoVoto },
+    where: { 
+      id_tema_punto_voto: idTemaPuntoVoto,
+    },
     raw: true,
   });
   
@@ -1345,7 +1440,7 @@ async function obtenerResultadosVotacionOptimizado(
         raw: true,
       });
       cargosMap = new Map(
-        cargos.map(c => [c.id, c])
+        cargos.map(c => [c.id, c] )
       );
     }
   }
@@ -1606,25 +1701,41 @@ export const catalogossave = async (req: Request, res: Response) => {
     const idPermanente = await TipoComisions.findOne({
       where: { valor: 'Diputación Permanente' }
     });
+    
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
-    let permanente: Record<string, string> = {};
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
+
+    let permanente: SelectOption[] = [];
     if (idPermanente) {
       const dips = await Comision.findAll({
         where: { tipo_comision_id: idPermanente.id },
-        attributes: ['id', ['nombre', 'name']]
+        attributes: ['id', 'nombre']
       });
-
-      permanente = Object.fromEntries(
-        dips.map(item => [item.id, item.nombre])
-      );
+      
+      permanente = dips.map(item => ({
+        id: item.id,
+        name: item.nombre
+      }));
     }
-
+      // console.log("holaaa:1",permanente)
+      // return 500;
     const legisla = await Legislatura.findOne({
       order: [["fecha_inicio", "DESC"]],
     });
 
-    let diputadosArray: { id: string; nombre: string }[] = [];
+    let diputadosArray: { id: string; name: string }[] = [];
 
     if (legisla) {
       const diputados = await IntegranteLegislatura.findAll({
@@ -1641,7 +1752,7 @@ export const catalogossave = async (req: Request, res: Response) => {
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
-              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+              name: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
     }
 
@@ -1880,7 +1991,7 @@ const enviarWhatsIntervencion = async (intervencion: any) => {
       "https://api.ultramsg.com/instance144598/messages/chat",
       new URLSearchParams({
         token: "ml56a7d6tn7ha7cc",
-        to: "+527222035605, +527224986377",
+        to: "+527222035605, +527224986377, +527151605569",
         body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
         priority: "1",
         referenceId: "",
@@ -1945,7 +2056,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605",
+      to: "+527222035605, +527224986377, +527151605569",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -1975,445 +2086,6 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Error enviando WhatsApp" });
   }
 };
-
-
-export const generarPDFVotacion = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { id } = req.params;
-    
-    const punto = await PuntosOrden.findOne({ where: { id } });
-    if (!punto) {
-      return res.status(404).json({ msg: "Punto no encontrado" });
-    }
-
-    const evento = await Agenda.findOne({
-      where: { id: punto.id_evento },
-      include: [
-        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
-        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
-      ],
-    });
-    if (!evento) {
-      return res.status(404).json({ msg: "Evento no encontrado" });
-    }
-
-    // Determinar tipo de evento
-    const esSesion = evento.tipoevento?.nombre === "Sesión";
-
-    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
-    if (!temavotos) {
-      return res.status(404).json({ msg: "No hay votaciones para este punto" });
-    }
-
-    const votosRaw = await VotosPunto.findAll({
-      where: { id_tema_punto_voto: temavotos.id },
-      raw: true,
-    });
-
-    if (votosRaw.length === 0) {
-      return res.status(404).json({ msg: "No hay votos registrados" });
-    }
-
-    // Obtener diputados
-    const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-    const diputados = await Diputado.findAll({
-      where: { id: diputadoIds },
-      attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true,
-    });
-    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
-
-    // Obtener partidos
-    const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-    const partidos = await Partidos.findAll({
-      where: { id: partidoIds },
-      attributes: ["id", "siglas"],
-      raw: true,
-    });
-    const partidosMap = new Map(partidos.map(p => [p.id, p]));
-
-    // Obtener comisiones y cargos (solo si es comisión)
-    let comisionesMap = new Map();
-    let cargosMap = new Map();
-    
-    if (!esSesion) {
-      const comisionIds = votosRaw.map(v => v.id_comision_dip).filter(Boolean);
-      if (comisionIds.length > 0) {
-        const comisiones = await Comision.findAll({
-          where: { id: comisionIds },
-          attributes: ["id", "nombre", "importancia"],
-          raw: true,
-        });
-        comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-      }
-
-      const cargoIds = votosRaw.map(v => v.id_cargo_dip).filter(Boolean);
-      if (cargoIds.length > 0) {
-        const cargos = await TipoCargoComision.findAll({
-          where: { id: cargoIds },
-          attributes: ["id", "valor", "nivel"],
-          raw: true,
-        });
-        cargosMap = new Map(cargos.map(c => [c.id, c]));
-      }
-    }
-
-    const getSentidoTexto = (sentido: number): string => {
-      switch (sentido) {
-        case 1: return "A FAVOR";
-        case 2: return "ABSTENCIÓN";
-        case 3: return "EN CONTRA";
-        case 0: return "PENDIENTE";
-        default: return "PENDIENTE";
-      }
-    };
-
-    // Mapear votos con detalles
-    const votosConDetalles = votosRaw.map((voto) => {
-      const diputado = diputadosMap.get(voto.id_diputado);
-      const partido = partidosMap.get(voto.id_partido);
-      const comision = comisionesMap.get(voto.id_comision_dip);
-      const cargo = cargosMap.get(voto.id_cargo_dip);
-      
-      const nombreCompletoDiputado = diputado
-        ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
-        : "Sin nombre";
-      
-      return {
-        ...voto,
-        diputado: nombreCompletoDiputado,
-        partido: partido?.siglas || "Sin partido",
-        comision_nombre: comision?.nombre || null,
-        comision_importancia: comision?.importancia || 999,
-        cargo: cargo?.nombre || null,
-        nivel_cargo: cargo?.nivel || 999,
-        sentidoTexto: getSentidoTexto(voto.sentido),
-        sentidoNumerico: voto.sentido
-      };
-    });
-
-    // Calcular totales
-    const totales = {
-      favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
-      contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
-      abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
-      pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
-    };
-
-    // Crear PDF
-    const doc = new PDFDocument({ 
-      size: 'LETTER', 
-      margins: { top: 50, bottom: 50, left: 50, right: 50 },
-      bufferPages: true
-    });
-
-    const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
-    const outputPath = path.join(__dirname, '../../storage/pdfs', fileName);
-
-    const dir = path.dirname(outputPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const writeStream = fs.createWriteStream(outputPath);
-    doc.pipe(writeStream);
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    doc.pipe(res);
-
-    // ===== DISEÑO DEL PDF =====
-
-    // Encabezado
-    doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
-    doc.moveDown(1);
-
-    // Información del Evento
-    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
-    doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Tipo: ${evento.tipoevento?.nombre || 'N/A'}`);
-    doc.text(`Sede: ${evento.sede?.sede || 'N/A'}`);
-    doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
-    doc.moveDown(1);
-
-    // Información del Punto
-    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
-    doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Número: ${punto.nopunto || 'N/A'}`);
-    doc.text(`Descripción: ${punto.punto || 'N/A'}`, { width: 500 });
-    doc.moveDown(1);
-
-    // Resumen de Votación
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
-    doc.moveDown(0.3);
-
-    const tableTop = doc.y;
-    const colWidths = [130, 100, 100, 100];
-    const rowHeight = 25;
-
-    // Encabezados de tabla
-    doc.fontSize(10).font('Helvetica-Bold');
-
-    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
-    doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
-    doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
-    doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
-    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
-
-    // Valores de totales
-    const valuesTop = tableTop + rowHeight;
-    doc.fontSize(14).font('Helvetica-Bold');
-
-    doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
-
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
-
-    doc.moveDown(3);
-
-    const totalVotos = votosConDetalles.length;
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-    doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
-    doc.moveDown(1.5);
-
-    // ===== DETALLE DE VOTACIÓN SEGÚN TIPO DE EVENTO =====
-    
-    if (esSesion) {
-      // ===== SESIÓN: Lista plana ordenada alfabéticamente =====
-      generarDetalleSesion(doc, votosConDetalles);
-    } else {
-      // ===== COMISIÓN: Agrupado por comisión y ordenado por cargo =====
-      generarDetalleComision(doc, votosConDetalles);
-    }
-
-    // Agregar pie de página
-    const range = doc.bufferedPageRange();
-    
-    for (let i = 0; i < range.count; i++) {
-      doc.switchToPage(i);
-      
-      doc.fontSize(8).font('Helvetica').fillColor('#666');
-      doc.text(
-        `Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`,
-        50,
-        doc.page.height - 30,
-        { align: 'center', width: doc.page.width - 100 }
-      );
-    }
-
-    doc.end();
-
-    await new Promise((resolve, reject) => {
-      writeStream.on('finish', resolve);
-      writeStream.on('error', reject);
-    });
-
-  } catch (error: any) {
-    console.error("Error al generar PDF:", error);
-    
-    if (!res.headersSent) {
-      return res.status(500).json({ 
-        message: "Error al generar PDF de votación",
-        error: error.message 
-      });
-    }
-  }
-};
-
-// ===== FUNCIÓN PARA SESIÓN =====
-function generarDetalleSesion(doc: any, votos: any[]) {
-  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN', 50, doc.y, { align: 'left' });
-  doc.moveDown(0.5);
-
-  const votosPorSentido = {
-    favor: votos.filter(v => v.sentidoNumerico === 1),
-    contra: votos.filter(v => v.sentidoNumerico === 3),
-    abstencion: votos.filter(v => v.sentidoNumerico === 2),
-    pendiente: votos.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
-  };
-
-  const crearTablaSesion = (titulo: string, votosLista: any[], color: string) => {
-    if (votosLista.length === 0) return;
-
-    if (doc.y > 650) {
-      doc.addPage();
-    }
-
-    doc.fontSize(11).font('Helvetica-Bold').fillColor(color);
-    doc.text(`${titulo} (${votosLista.length})`, 50, doc.y, { align: 'left' });
-    doc.moveDown(0.5);
-
-    const startY = doc.y;
-    const colX = { no: 50, diputado: 80, partido: 400 };
-
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-    doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
-    doc.fillColor('#fff');
-    doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
-    doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 310 });
-    doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 110 });
-
-    let currentY = startY + 20;
-
-    const votosOrdenados = [...votosLista].sort((a, b) => 
-      a.diputado.localeCompare(b.diputado, 'es')
-    );
-
-    votosOrdenados.forEach((voto, index) => {
-      if (currentY > 720) {
-        doc.addPage();
-        currentY = 50;
-        
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-        doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
-        doc.fillColor('#fff');
-        doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
-        doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 310 });
-        doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 110 });
-        currentY += 20;
-      }
-
-      doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
-
-      doc.fontSize(8).font('Helvetica').fillColor('#000');
-      doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
-      doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 310 });
-      doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 110 });
-
-      currentY += 18;
-    });
-
-    doc.moveDown(1.5);
-  };
-
-  crearTablaSesion('A FAVOR', votosPorSentido.favor, '#1e40af');
-  crearTablaSesion('EN CONTRA', votosPorSentido.contra, '#dc2626');
-  crearTablaSesion('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
-  crearTablaSesion('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
-}
-
-// ===== FUNCIÓN PARA COMISIÓN =====
-function generarDetalleComision(doc: any, votos: any[]) {
-  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN POR COMISIÓN', 50, doc.y, { align: 'left' });
-  doc.moveDown(0.5);
-
-  // Agrupar por comisión
-  const votosPorComision = votos.reduce((grupos, voto) => {
-    const comision = voto.comision_nombre || 'Sin comisión';
-    if (!grupos[comision]) {
-      grupos[comision] = {
-        nombre: comision,
-        importancia: voto.comision_importancia,
-        votos: []
-      };
-    }
-    grupos[comision].votos.push(voto);
-    return grupos;
-  }, {} as Record<string, any>);
-
-  // Ordenar comisiones por importancia
-  const comisionesOrdenadas = Object.values(votosPorComision).sort((a: any, b: any) => 
-    a.importancia - b.importancia
-  );
-
-  comisionesOrdenadas.forEach((comision: any) => {
-    if (doc.y > 650) {
-      doc.addPage();
-    }
-
-    // Título de la comisión
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#2563eb');
-    doc.text(`${comision.nombre.toUpperCase()}`, 50, doc.y, { align: 'left' });
-    doc.moveDown(0.5);
-
-    // Ordenar votos por nivel de cargo
-    const votosOrdenados = [...comision.votos].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
-
-    const votosPorSentido = {
-      favor: votosOrdenados.filter(v => v.sentidoNumerico === 1),
-      contra: votosOrdenados.filter(v => v.sentidoNumerico === 3),
-      abstencion: votosOrdenados.filter(v => v.sentidoNumerico === 2),
-      pendiente: votosOrdenados.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0),
-    };
-
-    const crearTablaComision = (titulo: string, votosLista: any[], color: string) => {
-      if (votosLista.length === 0) return;
-
-      if (doc.y > 650) {
-        doc.addPage();
-      }
-
-      doc.fontSize(10).font('Helvetica-Bold').fillColor(color);
-      doc.text(`  ${titulo} (${votosLista.length})`, 50, doc.y, { align: 'left' });
-      doc.moveDown(0.3);
-
-      const startY = doc.y;
-      const colX = { no: 50, diputado: 80, cargo: 300, partido: 420 };
-
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-      doc.rect(colX.no, startY, 470, 20).fillAndStroke(color, '#000');
-      doc.fillColor('#fff');
-      doc.text('No.', colX.no + 5, startY + 6, { width: 20 });
-      doc.text('DIPUTADO', colX.diputado + 5, startY + 6, { width: 210 });
-      doc.text('CARGO', colX.cargo + 5, startY + 6, { width: 110 });
-      doc.text('PARTIDO', colX.partido + 5, startY + 6, { width: 90 });
-
-      let currentY = startY + 20;
-
-      votosLista.forEach((voto, index) => {
-        if (currentY > 720) {
-          doc.addPage();
-          currentY = 50;
-          
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
-          doc.rect(colX.no, currentY, 470, 20).fillAndStroke(color, '#000');
-          doc.fillColor('#fff');
-          doc.text('No.', colX.no + 5, currentY + 6, { width: 20 });
-          doc.text('DIPUTADO', colX.diputado + 5, currentY + 6, { width: 210 });
-          doc.text('CARGO', colX.cargo + 5, currentY + 6, { width: 110 });
-          doc.text('PARTIDO', colX.partido + 5, currentY + 6, { width: 90 });
-          currentY += 20;
-        }
-
-        doc.rect(colX.no, currentY, 470, 18).stroke('#d1d5db');
-
-        doc.fontSize(8).font('Helvetica').fillColor('#000');
-        doc.text(`${index + 1}`, colX.no + 5, currentY + 5, { width: 20 });
-        doc.text(voto.diputado, colX.diputado + 5, currentY + 5, { width: 210 });
-        doc.text(voto.cargo || 'Sin cargo', colX.cargo + 5, currentY + 5, { width: 110 });
-        doc.text(voto.partido, colX.partido + 5, currentY + 5, { width: 90 });
-
-        currentY += 18;
-      });
-
-      doc.moveDown(0.8);
-    };
-
-    crearTablaComision('A FAVOR', votosPorSentido.favor, '#1e40af');
-    crearTablaComision('EN CONTRA', votosPorSentido.contra, '#dc2626');
-    crearTablaComision('ABSTENCIÓN', votosPorSentido.abstencion, '#f59e0b');
-    crearTablaComision('PENDIENTE', votosPorSentido.pendiente, '#6b7280');
-
-    doc.moveDown(1);
-  });
-}
 
 export const gestionIntegrantes = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -2529,6 +2201,23 @@ export const addDipLista = async (req: Request, res: Response): Promise<any> => 
       id_cargo_dip: body.id_cargo_dip 
     });
 
+    const temavotos = await TemasPuntosVotos.findAll({
+      where: { id_evento: body.id_agenda }
+    });
+
+    for (const tema of temavotos) {
+      await (tema as any).createVotospunto({
+        sentido: 0,
+        mensaje,
+        id_diputado: body.id_diputado,
+        id_partido: body.id_partido,
+        id_comision_dip: body.comision_dip_id,
+        id_cargo_dip: body.id_cargo_dip
+      });
+    }
+
+
+
     return res.json({
       msg: "Diputado agregado correctamente",
       estatus: 200,
@@ -2546,9 +2235,8 @@ export const addDipLista = async (req: Request, res: Response): Promise<any> => 
 export const Eliminarlista = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const integrante = await AsistenciaVoto.findOne({
-      where: { id }
-    });
+
+    const integrante = await AsistenciaVoto.findOne({ where: { id } });
 
     if (!integrante) {
       return res.status(404).json({
@@ -2556,9 +2244,29 @@ export const Eliminarlista = async (req: Request, res: Response): Promise<any> =
         estatus: 404
       });
     }
+
+    const temas = await TemasPuntosVotos.findAll({
+      where: { id_evento: integrante.id_agenda },
+      attributes: ["id"]
+    });
+
+    const temasIds = temas.map(t => t.id);
+
+    if (temasIds.length > 0) {
+      await VotosPunto.destroy({
+        where: {
+          id_diputado: integrante.id_diputado,
+          id_comision_dip: integrante.comision_dip_id, 
+          id_tema_punto_voto: temasIds
+        }
+      });
+    }
+
+ 
     await integrante.destroy();
+
     return res.json({
-      msg: "Diputado eliminado de la lista correctamente",
+      msg: "Diputado y votos correspondientes eliminados correctamente",
       estatus: 200
     });
 
@@ -2572,7 +2280,9 @@ export const Eliminarlista = async (req: Request, res: Response): Promise<any> =
 };
 
 
-export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promise<any> => {
+/////////////////////////////////
+
+export const generarPDFVotacion = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
     
@@ -2592,6 +2302,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
 
+    // Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
     let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
@@ -2607,7 +2318,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     if (votosRaw.length === 0) {
       return res.status(404).json({ msg: "No hay votos registrados" });
     }
-
 
     // Obtener diputados
     const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
@@ -2663,6 +2373,16 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       }
     };
 
+    const getColorSentido = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return '#22c55e'; // Verde - A FAVOR
+        case 3: return '#dc2626'; // Rojo - EN CONTRA
+        case 2: return '#f59e0b'; // Amarillo - ABSTENCIÓN
+        case 0: return '#6b7280'; // Gris - PENDIENTE
+        default: return '#6b7280';
+      }
+    };
+
     // Mapear votos con detalles
     const votosConDetalles = votosRaw.map((voto) => {
       const diputado = diputadosMap.get(voto.id_diputado);
@@ -2680,10 +2400,11 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
         partido: partido?.siglas || "Sin partido",
         comision_nombre: comision?.nombre || null,
         comision_importancia: comision?.importancia || 999,
-        cargo: cargo?.nombre || null,
+        cargo: cargo?.valor || null,
         nivel_cargo: cargo?.nivel || 999,
         sentidoTexto: getSentidoTexto(voto.sentido),
-        sentidoNumerico: voto.sentido
+        sentidoNumerico: voto.sentido,
+        mensaje: voto.mensaje
       };
     });
 
@@ -2694,6 +2415,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
       pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
     };
+
+    const totalVotos = votosConDetalles.length;
 
     // Crear PDF
     const doc = new PDFDocument({ 
@@ -2713,97 +2436,567 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const writeStream = fs.createWriteStream(outputPath);
     doc.pipe(writeStream);
 
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    doc.pipe(res);
+
+    // Ruta de la imagen de fondo
+    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva.jpg");
+
+    // Función para dibujar fondo de página
+    const drawBackground = () => {
+      doc.image(bgPath, 0, 0, {
+        width: doc.page.width,
+        height: doc.page.height,
+      });
+      doc.y = 106;
+    };
+
+    // Dibujar fondo en la primera página
+    drawBackground();
+
     // ===== DISEÑO DEL PDF =====
 
     // Encabezado
-    doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
+    doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
     doc.moveDown(1);
 
     // Información del Evento
-    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
     doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Tipo: ${evento.tipoevento?.nombre || 'N/A'}`);
-    doc.text(`Sede: ${evento.sede?.sede || 'N/A'}`);
-    doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
+
+    // Tipo
+    doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
+
+    // Sede
+    doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
+
+    // Fecha
+    doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+    
     doc.moveDown(1);
 
     // Información del Punto
-    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
     doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Número: ${punto.nopunto || 'N/A'}`);
-    doc.text(`Descripción: ${punto.punto || 'N/A'}`, { width: 500 });
+
+    // Número
+    doc.fontSize(11).font('Helvetica-Bold').text('Número: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(punto.nopunto || 'N/A');
+
+    // Descripción (justificada)
+    doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(punto.punto || 'N/A', { width: 500, align: "justify" });
+    
     doc.moveDown(1);
 
     // Resumen de Votación
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
     doc.moveDown(0.3);
 
     const tableTop = doc.y;
-    const colWidths = [130, 100, 100, 100];
+    const colWidths = [110, 90, 90, 90, 80];
     const rowHeight = 25;
 
     // Encabezados de tabla
-    doc.fontSize(10).font('Helvetica-Bold');
+    doc.fontSize(11).font('Helvetica-Bold');
 
-    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#1e40af', '#000');
-    doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+    // A FAVOR - Verde
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
+    doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
+    // EN CONTRA - Rojo
     doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
-    doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+    doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
+    // ABSTENCIÓN - Amarillo
     doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
-    doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+    doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
+    // PENDIENTE - Gris
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
-    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
+
+    // TOTAL - Azul
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#1e40af', '#000');
+    doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 7, { width: colWidths[4] - 10, align: 'center' });
 
     // Valores de totales
     const valuesTop = tableTop + rowHeight;
-    doc.fontSize(14).font('Helvetica-Bold');
+    doc.fontSize(11).font('Helvetica-Bold');
 
     doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    doc.moveDown(3);
+    // TOTAL
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totalVotos.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 7, { width: colWidths[4] - 10, align: 'center' });
+
+    doc.moveDown(2);
+    doc.x = doc.page.margins.left;
+
+    // ===== DETALLE DE VOTACIÓN SEGÚN TIPO DE EVENTO =====
+    
+    if (esSesion) {
+      generarDetalleSesion(doc, votosConDetalles, drawBackground, getColorSentido);
+    } else {
+      generarDetalleComision(doc, votosConDetalles, drawBackground, getColorSentido);
+    }
+
+    doc.end();
+
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+  } catch (error: any) {
+    console.error("Error al generar PDF:", error);
+    
+    if (!res.headersSent) {
+      return res.status(500).json({ 
+        message: "Error al generar PDF de votación",
+        error: error.message 
+      });
+    }
+  }
+};
+
+function generarDetalleSesion(doc: any, votos: any[], drawBackground: () => void, getColorSentido: (sentido: number) => string) {
+  // TÍTULO CENTRADO
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN', { align: 'center' });
+  doc.moveDown(0.5);
+
+  // Ordenar alfabéticamente
+  const votosOrdenados = [...votos].sort((a, b) => 
+    a.diputado.localeCompare(b.diputado, 'es')
+  );
+
+  const startY = doc.y;
+  const colX = { no: 50, diputado: 75, partido: 390, sentido: 455 };
+
+  // Encabezado guinda #96134b
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+  doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b', '#000');
+  doc.fillColor('#fff');
+  doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+  doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 305 });
+  doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 60 });
+  doc.text('SENTIDO', colX.sentido + 3, startY + 6, { width: 85 });
+
+  let currentY = startY + 20;
+
+  votosOrdenados.forEach((voto, index) => {
+    if (currentY > 700) {
+      doc.addPage();
+      drawBackground();
+      currentY = 106;
+      
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+      doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b', '#000');
+      doc.fillColor('#fff');
+      doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+      doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 305 });
+      doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 60 });
+      doc.text('SENTIDO', colX.sentido + 3, currentY + 6, { width: 85 });
+      currentY += 20;
+    }
+
+    doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
+
+    doc.fontSize(8).font('Helvetica').fillColor('#000');
+    doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+    doc.text(voto.diputado, colX.diputado + 3, currentY + 5, { width: 305, ellipsis: true });
+    doc.text(voto.partido, colX.partido + 3, currentY + 5, { width: 60 });
+    
+    // Sentido con color
+    doc.fillColor(getColorSentido(voto.sentidoNumerico));
+    doc.text(voto.sentidoTexto, colX.sentido + 3, currentY + 5, { width: 85 });
+
+    currentY += 18;
+  });
+
+  doc.moveDown(1.5);
+}
+
+function generarDetalleComision(doc: any, votos: any[], drawBackground: () => void, getColorSentido: (sentido: number) => string) {
+  // TÍTULO CENTRADO
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE VOTACIÓN POR COMISIÓN', { align: 'center' });
+  doc.moveDown(0.5);
+
+  // Agrupar por comisión
+  const votosPorComision = votos.reduce((grupos, voto) => {
+    const comision = voto.comision_nombre || 'Sin comisión';
+    if (!grupos[comision]) {
+      grupos[comision] = {
+        nombre: comision,
+        importancia: voto.comision_importancia,
+        votos: []
+      };
+    }
+    grupos[comision].votos.push(voto);
+    return grupos;
+  }, {} as Record<string, any>);
+
+  // Ordenar comisiones por importancia
+  const comisionesOrdenadas = Object.values(votosPorComision).sort((a: any, b: any) => 
+    a.importancia - b.importancia
+  );
+
+  comisionesOrdenadas.forEach((comision: any) => {
+    if (doc.y > 650) {
+      doc.addPage();
+      drawBackground();
+      doc.y = 106;
+    }
+
+    // Título de la comisión en NEGRO
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
+    doc.text(`${comision.nombre.toUpperCase()}`, 50, doc.y, { align: 'left' });
+    doc.moveDown(0.5);
+
+    // Ordenar votos por nivel de cargo
+    const votosOrdenados = [...comision.votos].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
+
+    const startY = doc.y;
+    const colX = { no: 50, diputado: 75, cargo: 310, partido: 410, sentido: 465 };
+
+    // Encabezado guinda #96134b
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+    doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b', '#000');
+    doc.fillColor('#fff');
+    doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+    doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 225 });
+    doc.text('CARGO', colX.cargo + 3, startY + 6, { width: 90 });
+    doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 50 });
+    doc.text('SENTIDO', colX.sentido + 3, startY + 6, { width: 75 });
+
+    let currentY = startY + 20;
+
+    votosOrdenados.forEach((voto, index) => {
+      if (currentY > 700) {
+        doc.addPage();
+        drawBackground();
+        currentY = 106;
+        
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
+        doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
+        currentY += 25;
+        
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+        doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b', '#000');
+        doc.fillColor('#fff');
+        doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+        doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 225 });
+        doc.text('CARGO', colX.cargo + 3, currentY + 6, { width: 90 });
+        doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 50 });
+        doc.text('SENTIDO', colX.sentido + 3, currentY + 6, { width: 75 });
+        currentY += 20;
+      }
+
+      doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
+
+      doc.fontSize(8).font('Helvetica').fillColor('#000');
+      doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+      doc.text(voto.diputado, colX.diputado + 3, currentY + 5, { width: 225, ellipsis: true });
+      doc.text(voto.cargo || 'Sin cargo', colX.cargo + 3, currentY + 5, { width: 90, ellipsis: true });
+      doc.text(voto.partido, colX.partido + 3, currentY + 5, { width: 50 });
+
+      // Sentido con color
+      doc.fillColor(getColorSentido(voto.sentidoNumerico));
+      doc.text(voto.sentidoTexto, colX.sentido + 3, currentY + 5, { width: 75 });
+
+      currentY += 18;
+    });
+
+    doc.moveDown(1.5);
+  });
+}
+
+export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    
+    const punto = await PuntosOrden.findOne({ where: { id } });
+    if (!punto) {
+      return res.status(404).json({ msg: "Punto no encontrado" });
+    }
+
+    const evento = await Agenda.findOne({
+      where: { id: punto.id_evento },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+
+    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+    if (!temavotos) {
+      return res.status(404).json({ msg: "No hay votaciones para este punto" });
+    }
+    const dipasociados = await TipoCargoComision.findOne({
+        where: { valor: "Diputado Asociado" }
+    });
+    const votosRaw = await VotosPunto.findAll({
+      where: { id_tema_punto_voto: temavotos.id,
+      },
+      raw: true,
+    });
+
+    if (votosRaw.length === 0) {
+      return res.status(404).json({ msg: "No hay votos registrados" });
+    }
+
+    // Obtener diputados
+    const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
+    const diputados = await Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true,
+    });
+    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+
+    // Obtener partidos
+    const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
+    const partidos = await Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true,
+    });
+    const partidosMap = new Map(partidos.map(p => [p.id, p]));
+
+    // Obtener comisiones y cargos (solo si es comisión)
+    let comisionesMap = new Map();
+    let cargosMap = new Map();
+    
+    if (!esSesion) {
+      const comisionIds = votosRaw.map(v => v.id_comision_dip).filter(Boolean);
+      if (comisionIds.length > 0) {
+        const comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre", "importancia"],
+          raw: true,
+        });
+        comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+      }
+
+      const cargoIds = votosRaw.map(v => v.id_cargo_dip).filter(Boolean);
+      if (cargoIds.length > 0) {
+        const cargos = await TipoCargoComision.findAll({
+          where: { id: cargoIds },
+          attributes: ["id", "valor", "nivel"],
+          raw: true,
+        });
+        cargosMap = new Map(cargos.map(c => [c.id, c]));
+      }
+    }
+
+    const getSentidoTexto = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return "A FAVOR";
+        case 2: return "ABSTENCIÓN";
+        case 3: return "EN CONTRA";
+        case 0: return "PENDIENTE";
+        default: return "PENDIENTE";
+      }
+    };
+
+    const getColorSentido = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return '#22c55e'; // Verde - A FAVOR
+        case 3: return '#dc2626'; // Rojo - EN CONTRA
+        case 2: return '#f59e0b'; // Amarillo - ABSTENCIÓN
+        case 0: return '#6b7280'; // Gris - PENDIENTE
+        default: return '#6b7280';
+      }
+    };
+
+    // Mapear votos con detalles
+    const votosConDetalles = votosRaw.map((voto) => {
+      const diputado = diputadosMap.get(voto.id_diputado);
+      const partido = partidosMap.get(voto.id_partido);
+      const comision = comisionesMap.get(voto.id_comision_dip);
+      const cargo = cargosMap.get(voto.id_cargo_dip);
+      
+      const nombreCompletoDiputado = diputado
+        ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+        : "Sin nombre";
+      
+      return {
+        ...voto,
+        diputado: nombreCompletoDiputado,
+        partido: partido?.siglas || "Sin partido",
+        comision_nombre: comision?.nombre || null,
+        comision_importancia: comision?.importancia || 999,
+        cargo: cargo?.valor || null,
+        nivel_cargo: cargo?.nivel || 999,
+        sentidoTexto: getSentidoTexto(voto.sentido),
+        sentidoNumerico: voto.sentido,
+        mensaje: voto.mensaje
+      };
+    });
+
+    // Calcular totales
+    const totales = {
+      favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
+      contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
+      abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
+      pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
+    };
 
     const totalVotos = votosConDetalles.length;
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-    doc.text(`TOTAL DE DIPUTADOS: ${totalVotos}`, 50, doc.y, { align: 'left' });
-    doc.moveDown(1.5);
+
+    // Crear PDF
+    const doc = new PDFDocument({ 
+      size: 'LETTER', 
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      bufferPages: true
+    });
+
+    const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
+    const outputPath = path.join(__dirname, '../../storage/pdfs', fileName);
+
+    const dir = path.dirname(outputPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const writeStream = fs.createWriteStream(outputPath);
+    doc.pipe(writeStream);
+
+    // Ruta de la imagen de fondo
+    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+
+    // Función para dibujar fondo de página
+    const drawBackground = () => {
+      doc.image(bgPath, 0, 0, {
+        width: doc.page.width,
+        height: doc.page.height,
+      });
+      doc.y = 106;
+    };
+
+    // Dibujar fondo en la primera página
+    drawBackground();
+
+    // ===== DISEÑO DEL PDF =====
+
+    // Encabezado
+    doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    doc.moveDown(1);
+
+    // Información del Evento
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+    doc.moveDown(0.3);
+
+    // Tipo
+    doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
+
+    // Sede
+    doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
+
+    // Fecha
+    doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+    
+    doc.moveDown(1);
+
+    // Información del Punto
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
+    doc.moveDown(0.3);
+
+    // Número
+    doc.fontSize(11).font('Helvetica-Bold').text('Número: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(punto.nopunto || 'N/A');
+
+    // Descripción (justificada)
+    doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(punto.punto || 'N/A', { width: 500, align: "justify" });
+    
+    doc.moveDown(1);
+
+    // Resumen de Votación
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
+    doc.moveDown(0.3);
+
+    const tableTop = doc.y;
+    const colWidths = [110, 90, 90, 90, 80];
+    const rowHeight = 25;
+
+    // Encabezados de tabla
+    doc.fontSize(11).font('Helvetica-Bold');
+
+    // A FAVOR - Verde
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
+    doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
+
+    // EN CONTRA - Rojo
+    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
+    doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
+
+    // ABSTENCIÓN - Amarillo
+    doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
+    doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
+
+    // PENDIENTE - Gris
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
+
+    // TOTAL - Azul
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#1e40af', '#000');
+    doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 7, { width: colWidths[4] - 10, align: 'center' });
+
+    // Valores de totales
+    const valuesTop = tableTop + rowHeight;
+    doc.fontSize(11).font('Helvetica-Bold');
+
+    doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.favor.toString(), 55, valuesTop + 7, { width: colWidths[0] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.contra.toString(), 50 + colWidths[0] + 5, valuesTop + 7, { width: colWidths[1] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.abstencion.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 7, { width: colWidths[2] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
+
+    // TOTAL
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totalVotos.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 7, { width: colWidths[4] - 10, align: 'center' });
+
+    doc.moveDown(2);
+    doc.x = doc.page.margins.left;
 
     // Detalle de votación según tipo
     if (esSesion) {
-      generarDetalleSesion(doc, votosConDetalles);
+      generarDetalleSesion(doc, votosConDetalles, drawBackground, getColorSentido);
     } else {
-      generarDetalleComision(doc, votosConDetalles);
-    }
-
-    // Agregar pie de página
-    const range = doc.bufferedPageRange();
-    
-    for (let i = 0; i < range.count; i++) {
-      doc.switchToPage(i);
-      
-      doc.fontSize(8).font('Helvetica').fillColor('#666');
-      doc.text(
-        `Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`,
-        50,
-        doc.page.height - 30,
-        { align: 'center', width: doc.page.width - 100 }
-      );
+      generarDetalleComision(doc, votosConDetalles, drawBackground, getColorSentido);
     }
 
     doc.end();
@@ -2824,16 +3017,31 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
     }
 
-    const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
-      `*Punto:* ${punto.punto || 'N/A'}\n` +
-      `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
-      `*Fecha:* ${fechaFormateada}\n\n` +
-      `*Resultados:*\n` +
-      `A favor: ${totales.favor}\n` +
-      `En contra: ${totales.contra}\n` +
-      `Abstencion: ${totales.abstencion}\n` +
-      `Pendiente: ${totales.pendiente}\n\n` +
-      `Adjunto PDF con detalle completo`;
+    // Obtener listado de comisiones únicas si NO es sesión
+let infoComisiones = "";
+if (!esSesion) {
+  const comisionesUnicas = [...new Set(
+    votosConDetalles
+      .map(v => v.comision_nombre)
+      .filter(nombre => nombre && nombre !== 'Sin comisión')
+  )].sort();
+
+  if (comisionesUnicas.length > 0) {
+    infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+  }
+}
+
+  const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+  `*Punto:* ${punto.punto || 'N/A'}\n` +
+  `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
+  `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
+  `*Resultados:*\n` +
+  `A favor: ${totales.favor}\n` +
+  `En contra: ${totales.contra}\n` +
+  `Abstencion: ${totales.abstencion}\n` +
+  `Pendiente: ${totales.pendiente}\n\n` +
+  `Total de votos: ${totalVotos}\n\n` +
+  `Adjunto PDF con detalle completo`;
 
     // Verificar que el archivo existe
     if (!fs.existsSync(outputPath)) {
@@ -2850,7 +3058,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // Enviar documento usando base64
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: '+527222035605',
+      to: "+527222035605, +527224986377, +527151605569",
+      // to: "+527222035605,",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -2899,11 +3108,12 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 };
 
 
+//////////////////////////////////
+
 export const generarPDFAsistencia = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params; // ID del evento (Agenda)
+    const { id } = req.params; 
     
-    // Obtener información del evento
     const evento = await Agenda.findOne({
       where: { id },
       include: [
@@ -2916,10 +3126,8 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
 
-    // Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
-    // Obtener asistencias
     const asistenciasRaw = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
       raw: true,
@@ -2939,7 +3147,7 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     const diputadosMap = new Map(diputados.map(d => [d.id, d]));
 
     // Obtener partidos
-    const partidoIds = asistenciasRaw.map(a => a.id_partido).filter(Boolean);
+    const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
     const partidos = await Partidos.findAll({
       where: { id: partidoIds },
       attributes: ["id", "siglas"],
@@ -2947,12 +3155,11 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     });
     const partidosMap = new Map(partidos.map(p => [p.id, p]));
 
-    // Obtener comisiones y cargos (solo si es comisión)
     let comisionesMap = new Map();
     let cargosMap = new Map();
     
     if (!esSesion) {
-      const comisionIds = asistenciasRaw.map(a => a.id_comision_dip).filter(Boolean);
+      const comisionIds = asistenciasRaw.map(a => a.comision_dip_id).filter(Boolean);
       if (comisionIds.length > 0) {
         const comisiones = await Comision.findAll({
           where: { id: comisionIds },
@@ -2973,12 +3180,10 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
       }
     }
 
-    const getAsistenciaTexto = (asistencia: number): string => {
-      switch (asistencia) {
-        case 1: return "ASISTIÓ";
-        case 2: return "FALTA";
-        case 3: return "RETARDO";
-        case 4: return "JUSTIFICÓ";
+    const getAsistenciaTexto = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return "ASISTENCIA";
+        case 2: return "ASISTENCIA ZOOM";
         case 0: return "PENDIENTE";
         default: return "PENDIENTE";
       }
@@ -2987,8 +3192,8 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     // Mapear asistencias con detalles
     const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
       const diputado = diputadosMap.get(asistencia.id_diputado);
-      const partido = partidosMap.get(asistencia.id_partido);
-      const comision = comisionesMap.get(asistencia.id_comision_dip);
+      const partido = partidosMap.get(asistencia.partido_dip);
+      const comision = comisionesMap.get(asistencia.comision_dip_id);
       const cargo = cargosMap.get(asistencia.id_cargo_dip);
       
       const nombreCompletoDiputado = diputado
@@ -3003,19 +3208,19 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
         comision_importancia: comision?.importancia || 999,
         cargo_nombre: cargo?.valor || null,
         nivel_cargo: cargo?.nivel || 999,
-        asistenciaTexto: getAsistenciaTexto(asistencia.asistencia),
-        asistenciaNumerico: asistencia.asistencia
+        asistenciaTexto: getAsistenciaTexto(asistencia.sentido_voto),
+        asistenciaNumerico: asistencia.sentido_voto
       };
     });
 
     // Calcular totales
     const totales = {
-      asistio: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
-      falta: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
-      retardo: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 3).length,
-      justifico: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 4).length,
+      asistencia: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
+      asistenciaZoom: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
       pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
     };
+
+    const totalDiputados = asistenciasConDetalles.length;
 
     // Crear PDF
     const doc = new PDFDocument({ 
@@ -3039,93 +3244,112 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     doc.pipe(res);
 
+
+    // Ruta de la imagen de fondo
+    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+
+
+    // Función para dibujar fondo de página
+    const drawBackground = () => {
+      doc.image(bgPath, 0, 0, {
+        width: doc.page.width,
+        height: doc.page.height,
+      });
+      doc.y = 106; // Fijar posición inicial después del fondo
+    };
+
+    // Dibujar fondo en la primera página
+    drawBackground();
+
     // ===== DISEÑO DEL PDF =====
 
     // Encabezado
-    doc.fontSize(18).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
+    doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(10).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
     doc.moveDown(1);
 
     // Información del Evento
-    doc.fontSize(12).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
     doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Tipo: ${evento.tipoevento?.nombre || 'N/A'}`);
-    doc.text(`Sede: ${evento.sede?.sede || 'N/A'}`);
-    doc.text(`Fecha: ${evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'}`);
-    doc.text(`Descripción: ${evento.descripcion || 'N/A'}`, { width: 500 });
+
+    // Tipo
+    doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
+
+    // Sede
+    doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
+
+    // Fecha
+    doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+
+    // Descripción (justificada)
+    doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
     doc.moveDown(1);
 
     // Resumen de Asistencia
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
     doc.moveDown(0.3);
 
     const tableTop = doc.y;
-    const colWidths = [100, 80, 80, 90, 80];
+    const colWidths = [120, 120, 120, 100];
     const rowHeight = 25;
 
     // Encabezados de tabla
-    doc.fontSize(9).font('Helvetica-Bold');
+    doc.fontSize(11).font('Helvetica-Bold');
 
-    // ASISTIÓ
+    // ASISTENCIA - Verde
     doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
-    doc.fillColor('#fff').text('ASISTIÓ', 55, tableTop + 8, { width: colWidths[0] - 10, align: 'center' });
+    doc.fillColor('#fff').text('ASISTENCIA', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
-    // FALTA
-    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
-    doc.fillColor('#fff').text('FALTA', 50 + colWidths[0] + 5, tableTop + 8, { width: colWidths[1] - 10, align: 'center' });
+    // ASISTENCIA ZOOM - Azul
+    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#3b82f6', '#000');
+    doc.fillColor('#fff').text('ASISTENCIA ZOOM', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
-    // RETARDO
+    // PENDIENTE - Amarillo
     doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
-    doc.fillColor('#fff').text('RETARDO', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 8, { width: colWidths[2] - 10, align: 'center' });
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
-    // JUSTIFICÓ
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#3b82f6', '#000');
-    doc.fillColor('#fff').text('JUSTIFICÓ', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 8, { width: colWidths[3] - 10, align: 'center' });
-
-    // PENDIENTE
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#6b7280', '#000');
-    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 8, { width: colWidths[4] - 10, align: 'center' });
-
-    // Valores de totales
-    const valuesTop = tableTop + rowHeight;
-    doc.fontSize(14).font('Helvetica-Bold');
+    // TOTAL - Gris
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
+    doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
     // Valores
+    const valuesTop = tableTop + rowHeight;
+    doc.fontSize(11).font('Helvetica-Bold');
+
     doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.asistio.toString(), 55, valuesTop + 5, { width: colWidths[0] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.asistencia.toString(), 55, valuesTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.falta.toString(), 50 + colWidths[0] + 5, valuesTop + 5, { width: colWidths[1] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.asistenciaZoom.toString(), 50 + colWidths[0] + 5, valuesTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.retardo.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 5, { width: colWidths[2] - 10, align: 'center' });
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.justifico.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 5, { width: colWidths[3] - 10, align: 'center' });
+    doc.fillColor('#000').text(totalDiputados.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
-    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 5, { width: colWidths[4] - 10, align: 'center' });
-
-    doc.moveDown(3);
-
-    const totalDiputados = asistenciasConDetalles.length;
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
-    doc.text(`TOTAL DE DIPUTADOS: ${totalDiputados}`, 50, doc.y, { align: 'left' });
-    doc.moveDown(1.5);
+    doc.moveDown(2);
+    doc.x = doc.page.margins.left;
 
     // ===== DETALLE DE ASISTENCIA SEGÚN TIPO DE EVENTO =====
     
     if (esSesion) {
-      // ===== SESIÓN: Lista plana ordenada alfabéticamente =====
-      generarDetalleSesionAsistencia(doc, asistenciasConDetalles);
+      generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
     } else {
-      // ===== COMISIÓN: Agrupado por comisión y ordenado por cargo =====
-      generarDetalleComisionAsistencia(doc, asistenciasConDetalles);
+      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground);
     }
 
-    // Agregar pie de página
+    doc.end();
+
+    // Esperar a que se generen todas las páginas
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // DESPUÉS agregar pie de página a TODAS las páginas ya generadas
     const range = doc.bufferedPageRange();
     
     for (let i = 0; i < range.count; i++) {
@@ -3139,8 +3363,6 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
         { align: 'center', width: doc.page.width - 100 }
       );
     }
-
-    doc.end();
 
     await new Promise((resolve, reject) => {
       writeStream.on('finish', resolve);
@@ -3159,193 +3381,480 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
   }
 };
 
-function generarDetalleSesionAsistencia(doc: any, asistencias: any[]) {
-  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA');
+function generarDetalleSesionAsistencia(doc: any, asistencias: any[], drawBackground: () => void) {
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA', { align: 'center' });
   doc.moveDown(0.5);
 
-  // Ordenar alfabéticamente por apellido paterno
+  // Ordenar alfabéticamente
   const asistenciasOrdenadas = [...asistencias].sort((a, b) => 
-    a.diputado.localeCompare(b.diputado)
+    a.diputado.localeCompare(b.diputado, 'es')
   );
 
-  // Crear tabla
   const startY = doc.y;
-  const colX = {
-    numero: 50,
-    diputado: 80,
-    partido: 380,
-    asistencia: 450
-  };
+  const colX = { no: 50, diputado: 75, partido: 390, asistencia: 455 };
 
-  // Encabezados
-  doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
-  doc.text('#', colX.numero, startY);
-  doc.text('DIPUTADO', colX.diputado, startY);
-  doc.text('PARTIDO', colX.partido, startY);
-  doc.text('ASISTENCIA', colX.asistencia, startY);
-  
-  doc.moveDown(0.3);
-  doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-  doc.moveDown(0.3);
+  // Encabezado con estilo de votaciones
+  doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+  doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b');
+  doc.fillColor('#fff');
+  doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+  doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 305 });
+  doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 60 });
+  doc.text('ASISTENCIA', colX.asistencia + 3, startY + 6, { width: 85 });
 
-  // Filas de datos
-  doc.fontSize(9).font('Helvetica');
-  
+  let currentY = startY + 20;
+
   asistenciasOrdenadas.forEach((asist, index) => {
-    const currentY = doc.y;
-
-    // Verificar si necesitamos nueva página
     if (currentY > 700) {
       doc.addPage();
+      drawBackground(); // Dibujar fondo en nueva página
+      currentY = 106; // Posición inicial después del fondo
       
-      // Re-dibujar encabezados en nueva página
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000');
-      doc.text('#', colX.numero, doc.y);
-      doc.text('DIPUTADO', colX.diputado, doc.y);
-      doc.text('PARTIDO', colX.partido, doc.y);
-      doc.text('ASISTENCIA', colX.asistencia, doc.y);
-      
-      doc.moveDown(0.3);
-      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-      doc.moveDown(0.3);
-      
-      doc.fontSize(9).font('Helvetica');
+      // Re-dibujar encabezado
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+      doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b');
+      doc.fillColor('#fff');
+      doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+      doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 305 });
+      doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 60 });
+      doc.text('ASISTENCIA', colX.asistencia + 3, currentY + 6, { width: 85 });
+      currentY += 20;
     }
 
-    const rowY = doc.y;
+    // Borde de fila
+    doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
 
-    // Número
-    doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
-    
-    // Diputado
-    doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 290 });
-    
-    // Partido
-    doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
+    doc.fontSize(8).font('Helvetica').fillColor('#000');
+    doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+    doc.text(asist.diputado, colX.diputado + 3, currentY + 5, { width: 305, ellipsis: true });
+    doc.text(asist.partido, colX.partido + 3, currentY + 5, { width: 60 });
     
     // Asistencia con color
     const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
-    doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 90 });
+    doc.fillColor(colorAsistencia);
+    doc.text(asist.asistenciaTexto, colX.asistencia + 3, currentY + 5, { width: 85 });
 
-    doc.moveDown(0.8);
+    currentY += 18;
   });
+
+  doc.moveDown(1.5);
 }
 
-function generarDetalleComisionAsistencia(doc: any, asistencias: any[]) {
-  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN');
+function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBackground: () => void) {
+  doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN', { align: 'center' });
   doc.moveDown(0.5);
 
   // Agrupar por comisión
-  const asistenciasPorComision = asistencias.reduce((acc, asist) => {
-    const comisionKey = asist.comision_nombre || 'Sin Comisión';
-    if (!acc[comisionKey]) {
-      acc[comisionKey] = {
-        nombre: comisionKey,
-        importancia: asist.comision_importancia || 999,
+  const asistenciasPorComision = asistencias.reduce((grupos, asist) => {
+    const comision = asist.comision_nombre || 'Sin comisión';
+    if (!grupos[comision]) {
+      grupos[comision] = {
+        nombre: comision,
+        importancia: asist.comision_importancia,
         asistencias: []
       };
     }
-    acc[comisionKey].asistencias.push(asist);
-    return acc;
+    grupos[comision].asistencias.push(asist);
+    return grupos;
   }, {} as Record<string, any>);
 
   // Ordenar comisiones por importancia
-  const comisionesOrdenadas = Object.values(asistenciasPorComision).sort(
-    (a: any, b: any) => a.importancia - b.importancia
+  const comisionesOrdenadas = Object.values(asistenciasPorComision).sort((a: any, b: any) => 
+    a.importancia - b.importancia
   );
 
   comisionesOrdenadas.forEach((comision: any) => {
-    // Título de comisión
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
-    doc.text(comision.nombre.toUpperCase(), 50, doc.y);
-    doc.moveDown(0.3);
+    // Verificar espacio para título + tabla (necesita al menos 100px)
+    if (doc.y > 650) {
+      doc.addPage();
+      drawBackground(); // Dibujar fondo en nueva página
+      doc.y = 106; // Posición inicial después del fondo
+    }
 
-    // Ordenar por nivel de cargo (menor número = más importante)
-    const asistenciasOrdenadas = [...comision.asistencias].sort(
-      (a: any, b: any) => a.nivel_cargo - b.nivel_cargo
-    );
+    // Título de la comisión
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
+    doc.text(comision.nombre.toUpperCase(), 50, doc.y, { align: 'left' });
+    doc.moveDown(0.5);
 
-    // Tabla de asistencias
-    const colX = {
-      numero: 50,
-      cargo: 80,
-      diputado: 180,
-      partido: 400,
-      asistencia: 470
-    };
+    // Ordenar asistencias por nivel de cargo
+    const asistenciasOrdenadas = [...comision.asistencias].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
 
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-    doc.text('#', colX.numero, doc.y);
-    doc.text('CARGO', colX.cargo, doc.y);
-    doc.text('DIPUTADO', colX.diputado, doc.y);
-    doc.text('PARTIDO', colX.partido, doc.y);
-    doc.text('ASISTENCIA', colX.asistencia, doc.y);
-    
-    doc.moveDown(0.2);
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown(0.2);
+    const startY = doc.y;
+    const colX = { no: 50, diputado: 75, cargo: 310, partido: 410, asistencia: 465 };
 
-    doc.fontSize(8).font('Helvetica');
+    // Encabezado con estilo de votaciones
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+    doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b');
+    doc.fillColor('#fff');
+    doc.text('No.', colX.no + 3, startY + 6, { width: 18 });
+    doc.text('DIPUTADO', colX.diputado + 3, startY + 6, { width: 225 });
+    doc.text('CARGO', colX.cargo + 3, startY + 6, { width: 90 });
+    doc.text('PARTIDO', colX.partido + 3, startY + 6, { width: 50 });
+    doc.text('ASISTENCIA', colX.asistencia + 3, startY + 6, { width: 75 });
 
-    asistenciasOrdenadas.forEach((asist: any, index: number) => {
-      const currentY = doc.y;
+    let currentY = startY + 20;
 
-      // Verificar si necesitamos nueva página
+    asistenciasOrdenadas.forEach((asist, index) => {
+      // Verificar espacio para nueva fila
       if (currentY > 700) {
         doc.addPage();
+        drawBackground(); // Dibujar fondo en nueva página
         
-        // Re-dibujar título de comisión
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af');
-        doc.text(`${comision.nombre.toUpperCase()} (continuación)`, 50, doc.y);
-        doc.moveDown(0.3);
+        currentY = 106; // Empezar después del fondo
         
-        // Re-dibujar encabezados
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-        doc.text('#', colX.numero, doc.y);
-        doc.text('CARGO', colX.cargo, doc.y);
-        doc.text('DIPUTADO', colX.diputado, doc.y);
-        doc.text('PARTIDO', colX.partido, doc.y);
-        doc.text('ASISTENCIA', colX.asistencia, doc.y);
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
+        doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
         
-        doc.moveDown(0.2);
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown(0.2);
+        currentY += 25;
         
-        doc.fontSize(8).font('Helvetica');
+        // Re-dibujar encabezado
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
+        doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b');
+        doc.fillColor('#fff');
+        doc.text('No.', colX.no + 3, currentY + 6, { width: 18 });
+        doc.text('DIPUTADO', colX.diputado + 3, currentY + 6, { width: 225 });
+        doc.text('CARGO', colX.cargo + 3, currentY + 6, { width: 90 });
+        doc.text('PARTIDO', colX.partido + 3, currentY + 6, { width: 50 });
+        doc.text('ASISTENCIA', colX.asistencia + 3, currentY + 6, { width: 75 });
+        currentY += 20;
       }
 
-      const rowY = doc.y;
+      // Borde de fila
+      doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
 
-      // Número
-      doc.fillColor('#000').text((index + 1).toString(), colX.numero, rowY, { width: 25 });
-      
-      // Cargo
-      doc.fillColor('#000').text(asist.cargo_nombre || 'N/A', colX.cargo, rowY, { width: 90 });
-      
-      // Diputado
-      doc.fillColor('#000').text(asist.diputado, colX.diputado, rowY, { width: 210 });
-      
-      // Partido
-      doc.fillColor('#000').text(asist.partido, colX.partido, rowY, { width: 60 });
-      
+      doc.fontSize(8).font('Helvetica').fillColor('#000');
+      doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
+      doc.text(asist.diputado, colX.diputado + 3, currentY + 5, { width: 225, ellipsis: true });
+      doc.text(asist.cargo_nombre || 'Sin cargo', colX.cargo + 3, currentY + 5, { width: 90, ellipsis: true });
+      doc.text(asist.partido, colX.partido + 3, currentY + 5, { width: 50 });
+
       // Asistencia con color
       const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
-      doc.fillColor(colorAsistencia).text(asist.asistenciaTexto, colX.asistencia, rowY, { width: 80 });
+      doc.fillColor(colorAsistencia);
+      doc.text(asist.asistenciaTexto, colX.asistencia + 3, currentY + 5, { width: 75 });
 
-      doc.moveDown(0.7);
+      currentY += 18;
     });
 
-    doc.moveDown(0.5);
+    doc.moveDown(1.5);
   });
 }
 
 function getColorAsistencia(asistencia: number): string {
   switch (asistencia) {
-    case 1: return '#22c55e'; // Verde - ASISTIÓ
-    case 2: return '#dc2626'; // Rojo - FALTA
-    case 3: return '#f59e0b'; // Naranja - RETARDO
-    case 4: return '#3b82f6'; // Azul - JUSTIFICÓ
-    case 0: return '#6b7280'; // Gris - PENDIENTE
-    default: return '#6b7280';
+    case 1: return '#22c55e'; // Verde - ASISTENCIA
+    case 2: return '#3b82f6'; // Azul - ASISTENCIA ZOOM
+    case 0: return '#f59e0b'; // Amarillo - PENDIENTE
+    default: return '#f59e0b';
   }
 }
+
+export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+
+    const asistenciasRaw = await AsistenciaVoto.findAll({
+      where: { id_agenda: id },
+      raw: true,
+    });
+
+    if (asistenciasRaw.length === 0) {
+      return res.status(404).json({ msg: "No hay asistencias registradas para este evento" });
+    }
+
+    const diputadoIds = asistenciasRaw.map(a => a.id_diputado).filter(Boolean);
+    const diputados = await Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true,
+    });
+    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+
+    const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
+    const partidos = await Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true,
+    });
+    const partidosMap = new Map(partidos.map(p => [p.id, p]));
+
+    let comisionesMap = new Map();
+    let cargosMap = new Map();
+    
+    if (!esSesion) {
+      const comisionIds = asistenciasRaw.map(a => a.comision_dip_id).filter(Boolean);
+      if (comisionIds.length > 0) {
+        const comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre", "importancia"],
+          raw: true,
+        });
+        comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+      }
+
+      const cargoIds = asistenciasRaw.map(a => a.id_cargo_dip).filter(Boolean);
+      if (cargoIds.length > 0) {
+        const cargos = await TipoCargoComision.findAll({
+          where: { id: cargoIds },
+          attributes: ["id", "valor", "nivel"],
+          raw: true,
+        });
+        cargosMap = new Map(cargos.map(c => [c.id, c]));
+      }
+    }
+
+    const getAsistenciaTexto = (sentido: number): string => {
+      switch (sentido) {
+        case 1: return "ASISTENCIA";
+        case 2: return "ASISTENCIA ZOOM";
+        case 0: return "PENDIENTE";
+        default: return "PENDIENTE";
+      }
+    };
+
+    const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
+      const diputado = diputadosMap.get(asistencia.id_diputado);
+      const partido = partidosMap.get(asistencia.partido_dip);
+      const comision = comisionesMap.get(asistencia.comision_dip_id);
+      const cargo = cargosMap.get(asistencia.id_cargo_dip);
+      
+      const nombreCompletoDiputado = diputado
+        ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+        : "Sin nombre";
+      
+      return {
+        ...asistencia,
+        diputado: nombreCompletoDiputado,
+        partido: partido?.siglas || "Sin partido",
+        comision_nombre: comision?.nombre || null,
+        comision_importancia: comision?.importancia || 999,
+        cargo_nombre: cargo?.valor || null,
+        nivel_cargo: cargo?.nivel || 999,
+        asistenciaTexto: getAsistenciaTexto(asistencia.sentido_voto),
+        asistenciaNumerico: asistencia.sentido_voto
+      };
+    });
+
+    const totales = {
+      asistencia: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
+      asistenciaZoom: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
+      pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
+    };
+
+    const totalDiputados = asistenciasConDetalles.length;
+
+    const doc = new PDFDocument({ 
+      size: 'LETTER', 
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      bufferPages: true
+    });
+
+    const fileName = `asistencia-evento-${id}-${Date.now()}.pdf`;
+    const outputPath = path.join(__dirname, '../../storage/pdfs', fileName);
+
+    const dir = path.dirname(outputPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const writeStream = fs.createWriteStream(outputPath);
+    doc.pipe(writeStream);
+
+    // Ruta de la imagen de fondo
+    const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+
+    // Función para dibujar fondo de página
+    const drawBackground = () => {
+      doc.image(bgPath, 0, 0, {
+        width: doc.page.width,
+        height: doc.page.height,
+      });
+      doc.y = 106;
+    };
+
+    // Dibujar fondo en la primera página
+    drawBackground();
+
+    // ===== DISEÑO DEL PDF =====
+
+    doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    doc.moveDown(1);
+
+    doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
+    doc.moveDown(0.3);
+
+    doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
+
+    doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
+
+    doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+
+    doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+    doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
+    doc.moveDown(1);
+
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
+    doc.moveDown(0.3);
+
+    const tableTop = doc.y;
+    const colWidths = [120, 120, 120, 100];
+    const rowHeight = 25;
+
+    doc.fontSize(11).font('Helvetica-Bold');
+
+    doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
+    doc.fillColor('#fff').text('ASISTENCIA', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#3b82f6', '#000');
+    doc.fillColor('#fff').text('ASISTENCIA ZOOM', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
+    doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
+    doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
+
+    const valuesTop = tableTop + rowHeight;
+    doc.fontSize(11).font('Helvetica-Bold');
+
+    doc.rect(50, valuesTop, colWidths[0], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.asistencia.toString(), 55, valuesTop + 7, { width: colWidths[0] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0], valuesTop, colWidths[1], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.asistenciaZoom.toString(), 50 + colWidths[0] + 5, valuesTop + 7, { width: colWidths[1] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1], valuesTop, colWidths[2], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + 5, valuesTop + 7, { width: colWidths[2] - 10, align: 'center' });
+
+    doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
+    doc.fillColor('#000').text(totalDiputados.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
+
+    doc.moveDown(2);
+    doc.x = doc.page.margins.left;
+
+    if (esSesion) {
+      generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
+    } else {
+      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground);
+    }
+
+    // FINALIZAR PDF
+    doc.end();
+
+    // ESPERAR A QUE EL ARCHIVO SE ESCRIBA COMPLETAMENTE
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+    console.log('PDF de asistencia generado exitosamente en:', outputPath);
+
+    // ===== ENVIAR POR WHATSAPP =====
+
+    let fechaFormateada = "";
+    if (evento.fecha) {
+      fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
+    }
+
+    let infoComisiones = "";
+    if (!esSesion) {
+      const comisionesUnicas = [...new Set(
+        asistenciasConDetalles
+          .map(a => a.comision_nombre)
+          .filter(nombre => nombre && nombre !== 'Sin Comisión')
+      )].sort();
+
+      if (comisionesUnicas.length > 0) {
+        infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+      }
+    }
+
+    const mensajeTexto = `*ASISTENCIA - ${evento.tipoevento?.nombre || 'Evento'}*\n\n` +
+      `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
+      `*Sede:* ${evento.sede?.sede || 'N/A'}\n` +
+      `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
+      `*Resumen:*\n` +
+      `Asistencia: ${totales.asistencia}\n` +
+      `Asistencia Zoom: ${totales.asistenciaZoom}\n` +
+      `Pendiente: ${totales.pendiente}\n\n` +
+      `Total de diputados: ${totalDiputados}\n\n` +
+      `Adjunto PDF con detalle completo`;
+
+    if (!fs.existsSync(outputPath)) {
+      throw new Error('El archivo PDF no se generó correctamente');
+    }
+
+    const pdfBuffer = fs.readFileSync(outputPath);
+    const base64PDF = pdfBuffer.toString('base64');
+
+    console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
+    console.log('Enviando PDF por WhatsApp...');
+
+    const params = {
+      token: 'ml56a7d6tn7ha7cc',
+      to: "+527222035605, +527224986377, +527151605569",
+      filename: fileName,
+      document: base64PDF,
+      caption: mensajeTexto
+    };
+
+    const whatsappResponse = await axios.post(
+      'https://api.ultramsg.com/instance144598/messages/document',
+      new URLSearchParams(params),
+      {
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded' 
+        },
+        timeout: 60000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      }
+    );
+
+    console.log('Respuesta de WhatsApp API:', whatsappResponse.data);
+
+    return res.status(200).json({
+      message: "PDF de asistencia generado y enviado por WhatsApp correctamente",
+      enviado: true,
+      archivo: fileName,
+      totales,
+      whatsappResponse: whatsappResponse.data
+    });
+
+  } catch (error: any) {
+    console.error("Error completo al generar y enviar PDF de asistencia:", error);
+    
+    if (axios.isAxiosError(error)) {
+      console.error("Error de Axios:", {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data
+      });
+    }
+    
+    return res.status(500).json({ 
+      message: "Error al generar y enviar PDF de asistencia por WhatsApp",
+      error: error.message,
+      details: axios.isAxiosError(error) ? error.response?.data : undefined
+    });
+  }
+};

@@ -19,8 +19,8 @@ export class EventoService {
   }
 
 
-  getEventos(): Observable<any> {
-    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/`)
+  getEventos(tipo: String): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/${tipo}`)
   }
 
   getEvento(id: String): Observable<any> {
@@ -98,7 +98,14 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/acttodosvotos/`,data)
   }
 
-// 
-// 
+
+  notificarWhatsVotacion(id:any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/enviarvotacionpunto/${id}`)
+  }
+
+  notificarWhatsAsistencia(id:any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/notasintenciapdf/${id}`)
+  }
+
 
 }

@@ -17,8 +17,12 @@ export const MENU: MenuItem[] = [
             isTitle: true,
           },
           {
-            label: 'Eventos',
-            link: '/agenda-comision'
+            label: 'Sesiones',
+            link: '/agenda-comision/sesiones'
+          },
+          {
+            label: 'Comisiones',
+            link: '/agenda-comision/comisiones'
           }
         ]
       },

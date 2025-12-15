@@ -1,7 +1,7 @@
 import { Component, inject, signal, ViewChild, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
-import { Router, RouterLink, RouterModule } from '@angular/router';
+import { Router, RouterLink, RouterModule, ActivatedRoute  } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EventoService } from '../../../service/evento.service';
 import { ChangeDetectionStrategy } from '@angular/core';
@@ -63,21 +63,30 @@ export class ComisionComponent {
   slctPartidos: any[] = [];
   slctComisiones: any[] = [];
   slctCargo: any[] = [];
-
+  tipo: string | null = null;
   integranteForm!: FormGroup;
 
-  constructor(private ngZone: NgZone, private modalService: NgbModal) {
+  constructor(private ngZone: NgZone, private modalService: NgbModal, private route: ActivatedRoute) {
     this.initForm();
   }
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe(params => {
+      this.tipo = params.get('tipo'); 
+      if (this.tipo === 'sesiones') {
+        this.tipo = '1';
+      } else {
+        this.tipo = '0';
+      }
+      this.getEventos(this.tipo);
+    });
     const tooltipTriggerList = Array.from(
       document.querySelectorAll('[data-bs-toggle="tooltip"]')
     );
     tooltipTriggerList.forEach(tooltipEl => {
       new bootstrap.Tooltip(tooltipEl);
     });
-    this.getEventos();
+    
   }
 
   initForm() {
@@ -484,9 +493,10 @@ export class ComisionComponent {
     });
   }
 
-  getEventos() {
-    this._eventoService.getEventos().subscribe({
+  getEventos(tipo: String) {
+    this._eventoService.getEventos(tipo).subscribe({
       next: (response: any) => {
+        console.log(response)
         this.originalData.set(response.citas);
         this.temp.set(response.citas);
         this.rows.set(response.citas);

@@ -1492,9 +1492,87 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
+  notificarWhats(tipo: number): void {
+    console.log(tipo);
+
+ 
+    Swal.fire({
+      position: 'center',
+      icon: 'info',
+      title: 'Enviando notificación',
+      text: 'Espere mientras se procesa la solicitud',
+      showConfirmButton: false,
+      allowOutsideClick: false
+    });
+
+ 
+    if(tipo == 2){
+    
+      this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
+        next: (response: any) => {
+
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
+
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+
+    }else{
+      this._eventoService.notificarWhatsAsistencia(this.idComisionRuta).subscribe({
+        next: (response: any) => {
+
+          Swal.close(); 
+          Swal.fire({
+            toast: true, 
+            position: 'top-end',
+            icon: 'success',
+            title: 'Notificación enviada correctamente',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al notificar:', e);
+
+          Swal.close();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la notificación',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+
+  }
 
 
-  //este es opcional
   private cargarDatosResumen(): void {
 
   }
