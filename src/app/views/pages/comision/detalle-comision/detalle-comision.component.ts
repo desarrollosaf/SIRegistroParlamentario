@@ -80,6 +80,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcTipo: any;
   slcTipIntervencion: any;
   slcComisiones: any; // <-- NUEVO CAMPO
+  slcPuntosTurnados: any; // <-- NUEVO CAMPO
 
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
@@ -124,7 +125,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: [''],
       observaciones: [''],
       se_turna_comision: [false], // <-- NUEVO
-      id_comision: [[]] // <-- NUEVO (array vacío para multi-select)
+      id_comision: [[]], // <-- NUEVO (array vacío para multi-select)
+      id_punto_turnado: [''] // <-- NUEVO (array vacío para multi-select)
     });
 
     // NUEVO: Suscribirse a cambios de se_turna_comision para manejar validaciones
@@ -462,7 +464,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private cargardatosAsistencia(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta completa:', response.evento.id);
+        console.log('Respuesta completa DE PUNTOS:', response);
         this.idEvento = response.evento.id;
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
