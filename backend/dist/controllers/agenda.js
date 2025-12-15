@@ -135,8 +135,9 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // 2. Determinar tipo de evento
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
         const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-        // 3. Obtener título según tipo de evento
+        // 3. Obtener título y puntos según tipo de evento
         let titulo = "";
+        let puntos = []; // ✅ Declarar aquí, fuera del if/else
         if (esSesion) {
             titulo = (_b = evento.descripcion) !== null && _b !== void 0 ? _b : "";
         }
@@ -146,14 +147,31 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 attributes: ["autor_id"],
                 raw: true
             });
-            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-            if (comisionIds.length > 0) {
-                const comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["nombre"],
-                    raw: true
+            if (anfitriones.length > 0) { // ✅ Validar antes de continuar
+                const puntosturnados = yield puntos_comisiones_1.default.findAll({
+                    where: {
+                        id_comision: anfitriones.map(a => a.autor_id),
+                        id_punto_turno: null
+                    }
                 });
-                titulo = comisiones.map(c => c.nombre).join(", ");
+                if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
+                    puntos = yield puntos_ordens_1.default.findAll({
+                        where: {
+                            id: puntosturnados.map(p => p.id_punto)
+                        },
+                        attributes: ["id", "punto"],
+                        raw: true
+                    });
+                }
+                const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+                if (comisionIds.length > 0) {
+                    const comisiones = yield comisions_1.default.findAll({
+                        where: { id: comisionIds },
+                        attributes: ["nombre"],
+                        raw: true
+                    });
+                    titulo = comisiones.map(c => c.nombre).join(", ");
+                }
             }
         }
         // 4. Verificar si existen asistencias
@@ -177,7 +195,8 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 evento,
                 integrantes,
                 titulo,
-                tipoEvento
+                tipoEvento,
+                puntos
             });
         }
         // 6. Si SÍ existen asistencias, procesarlas
@@ -187,7 +206,8 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             evento,
             integrantes,
             titulo,
-            tipoEvento
+            tipoEvento, // ✅ Faltaba la coma aquí
+            puntos
         });
     }
     catch (error) {

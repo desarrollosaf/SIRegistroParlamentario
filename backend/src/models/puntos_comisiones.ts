@@ -46,6 +46,10 @@ PuntosComisiones.init(
       type: DataTypes.CHAR(36),
       allowNull: true,
     },
+    id_punto_turno: {
+      type: DataTypes.INTEGER,
+      allowNull: true 
+    } 
   },
   {
     sequelize,
