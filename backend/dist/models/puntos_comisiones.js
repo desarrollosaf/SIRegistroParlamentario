@@ -25,6 +25,10 @@ PuntosComisiones.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
+    id_punto_turno: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true
+    }
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: "puntos_comisiones",
