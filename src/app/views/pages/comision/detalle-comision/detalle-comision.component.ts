@@ -152,6 +152,19 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
+      if (value) {
+        const selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+        console.log(selectedOption);
+        const textoSeleccionado = selectedOption?.punto || '';
+
+        this.formPunto.get('punto')?.setValue(textoSeleccionado);
+        this.formPunto.get('punto')?.disable();
+      } else {
+        this.formPunto.get('punto')?.setValue('');
+        this.formPunto.get('punto')?.enable();
+      }
+    });
     this.cargarDatosIniciales();
   }
 
@@ -468,7 +481,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.idEvento = response.evento.id;
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
-
+        this.slcPuntosTurnados = response.puntos;
         //COMISIÓN O SESIÓN
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
           const primerElemento = response.integrantes[0];
@@ -706,7 +719,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             : [];
 
           console.log(presentanIds);
-          
+
           // Extraer los id_comision del array turnocomision
           let comisionesIds: string[] = [];
           if (punto.turnocomision && Array.isArray(punto.turnocomision) && punto.turnocomision.length > 0) {
@@ -717,8 +730,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           // Determinar si se turna a comisión basado en si hay comisiones
           const seTurnaComision = comisionesIds.length > 0;
-          
-    
+
+
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -733,7 +746,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               punto: [punto.punto],
               observaciones: [punto.observaciones],
               se_turna_comision: [seTurnaComision],
-              id_comision: [comisionesIds] 
+              id_comision: [comisionesIds]
             })
           };
 
@@ -1495,7 +1508,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   notificarWhats(tipo: number): void {
     console.log(tipo);
 
- 
+
     Swal.fire({
       position: 'center',
       icon: 'info',
@@ -1505,15 +1518,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       allowOutsideClick: false
     });
 
- 
-    if(tipo == 2){
-    
+
+    if (tipo == 2) {
+
       this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
         next: (response: any) => {
 
-          Swal.close(); 
+          Swal.close();
           Swal.fire({
-            toast: true, 
+            toast: true,
             position: 'top-end',
             icon: 'success',
             title: 'Notificación enviada correctamente',
@@ -1538,13 +1551,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         }
       });
 
-    }else{
+    } else {
       this._eventoService.notificarWhatsAsistencia(this.idComisionRuta).subscribe({
         next: (response: any) => {
 
-          Swal.close(); 
+          Swal.close();
           Swal.fire({
-            toast: true, 
+            toast: true,
             position: 'top-end',
             icon: 'success',
             title: 'Notificación enviada correctamente',
