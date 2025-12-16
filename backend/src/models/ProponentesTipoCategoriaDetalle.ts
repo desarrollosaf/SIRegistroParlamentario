@@ -29,8 +29,14 @@ ProponentesTipoCategoriaDetalle.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
+   createdAt: {
+      type: DataTypes.DATE,
+      field: 'created_at', 
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      field: 'updated_at', 
+    },
   },
   {
     sequelize,
@@ -39,11 +45,11 @@ ProponentesTipoCategoriaDetalle.init(
   }
 );
 
-// Proponentes.belongsToMany(TipoCategoriaIniciativas, {
+// TipoCategoriaIniciativas.belongsToMany(Proponentes, {
 //   through: ProponentesTipoCategoriaDetalle,
-//   foreignKey: 'proponente_id',
-//   otherKey: 'tipo_categoria_id',
-//   as: 'categorias',
+//   foreignKey: 'tipo_categoria_id',
+//   otherKey: 'proponente_id',
+//   as: 'proponentes',
 // });
 
 // TipoCategoriaIniciativas.belongsToMany(Proponentes, {
@@ -52,5 +58,7 @@ ProponentesTipoCategoriaDetalle.init(
 //   otherKey: 'proponente_id',
 //   as: 'proponentes',
 // });
+
+
 
 export default ProponentesTipoCategoriaDetalle;

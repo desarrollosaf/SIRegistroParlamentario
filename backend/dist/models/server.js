@@ -17,6 +17,7 @@ const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const eventos_1 = __importDefault(require("../routes/eventos"));
 const user_1 = __importDefault(require("../routes/user"));
+const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -38,6 +39,7 @@ class Server {
         this.app.use(eventos_1.default);
         this.app.use(user_1.default);
         this.app.use(diputados_1.default);
+        this.app.use(catalogos_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());

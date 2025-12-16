@@ -21,18 +21,24 @@ ProponentesTipoCategoriaDetalle.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
+    createdAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'created_at',
+    },
+    updatedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        field: 'updated_at',
+    },
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: 'proponentes_tipo_categoria_detalle',
     timestamps: true,
 });
-// Proponentes.belongsToMany(TipoCategoriaIniciativas, {
+// TipoCategoriaIniciativas.belongsToMany(Proponentes, {
 //   through: ProponentesTipoCategoriaDetalle,
-//   foreignKey: 'proponente_id',
-//   otherKey: 'tipo_categoria_id',
-//   as: 'categorias',
+//   foreignKey: 'tipo_categoria_id',
+//   otherKey: 'proponente_id',
+//   as: 'proponentes',
 // });
 // TipoCategoriaIniciativas.belongsToMany(Proponentes, {
 //   through: ProponentesTipoCategoriaDetalle,
