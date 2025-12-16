@@ -1,12 +1,11 @@
 import { Component, inject, signal, ViewChild, TemplateRef, ChangeDetectorRef, NgZone } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
-import { Router, RouterLink, RouterModule, ActivatedRoute  } from '@angular/router';
+import { Router, RouterLink, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CatalogosService } from '../../../service/catalogos.service';
-
-
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 @Component({
   selector: 'app-catalogos',
   imports: [NgxDatatableModule, CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
@@ -20,19 +19,24 @@ export class CatalogosComponent {
   rows = signal<any[]>([]);
   page = signal<number>(0);
   pageSize = signal<number>(10);
+  formNombre!: FormGroup;
   filteredCount = signal<number>(0);
   loading = signal<boolean>(true);
+  modalRef: NgbModalRef;
+  @ViewChild('xlModal', { static: true }) xlModal!: TemplateRef<any>;
   private _catalogoService = inject(CatalogosService);
 
-  constructor(private ngZone: NgZone, private route: ActivatedRoute) {
-
+  constructor(private ngZone: NgZone, private route: ActivatedRoute, private modalService: NgbModal, private fb: FormBuilder,) {
+    this.formNombre = this.fb.group({
+      nombre: ['', Validators.required],
+    });
   }
 
   ngOnInit(): void {
-   this._catalogoService.getCatalogos().subscribe({
+    this._catalogoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response)
-         this.originalData.set(response.data);
+        this.originalData.set(response.data);
         this.temp.set(response.data);
         this.rows.set(response.data);
         this.filteredCount.set(response.data.length);
@@ -43,7 +47,39 @@ export class CatalogosComponent {
         console.error('Error del servidor:', msg);
       }
     });
-    
+
+  }
+
+  abrirModal() {
+    this.modalRef = this.modalService.open(this.xlModal, { size: 'lg' });
+    this.modalRef.result.then((result) => {
+      this.formNombre.reset({
+        nombre: '',
+
+      });
+    }).catch((res) => {
+      this.formNombre.reset({
+        nombre: '',
+
+      });
+    });
+  }
+
+
+  guardarNombre() {
+    const data = {
+      ...this.formNombre.value,
+    };
+    console.log(data);
+      // this._catalogoService.saveAgenda(data).subscribe({
+      //   next: (response: any) => {
+      //     console.log(response);
+      //   },
+      //   error: (e: HttpErrorResponse) => {
+      //     const msg = e.error?.msg || 'Error desconocido';
+      //     console.error('Error del servidor:', msg);
+      //   }
+      // });
   }
 
   setPage(pageInfo: any) {

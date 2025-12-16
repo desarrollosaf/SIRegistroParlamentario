@@ -4,7 +4,7 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="card-title">Catalogos</h6>
-                <button class="btn btn-sm btn-primary me-2" [routerLink]="['add']">
+                <button class="btn btn-sm btn-primary me-2" (click)="abrirModal()">
                     <ng-container>
                         <i class="arrow-right-circle"></i> Agregar
                     </ng-container>
@@ -68,3 +68,33 @@
         </div>
     </div>
 </div>
+
+<ng-template #xlModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Agregar Proponentes</h5>
+        <button type="button" class="btn-close" (click)="modal.close('by: close icon')" aria-label="Close"></button>
+    </div>
+    <form [formGroup]="formNombre" (ngSubmit)="guardarNombre()" class="forms-sample">
+        <div class="modal-body">
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="mb-3">
+                        <label class="form-label negri">Nombre:</label>
+                        <input formControlName="nombre" type="text" class="form-control"
+                            [class.is-invalid]="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched" />
+                        <div class="invalid-feedback"
+                            *ngIf="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched">
+                            <small>Campo requerido</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modal.close('by: close button')">Cerrar</button>
+            <button type="submit" class="btn" style="background-color: #800048; color: white;">Guardar</button>
+        </div>
+    </form>
+</ng-template>
