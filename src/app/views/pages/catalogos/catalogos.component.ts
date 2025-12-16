@@ -74,6 +74,7 @@ export class CatalogosComponent {
       // this._catalogoService.saveAgenda(data).subscribe({
       //   next: (response: any) => {
       //     console.log(response);
+      //     this.cerrarModal();
       //   },
       //   error: (e: HttpErrorResponse) => {
       //     const msg = e.error?.msg || 'Error desconocido';
@@ -81,7 +82,9 @@ export class CatalogosComponent {
       //   }
       // });
   }
-
+ cerrarModal() {
+    this.modalRef.close();
+  }
   setPage(pageInfo: any) {
     this.page.set(pageInfo.offset);
     const start = this.page() * this.pageSize();

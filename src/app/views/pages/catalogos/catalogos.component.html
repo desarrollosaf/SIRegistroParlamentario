@@ -94,7 +94,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="modal.close('by: close button')">Cerrar</button>
-            <button type="submit" class="btn" style="background-color: #800048; color: white;">Guardar</button>
+            <button type="submit" class="btn" style="background-color: #800048; color: white;" [disabled]="formNombre.invalid">Guardar</button>
         </div>
     </form>
 </ng-template>
