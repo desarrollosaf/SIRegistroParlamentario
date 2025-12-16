@@ -134,7 +134,7 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-
+    
     // 1. Obtener evento
     const evento = await Agenda.findOne({
       where: { id },
@@ -143,17 +143,19 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
       ],
     });
-
+    
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-
+    
     // 2. Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
     const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-
-    // 3. Obtener título según tipo de evento
+    
+    // 3. Obtener título y puntos según tipo de evento
     let titulo = "";
+    let puntos: any[] = []; // ✅ Declarar aquí, fuera del if/else
+    
     if (esSesion) {
       titulo = evento.descripcion ?? "";
     } else {
@@ -162,25 +164,45 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         attributes: ["autor_id"],
         raw: true
       });
-      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
       
-      if (comisionIds.length > 0) {
-        const comisiones = await Comision.findAll({
-          where: { id: comisionIds },
-          attributes: ["nombre"],
-          raw: true
+      if (anfitriones.length > 0) { // ✅ Validar antes de continuar
+        const puntosturnados = await PuntosComisiones.findAll({
+          where: { 
+            id_comision: anfitriones.map(a => a.autor_id),
+            id_punto_turno: null 
+          }
         });
-        titulo = comisiones.map(c => c.nombre).join(", ");
+        
+        if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
+          puntos = await PuntosOrden.findAll({
+            where: { 
+              id: puntosturnados.map(p => p.id_punto) 
+            },
+            attributes: ["id", "punto"],
+            raw: true
+          });
+        }
+        
+        const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+        
+        if (comisionIds.length > 0) {
+          const comisiones = await Comision.findAll({
+            where: { id: comisionIds },
+            attributes: ["nombre"],
+            raw: true
+          });
+          titulo = comisiones.map(c => c.nombre).join(", ");
+        }
       }
     }
-
+    
     // 4. Verificar si existen asistencias
     const asistenciasExistentes = await AsistenciaVoto.findAll({
       where: { id_agenda: id },
       order: [['created_at', 'DESC']],
       raw: true,
     });
-
+    
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
       await crearAsistencias(evento, esSesion);
@@ -191,7 +213,6 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         order: [['created_at', 'DESC']],
         raw: true,
       });
-
       const integrantes = await procesarAsistencias(asistenciasNuevas, esSesion);
       
       return res.status(200).json({
@@ -199,21 +220,23 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         evento,
         integrantes,
         titulo,
-        tipoEvento
+        tipoEvento,
+        puntos
       });
     }
-
+    
     // 6. Si SÍ existen asistencias, procesarlas
     const integrantes = await procesarAsistencias(asistenciasExistentes, esSesion);
-
+    
     return res.status(200).json({
       msg: "Evento con asistencias existentes",
       evento,
       integrantes,
       titulo,
-      tipoEvento
+      tipoEvento, // ✅ Faltaba la coma aquí
+      puntos
     });
-
+    
   } catch (error) {
     console.error("Error obteniendo evento:", error);
     return res.status(500).json({
@@ -1678,25 +1701,42 @@ export const catalogossave = async (req: Request, res: Response) => {
     const idPermanente = await TipoComisions.findOne({
       where: { valor: 'Diputación Permanente' }
     });
+    
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
-    let permanente: Record<string, string> = {};
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
+
+    let permanente: SelectOption[] = [];
     if (idPermanente) {
       const dips = await Comision.findAll({
         where: { tipo_comision_id: idPermanente.id },
-        attributes: ['id', ['nombre', 'name']]
+        attributes: ['id', 'nombre']
       });
-
-      permanente = Object.fromEntries(
-        dips.map(item => [item.id, item.nombre])
-      );
+      console.log(dips)
+      permanente = dips.map(item => ({
+        id: item.id,
+        name: item.nombre
+      }));
+      console.log('permanente:', permanente)
     }
-
+      // console.log("holaaa:1",permanente)
+      // return 500;
     const legisla = await Legislatura.findOne({
       order: [["fecha_inicio", "DESC"]],
     });
 
-    let diputadosArray: { id: string; nombre: string }[] = [];
+    let diputadosArray: { id: string; name: string }[] = [];
 
     if (legisla) {
       const diputados = await IntegranteLegislatura.findAll({
@@ -1713,7 +1753,7 @@ export const catalogossave = async (req: Request, res: Response) => {
             .filter(d => d.diputado)
             .map(d => ({
               id: d.diputado.id,
-              nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
+              name: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
     }
 

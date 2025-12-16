@@ -547,6 +547,7 @@
                                                         </div>
                                                     </div>
 
+
                                                     <div class="col-12" *ngIf="formPunto.get('se_turna_comision')?.value === true && !esComision">
                                                         <label class="form-label">Comisión <span class="text-danger">*</span></label>
                                                         <ng-select [items]="slcComisiones" 
@@ -556,6 +557,13 @@
                                                             formControlName="id_comision" 
                                                             placeholder="Selecciona una o más comisiones"
                                                             [closeOnSelect]="false">
+                                                        </ng-select>
+                                                    </div>
+
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-semibold">Puntos turnados a comisión</label>
+                                                        <ng-select [items]="slcPuntosTurnados" bindLabel="nombre" bindValue="id" formControlName="id_punto_turnado"
+                                                            placeholder="Selecciona" [closeOnSelect]="false">
                                                         </ng-select>
                                                     </div>
 
@@ -640,6 +648,7 @@
                                                                         placeholder="Selecciona">
                                                                     </ng-select>
                                                                 </div>
+
 
                                                                 <div class="col-12" *ngIf="!esComision">
                                                                     <label class="form-label fw-semibold">¿Se turna a comisión?</label>
