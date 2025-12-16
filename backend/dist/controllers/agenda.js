@@ -1474,10 +1474,12 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 where: { tipo_comision_id: idPermanente.id },
                 attributes: ['id', 'nombre']
             });
+            console.log(dips);
             permanente = dips.map(item => ({
                 id: item.id,
                 name: item.nombre
             }));
+            console.log('permanente:', permanente);
         }
         // console.log("holaaa:1",permanente)
         // return 500;
