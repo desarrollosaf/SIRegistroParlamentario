@@ -1992,7 +1992,7 @@ const enviarWhatsIntervencion = async (intervencion: any) => {
       "https://api.ultramsg.com/instance144598/messages/chat",
       new URLSearchParams({
         token: "ml56a7d6tn7ha7cc",
-        to: "+527222035605, +527224986377, +527151605569",
+        to: "+527222035605, +527224986377, +527151605569, +527222285798",
         body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
         priority: "1",
         referenceId: "",
@@ -2057,7 +2057,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605, +527224986377, +527151605569",
+      to: "+527222035605, +527224986377, +527151605569, +527222285798",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -3059,7 +3059,7 @@ if (!esSesion) {
     // Enviar documento usando base64
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+527222035605, +527224986377, +527151605569",
+      to: "+527222035605, +527224986377, +527151605569, +527222285798",
       // to: "+527222035605,",
       filename: fileName,
       document: base64PDF,
@@ -3812,7 +3812,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+527222035605, +527224986377, +527151605569",
+      to: "+527222035605, +527224986377, +527151605569, +527222285798",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
