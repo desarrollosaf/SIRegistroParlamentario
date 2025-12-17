@@ -151,7 +151,6 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 const puntosturnados = yield puntos_comisiones_1.default.findAll({
                     where: {
                         id_comision: anfitriones.map(a => a.autor_id),
-                        id_punto_turno: null
                     }
                 });
                 if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
@@ -861,7 +860,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         const idPuntoTurnado = body.id_punto_turnado;
         let punto;
-        if (idPuntoTurnado != null) {
+        if (idPuntoTurnado != 'null') {
             const data = yield puntos_ordens_1.default.findOne({
                 where: { id: idPuntoTurnado },
             });
@@ -883,7 +882,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             observaciones: body.observaciones,
             se_turna_comision: body.se_turna_comision,
         });
-        if (idPuntoTurnado != null) {
+        if (idPuntoTurnado != 'null') {
             const puntoTurnado = yield puntos_comisiones_1.default.findOne({
                 where: { id_punto: idPuntoTurnado },
             });

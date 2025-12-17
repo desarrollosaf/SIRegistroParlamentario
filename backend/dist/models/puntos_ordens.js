@@ -83,6 +83,6 @@ PuntosOrden.hasMany(puntos_presenta_1.default, {
 });
 PuntosOrden.belongsTo(agendas_1.default, { foreignKey: 'id_evento', as: 'evento' });
 PuntosOrden.hasMany(puntos_comisiones_1.default, {
-    foreignKey: 'id_punto', as: 'turnocomision'
+    foreignKey: 'id_punto_turno', as: 'turnocomision'
 });
 exports.default = PuntosOrden;

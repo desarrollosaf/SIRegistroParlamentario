@@ -169,7 +169,6 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         const puntosturnados = await PuntosComisiones.findAll({
           where: { 
             id_comision: anfitriones.map(a => a.autor_id),
-            id_punto_turno: null 
           }
         });
         
@@ -968,7 +967,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const idPuntoTurnado = body.id_punto_turnado;
     let punto: string;
 
-    if (idPuntoTurnado != null) {
+    if (idPuntoTurnado != 'null') {
       const data = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
@@ -993,7 +992,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       se_turna_comision: body.se_turna_comision,
     });
 
-    if (idPuntoTurnado != null) {
+    if (idPuntoTurnado != 'null') {
       const puntoTurnado = await PuntosComisiones.findOne({
         where: { id_punto: idPuntoTurnado },
       });
