@@ -560,8 +560,15 @@
                                                         </ng-select>
                                                     </div>
 
-                                                    <div class="col-12">
+                                                    <div class="col-12" *ngIf="esComision">
                                                         <label class="form-label fw-semibold">Puntos turnados a comisión</label>
+                                                        <ng-select [items]="slcPuntosTurnados" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
+                                                            placeholder="Selecciona">
+                                                        </ng-select>
+                                                    </div>
+
+                                                    <div class="col-12" *ngIf="!esComision">
+                                                        <label class="form-label fw-semibold">Dictámenes</label>
                                                         <ng-select [items]="slcPuntosTurnados" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
                                                             placeholder="Selecciona">
                                                         </ng-select>
@@ -685,6 +692,22 @@
                                                                         [closeOnSelect]="false">
                                                                     </ng-select>
                                                                 </div>
+
+
+                                                                <div class="col-12" *ngIf="esComision">
+                                                                <label class="form-label fw-semibold">Puntos turnados a comisión</label>
+                                                                <ng-select [items]="slcPuntosTurnados" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
+                                                                placeholder="Selecciona">
+                                                                </ng-select>
+                                                                </div>
+
+                                                                <div class="col-12" *ngIf="!esComision">
+                                                                <label class="form-label fw-semibold">Dictámenes</label>
+                                                                <ng-select [items]="slcPuntosTurnados" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
+                                                                placeholder="Selecciona">
+                                                                </ng-select>
+                                                                </div>
+
 
                                                                 <div class="col-12">
                                                                     <label class="form-label">Punto</label>
