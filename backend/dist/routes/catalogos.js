@@ -8,4 +8,6 @@ router.get("/api/catalogos/getcatalogo/:id", catalogos_1.getCatalogo);
 router.post("/api/catalogos/categoriaproponente/save/", catalogos_1.saveCategoriaProponente);
 router.post("/api/catalogos/categoriaproponente/delete/", catalogos_1.deleteCategoriaProponente);
 router.post("/api/catalogos/proponentetitular/save/", catalogos_1.saveTitularProponente);
+router.post("/api/catalogos/categoriainicitiva/save/", catalogos_1.saveCategoriaInicitavias);
+router.post("/api/catalogos/proponentes/save/", catalogos_1.saveProponentes);
 exports.default = router;

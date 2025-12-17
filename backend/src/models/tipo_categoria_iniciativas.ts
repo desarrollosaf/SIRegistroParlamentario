@@ -6,7 +6,7 @@ class TipoCategoriaIniciativas extends Model<
   InferAttributes<TipoCategoriaIniciativas>,
   InferCreationAttributes<TipoCategoriaIniciativas>
 > {
-  declare id: string;
+  declare id: CreationOptional<number>;
   declare valor: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;

@@ -14,6 +14,7 @@ class PuntosComisiones extends Model {
   declare id: CreationOptional<number>;
   declare id_punto: ForeignKey<PuntosOrden["id"]>;
   declare id_comision: string | null;
+  declare id_punto_turno: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 

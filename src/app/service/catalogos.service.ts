@@ -38,10 +38,15 @@ export class CatalogosService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/proponentetitular/save/`,data)
   }
 
-  
-  
-  
+  saveProponente(data: any): Observable<any> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/proponentes/save/`,data)
+  }
 
+  saveCategorias(data: any): Observable<any> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/categoriainicitiva/save/`,data)
+  }
+
+  
   
 
 }

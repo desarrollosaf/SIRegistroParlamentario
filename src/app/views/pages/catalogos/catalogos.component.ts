@@ -24,6 +24,8 @@ export class CatalogosComponent {
   loading = signal<boolean>(true);
   modalRef: NgbModalRef;
   @ViewChild('xlModal', { static: true }) xlModal!: TemplateRef<any>;
+  @ViewChild('modalCategorias') modalCategorias!: TemplateRef<any>;
+
   private _catalogoService = inject(CatalogosService);
 
   constructor(private ngZone: NgZone, private route: ActivatedRoute, private modalService: NgbModal, private fb: FormBuilder,) {
@@ -65,23 +67,60 @@ export class CatalogosComponent {
     });
   }
 
+  abrirModalCategorias() {
+    this.modalRef = this.modalService.open(this.modalCategorias, { size: 'lg' });
+    this.modalRef.result.then((result) => {
+      this.formNombre.reset({
+        nombre: '',
+
+      });
+    }).catch((res) => {
+      this.formNombre.reset({
+        nombre: '',
+
+      });
+    });
+  }
+
 
   guardarNombre() {
     const data = {
       ...this.formNombre.value,
     };
     console.log(data);
-      // this._catalogoService.saveAgenda(data).subscribe({
-      //   next: (response: any) => {
-      //     console.log(response);
-      //     this.cerrarModal();
-      //   },
-      //   error: (e: HttpErrorResponse) => {
-      //     const msg = e.error?.msg || 'Error desconocido';
-      //     console.error('Error del servidor:', msg);
-      //   }
-      // });
+    this._catalogoService.saveProponente(data).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        this.originalData.set(response.data);
+        this.temp.set(response.data);
+        this.rows.set(response.data);
+        this.filteredCount.set(response.data.length);
+        this.loading.set(false);
+        this.cerrarModal();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
+
+  guardarNombreCategoria() {
+    const data = {
+      ...this.formNombre.value,
+    };
+    console.log('save categorias', data);
+    this._catalogoService.saveCategorias(data).subscribe({
+      next: (response: any) => {
+        this.cerrarModal();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
+  }
+
  cerrarModal() {
     this.modalRef.close();
   }

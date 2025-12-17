@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveTitularProponente = exports.deleteCategoriaProponente = exports.saveCategoriaProponente = exports.getCatalogo = exports.getCatalogos = void 0;
+exports.saveProponentes = exports.saveCategoriaInicitavias = exports.saveTitularProponente = exports.deleteCategoriaProponente = exports.saveCategoriaProponente = exports.getCatalogo = exports.getCatalogos = void 0;
 const proponentes_1 = __importDefault(require("../models/proponentes"));
 const ProponentesTipoCategoriaDetalle_1 = __importDefault(require("../models/ProponentesTipoCategoriaDetalle"));
 const tipo_categoria_iniciativas_1 = __importDefault(require("../models/tipo_categoria_iniciativas"));
@@ -278,3 +278,47 @@ const saveTitularProponente = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.saveTitularProponente = saveTitularProponente;
+const saveCategoriaInicitavias = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        console.log(body);
+        const saveDatos = yield tipo_categoria_iniciativas_1.default.create({
+            valor: body.nombre,
+        });
+        return res.status(200).json({
+            msg: `sucess`,
+            estatus: 200,
+        });
+    }
+    catch (error) {
+        console.error('Error al guardar categoria proponente:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.saveCategoriaInicitavias = saveCategoriaInicitavias;
+const saveProponentes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        console.log(body);
+        const saveDatos = yield proponentes_1.default.create({
+            valor: body.nombre,
+        });
+        const proponentes = yield proponentes_1.default.findAll();
+        return res.status(200).json({
+            msg: `sucess`,
+            data: proponentes,
+            estatus: 200,
+        });
+    }
+    catch (error) {
+        console.error('Error al guardar categoria proponente:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.saveProponentes = saveProponentes;

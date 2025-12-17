@@ -4,7 +4,7 @@ import TipoCategoriaIniciativas from './tipo_categoria_iniciativas';
 import ProponentesTipoCategoriaDetalle from './ProponentesTipoCategoriaDetalle';
 
 class Proponentes extends Model<InferAttributes<Proponentes>, InferCreationAttributes<Proponentes>> {
-  declare id: string;
+  declare id: CreationOptional<string>;
   declare valor: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;

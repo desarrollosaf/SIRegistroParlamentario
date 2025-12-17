@@ -81,7 +81,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcTipIntervencion: any;
   slcComisiones: any; // <-- NUEVO CAMPO
   slcPuntosTurnados: any; // <-- NUEVO CAMPO
-
+  tipo_evento: any;
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
@@ -731,7 +731,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           // Determinar si se turna a comisión basado en si hay comisiones
           const seTurnaComision = comisionesIds.length > 0;
 
-
+          console.log('PIKOASDJKASJKS', punto.turnocomision.id_punto);
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -746,7 +746,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               punto: [punto.punto],
               observaciones: [punto.observaciones],
               se_turna_comision: [seTurnaComision],
-              id_comision: [comisionesIds]
+              id_comision: [comisionesIds],
+              id_punto_turnado: [punto.turnocomision?.[0]?.id_punto || null]
             })
           };
 
@@ -763,6 +764,18 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             comisionControl?.updateValueAndValidity();
           });
 
+          // PARA id_punto_turnado
+          puntoMapeado.form.get('id_punto_turnado')?.valueChanges.subscribe((value: any) => {
+            this.aplicarPuntoTurnado(puntoMapeado.form, value);
+          });
+
+          // LÓGICA INICIAL SI YA HAY UN VALOR
+          const valorInicial = puntoMapeado.form.get('id_punto_turnado')?.value;
+          if (valorInicial) {
+            this.aplicarPuntoTurnado(puntoMapeado.form, valorInicial);
+          }
+
+
           // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
           if (proponentesIds.length > 0) {
             this.cargarTiposParaPunto(puntoMapeado, proponentesIds);
@@ -778,6 +791,20 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       }
     });
     this.cdr.detectChanges();
+  }
+
+  aplicarPuntoTurnado(form: FormGroup, value: any): void {
+    if (value) {
+      const selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+      console.log(selectedOption);
+      const textoSeleccionado = selectedOption?.punto || '';
+
+      form.get('punto')?.setValue(textoSeleccionado);
+      form.get('punto')?.disable();
+    } else {
+      form.get('punto')?.setValue('');
+      form.get('punto')?.enable();
+    }
   }
 
 
@@ -851,6 +878,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (punto.nuevoDocumento) {
       formData.append('documento', punto.nuevoDocumento);
     }
+
+    if(this.esComision){
+       this.tipo_evento = 1;
+    }else{
+      this.tipo_evento = 0;
+
+    }
+    formData.append('tipo_evento', this.tipo_evento);
 
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
@@ -1138,7 +1173,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
+  if(this.esComision){
+       this.tipo_evento = 1;
+    }else{
+      this.tipo_evento = 0;
 
+    }
+    formData.append('tipo_evento', this.tipo_evento);
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
     // });
