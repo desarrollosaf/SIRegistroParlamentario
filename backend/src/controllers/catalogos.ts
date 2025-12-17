@@ -308,6 +308,53 @@ export const saveTitularProponente = async (req: Request, res: Response): Promis
   }
 };
 
+export const saveCategoriaInicitavias = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    console.log(body)
+
+    const saveDatos = await TipoCategoriaIniciativas.create({
+      valor: body.valor,
+    });
+   
+    return res.status(200).json({
+      msg: `sucess`,
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error('Error al guardar categoria proponente:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+export const saveProponentes = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    console.log(body)
+    
+    const saveDatos = await ProponentesTipoCategoriaDetalle.create({
+      proponente_id: body.proponete,
+      tipo_categoria_id: body.categoria
+    });
+   
+    return res.status(200).json({
+      msg: `sucess`,
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error('Error al guardar categoria proponente:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
 
 
 
