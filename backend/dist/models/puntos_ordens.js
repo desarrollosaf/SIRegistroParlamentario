@@ -7,6 +7,7 @@ const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 const puntos_presenta_1 = __importDefault(require("./puntos_presenta"));
 const agendas_1 = __importDefault(require("./agendas"));
+const temas_puntos_votos_1 = __importDefault(require("./temas_puntos_votos"));
 const puntos_comisiones_1 = __importDefault(require("./puntos_comisiones"));
 class PuntosOrden extends sequelize_1.Model {
 }
@@ -71,6 +72,11 @@ PuntosOrden.init({
         allowNull: false,
         defaultValue: 0,
     },
+    id_dictamen: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+    },
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: "puntos_ordens",
@@ -84,5 +90,9 @@ PuntosOrden.hasMany(puntos_presenta_1.default, {
 PuntosOrden.belongsTo(agendas_1.default, { foreignKey: 'id_evento', as: 'evento' });
 PuntosOrden.hasMany(puntos_comisiones_1.default, {
     foreignKey: 'id_punto_turno', as: 'turnocomision'
+});
+PuntosOrden.hasMany(temas_puntos_votos_1.default, {
+    foreignKey: 'id_punto',
+    as: 'temasVotos',
 });
 exports.default = PuntosOrden;

@@ -587,8 +587,26 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           attributes: ['id', 'nombre'],
           raw: true,
         });
-
-
+        
+        const dictamenes = await PuntosOrden.findAll({
+          where: { id_tipo: 6 },
+          include: [
+            {
+              model: TemasPuntosVotos,
+              as: 'temasVotos',
+              include: [
+                {
+                  model: VotosPunto,
+                  as: 'votospuntos',
+                  where: { sentido: 1 },
+                  required: false,
+                }
+              ],
+              required: false
+            }
+          ]
+        });
+        
         const legislatura = await Legislatura.findOne({
           order: [["fecha_inicio", "DESC"]],
         });
@@ -625,7 +643,8 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             comisiones: comisiones,
             diputados: diputadosArray,
             tipointer: tipointer,
-            partidos:partidos
+            partidos:partidos,
+            dictamenes: dictamenes
 
         });
 

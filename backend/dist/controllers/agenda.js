@@ -509,6 +509,24 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'nombre'],
             raw: true,
         });
+        const dictamenes = yield puntos_ordens_1.default.findAll({
+            where: { id_tipo: 6 },
+            include: [
+                {
+                    model: temas_puntos_votos_1.default,
+                    as: 'temasVotos',
+                    include: [
+                        {
+                            model: votos_punto_1.default,
+                            as: 'votospuntos',
+                            where: { sentido: 1 },
+                            required: false,
+                        }
+                    ],
+                    required: false
+                }
+            ]
+        });
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
@@ -543,7 +561,8 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             comisiones: comisiones,
             diputados: diputadosArray,
             tipointer: tipointer,
-            partidos: partidos
+            partidos: partidos,
+            dictamenes: dictamenes
         });
     }
     catch (error) {
