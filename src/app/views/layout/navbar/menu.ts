@@ -29,6 +29,25 @@ export const MENU: MenuItem[] = [
       
     ]
   },
+  {
+    label: 'Catalogos',
+    icon: 'mail',
+    subMenus: [
+      {
+        subMenuItems: [
+          {
+            label: 'catalogos',
+            isTitle: true,
+          },
+          {
+            label: 'proponentes',
+            link: '/catalogos'
+          }
+        ]
+      },
+      
+    ]
+  },
   
   
 ];

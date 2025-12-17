@@ -27,16 +27,14 @@ TipoCategoriaIniciativas.init({
         field: 'updated_at',
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
-    },
-    deletedAt: {
-        field: 'deleted_at',
-        type: sequelize_1.DataTypes.DATE,
-        allowNull: true,
-    },
+    }
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: 'tipo_categoria_iniciativas',
     timestamps: true,
     paranoid: false,
 });
+// TipoCategoriaIniciativas.hasMany(ProponentesTipoCategoriaDetalle, {
+//   foreignKey: 'proponente_id', as: 'proponentes_tipo_categoria_detalle'
+// });
 exports.default = TipoCategoriaIniciativas;

@@ -1,5 +1,6 @@
 import { Model, DataTypes, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
 import sequelize from '../database/registrocomisiones'; 
+import ProponentesTipoCategoriaDetalle from './ProponentesTipoCategoriaDetalle';
 
 class TipoCategoriaIniciativas extends Model<
   InferAttributes<TipoCategoriaIniciativas>,
@@ -9,7 +10,6 @@ class TipoCategoriaIniciativas extends Model<
   declare valor: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-  declare deletedAt: CreationOptional<Date>;
 }
 
 TipoCategoriaIniciativas.init(
@@ -33,12 +33,7 @@ TipoCategoriaIniciativas.init(
       field: 'updated_at',
       type: DataTypes.DATE,
       allowNull: true,
-    },
-    deletedAt: {
-      field: 'deleted_at',
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
+    }
   },
   {
     sequelize,
@@ -47,5 +42,9 @@ TipoCategoriaIniciativas.init(
     paranoid: false, 
   }
 );
+
+// TipoCategoriaIniciativas.hasMany(ProponentesTipoCategoriaDetalle, {
+//   foreignKey: 'proponente_id', as: 'proponentes_tipo_categoria_detalle'
+// });
 
 export default TipoCategoriaIniciativas;

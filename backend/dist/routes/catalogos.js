@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const catalogos_1 = require("../controllers/catalogos");
+const router = (0, express_1.Router)();
+router.get("/api/catalogos/getcatalogos/", catalogos_1.getCatalogos);
+router.get("/api/catalogos/getcatalogo/:id", catalogos_1.getCatalogo);
+router.post("/api/catalogos/categoriaproponente/save/", catalogos_1.saveCategoriaProponente);
+router.post("/api/catalogos/categoriaproponente/delete/", catalogos_1.deleteCategoriaProponente);
+router.post("/api/catalogos/proponentetitular/save/", catalogos_1.saveTitularProponente);
+exports.default = router;

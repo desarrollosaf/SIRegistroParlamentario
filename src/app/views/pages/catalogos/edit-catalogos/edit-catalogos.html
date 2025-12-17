@@ -1,0 +1,123 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Edición de Catálogos</h6>
+        <p class="text-muted">{{ proponente()?.valor }}</p>
+
+        <div *ngIf="tiposProponentes()?.length; else vacio">
+
+            <div class="d-flex mb-3">
+                <form class="d-flex gap-3 mb-3 align-items-end" (ngSubmit)="agregarTitular()">
+
+                    <!-- Nombre -->
+                    <div class="flex-fill">
+                        <label class="form-label">Nombre del titular</label>
+                        <input
+                        type="text"
+                        class="form-control"
+                        name="nombreTitular"
+                        [(ngModel)]="titular.nombre"
+                        required
+                        />
+                    </div>
+
+                    <!-- Fecha inicio -->
+                    <div>
+                        <label class="form-label">Fecha inicio</label>
+                        <input
+                        type="date"
+                        class="form-control"
+                        name="fechaInicio"
+                        [(ngModel)]="titular.fechaInicio"
+                        required
+                        />
+                    </div>
+
+                    <!-- Fecha fin -->
+                    <div>
+                        <label class="form-label">Fecha fin</label>
+                        <input
+                        type="date"
+                        class="form-control"
+                        name="fechaFin"
+                        [(ngModel)]="titular.fechaFin"
+                        />
+                    </div>
+
+                    <!-- Botón -->
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Agregar
+                    </button>
+
+                    </form>
+            </div>  
+
+
+            
+            <table class="table table-striped table-bordered">
+            <thead class="table-light">
+                <tr>
+                <th>Titular</th>
+                <th>Acciones</th>
+                </tr>
+            </thead>
+                <tbody>
+                <tr *ngFor="let tp of tiposProponentes(); trackBy: trackById">
+                    <td>{{ tp.valor }}</td>
+                    <td>
+                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarCategoria(1)">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+
+       
+      
+        </div>
+
+        <ng-template #vacio>
+            <p>No hay datos</p>
+        </ng-template>
+
+        <br><br>
+
+        <div class="d-flex mb-3">
+          <select class="form-select me-2" [(ngModel)]="categoriaSeleccionada">
+            <option [ngValue]="null">Selecciona categoría...</option>
+            <option *ngFor="let cat of categoriasDisponibles" [ngValue]="cat.id">{{ cat.valor }}</option>
+          </select>
+          <button class="btn btn-primary" (click)="agregarCategoria()">
+            <i class="bi bi-plus"></i> Agregar
+          </button>
+        </div>  
+
+        <!-- Tabla de categorías -->
+        <table class="table table-striped table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th>Categoria</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+            <tbody>
+            <tr *ngFor="let cat of proponente()?.categorias; trackBy: trackById">
+                <td>{{ cat.valor }}</td>
+                <td>
+                <button class="btn btn-sm btn-outline-danger" (click)="eliminarCategoria(cat.id)">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Catalogos</h6>
+                <button class="btn btn-sm btn-primary me-2" (click)="abrirModal()">
+                    <ng-container>
+                        <i class="arrow-right-circle"></i> Agregar
+                    </ng-container>
+                </button>
+                <br><br>
+                <div class="row">
+                    <div class="col-xl-3 col-md-4">
+                        <input type="text" class="form-control form-control-sm" placeholder="Buscar..."
+                            (keyup)="updateFilter($event)" />
+                    </div>
+                </div>
+                <br>
+               <div class="table-responsive">
+                    <div *ngIf="rows().length === 0 && !loading()" class="text-center my-3">
+                        <p><strong>No hay datos para mostrar</strong></p>
+                    </div>
+                    <ngx-datatable #table class="bootstrap" (sort)="onSort($event)" [rows]="rows()"
+                        [columnMode]="'force'" [headerHeight]="50" *ngIf="rows().length > 0" [footerHeight]="50"
+                        [externalSorting]="true" [externalPaging]="true" [rowHeight]="'auto'" [limit]="pageSize()"
+                        [count]="filteredCount()" [offset]="page()" (page)="setPage($event)"
+                        [loadingIndicator]="loading()">
+
+
+                         <ngx-datatable-column prop="id" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="id">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{row.id}}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column prop="nombre" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="Nombre">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{row.valor}}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+
+                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Detalles">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <div class="btn-group-actions mid">
+                                   
+                                    <a class="btn btn-primary action-btn"
+                                        routerLink="edit/{{ row.id }}" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="Editar ">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    <a class="btn btn-danger action-btn" routerLink="/" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+
+                                   
+                                </div>
+                            </ng-template>
+                        </ngx-datatable-column>
+                    </ngx-datatable>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #xlModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Agregar Proponentes</h5>
+        <button type="button" class="btn-close" (click)="modal.close('by: close icon')" aria-label="Close"></button>
+    </div>
+    <form [formGroup]="formNombre" (ngSubmit)="guardarNombre()" class="forms-sample">
+        <div class="modal-body">
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="mb-3">
+                        <label class="form-label negri">Nombre:</label>
+                        <input formControlName="nombre" type="text" class="form-control"
+                            [class.is-invalid]="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched" />
+                        <div class="invalid-feedback"
+                            *ngIf="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched">
+                            <small>Campo requerido</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modal.close('by: close button')">Cerrar</button>
+            <button type="submit" class="btn" style="background-color: #800048; color: white;" [disabled]="formNombre.invalid">Guardar</button>
+        </div>
+    </form>
+</ng-template>

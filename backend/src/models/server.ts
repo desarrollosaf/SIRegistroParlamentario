@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path';
 import eventos from "../routes/eventos";
 import user from "../routes/user";
+import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
@@ -32,6 +33,7 @@ class Server {
        this.app.use(eventos);
        this.app.use(user);
        this.app.use(diputados);
+       this.app.use(catalogos);
 
     }
 

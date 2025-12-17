@@ -58,6 +58,10 @@ export const routes: Routes = [
       path: 'legislatura',
        loadChildren: () => import('./views/pages/legislatura/legislatura.route')
       },
+      {
+       path: 'catalogos',
+       loadChildren: () => import('./views/pages/catalogos/comision.route')
+      },
     ]
   },
   {
