@@ -336,9 +336,8 @@ export const saveProponentes = async (req: Request, res: Response): Promise<any>
     const { body } = req;
     console.log(body)
     
-    const saveDatos = await ProponentesTipoCategoriaDetalle.create({
-      proponente_id: body.proponete,
-      tipo_categoria_id: body.categoria
+    const saveDatos = await Proponentes.create({
+      valor: body.valor,
     });
    
     return res.status(200).json({

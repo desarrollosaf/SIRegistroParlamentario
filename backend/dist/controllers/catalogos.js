@@ -303,9 +303,8 @@ const saveProponentes = (req, res) => __awaiter(void 0, void 0, void 0, function
     try {
         const { body } = req;
         console.log(body);
-        const saveDatos = yield ProponentesTipoCategoriaDetalle_1.default.create({
-            proponente_id: body.proponete,
-            tipo_categoria_id: body.categoria
+        const saveDatos = yield proponentes_1.default.create({
+            valor: body.valor,
         });
         return res.status(200).json({
             msg: `sucess`,
