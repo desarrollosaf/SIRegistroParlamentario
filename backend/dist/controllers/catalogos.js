@@ -283,7 +283,7 @@ const saveCategoriaInicitavias = (req, res) => __awaiter(void 0, void 0, void 0,
         const { body } = req;
         console.log(body);
         const saveDatos = yield tipo_categoria_iniciativas_1.default.create({
-            valor: body.valor,
+            valor: body.nombre,
         });
         return res.status(200).json({
             msg: `sucess`,
@@ -304,7 +304,7 @@ const saveProponentes = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { body } = req;
         console.log(body);
         const saveDatos = yield proponentes_1.default.create({
-            valor: body.valor,
+            valor: body.nombre,
         });
         const proponentes = yield proponentes_1.default.findAll();
         return res.status(200).json({

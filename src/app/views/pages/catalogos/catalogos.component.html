@@ -6,7 +6,12 @@
                 <h6 class="card-title">Catalogos</h6>
                 <button class="btn btn-sm btn-primary me-2" (click)="abrirModal()">
                     <ng-container>
-                        <i class="arrow-right-circle"></i> Agregar
+                        <i class="arrow-right-circle"></i> Agregar proponentes
+                    </ng-container>
+                </button>
+                <button class="btn btn-sm btn-primary me-2" (click)="abrirModalCategorias()">
+                    <ng-container>
+                        <i class="arrow-right-circle"></i> Agregar categorias
                     </ng-container>
                 </button>
                 <br><br>
@@ -75,6 +80,37 @@
         <button type="button" class="btn-close" (click)="modal.close('by: close icon')" aria-label="Close"></button>
     </div>
     <form [formGroup]="formNombre" (ngSubmit)="guardarNombre()" class="forms-sample">
+        <div class="modal-body">
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="mb-3">
+                        <label class="form-label negri">Nombre:</label>
+                        <input formControlName="nombre" type="text" class="form-control"
+                            [class.is-invalid]="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched" />
+                        <div class="invalid-feedback"
+                            *ngIf="formNombre.get('nombre')?.invalid && formNombre.get('nombre')?.touched">
+                            <small>Campo requerido</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modal.close('by: close button')">Cerrar</button>
+            <button type="submit" class="btn" style="background-color: #800048; color: white;" [disabled]="formNombre.invalid">Guardar</button>
+        </div>
+    </form>
+</ng-template>
+
+
+<ng-template #modalCategorias let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Agregar categorias</h5>
+        <button type="button" class="btn-close" (click)="modal.close('by: close icon')" aria-label="Close"></button>
+    </div>
+    <form [formGroup]="formNombre" (ngSubmit)="guardarNombreCategoria()" class="forms-sample">
         <div class="modal-body">
 
             <div class="row">

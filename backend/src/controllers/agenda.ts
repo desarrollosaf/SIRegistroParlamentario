@@ -989,7 +989,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto,
       observaciones: body.observaciones,
-      se_turna_comision: body.se_turna_comision,
+      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
     if (idPuntoTurnado != 'null') {
@@ -1014,12 +1014,17 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    for (const item of turnocomision) {
-      await PuntosComisiones.create({
-        id_punto: puntonuevo.id,
-        id_comision: item,
-      });
+
+    if(body.tipo_evento == 0){
+      for (const item of turnocomision) {
+        await PuntosComisiones.create({
+          id_punto: puntonuevo.id,
+          id_comision: item,
+        });
+      }
+
     }
+    
 
 
     return res.status(201).json({
@@ -1067,7 +1072,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       if (!puntos) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-     
+     console.log(puntos)
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos, 
@@ -1083,6 +1088,9 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
+    console.log(body);
+
+
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -1104,6 +1112,8 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       .map((id: string) => id.trim()) 
       .filter((id: string) => id.length > 0);
 
+    
+    console.log(turnocomision);
 
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
@@ -1112,16 +1122,66 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
 
+    const idPuntoTurnado = body.id_punto_turnado;
+    let puntoDesc: string;
+
+    if (idPuntoTurnado != 'null') {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
+        })
+
+      }
+
+      const puntoTurnadoCreate = await PuntosOrden.findOne({
+        where: { id: idPuntoTurnado },
+      });
+      if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
+        throw new Error('No se encontró la descripción del punto turnado');
+      }
+      puntoDesc = puntoTurnadoCreate.punto;
+      
+    } else {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
+        })
+
+      }
+      puntoDesc = body.punto;
+    }
+
     await punto.update({
       nopunto: body.numpunto ?? punto.nopunto,
       id_tipo: body.tipo ?? punto.id_tipo,
       tribuna: body.tribuna ?? punto.tribuna,
       path_doc: nuevoPath,
-      punto: body.punto ?? punto.punto,
+      punto: puntoDesc,
       observaciones: body.observaciones ?? punto.observaciones,
       editado: 1,
-      se_turna_comision: body.se_turna_comision,
+      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
+
+    if (idPuntoTurnado != 'null') {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto: idPuntoTurnado },
+      });
+
+      if (!puntoTurnado) {
+        throw new Error('Relación de punto-comisión no encontrada');
+      }
+
+      await puntoTurnado.update({
+        id_punto_turno: punto.id,
+      });
+    }
 
     await PuntosPresenta.destroy({
       where: { id_punto: punto.id }
@@ -1134,17 +1194,21 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         id_presenta: item.autorId
       });
     }
-    await PuntosComisiones.destroy({
-      where: { id_punto: punto.id }
-    });
 
-     for (const item of turnocomision) {
-      await PuntosComisiones.create({
-        id_punto: punto.id,
-        id_comision: item,
+    if(body.tipo_evento == 0){
+      await PuntosComisiones.destroy({
+        where: { id_punto: punto.id }
       });
-    }
 
+      for (const item of turnocomision) {
+        await PuntosComisiones.create({
+          id_punto: punto.id,
+          id_comision: item,
+        });
+      }
+
+    }
+    
     return res.status(200).json({
       message: "Punto actualizado correctamente",
       data: punto,

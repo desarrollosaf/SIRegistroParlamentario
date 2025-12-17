@@ -314,7 +314,7 @@ export const saveCategoriaInicitavias = async (req: Request, res: Response): Pro
     console.log(body)
 
     const saveDatos = await TipoCategoriaIniciativas.create({
-      valor: body.valor,
+      valor: body.nombre,
     });
    
     return res.status(200).json({
@@ -337,7 +337,7 @@ export const saveProponentes = async (req: Request, res: Response): Promise<any>
     console.log(body)
     
     const saveDatos = await Proponentes.create({
-      valor: body.valor,
+      valor: body.nombre,
     });
     
     const proponentes =  await  Proponentes.findAll();
