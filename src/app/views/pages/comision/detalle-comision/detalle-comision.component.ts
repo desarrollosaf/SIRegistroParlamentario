@@ -731,7 +731,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           // Determinar si se turna a comisión basado en si hay comisiones
           const seTurnaComision = comisionesIds.length > 0;
 
-
+console.log('PIKOASDJKASJKS',punto.turnocomision[0].id_punto);
           const puntoMapeado = {
             ...punto,
             tiposDisponibles: [],
@@ -746,7 +746,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               punto: [punto.punto],
               observaciones: [punto.observaciones],
               se_turna_comision: [seTurnaComision],
-              id_comision: [comisionesIds]
+              id_comision: [comisionesIds],
+              id_punto_turnado: [punto.turnocomision[0].id_punto]
             })
           };
 
