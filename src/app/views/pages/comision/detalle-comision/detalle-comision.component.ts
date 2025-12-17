@@ -81,7 +81,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcTipIntervencion: any;
   slcComisiones: any; // <-- NUEVO CAMPO
   slcPuntosTurnados: any; // <-- NUEVO CAMPO
-
+  tipo_evento: any;
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
   formPunto!: FormGroup;
@@ -879,6 +879,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', punto.nuevoDocumento);
     }
 
+    if(this.esComision){
+       this.tipo_evento = 1;
+    }else{
+      this.tipo_evento = 0;
+
+    }
+    formData.append('tipo_evento', this.tipo_evento);
+
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
     // });
@@ -1165,7 +1173,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
+  if(this.esComision){
+       this.tipo_evento = 1;
+    }else{
+      this.tipo_evento = 0;
 
+    }
+    formData.append('tipo_evento', this.tipo_evento);
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
     // });
