@@ -43,8 +43,3 @@ Thumbs.db
 
 backend/dist/storage
 backend/storage
-/backend/src/database/
-/backend/src/database/registrocomisiones.ts
-/backend/src/database/legislativoConnection.ts
-/backend/dist/database/registrocomisiones.js
-/backend/dist/database/legislativoConnection.js
