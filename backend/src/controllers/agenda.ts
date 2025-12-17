@@ -933,7 +933,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    // console.log(body);
+    console.log(body);
     // return 500;
 
   
@@ -965,16 +965,47 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
+    const idPuntoTurnado = body.id_punto_turnado;
+    let punto: string;
+
+    if (idPuntoTurnado != null) {
+      const data = await PuntosOrden.findOne({
+        where: { id: idPuntoTurnado },
+      });
+
+      if (!data) {
+        throw new Error('Punto turnado no encontrado');
+      }
+
+      punto = data.punto;
+    } else {
+      punto = body.punto;
+    }
+
     const puntonuevo = await PuntosOrden.create({
       id_evento: evento.id,
       nopunto: body.numpunto,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
       path_doc: file ? `storage/puntos/${file.filename}` : null,
-      punto: body.punto,
+      punto,
       observaciones: body.observaciones,
       se_turna_comision: body.se_turna_comision,
     });
+
+    if (idPuntoTurnado != null) {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto: idPuntoTurnado },
+      });
+
+      if (!puntoTurnado) {
+        throw new Error('Relación de punto-comisión no encontrada');
+      }
+
+      await puntoTurnado.update({
+        id_punto_turno: puntonuevo.id,
+      });
+    }
 
     for (const item of presentaArray) {
       await PuntosPresenta.create({
@@ -1031,7 +1062,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
               ["id_tipo_presenta", "id_proponente"]
             ]
           },
-          { model: PuntosComisiones, as: "turnocomision", attributes: ["id", "id_punto","id_comision"] },
+          { model: PuntosComisiones, as: "turnocomision", attributes: ["id", "id_punto","id_comision","id_punto_turno"] },
         ]
       });
       if (!puntos) {

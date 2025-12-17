@@ -339,9 +339,12 @@ export const saveProponentes = async (req: Request, res: Response): Promise<any>
     const saveDatos = await Proponentes.create({
       valor: body.valor,
     });
-   
+    
+    const proponentes =  await  Proponentes.findAll();
+
     return res.status(200).json({
       msg: `sucess`,
+      data: proponentes,
       estatus: 200,
     });
 

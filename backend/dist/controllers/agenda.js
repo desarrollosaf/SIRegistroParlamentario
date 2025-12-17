@@ -834,7 +834,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        // console.log(body);
+        console.log(body);
         // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
@@ -859,16 +859,41 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
+        const idPuntoTurnado = body.id_punto_turnado;
+        let punto;
+        if (idPuntoTurnado != null) {
+            const data = yield puntos_ordens_1.default.findOne({
+                where: { id: idPuntoTurnado },
+            });
+            if (!data) {
+                throw new Error('Punto turnado no encontrado');
+            }
+            punto = data.punto;
+        }
+        else {
+            punto = body.punto;
+        }
         const puntonuevo = yield puntos_ordens_1.default.create({
             id_evento: evento.id,
             nopunto: body.numpunto,
             id_tipo: body.tipo,
             tribuna: body.tribuna,
             path_doc: file ? `storage/puntos/${file.filename}` : null,
-            punto: body.punto,
+            punto,
             observaciones: body.observaciones,
             se_turna_comision: body.se_turna_comision,
         });
+        if (idPuntoTurnado != null) {
+            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                where: { id_punto: idPuntoTurnado },
+            });
+            if (!puntoTurnado) {
+                throw new Error('Relación de punto-comisión no encontrada');
+            }
+            yield puntoTurnado.update({
+                id_punto_turno: puntonuevo.id,
+            });
+        }
         for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
                 id_punto: puntonuevo.id,
@@ -916,7 +941,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         ["id_tipo_presenta", "id_proponente"]
                     ]
                 },
-                { model: puntos_comisiones_1.default, as: "turnocomision", attributes: ["id", "id_punto", "id_comision"] },
+                { model: puntos_comisiones_1.default, as: "turnocomision", attributes: ["id", "id_punto", "id_comision", "id_punto_turno"] },
             ]
         });
         if (!puntos) {

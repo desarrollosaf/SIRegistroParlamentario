@@ -306,8 +306,10 @@ const saveProponentes = (req, res) => __awaiter(void 0, void 0, void 0, function
         const saveDatos = yield proponentes_1.default.create({
             valor: body.valor,
         });
+        const proponentes = yield proponentes_1.default.findAll();
         return res.status(200).json({
             msg: `sucess`,
+            data: proponentes,
             estatus: 200,
         });
     }
