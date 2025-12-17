@@ -34,6 +34,11 @@ export class CatalogosService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/categoriaproponente/delete/`,data)
   }
 
+  agregarTitular(data: any): Observable<any> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/proponentetitular/save/`,data)
+  }
+
+  
   
   
 

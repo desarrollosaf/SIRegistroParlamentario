@@ -49,64 +49,60 @@ export const getCatalogo = async (req: Request, res: Response): Promise<Response
       }]
     });
 
-    let dtSlctTemp: any = null;
+    let dtSlctTemp: any[] = [];
 
     if (proponenteConCategorias?.valor === 'Gobernadora o Gobernador del Estado') {
-      const gobernadora = await CatFunDep.findOne({
+      const gobernadora = await CatFunDep.findAll({
         where: {
           nombre_dependencia: { [Op.like]: '%Gobernadora o Gobernador del Estado%' },
           vigente: 1
         },
       });
-      if (gobernadora) {
-        dtSlctTemp = [{
-          id: `${proponenteConCategorias.id}/${gobernadora.id}`,
-          id_original: gobernadora.id,
-          valor: gobernadora.nombre_titular,
-          proponente_id: proponenteConCategorias.id,
-          proponente_valor: proponenteConCategorias.valor,
-          tipo: 'funcionario'
-        }];
-      }
+      dtSlctTemp = gobernadora.map(gobernadora => ({
+        id: `${proponenteConCategorias.id}/${gobernadora.id}`,
+        id_original: gobernadora.id,
+        valor: gobernadora.nombre_titular,
+        proponente_id: proponenteConCategorias.id,
+        proponente_valor: proponenteConCategorias.valor,
+        tipo: gobernadora.nombre_dependencia
+      }));
 
     } else if (proponenteConCategorias?.valor === 'Tribunal Superior de Justicia') {
-      const tribunal = await CatFunDep.findOne({
+      const tribunal = await CatFunDep.findAll({
         where: {
           nombre_dependencia: { [Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
           vigente: 1
         },
       });
-      if (tribunal) {
-        dtSlctTemp = [{
-          id: `${proponenteConCategorias.id}/${tribunal.id}`,
-          id_original: tribunal.id,
-          valor: tribunal.nombre_titular,
-          proponente_id: proponenteConCategorias.id,
-          proponente_valor: proponenteConCategorias.valor,
-          tipo: 'funcionario'
-        }];
-      }
+
+       dtSlctTemp = tribunal.map(data => ({
+        id: `${proponenteConCategorias.id}/${data.id}`,
+        id_original: data.id,
+        valor: data.nombre_titular,
+        proponente_id: proponenteConCategorias.id,
+        proponente_valor: proponenteConCategorias.valor,
+        tipo: data.nombre_dependencia
+      }));
+      
       
     } else if (
       proponenteConCategorias?.valor === 'Ciudadanas y ciudadanos del Estado' ||
       proponenteConCategorias?.valor === 'Fiscalía General de Justicia del Estado de México'
     ) {
-      const fiscalia = await CatFunDep.findOne({
+      const fiscalia = await CatFunDep.findAll({
         where: {
           nombre_dependencia: { [Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
           vigente: 1
         },
       });
-      if (fiscalia) {
-        dtSlctTemp = [{
-          id: `${proponenteConCategorias.id}/${fiscalia.id}`,
-          id_original: fiscalia.id,
-          valor: fiscalia.nombre_titular,
-          proponente_id: proponenteConCategorias.id,
-          proponente_valor: proponenteConCategorias.valor,
-          tipo: 'funcionario'
-        }];
-      }
+      dtSlctTemp = fiscalia.map(data => ({
+        id: `${proponenteConCategorias.id}/${data.id}`,
+        id_original: data.id,
+        valor: data.nombre_titular,
+        proponente_id: proponenteConCategorias.id,
+        proponente_valor: proponenteConCategorias.valor,
+        tipo: data.nombre_dependencia
+      }));
         
     } 
 
@@ -156,7 +152,7 @@ export const saveCategoriaProponente = async (req: Request, res: Response): Prom
     });
 
   } catch (error) {
-    console.error('Error al reiniciar las votaciones:', error);
+    console.error('Error al guardar categoria proponente:', error);
     return res.status(500).json({ 
       msg: 'Error interno del servidor',
       error: error instanceof Error ? error.message : 'Error desconocido'
@@ -192,7 +188,7 @@ export const deleteCategoriaProponente = async (req: Request, res: Response): Pr
     });
 
   } catch (error) {
-    console.error('Error al reiniciar las votaciones:', error);
+    console.error('Error al eliminar categoria:', error);
     return res.status(500).json({ 
       msg: 'Error interno del servidor',
       error: error instanceof Error ? error.message : 'Error desconocido'
@@ -200,6 +196,117 @@ export const deleteCategoriaProponente = async (req: Request, res: Response): Pr
   }
 };
 
+
+export const saveTitularProponente = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    console.log(body)
+    
+
+    const proponente = await Proponentes.findOne({
+      where: { id: body.proponenteId },
+    });
+
+    let dtSlctTemp: any[] = [];
+
+    if (proponente?.valor === 'Gobernadora o Gobernador del Estado') {
+
+      const saveCatFun = await CatFunDep.create({
+        nombre_dependencia: 'Gobernadora o Gobernador del Estado',
+        nombre_titular: body.nombre,
+        vigente: true,
+        fecha_inicio:body.fecha_inicio,
+        fecha_fin: body.fecha_fin,
+        tipo: proponente.id
+      });
+      
+      const gobernadora = await CatFunDep.findAll({
+        where: {
+          nombre_dependencia: { [Op.like]: '%Gobernadora o Gobernador del Estado%' },
+          vigente: 1
+        },
+      });
+      dtSlctTemp = gobernadora.map(gobernadora => ({
+        id: `${proponente.id}/${gobernadora.id}`,
+        id_original: gobernadora.id,
+        valor: gobernadora.nombre_titular,
+        proponente_id: proponente.id,
+        proponente_valor: proponente.valor,
+        tipo: gobernadora.nombre_dependencia
+      }));
+
+    } else if (proponente?.valor === 'Tribunal Superior de Justicia') {
+      const saveCatFun = await CatFunDep.create({
+        nombre_dependencia: 'Tribunal Superior de Justicia del Estado de México',
+        nombre_titular: body.nombre,
+        vigente: true,
+        fecha_inicio:body.fecha_inicio,
+        fecha_fin: body.fecha_fin,
+        tipo: proponente.id
+      });
+
+      const tribunal = await CatFunDep.findAll({
+        where: {
+          nombre_dependencia: { [Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
+          vigente: 1
+        },
+      });
+
+       dtSlctTemp = tribunal.map(data => ({
+        id: `${proponente.id}/${data.id}`,
+        id_original: data.id,
+        valor: data.nombre_titular,
+        proponente_id: proponente.id,
+        proponente_valor: proponente.valor,
+        tipo: data.nombre_dependencia
+      }));
+      
+      
+    } else if (
+      proponente?.valor === 'Ciudadanas y ciudadanos del Estado' ||
+      proponente?.valor === 'Fiscalía General de Justicia del Estado de México'
+    ) {
+
+      const saveCatFun = await CatFunDep.create({
+        nombre_dependencia: proponente?.valor,
+        nombre_titular: body.nombre,
+        vigente: true,
+        fecha_inicio:body.fecha_inicio,
+        fecha_fin: body.fecha_fin,
+        tipo: proponente.id
+      });
+
+      const fiscalia = await CatFunDep.findAll({
+        where: {
+          nombre_dependencia: { [Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
+          vigente: 1
+        },
+      });
+      dtSlctTemp = fiscalia.map(data => ({
+        id: `${proponente.id}/${data.id}`,
+        id_original: data.id,
+        valor: data.nombre_titular,
+        proponente_id: proponente.id,
+        proponente_valor: proponente.valor,
+        tipo: data.nombre_dependencia
+      }));
+        
+    } 
+
+    return res.status(200).json({
+      msg: `sucess`,
+      data: dtSlctTemp, 
+      estatus: 200,
+    });
+
+  } catch (error) {
+    console.error('Error al guardar titular:', error);
+    return res.status(500).json({ 
+      msg: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
 
 
 

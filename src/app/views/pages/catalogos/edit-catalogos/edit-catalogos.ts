@@ -137,20 +137,17 @@ export class EditCatalogos {
     };
     console.log(payload)
 
-    // this._catalogoService.agregarTitular(payload).subscribe({
-    //   next: (res: any) => {
-    //     // sincroniza estado
-    //     this.proponente.set(res.data);
-
-    //     // limpia formulario
-    //     this.titular = {
-    //       nombre: '',
-    //       fechaInicio: '',
-    //       fechaFin: ''
-    //     };
-    //   },
-    //   error: err => console.error(err)
-    // });
+    this._catalogoService.agregarTitular(payload).subscribe({
+      next: (res: any) => {
+        this.tiposProponentes.set(res.data);
+        this.titular = {
+          nombre: '',
+          fechaInicio: '',
+          fechaFin: ''
+        };
+      },
+      error: err => console.error(err)
+    });
   } 
 
 
