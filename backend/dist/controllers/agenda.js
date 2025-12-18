@@ -664,35 +664,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     }
                 }
             }
-            else if (proponente.valor === 'Secretarías del GEM') {
-                const secretgem = yield secretarias_1.Secretarias.findAll();
-                dtSlctTemp = secretgem.map(s => ({
-                    id: `${proponente.id}/${s.id}`,
-                    id_original: s.id,
-                    valor: `${s.nombre} / ${s.titular}`,
-                    proponente_id: proponente.id,
-                    proponente_valor: proponente.valor,
-                    tipo: 'secretaria'
-                }));
-            }
-            else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-                const gobernadora = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
-                        vigente: 1
-                    },
-                });
-                if (gobernadora) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${gobernadora.id}`,
-                            id_original: gobernadora.id,
-                            valor: gobernadora.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
-            }
             else if (proponente.valor === 'Ayuntamientos') {
                 const municipios = yield municipiosag_1.default.findAll();
                 dtSlctTemp = municipios.map(l => ({
@@ -703,61 +674,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     proponente_valor: proponente.valor,
                     tipo: 'municipio'
                 }));
-            }
-            else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
-                const derechoshumanos = yield comisions_1.default.findOne({
-                    where: {
-                        nombre: { [sequelize_1.Op.like]: '%Derechos Humanos%' },
-                    },
-                    order: [['created_at', 'DESC']],
-                });
-                if (derechoshumanos) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${derechoshumanos.id}`,
-                            id_original: derechoshumanos.id,
-                            valor: derechoshumanos.nombre,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'comision'
-                        }];
-                }
-            }
-            else if (proponente.valor === 'Tribunal Superior de Justicia') {
-                const tribunal = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-                        vigente: 1
-                    },
-                });
-                if (tribunal) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${tribunal.id}`,
-                            id_original: tribunal.id,
-                            valor: tribunal.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
-            }
-            else if (proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-                proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
-                const fiscalia = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-                        vigente: 1
-                    },
-                });
-                if (fiscalia) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${fiscalia.id}`,
-                            id_original: fiscalia.id,
-                            valor: fiscalia.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
             }
             else if (proponente.valor === 'Comisiones Legislativas') {
                 const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
@@ -823,6 +739,32 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     proponente_id: proponente.id,
                     proponente_valor: proponente.valor,
                     tipo: 'legislatura'
+                }));
+            }
+            else if (proponente.valor === 'Secretarías del GEM') {
+                const secretgem = yield secretarias_1.Secretarias.findAll();
+                dtSlctTemp = secretgem.map(s => ({
+                    id: `${proponente.id}/${s.id}`,
+                    id_original: s.id,
+                    valor: `${s.nombre} / ${s.titular}`,
+                    proponente_id: proponente.id,
+                    proponente_valor: proponente.valor,
+                    tipo: 'secretaria'
+                }));
+            }
+            else {
+                const catalogo = yield cat_fun_dep_1.default.findAll({
+                    where: {
+                        tipo: proponente.id,
+                    },
+                });
+                dtSlctTemp = catalogo.map(data => ({
+                    id: `${proponente.id}/${data.id}`,
+                    id_original: data.id,
+                    valor: data.nombre_titular,
+                    proponente_id: proponente.id,
+                    proponente_valor: proponente.valor,
+                    tipo: 'funcionario'
                 }));
             }
             if (dtSlctTemp) {
@@ -951,7 +893,7 @@ exports.guardarpunto = guardarpunto;
 const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const puntos = yield puntos_ordens_1.default.findAll({
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
             order: [['nopunto', 'DESC']],
             include: [
@@ -968,12 +910,31 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         ["id_tipo_presenta", "id_proponente"]
                     ]
                 },
-                { model: puntos_comisiones_1.default, as: "turnocomision", attributes: ["id", "id_punto", "id_comision", "id_punto_turno"] },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "turnocomision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "puntoTurnoComision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
             ]
         });
-        if (!puntos) {
+        if (!puntosRaw) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
+        console.log(puntosRaw);
+        const puntos = puntosRaw.map(punto => {
+            var _a, _b;
+            const data = punto.toJSON();
+            const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
+                ? data.turnocomision
+                : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
+            delete data.puntoTurnoComision;
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
+        });
         console.log(puntos);
         return res.status(201).json({
             message: "Se encontraron registros",
