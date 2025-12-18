@@ -1021,29 +1021,43 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const idPuntoTurnado = body.id_punto_turnado;
         let puntoDesc;
         if (idPuntoTurnado != 'null') {
-            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                where: { id_punto_turno: punto.id },
-            });
-            if (puntoTurnado) {
-                puntoTurnado.update({
-                    id_punto_turno: null
-                });
-            }
             const puntoTurnadoCreate = yield puntos_ordens_1.default.findOne({
                 where: { id: idPuntoTurnado },
             });
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto_turno: punto.id },
+                });
+                if (puntoTurnado) {
+                    puntoTurnado.update({
+                        id_punto_turno: null
+                    });
+                }
+            }
+            else {
+                punto === null || punto === void 0 ? void 0 : punto.update({
+                    id_dictamen: puntoTurnadoCreate === null || puntoTurnadoCreate === void 0 ? void 0 : puntoTurnadoCreate.id
+                });
+            }
             if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
                 throw new Error('No se encontró la descripción del punto turnado');
             }
             puntoDesc = puntoTurnadoCreate.punto;
         }
         else {
-            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                where: { id_punto_turno: punto.id },
-            });
-            if (puntoTurnado) {
-                puntoTurnado.update({
-                    id_punto_turno: null
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto_turno: punto.id },
+                });
+                if (puntoTurnado) {
+                    puntoTurnado.update({
+                        id_punto_turno: null
+                    });
+                }
+            }
+            else {
+                punto.update({
+                    id_dictamen: 0
                 });
             }
             puntoDesc = body.punto;
@@ -1106,7 +1120,8 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
 exports.actualizarPunto = actualizarPunto;
 const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
+        const { id, sesion } = req.params;
+        console.log(id, sesion);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });

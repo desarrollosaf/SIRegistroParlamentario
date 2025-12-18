@@ -941,7 +941,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cancelButtonText: "Cancelar"
     }).then((result) => {
       if (result.isConfirmed) {
-        this._eventoService.deletePunto(punto.id).subscribe({
+        this._eventoService.deletePunto(punto.id, this.esComision).subscribe({
           next: (response: any) => {
             const Toast = Swal.mixin({
               toast: true,
