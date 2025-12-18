@@ -1012,17 +1012,23 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     });
 
     if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto: idPuntoTurnado },
-      });
 
-      if (!puntoTurnado) {
-        throw new Error('Relación de punto-comisión no encontrada');
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto: idPuntoTurnado },
+        });
+        if (!puntoTurnado) {
+          throw new Error('Relación de punto-comisión no encontrada');
+        }
+        await puntoTurnado.update({
+          id_punto_turno: puntonuevo.id,
+        });
+      }else{
+        await puntonuevo.update({
+          id_dictamen: idPuntoTurnado,
+        });
       }
-
-      await puntoTurnado.update({
-        id_punto_turno: puntonuevo.id,
-      });
+      
     }
 
     for (const item of presentaArray) {
