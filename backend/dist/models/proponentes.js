@@ -20,6 +20,11 @@ Proponentes.init({
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
+    tipo: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: 0,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         field: 'created_at',

@@ -1012,17 +1012,23 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     });
 
     if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto: idPuntoTurnado },
-      });
 
-      if (!puntoTurnado) {
-        throw new Error('Relación de punto-comisión no encontrada');
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto: idPuntoTurnado },
+        });
+        if (!puntoTurnado) {
+          throw new Error('Relación de punto-comisión no encontrada');
+        }
+        await puntoTurnado.update({
+          id_punto_turno: puntonuevo.id,
+        });
+      }else{
+        await puntonuevo.update({
+          id_dictamen: idPuntoTurnado,
+        });
       }
-
-      await puntoTurnado.update({
-        id_punto_turno: puntonuevo.id,
-      });
+      
     }
 
     for (const item of presentaArray) {
@@ -1145,35 +1151,53 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     let puntoDesc: string;
 
     if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto_turno: punto.id },
-      });
-
-      if (puntoTurnado) {
-        puntoTurnado.update({
-          id_punto_turno: null
-        })
-
-      }
-
       const puntoTurnadoCreate = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
+
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto_turno: punto.id },
+        });
+
+        if (puntoTurnado) {
+          puntoTurnado.update({
+            id_punto_turno: null
+          })
+
+        }
+
+      }else{
+        punto?.update({
+          id_dictamen: puntoTurnadoCreate?.id
+        })
+      }
+      
+
+     
       if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
         throw new Error('No se encontró la descripción del punto turnado');
       }
       puntoDesc = puntoTurnadoCreate.punto;
       
     } else {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto_turno: punto.id },
-      });
-      if (puntoTurnado) {
-        puntoTurnado.update({
-          id_punto_turno: null
-        })
 
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto_turno: punto.id },
+        });
+        if (puntoTurnado) {
+          puntoTurnado.update({
+            id_punto_turno: null
+          })
+
+        }
+      }else{
+        punto.update({
+          id_dictamen: 0
+        })
       }
+      
       puntoDesc = body.punto;
     }
 
@@ -1245,11 +1269,13 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
 export const eliminarpunto = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const { id, sesion } = req.params;
+    console.log(id, sesion)
     const punto = await PuntosOrden.findOne({ where: { id } });
      if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
+    
     await punto.destroy();
     return res.status(200).json({
       message: "Punto eliminado correctamente",

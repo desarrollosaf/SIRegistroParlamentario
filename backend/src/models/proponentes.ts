@@ -6,6 +6,7 @@ import ProponentesTipoCategoriaDetalle from './ProponentesTipoCategoriaDetalle';
 class Proponentes extends Model<InferAttributes<Proponentes>, InferCreationAttributes<Proponentes>> {
   declare id: CreationOptional<string>;
   declare valor: string;
+  declare tipo: CreationOptional<Boolean>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   public getTipos!: (options?: any) => Promise<TipoCategoriaIniciativas[]>;
@@ -22,6 +23,11 @@ Proponentes.init(
     valor: {
       type: DataTypes.STRING(255),
       allowNull: false,
+    },
+    tipo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: 0,
     },
     createdAt: {
       type: DataTypes.DATE,

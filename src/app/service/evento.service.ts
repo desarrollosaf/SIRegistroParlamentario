@@ -61,8 +61,8 @@ export class EventoService {
   }
 
 
-  deletePunto(id: String): Observable<string> {
-    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarpunto/${id}`)
+  deletePunto(id: String, sesion:boolean): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarpunto/${id}/${sesion}`)
   }
 
   getIntegrantesVotosPunto(id: String): Observable<string> {
