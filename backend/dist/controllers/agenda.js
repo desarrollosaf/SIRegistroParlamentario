@@ -902,15 +902,22 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
         if (idPuntoTurnado != 'null') {
-            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                where: { id_punto: idPuntoTurnado },
-            });
-            if (!puntoTurnado) {
-                throw new Error('Relación de punto-comisión no encontrada');
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto: idPuntoTurnado },
+                });
+                if (!puntoTurnado) {
+                    throw new Error('Relación de punto-comisión no encontrada');
+                }
+                yield puntoTurnado.update({
+                    id_punto_turno: puntonuevo.id,
+                });
             }
-            yield puntoTurnado.update({
-                id_punto_turno: puntonuevo.id,
-            });
+            else {
+                yield puntonuevo.update({
+                    id_dictamen: idPuntoTurnado,
+                });
+            }
         }
         for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
