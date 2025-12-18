@@ -893,7 +893,7 @@ exports.guardarpunto = guardarpunto;
 const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const puntos = yield puntos_ordens_1.default.findAll({
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
             order: [['nopunto', 'DESC']],
             include: [
@@ -910,12 +910,31 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         ["id_tipo_presenta", "id_proponente"]
                     ]
                 },
-                { model: puntos_comisiones_1.default, as: "turnocomision", attributes: ["id", "id_punto", "id_comision", "id_punto_turno"] },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "turnocomision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "puntoTurnoComision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
             ]
         });
-        if (!puntos) {
+        if (!puntosRaw) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
+        console.log(puntosRaw);
+        const puntos = puntosRaw.map(punto => {
+            var _a, _b;
+            const data = punto.toJSON();
+            const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
+                ? data.turnocomision
+                : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
+            delete data.puntoTurnoComision;
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
+        });
         console.log(puntos);
         return res.status(201).json({
             message: "Se encontraron registros",

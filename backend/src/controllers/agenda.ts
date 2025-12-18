@@ -1010,7 +1010,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
 
-      const puntos = await PuntosOrden.findAll({
+      const puntosRaw = await PuntosOrden.findAll({
         where: { id_evento: id },
         order: [['nopunto', 'DESC']],
         include: [
@@ -1032,17 +1032,45 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
               ["id_tipo_presenta", "id_proponente"]
             ]
           },
-          { model: PuntosComisiones, as: "turnocomision", attributes: ["id", "id_punto","id_comision","id_punto_turno"] },
+          {
+            model: PuntosComisiones,
+            as: "turnocomision",
+            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+          },
+          {
+            model: PuntosComisiones,
+            as: "puntoTurnoComision",
+            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+          },
         ]
       });
-      if (!puntos) {
+
+      if (!puntosRaw) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-     console.log(puntos)
+      console.log(puntosRaw)
+      const puntos = puntosRaw.map(punto => {
+        const data = punto.toJSON();
+
+        const turnosNormalizados =
+          data.turnocomision?.length
+            ? data.turnocomision
+            : data.puntoTurnoComision ?? [];
+
+        delete data.puntoTurnoComision;
+
+        return {
+          ...data,
+          turnocomision: turnosNormalizados
+        };
+      });
+      console.log(puntos)
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos, 
       });
+
+
     } catch (error: any) {
       console.error("Error al guardar el punto:", error);
       return res.status(500).json({ message: "Error interno del servidor" });
