@@ -49,48 +49,18 @@ const getCatalogo = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     through: { attributes: [] }
                 }]
         });
+        if (!proponenteConCategorias) {
+            return res.status(404).json({ msg: "Proponente no encontrado" });
+        }
         let dtSlctTemp = [];
-        if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Gobernadora o Gobernador del Estado') {
-            const gobernadora = yield cat_fun_dep_1.default.findAll({
+        // Si el proponente tiene un tipo (id de CatFunDep), consultar directamente
+        if (proponenteConCategorias.id) {
+            const funcionarios = yield cat_fun_dep_1.default.findAll({
                 where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
-                    vigente: 1
+                    tipo: proponenteConCategorias.id, // Consulta directa por el id
                 },
             });
-            dtSlctTemp = gobernadora.map(gobernadora => ({
-                id: `${proponenteConCategorias.id}/${gobernadora.id}`,
-                id_original: gobernadora.id,
-                valor: gobernadora.nombre_titular,
-                proponente_id: proponenteConCategorias.id,
-                proponente_valor: proponenteConCategorias.valor,
-                tipo: gobernadora.nombre_dependencia
-            }));
-        }
-        else if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Tribunal Superior de Justicia') {
-            const tribunal = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = tribunal.map(data => ({
-                id: `${proponenteConCategorias.id}/${data.id}`,
-                id_original: data.id,
-                valor: data.nombre_titular,
-                proponente_id: proponenteConCategorias.id,
-                proponente_valor: proponenteConCategorias.valor,
-                tipo: data.nombre_dependencia
-            }));
-        }
-        else if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Ciudadanas y ciudadanos del Estado' ||
-            (proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Fiscalía General de Justicia del Estado de México') {
-            const fiscalia = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = fiscalia.map(data => ({
+            dtSlctTemp = funcionarios.map(data => ({
                 id: `${proponenteConCategorias.id}/${data.id}`,
                 id_original: data.id,
                 valor: data.nombre_titular,
@@ -101,7 +71,7 @@ const getCatalogo = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         console.log('proponente', proponenteConCategorias);
         const categoriasInciativas = yield tipo_categoria_iniciativas_1.default.findAll();
-        console.log('categoriasIniciativas: ', categoriasInciativas);
+        console.log('categoriasIniciativas:', categoriasInciativas);
         return res.status(200).json({
             msg: "Exito",
             data: proponenteConCategorias,
