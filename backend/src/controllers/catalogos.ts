@@ -168,105 +168,48 @@ export const deleteCategoriaProponente = async (req: Request, res: Response): Pr
 export const saveTitularProponente = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body)
+    console.log(body);
     
-
     const proponente = await Proponentes.findOne({
       where: { id: body.proponenteId },
     });
 
-    let dtSlctTemp: any[] = [];
+    if (!proponente) {
+      return res.status(404).json({ msg: "Proponente no encontrado" });
+    }
 
-    if (proponente?.valor === 'Gobernadora o Gobernador del Estado') {
 
-      const saveCatFun = await CatFunDep.create({
-        nombre_dependencia: 'Gobernadora o Gobernador del Estado',
-        nombre_titular: body.nombre,
-        vigente: true,
-        fecha_inicio:body.fecha_inicio,
-        fecha_fin: body.fecha_fin,
-        tipo: proponente.id
-      });
-      
-      const gobernadora = await CatFunDep.findAll({
-        where: {
-          nombre_dependencia: { [Op.like]: '%Gobernadora o Gobernador del Estado%' },
-          vigente: 1
-        },
-      });
-      dtSlctTemp = gobernadora.map(gobernadora => ({
-        id: `${proponente.id}/${gobernadora.id}`,
-        id_original: gobernadora.id,
-        valor: gobernadora.nombre_titular,
-        proponente_id: proponente.id,
-        proponente_valor: proponente.valor,
-        tipo: gobernadora.nombre_dependencia
-      }));
+    await CatFunDep.create({
+      nombre_dependencia: proponente.valor, 
+      nombre_titular: body.nombre,
+      vigente: true,
+      fecha_inicio: body.fecha_inicio,
+      fecha_fin: body.fecha_fin,
+      tipo: proponente.id
+    });
 
-    } else if (proponente?.valor === 'Tribunal Superior de Justicia') {
-      const saveCatFun = await CatFunDep.create({
-        nombre_dependencia: 'Tribunal Superior de Justicia del Estado de México',
-        nombre_titular: body.nombre,
-        vigente: true,
-        fecha_inicio:body.fecha_inicio,
-        fecha_fin: body.fecha_fin,
-        tipo: proponente.id
-      });
+    const funcionarios = await CatFunDep.findAll({
+      where: {
+        tipo: proponente.id,
+        vigente: 1
+      },
+    });
 
-      const tribunal = await CatFunDep.findAll({
-        where: {
-          nombre_dependencia: { [Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-          vigente: 1
-        },
-      });
-
-       dtSlctTemp = tribunal.map(data => ({
-        id: `${proponente.id}/${data.id}`,
-        id_original: data.id,
-        valor: data.nombre_titular,
-        proponente_id: proponente.id,
-        proponente_valor: proponente.valor,
-        tipo: data.nombre_dependencia
-      }));
-      
-      
-    } else if (
-      proponente?.valor === 'Ciudadanas y ciudadanos del Estado' ||
-      proponente?.valor === 'Fiscalía General de Justicia del Estado de México'
-    ) {
-
-      const saveCatFun = await CatFunDep.create({
-        nombre_dependencia: proponente?.valor,
-        nombre_titular: body.nombre,
-        vigente: true,
-        fecha_inicio:body.fecha_inicio,
-        fecha_fin: body.fecha_fin,
-        tipo: proponente.id
-      });
-
-      const fiscalia = await CatFunDep.findAll({
-        where: {
-          nombre_dependencia: { [Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-          vigente: 1
-        },
-      });
-      dtSlctTemp = fiscalia.map(data => ({
-        id: `${proponente.id}/${data.id}`,
-        id_original: data.id,
-        valor: data.nombre_titular,
-        proponente_id: proponente.id,
-        proponente_valor: proponente.valor,
-        tipo: data.nombre_dependencia
-      }));
-        
-    } 
+    const dtSlctTemp = funcionarios.map(data => ({
+      id: `${proponente.id}/${data.id}`,
+      id_original: data.id,
+      valor: data.nombre_titular,
+      proponente_id: proponente.id,
+      proponente_valor: proponente.valor,
+      tipo: data.nombre_dependencia
+    }));
 
     return res.status(200).json({
-      msg: `sucess`,
+      msg: 'success',
       data: dtSlctTemp, 
       estatus: 200,
     });
-
+    
   } catch (error) {
     console.error('Error al guardar titular:', error);
     return res.status(500).json({ 
