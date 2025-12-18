@@ -15,6 +15,7 @@ interface Categoria {
 interface Proponente {
   id: number;
   valor: string;
+  tipo: boolean;
   categorias: Categoria[];
 }
 

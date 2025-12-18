@@ -81,6 +81,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcTipIntervencion: any;
   slcComisiones: any; // <-- NUEVO CAMPO
   slcPuntosTurnados: any; // <-- NUEVO CAMPO
+  slcDictamenes: any; // <-- NUEVO CAMPO
   tipo_evento: any;
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
@@ -126,7 +127,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       observaciones: [''],
       se_turna_comision: [false], // <-- NUEVO
       id_comision: [[]], // <-- NUEVO (array vacío para multi-select)
-      id_punto_turnado: [''] // <-- NUEVO (array vacío para multi-select)
+      id_punto_turnado: [''], // <-- NUEVO (array vacío para multi-select)
+      id_dictamen: [''] // <-- NUEVO (array vacío para multi-select)
     });
 
     // NUEVO: Suscribirse a cambios de se_turna_comision para manejar validaciones
@@ -153,18 +155,26 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
-      if (value) {
-        const selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
-        console.log(selectedOption);
-        const textoSeleccionado = selectedOption?.punto || '';
-
-        this.formPunto.get('punto')?.setValue(textoSeleccionado);
-        this.formPunto.get('punto')?.disable();
-      } else {
+      if (!value) {
         this.formPunto.get('punto')?.setValue('');
         this.formPunto.get('punto')?.enable();
+        return;
       }
+
+      let selectedOption;
+
+      if (this.esComision) {
+        selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
+      } else {
+        selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
+      }
+
+      const textoSeleccionado = selectedOption?.punto || '';
+
+      this.formPunto.get('punto')?.setValue(textoSeleccionado);
+      this.formPunto.get('punto')?.disable();
     });
+
     this.cargarDatosIniciales();
   }
 
@@ -680,6 +690,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.slctProponentes = response.proponentes;
         this.slcTribunaDip = response.diputados;
         this.slcComisiones = response.comisiones; // <-- CARGAR COMISIONES
+        this.slcDictamenes = response.dictamenes;
         this.slcTipIntervencion = response.tipointer;
         this.cargarPuntosRegistrados();
       },
@@ -730,7 +741,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           // Determinar si se turna a comisión basado en si hay comisiones
           const seTurnaComision = comisionesIds.length > 0;
+          let idPuntoTurnadoInicial: any = null;
 
+          if (this.esComision) {
+            idPuntoTurnadoInicial = punto.turnocomision?.[0]?.id_punto || null;
+          } else {
+            idPuntoTurnadoInicial = punto.id_dictamen || null; 
+          }
+
+          console.log(this.esComision)
           console.log('PIKOASDJKASJKS', punto.turnocomision.id_punto);
           const puntoMapeado = {
             ...punto,
@@ -747,7 +766,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               observaciones: [punto.observaciones],
               se_turna_comision: [seTurnaComision],
               id_comision: [comisionesIds],
-              id_punto_turnado: [punto.turnocomision?.[0]?.id_punto || null]
+              id_punto_turnado: [idPuntoTurnadoInicial]
             })
           };
 
@@ -794,17 +813,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   aplicarPuntoTurnado(form: FormGroup, value: any): void {
-    if (value) {
-      const selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
-      console.log(selectedOption);
-      const textoSeleccionado = selectedOption?.punto || '';
-
-      form.get('punto')?.setValue(textoSeleccionado);
-      form.get('punto')?.disable();
-    } else {
+    if (!value) {
       form.get('punto')?.setValue('');
       form.get('punto')?.enable();
+      return;
     }
+
+    let selectedOption;
+
+    if (this.esComision) {
+      selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+    } else {
+      selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
+    }
+
+    const textoSeleccionado = selectedOption?.punto || '';
+
+    form.get('punto')?.setValue(textoSeleccionado);
+    form.get('punto')?.disable();
   }
 
 
