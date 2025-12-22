@@ -4,56 +4,57 @@
   <div class="col-md-12">
     <div class="card">
       <div class="card-body">
-        <h6 class="card-title">Edición de Catálogos</h6>
-        <p class="text-muted">{{ proponente()?.valor }}</p>
+        <h4 class="card-title">Edición de Catálogos</h4>
+        <p class="text-muted text-center fs-4 fw-semibold">{{ proponente()?.valor }}</p>
+        <br>
+        <div *ngIf="!proponente()?.tipo;">
 
-        <div *ngIf="!proponente()?.tipo; else vacio">
+            <form class="row g-3 align-items-end mb-3" (ngSubmit)="agregarTitular()">
 
-            <div class="d-flex mb-3">
-                <form class="d-flex gap-3 mb-3 align-items-end" (ngSubmit)="agregarTitular()">
+                <!-- Nombre -->
+                <div class="col-md-5">
+                    <label class="form-label">Nombre del titular</label>
+                    <input
+                    type="text"
+                    class="form-control"
+                    name="nombreTitular"
+                    [(ngModel)]="titular.nombre"
+                    required
+                    />
+                </div>
 
-                    <!-- Nombre -->
-                    <div class="flex-fill">
-                        <label class="form-label">Nombre del titular</label>
-                        <input
-                        type="text"
-                        class="form-control"
-                        name="nombreTitular"
-                        [(ngModel)]="titular.nombre"
-                        required
-                        />
-                    </div>
+                <!-- Fecha inicio -->
+                <div class="col-md-3">
+                    <label class="form-label">Fecha inicio</label>
+                    <input
+                    type="date"
+                    class="form-control"
+                    name="fechaInicio"
+                    [(ngModel)]="titular.fechaInicio"
+                    required
+                    />
+                </div>
 
-                    <!-- Fecha inicio -->
-                    <div>
-                        <label class="form-label">Fecha inicio</label>
-                        <input
-                        type="date"
-                        class="form-control"
-                        name="fechaInicio"
-                        [(ngModel)]="titular.fechaInicio"
-                        required
-                        />
-                    </div>
+                <!-- Fecha fin -->
+                <div class="col-md-3">
+                    <label class="form-label">Fecha fin</label>
+                    <input
+                    type="date"
+                    class="form-control"
+                    name="fechaFin"
+                    [(ngModel)]="titular.fechaFin"
+                    />
+                </div>
 
-                    <!-- Fecha fin -->
-                    <div>
-                        <label class="form-label">Fecha fin</label>
-                        <input
-                        type="date"
-                        class="form-control"
-                        name="fechaFin"
-                        [(ngModel)]="titular.fechaFin"
-                        />
-                    </div>
-
-                    <!-- Botón -->
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-plus"></i> Agregar
+                <!-- Botón -->
+                <div class="col-md-1 d-grid">
+                    <button type="submit" class="btn btn-primary h-100">
+                    <i class="bi bi-plus"></i>
                     </button>
+                </div>
 
-                    </form>
-            </div>  
+            </form>
+  
 
 
             
@@ -87,14 +88,20 @@
 
         <br><br>
 
-        <div class="d-flex mb-3">
-          <select class="form-select me-2" [(ngModel)]="categoriaSeleccionada">
-            <option [ngValue]="null">Selecciona categoría...</option>
-            <option *ngFor="let cat of categoriasDisponibles" [ngValue]="cat.id">{{ cat.valor }}</option>
-          </select>
-          <button class="btn btn-primary" (click)="agregarCategoria()">
-            <i class="bi bi-plus"></i> Agregar
-          </button>
+        <div class="d-flex gap-2 mb-3">
+            <ng-select
+                [items]="categoriasDisponibles"
+                bindLabel="valor"
+                bindValue="id"
+                [(ngModel)]="categoriaSeleccionada"
+                placeholder="Selecciona categoría..."
+                [searchable]="true"
+                [clearable]="true"
+                class="col-8">
+            </ng-select>
+            <button class="btn btn-primary" (click)="agregarCategoria()">
+                <i class="bi bi-plus"></i> 
+            </button>
         </div>  
 
         <!-- Tabla de categorías -->

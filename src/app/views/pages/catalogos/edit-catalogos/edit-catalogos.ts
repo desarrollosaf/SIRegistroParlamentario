@@ -5,7 +5,7 @@ import { Router, RouterLink, RouterModule, ActivatedRoute  } from '@angular/rout
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CatalogosService } from '../../../../service/catalogos.service';
-
+import { NgSelectModule } from '@ng-select/ng-select';
 
 interface Categoria {
   id: number;
@@ -31,7 +31,7 @@ export interface TipoProponente {
 
 @Component({
   selector: 'app-edit-catalogos',
-  imports: [NgxDatatableModule, CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
+  imports: [NgxDatatableModule, CommonModule, RouterModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './edit-catalogos.html',
   styleUrl: './edit-catalogos.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
