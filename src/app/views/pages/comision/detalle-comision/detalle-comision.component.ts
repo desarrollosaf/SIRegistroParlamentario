@@ -47,6 +47,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private readonly SEGUNDO_PLANO_INTERVAL_MS = 5000;
 
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
+  @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
   step = 1;
   stepNames = [
     { numero: 1, nombre: 'Asistencia' },
@@ -87,6 +88,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   formPunto!: FormGroup;
 
   modalRef!: NgbModalRef;
+  modalRefT!: NgbModalRef;
   formIntervencion!: FormGroup;
   mostrarFormIntervencion = false;
   tipoIntervencionActual: number = 1;
@@ -104,6 +106,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   documentos: { [key: string]: File | null } = {
     docPunto: null,
   };
+
+  mostrarFormTema = false;
+  formTema!: FormGroup;
+  listaTemas: any[] = []; // Esta será temporal mientras se crea el punto
+  temasTemporales: any[] = []; // Para almacenar temas antes de guardar el punto
+
+
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -147,6 +156,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id_tipo_intervencion: [null],
       comentario: [{ value: '', disabled: true }],
       destacada: [false]
+    });
+
+    this.formTema = this.fb.group({
+      descripcion: ['', Validators.required]
     });
 
   }
@@ -879,9 +892,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', punto.nuevoDocumento);
     }
 
-    if(this.esComision){
-       this.tipo_evento = 1;
-    }else{
+    if (this.esComision) {
+      this.tipo_evento = 1;
+    } else {
       this.tipo_evento = 0;
 
     }
@@ -975,6 +988,106 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.abrirModalIntervencion();
   }
 
+  abrirModalTemas() {
+    this.formTema.reset();
+    this.mostrarFormTema = false;
+    // No cargamos temas del servidor, usamos los temporales
+    this.listaTemas = [...this.temasTemporales];
+
+    this.modalRefT = this.modalService.open(this.xlModalT, {
+      size: 'xl',
+      windowClass: 'modal-top-centered',
+      backdrop: 'static'
+    });
+  }
+
+  // MODIFICA toggleFormTema (mantiene igual):
+  toggleFormTema() {
+    this.mostrarFormTema = !this.mostrarFormTema;
+    if (!this.mostrarFormTema) {
+      this.formTema.reset();
+    }
+  }
+
+  guardarTema() {
+    if (this.formTema.invalid) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: "Debe escribir la descripción del tema.",
+        showConfirmButton: false,
+        timer: 2000
+      });
+      return;
+    }
+
+    // Agregar a la lista temporal
+    const nuevoTema = {
+      id: Date.now(), // ID temporal
+      descripcion: this.formTema.value.descripcion
+    };
+
+    this.listaTemas.push(nuevoTema);
+    this.temasTemporales.push(nuevoTema);
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: "success",
+      title: "Tema agregado (se guardará con el punto)."
+    });
+
+    this.toggleFormTema();
+  }
+
+  // MODIFICA eliminarTema:
+  eliminarTema(tema: any, index: number) {
+    Swal.fire({
+      title: "¿Está seguro?",
+      text: "Se eliminará este tema de la lista",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Eliminar de ambas listas
+        this.listaTemas.splice(index, 1);
+        const tempIndex = this.temasTemporales.findIndex(t => t.id === tema.id);
+        if (tempIndex > -1) {
+          this.temasTemporales.splice(tempIndex, 1);
+        }
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Tema eliminado."
+        });
+      }
+    });
+  }
+
+
+
+
+
+
+
+
   abrirModalIntervencion() {
     this.formIntervencion.reset({
       id_diputado: [],
@@ -990,6 +1103,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       backdrop: 'static'
     });
   }
+
 
   toggleFormIntervencion() {
     this.mostrarFormIntervencion = !this.mostrarFormIntervencion;
@@ -1110,6 +1224,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cerrarModal() {
     this.modalRef.close();
   }
+  cerrarModalTema() {
+    this.modalRefT.close();
+  }
   // ==================== FIN DEL MODAL ====================
   notificar(punto: any) {
 
@@ -1154,10 +1271,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
     this.documentos['docPunto'] = null;
     this.formPunto.reset({
-      se_turna_comision: false // <-- Resetear a false cuando se cierra
+      se_turna_comision: false
     });
-  }
 
+    // Limpiar temas temporales cuando se cierra el formulario
+    if (!this.mostrarFormularioPunto) {
+      this.temasTemporales = [];
+      this.listaTemas = [];
+    }
+  }
 
   guardarPunto() {
     if (this.formPunto.invalid) {
@@ -1166,23 +1288,39 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
 
     const formData = new FormData();
+
+    // Agregar todos los campos del formulario
     Object.entries(this.formPunto.value).forEach(([key, value]) => {
       formData.append(key, value as string);
     });
 
+    // Agregar documento si existe
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
-  if(this.esComision){
-       this.tipo_evento = 1;
-    }else{
-      this.tipo_evento = 0;
 
+    // Agregar tipo de evento
+    if (this.esComision) {
+      this.tipo_evento = 1;
+    } else {
+      this.tipo_evento = 0;
     }
     formData.append('tipo_evento', this.tipo_evento);
-    // formData.forEach((valor, clave) => {
-    //   console.log(clave, valor);
-    // });
+
+
+    if (this.temasTemporales.length > 0) {
+      const temasParaEnviar = this.temasTemporales.map(t => ({
+        descripcion: t.descripcion
+      }));
+      formData.append('temas', JSON.stringify(temasParaEnviar));
+    }
+
+    // Log para verificar
+    console.log('Temas a enviar:', this.temasTemporales);
+
+    formData.forEach((valor, clave) => {
+      console.log(clave, valor);
+    });
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
@@ -1198,22 +1336,31 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
         Toast.fire({
           icon: "success",
-          title: "Punto guardado correctamente."
+          title: "Punto guardado correctamente con sus temas."
         });
 
+        // Limpiar todo
         this.documentos['docPunto'] = null;
         this.formPunto.reset({
           se_turna_comision: false
         });
+        this.temasTemporales = [];
+        this.listaTemas = [];
         this.mostrarFormularioPunto = false;
         this.cargarPuntosRegistrados();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: msg,
+          timer: 3000
+        });
       }
     });
-
   }
 
   //********************************************************************************************************* */
