@@ -861,6 +861,16 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
+        if (body.temaspunto != 'null') {
+            for (const item of body.temaspunto) {
+                yield temas_puntos_votos_1.default.create({
+                    id_punto: puntonuevo.id,
+                    id_evento: evento.id,
+                    tema_votacion: item.tema,
+                    fecha_votacion: null,
+                });
+            }
+        }
         for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
                 id_punto: puntonuevo.id,
@@ -963,43 +973,29 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const idPuntoTurnado = body.id_punto_turnado;
         let puntoDesc;
         if (idPuntoTurnado != 'null') {
+            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                where: { id_punto_turno: punto.id },
+            });
+            if (puntoTurnado) {
+                puntoTurnado.update({
+                    id_punto_turno: null
+                });
+            }
             const puntoTurnadoCreate = yield puntos_ordens_1.default.findOne({
                 where: { id: idPuntoTurnado },
             });
-            if (body.tipo_evento != 0) {
-                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                    where: { id_punto_turno: punto.id },
-                });
-                if (puntoTurnado) {
-                    puntoTurnado.update({
-                        id_punto_turno: null
-                    });
-                }
-            }
-            else {
-                punto === null || punto === void 0 ? void 0 : punto.update({
-                    id_dictamen: puntoTurnadoCreate === null || puntoTurnadoCreate === void 0 ? void 0 : puntoTurnadoCreate.id
-                });
-            }
             if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
                 throw new Error('No se encontró la descripción del punto turnado');
             }
             puntoDesc = puntoTurnadoCreate.punto;
         }
         else {
-            if (body.tipo_evento != 0) {
-                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                    where: { id_punto_turno: punto.id },
-                });
-                if (puntoTurnado) {
-                    puntoTurnado.update({
-                        id_punto_turno: null
-                    });
-                }
-            }
-            else {
-                punto.update({
-                    id_dictamen: 0
+            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                where: { id_punto_turno: punto.id },
+            });
+            if (puntoTurnado) {
+                puntoTurnado.update({
+                    id_punto_turno: null
                 });
             }
             puntoDesc = body.punto;
@@ -1062,8 +1058,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
 exports.actualizarPunto = actualizarPunto;
 const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id, sesion } = req.params;
-        console.log(id, sesion);
+        const { id } = req.params;
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
@@ -1200,6 +1195,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         let mensajeRespuesta = "Punto con votos existentes";
         if (!temavotos) {
             const listadoDiputados = yield obtenerListadoDiputados(evento);
+            //Esto se tiene que cambiar para que solo actualice la fecha de la votacion
             temavotos = yield temas_puntos_votos_1.default.create({
                 id_punto: punto.id,
                 id_evento: punto.id_evento,

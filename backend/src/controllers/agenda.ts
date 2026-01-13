@@ -849,6 +849,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         const catalogo = await CatFunDep.findAll({
           where: {
             tipo: proponente.id,
+
           },
         });
 
@@ -931,11 +932,9 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       const data = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
-
       if (!data) {
         throw new Error('Punto turnado no encontrado');
       }
-
       punto = data.punto;
     } else {
       punto = body.punto;
@@ -952,8 +951,8 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
-    if (idPuntoTurnado != 'null') {
 
+    if (idPuntoTurnado != 'null') {
       if(body.tipo_evento != 0){
         const puntoTurnado = await PuntosComisiones.findOne({
           where: { id_punto: idPuntoTurnado },
@@ -968,8 +967,19 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         await puntonuevo.update({
           id_dictamen: idPuntoTurnado,
         });
+      }  
+    }
+
+    if (body.temaspunto != 'null') {
+      for (const item of body.temaspunto) {
+        await TemasPuntosVotos.create({
+          id_punto: puntonuevo.id,
+          id_evento: evento.id,
+          tema_votacion: item.tema,
+          fecha_votacion: null,
+          
+        });
       }
-      
     }
 
     for (const item of presentaArray) {
@@ -988,7 +998,6 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
           id_comision: item,
         });
       }
-
     }
     
 
@@ -1092,53 +1101,35 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     let puntoDesc: string;
 
     if (idPuntoTurnado != 'null') {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
+        })
+
+      }
+
       const puntoTurnadoCreate = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
-
-      if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto_turno: punto.id },
-        });
-
-        if (puntoTurnado) {
-          puntoTurnado.update({
-            id_punto_turno: null
-          })
-
-        }
-
-      }else{
-        punto?.update({
-          id_dictamen: puntoTurnadoCreate?.id
-        })
-      }
-      
-
-     
       if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
         throw new Error('No se encontró la descripción del punto turnado');
       }
       puntoDesc = puntoTurnadoCreate.punto;
       
     } else {
-
-      if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto_turno: punto.id },
-        });
-        if (puntoTurnado) {
-          puntoTurnado.update({
-            id_punto_turno: null
-          })
-
-        }
-      }else{
-        punto.update({
-          id_dictamen: 0
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
         })
+
       }
-      
       puntoDesc = body.punto;
     }
 
@@ -1210,13 +1201,11 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
 export const eliminarpunto = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id, sesion } = req.params;
-    console.log(id, sesion)
+    const { id } = req.params;
     const punto = await PuntosOrden.findOne({ where: { id } });
      if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
-    
     await punto.destroy();
     return res.status(200).json({
       message: "Punto eliminado correctamente",
@@ -1364,6 +1353,8 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     if (!temavotos) {
       const listadoDiputados = await obtenerListadoDiputados(evento);
       
+
+      //Esto se tiene que cambiar para que solo actualice la fecha de la votacion
       temavotos = await TemasPuntosVotos.create({
         id_punto: punto.id,
         id_evento: punto.id_evento,
