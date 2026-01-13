@@ -509,6 +509,24 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'nombre'],
             raw: true,
         });
+        const dictamenes = yield puntos_ordens_1.default.findAll({
+            where: { id_tipo: 6 },
+            include: [
+                {
+                    model: temas_puntos_votos_1.default,
+                    as: 'temasVotos',
+                    include: [
+                        {
+                            model: votos_punto_1.default,
+                            as: 'votospuntos',
+                            where: { sentido: 1 },
+                            required: false,
+                        }
+                    ],
+                    required: false
+                }
+            ]
+        });
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
@@ -543,7 +561,8 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             comisiones: comisiones,
             diputados: diputadosArray,
             tipointer: tipointer,
-            partidos: partidos
+            partidos: partidos,
+            dictamenes: dictamenes
         });
     }
     catch (error) {
@@ -645,35 +664,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     }
                 }
             }
-            else if (proponente.valor === 'Secretarías del GEM') {
-                const secretgem = yield secretarias_1.Secretarias.findAll();
-                dtSlctTemp = secretgem.map(s => ({
-                    id: `${proponente.id}/${s.id}`,
-                    id_original: s.id,
-                    valor: `${s.nombre} / ${s.titular}`,
-                    proponente_id: proponente.id,
-                    proponente_valor: proponente.valor,
-                    tipo: 'secretaria'
-                }));
-            }
-            else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-                const gobernadora = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
-                        vigente: 1
-                    },
-                });
-                if (gobernadora) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${gobernadora.id}`,
-                            id_original: gobernadora.id,
-                            valor: gobernadora.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
-            }
             else if (proponente.valor === 'Ayuntamientos') {
                 const municipios = yield municipiosag_1.default.findAll();
                 dtSlctTemp = municipios.map(l => ({
@@ -684,61 +674,6 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     proponente_valor: proponente.valor,
                     tipo: 'municipio'
                 }));
-            }
-            else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
-                const derechoshumanos = yield comisions_1.default.findOne({
-                    where: {
-                        nombre: { [sequelize_1.Op.like]: '%Derechos Humanos%' },
-                    },
-                    order: [['created_at', 'DESC']],
-                });
-                if (derechoshumanos) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${derechoshumanos.id}`,
-                            id_original: derechoshumanos.id,
-                            valor: derechoshumanos.nombre,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'comision'
-                        }];
-                }
-            }
-            else if (proponente.valor === 'Tribunal Superior de Justicia') {
-                const tribunal = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-                        vigente: 1
-                    },
-                });
-                if (tribunal) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${tribunal.id}`,
-                            id_original: tribunal.id,
-                            valor: tribunal.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
-            }
-            else if (proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-                proponente.valor === 'Fiscalía General de Justicia del Estado de México') {
-                const fiscalia = yield cat_fun_dep_1.default.findOne({
-                    where: {
-                        nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-                        vigente: 1
-                    },
-                });
-                if (fiscalia) {
-                    dtSlctTemp = [{
-                            id: `${proponente.id}/${fiscalia.id}`,
-                            id_original: fiscalia.id,
-                            valor: fiscalia.nombre_titular,
-                            proponente_id: proponente.id,
-                            proponente_valor: proponente.valor,
-                            tipo: 'funcionario'
-                        }];
-                }
             }
             else if (proponente.valor === 'Comisiones Legislativas') {
                 const idMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
@@ -804,6 +739,32 @@ const getTiposPuntos = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     proponente_id: proponente.id,
                     proponente_valor: proponente.valor,
                     tipo: 'legislatura'
+                }));
+            }
+            else if (proponente.valor === 'Secretarías del GEM') {
+                const secretgem = yield secretarias_1.Secretarias.findAll();
+                dtSlctTemp = secretgem.map(s => ({
+                    id: `${proponente.id}/${s.id}`,
+                    id_original: s.id,
+                    valor: `${s.nombre} / ${s.titular}`,
+                    proponente_id: proponente.id,
+                    proponente_valor: proponente.valor,
+                    tipo: 'secretaria'
+                }));
+            }
+            else {
+                const catalogo = yield cat_fun_dep_1.default.findAll({
+                    where: {
+                        tipo: proponente.id,
+                    },
+                });
+                dtSlctTemp = catalogo.map(data => ({
+                    id: `${proponente.id}/${data.id}`,
+                    id_original: data.id,
+                    valor: data.nombre_titular,
+                    proponente_id: proponente.id,
+                    proponente_valor: proponente.valor,
+                    tipo: 'funcionario'
                 }));
             }
             if (dtSlctTemp) {
@@ -880,18 +841,25 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto,
             observaciones: body.observaciones,
-            se_turna_comision: body.se_turna_comision,
+            se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
         if (idPuntoTurnado != 'null') {
-            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                where: { id_punto: idPuntoTurnado },
-            });
-            if (!puntoTurnado) {
-                throw new Error('Relación de punto-comisión no encontrada');
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto: idPuntoTurnado },
+                });
+                if (!puntoTurnado) {
+                    throw new Error('Relación de punto-comisión no encontrada');
+                }
+                yield puntoTurnado.update({
+                    id_punto_turno: puntonuevo.id,
+                });
             }
-            yield puntoTurnado.update({
-                id_punto_turno: puntonuevo.id,
-            });
+            else {
+                yield puntonuevo.update({
+                    id_dictamen: idPuntoTurnado,
+                });
+            }
         }
         for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
@@ -900,11 +868,13 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 id_presenta: item.autorId
             });
         }
-        for (const item of turnocomision) {
-            yield puntos_comisiones_1.default.create({
-                id_punto: puntonuevo.id,
-                id_comision: item,
-            });
+        if (body.tipo_evento == 0) {
+            for (const item of turnocomision) {
+                yield puntos_comisiones_1.default.create({
+                    id_punto: puntonuevo.id,
+                    id_comision: item,
+                });
+            }
         }
         return res.status(201).json({
             message: "Punto creado correctamente",
@@ -923,7 +893,7 @@ exports.guardarpunto = guardarpunto;
 const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const puntos = yield puntos_ordens_1.default.findAll({
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
             order: [['nopunto', 'DESC']],
             include: [
@@ -940,12 +910,32 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         ["id_tipo_presenta", "id_proponente"]
                     ]
                 },
-                { model: puntos_comisiones_1.default, as: "turnocomision", attributes: ["id", "id_punto", "id_comision", "id_punto_turno"] },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "turnocomision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
+                {
+                    model: puntos_comisiones_1.default,
+                    as: "puntoTurnoComision",
+                    attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+                },
             ]
         });
-        if (!puntos) {
+        if (!puntosRaw) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
+        console.log(puntosRaw);
+        const puntos = puntosRaw.map(punto => {
+            var _a, _b;
+            const data = punto.toJSON();
+            const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
+                ? data.turnocomision
+                : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
+            delete data.puntoTurnoComision;
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
+        });
+        console.log(puntos);
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
@@ -958,11 +948,12 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getpuntos = getpuntos;
 const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     try {
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
+        console.log(body);
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -982,21 +973,77 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id.length > 0);
+        console.log(turnocomision);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
         const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
+        const idPuntoTurnado = body.id_punto_turnado;
+        let puntoDesc;
+        if (idPuntoTurnado != 'null') {
+            const puntoTurnadoCreate = yield puntos_ordens_1.default.findOne({
+                where: { id: idPuntoTurnado },
+            });
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto_turno: punto.id },
+                });
+                if (puntoTurnado) {
+                    puntoTurnado.update({
+                        id_punto_turno: null
+                    });
+                }
+            }
+            else {
+                punto === null || punto === void 0 ? void 0 : punto.update({
+                    id_dictamen: puntoTurnadoCreate === null || puntoTurnadoCreate === void 0 ? void 0 : puntoTurnadoCreate.id
+                });
+            }
+            if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
+                throw new Error('No se encontró la descripción del punto turnado');
+            }
+            puntoDesc = puntoTurnadoCreate.punto;
+        }
+        else {
+            if (body.tipo_evento != 0) {
+                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                    where: { id_punto_turno: punto.id },
+                });
+                if (puntoTurnado) {
+                    puntoTurnado.update({
+                        id_punto_turno: null
+                    });
+                }
+            }
+            else {
+                punto.update({
+                    id_dictamen: 0
+                });
+            }
+            puntoDesc = body.punto;
+        }
         yield punto.update({
             nopunto: (_a = body.numpunto) !== null && _a !== void 0 ? _a : punto.nopunto,
             id_tipo: (_b = body.tipo) !== null && _b !== void 0 ? _b : punto.id_tipo,
             tribuna: (_c = body.tribuna) !== null && _c !== void 0 ? _c : punto.tribuna,
             path_doc: nuevoPath,
-            punto: (_d = body.punto) !== null && _d !== void 0 ? _d : punto.punto,
-            observaciones: (_e = body.observaciones) !== null && _e !== void 0 ? _e : punto.observaciones,
+            punto: puntoDesc,
+            observaciones: (_d = body.observaciones) !== null && _d !== void 0 ? _d : punto.observaciones,
             editado: 1,
-            se_turna_comision: body.se_turna_comision,
+            se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
+        if (idPuntoTurnado != 'null') {
+            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
+                where: { id_punto: idPuntoTurnado },
+            });
+            if (!puntoTurnado) {
+                throw new Error('Relación de punto-comisión no encontrada');
+            }
+            yield puntoTurnado.update({
+                id_punto_turno: punto.id,
+            });
+        }
         yield puntos_presenta_1.default.destroy({
             where: { id_punto: punto.id }
         });
@@ -1007,14 +1054,16 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 id_presenta: item.autorId
             });
         }
-        yield puntos_comisiones_1.default.destroy({
-            where: { id_punto: punto.id }
-        });
-        for (const item of turnocomision) {
-            yield puntos_comisiones_1.default.create({
-                id_punto: punto.id,
-                id_comision: item,
+        if (body.tipo_evento == 0) {
+            yield puntos_comisiones_1.default.destroy({
+                where: { id_punto: punto.id }
             });
+            for (const item of turnocomision) {
+                yield puntos_comisiones_1.default.create({
+                    id_punto: punto.id,
+                    id_comision: item,
+                });
+            }
         }
         return res.status(200).json({
             message: "Punto actualizado correctamente",
@@ -1032,7 +1081,8 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
 exports.actualizarPunto = actualizarPunto;
 const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params;
+        const { id, sesion } = req.params;
+        console.log(id, sesion);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });

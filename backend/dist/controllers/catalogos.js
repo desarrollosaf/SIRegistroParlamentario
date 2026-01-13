@@ -17,7 +17,6 @@ const proponentes_1 = __importDefault(require("../models/proponentes"));
 const ProponentesTipoCategoriaDetalle_1 = __importDefault(require("../models/ProponentesTipoCategoriaDetalle"));
 const tipo_categoria_iniciativas_1 = __importDefault(require("../models/tipo_categoria_iniciativas"));
 const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
-const sequelize_1 = require("sequelize");
 require("../models/associations");
 const getCatalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -49,48 +48,18 @@ const getCatalogo = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     through: { attributes: [] }
                 }]
         });
+        if (!proponenteConCategorias) {
+            return res.status(404).json({ msg: "Proponente no encontrado" });
+        }
         let dtSlctTemp = [];
-        if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Gobernadora o Gobernador del Estado') {
-            const gobernadora = yield cat_fun_dep_1.default.findAll({
+        // Si el proponente tiene un tipo (id de CatFunDep), consultar directamente
+        if (proponenteConCategorias.id) {
+            const funcionarios = yield cat_fun_dep_1.default.findAll({
                 where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
-                    vigente: 1
+                    tipo: proponenteConCategorias.id, // Consulta directa por el id
                 },
             });
-            dtSlctTemp = gobernadora.map(gobernadora => ({
-                id: `${proponenteConCategorias.id}/${gobernadora.id}`,
-                id_original: gobernadora.id,
-                valor: gobernadora.nombre_titular,
-                proponente_id: proponenteConCategorias.id,
-                proponente_valor: proponenteConCategorias.valor,
-                tipo: gobernadora.nombre_dependencia
-            }));
-        }
-        else if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Tribunal Superior de Justicia') {
-            const tribunal = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = tribunal.map(data => ({
-                id: `${proponenteConCategorias.id}/${data.id}`,
-                id_original: data.id,
-                valor: data.nombre_titular,
-                proponente_id: proponenteConCategorias.id,
-                proponente_valor: proponenteConCategorias.valor,
-                tipo: data.nombre_dependencia
-            }));
-        }
-        else if ((proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Ciudadanas y ciudadanos del Estado' ||
-            (proponenteConCategorias === null || proponenteConCategorias === void 0 ? void 0 : proponenteConCategorias.valor) === 'Fiscalía General de Justicia del Estado de México') {
-            const fiscalia = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = fiscalia.map(data => ({
+            dtSlctTemp = funcionarios.map(data => ({
                 id: `${proponenteConCategorias.id}/${data.id}`,
                 id_original: data.id,
                 valor: data.nombre_titular,
@@ -101,7 +70,7 @@ const getCatalogo = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         console.log('proponente', proponenteConCategorias);
         const categoriasInciativas = yield tipo_categoria_iniciativas_1.default.findAll();
-        console.log('categoriasIniciativas: ', categoriasInciativas);
+        console.log('categoriasIniciativas:', categoriasInciativas);
         return res.status(200).json({
             msg: "Exito",
             data: proponenteConCategorias,
@@ -189,82 +158,33 @@ const saveTitularProponente = (req, res) => __awaiter(void 0, void 0, void 0, fu
         const proponente = yield proponentes_1.default.findOne({
             where: { id: body.proponenteId },
         });
-        let dtSlctTemp = [];
-        if ((proponente === null || proponente === void 0 ? void 0 : proponente.valor) === 'Gobernadora o Gobernador del Estado') {
-            const saveCatFun = yield cat_fun_dep_1.default.create({
-                nombre_dependencia: 'Gobernadora o Gobernador del Estado',
-                nombre_titular: body.nombre,
-                vigente: true,
-                fecha_inicio: body.fecha_inicio,
-                fecha_fin: body.fecha_fin,
-                tipo: proponente.id
-            });
-            const gobernadora = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Gobernadora o Gobernador del Estado%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = gobernadora.map(gobernadora => ({
-                id: `${proponente.id}/${gobernadora.id}`,
-                id_original: gobernadora.id,
-                valor: gobernadora.nombre_titular,
-                proponente_id: proponente.id,
-                proponente_valor: proponente.valor,
-                tipo: gobernadora.nombre_dependencia
-            }));
+        if (!proponente) {
+            return res.status(404).json({ msg: "Proponente no encontrado" });
         }
-        else if ((proponente === null || proponente === void 0 ? void 0 : proponente.valor) === 'Tribunal Superior de Justicia') {
-            const saveCatFun = yield cat_fun_dep_1.default.create({
-                nombre_dependencia: 'Tribunal Superior de Justicia del Estado de México',
-                nombre_titular: body.nombre,
-                vigente: true,
-                fecha_inicio: body.fecha_inicio,
-                fecha_fin: body.fecha_fin,
-                tipo: proponente.id
-            });
-            const tribunal = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = tribunal.map(data => ({
-                id: `${proponente.id}/${data.id}`,
-                id_original: data.id,
-                valor: data.nombre_titular,
-                proponente_id: proponente.id,
-                proponente_valor: proponente.valor,
-                tipo: data.nombre_dependencia
-            }));
-        }
-        else if ((proponente === null || proponente === void 0 ? void 0 : proponente.valor) === 'Ciudadanas y ciudadanos del Estado' ||
-            (proponente === null || proponente === void 0 ? void 0 : proponente.valor) === 'Fiscalía General de Justicia del Estado de México') {
-            const saveCatFun = yield cat_fun_dep_1.default.create({
-                nombre_dependencia: proponente === null || proponente === void 0 ? void 0 : proponente.valor,
-                nombre_titular: body.nombre,
-                vigente: true,
-                fecha_inicio: body.fecha_inicio,
-                fecha_fin: body.fecha_fin,
-                tipo: proponente.id
-            });
-            const fiscalia = yield cat_fun_dep_1.default.findAll({
-                where: {
-                    nombre_dependencia: { [sequelize_1.Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-                    vigente: 1
-                },
-            });
-            dtSlctTemp = fiscalia.map(data => ({
-                id: `${proponente.id}/${data.id}`,
-                id_original: data.id,
-                valor: data.nombre_titular,
-                proponente_id: proponente.id,
-                proponente_valor: proponente.valor,
-                tipo: data.nombre_dependencia
-            }));
-        }
+        yield cat_fun_dep_1.default.create({
+            nombre_dependencia: proponente.valor,
+            nombre_titular: body.nombre,
+            vigente: true,
+            fecha_inicio: body.fecha_inicio,
+            fecha_fin: body.fecha_fin,
+            tipo: proponente.id
+        });
+        const funcionarios = yield cat_fun_dep_1.default.findAll({
+            where: {
+                tipo: proponente.id,
+                vigente: 1
+            },
+        });
+        const dtSlctTemp = funcionarios.map(data => ({
+            id: `${proponente.id}/${data.id}`,
+            id_original: data.id,
+            valor: data.nombre_titular,
+            proponente_id: proponente.id,
+            proponente_valor: proponente.valor,
+            tipo: data.nombre_dependencia
+        }));
         return res.status(200).json({
-            msg: `sucess`,
+            msg: 'success',
             data: dtSlctTemp,
             estatus: 200,
         });
@@ -283,7 +203,7 @@ const saveCategoriaInicitavias = (req, res) => __awaiter(void 0, void 0, void 0,
         const { body } = req;
         console.log(body);
         const saveDatos = yield tipo_categoria_iniciativas_1.default.create({
-            valor: body.valor,
+            valor: body.nombre,
         });
         return res.status(200).json({
             msg: `sucess`,
@@ -304,7 +224,7 @@ const saveProponentes = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { body } = req;
         console.log(body);
         const saveDatos = yield proponentes_1.default.create({
-            valor: body.valor,
+            valor: body.nombre,
         });
         const proponentes = yield proponentes_1.default.findAll();
         return res.status(200).json({

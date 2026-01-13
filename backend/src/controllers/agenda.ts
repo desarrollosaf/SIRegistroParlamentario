@@ -587,8 +587,26 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           attributes: ['id', 'nombre'],
           raw: true,
         });
-
-
+        
+        const dictamenes = await PuntosOrden.findAll({
+          where: { id_tipo: 6 },
+          include: [
+            {
+              model: TemasPuntosVotos,
+              as: 'temasVotos',
+              include: [
+                {
+                  model: VotosPunto,
+                  as: 'votospuntos',
+                  where: { sentido: 1 },
+                  required: false,
+                }
+              ],
+              required: false
+            }
+          ]
+        });
+        
         const legislatura = await Legislatura.findOne({
           order: [["fecha_inicio", "DESC"]],
         });
@@ -625,7 +643,8 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             comisiones: comisiones,
             diputados: diputadosArray,
             tipointer: tipointer,
-            partidos:partidos
+            partidos:partidos,
+            dictamenes: dictamenes
 
         });
 
@@ -740,36 +759,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           }
         }
         
-      } else if (proponente.valor === 'Secretarías del GEM') {
-        const secretgem = await Secretarias.findAll();
-        dtSlctTemp = secretgem.map(s => ({
-          id: `${proponente.id}/${s.id}`,
-          id_original: s.id,
-          valor: `${s.nombre} / ${s.titular}`,
-          proponente_id: proponente.id,
-          proponente_valor: proponente.valor,
-          tipo: 'secretaria'
-        }));
-        
-      } else if (proponente.valor === 'Gobernadora o Gobernador del Estado') {
-        const gobernadora = await CatFunDep.findOne({
-          where: {
-            nombre_dependencia: { [Op.like]: '%Gobernadora o Gobernador del Estado%' },
-            vigente: 1
-          },
-        });
-        if (gobernadora) {
-          dtSlctTemp = [{
-            id: `${proponente.id}/${gobernadora.id}`,
-            id_original: gobernadora.id,
-            valor: gobernadora.nombre_titular,
-            proponente_id: proponente.id,
-            proponente_valor: proponente.valor,
-            tipo: 'funcionario'
-          }];
-        }
-
-      } else if (proponente.valor === 'Ayuntamientos') {
+      }   else if (proponente.valor === 'Ayuntamientos') {
         const municipios = await MunicipiosAg.findAll();
         dtSlctTemp = municipios.map(l => ({
           id: `${proponente.id}/${l.id}`,
@@ -780,63 +770,6 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           tipo: 'municipio'
         }));
         
-      } else if (proponente.valor === 'Comición de Derechos Humanos del Estado de México') {
-        const derechoshumanos = await Comision.findOne({
-          where: {
-            nombre: { [Op.like]: '%Derechos Humanos%' },
-          },
-          order: [['created_at', 'DESC']],
-        });
-        if (derechoshumanos) {
-          dtSlctTemp = [{
-            id: `${proponente.id}/${derechoshumanos.id}`,
-            id_original: derechoshumanos.id,
-            valor: derechoshumanos.nombre,
-            proponente_id: proponente.id,
-            proponente_valor: proponente.valor,
-            tipo: 'comision'
-          }];
-        }
-        
-      } else if (proponente.valor === 'Tribunal Superior de Justicia') {
-        const tribunal = await CatFunDep.findOne({
-          where: {
-            nombre_dependencia: { [Op.like]: '%Tribunal Superior de Justicia del Estado de México%' },
-            vigente: 1
-          },
-        });
-        if (tribunal) {
-          dtSlctTemp = [{
-            id: `${proponente.id}/${tribunal.id}`,
-            id_original: tribunal.id,
-            valor: tribunal.nombre_titular,
-            proponente_id: proponente.id,
-            proponente_valor: proponente.valor,
-            tipo: 'funcionario'
-          }];
-        }
-        
-      } else if (
-        proponente.valor === 'Ciudadanas y ciudadanos del Estado' ||
-        proponente.valor === 'Fiscalía General de Justicia del Estado de México'
-      ) {
-        const fiscalia = await CatFunDep.findOne({
-          where: {
-            nombre_dependencia: { [Op.like]: '%Fiscalía General de Justicia del Estado de México%' },
-            vigente: 1
-          },
-        });
-        if (fiscalia) {
-          dtSlctTemp = [{
-            id: `${proponente.id}/${fiscalia.id}`,
-            id_original: fiscalia.id,
-            valor: fiscalia.nombre_titular,
-            proponente_id: proponente.id,
-            proponente_valor: proponente.valor,
-            tipo: 'funcionario'
-          }];
-        }
-          
       } else if (proponente.valor === 'Comisiones Legislativas') {
         const idMesa = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
         if (idMesa) {
@@ -902,7 +835,34 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
           proponente_valor: proponente.valor,
           tipo: 'legislatura'
         }));
+      } else if (proponente.valor === 'Secretarías del GEM') {
+        const secretgem = await Secretarias.findAll();
+        dtSlctTemp = secretgem.map(s => ({
+          id: `${proponente.id}/${s.id}`,
+          id_original: s.id,
+          valor: `${s.nombre} / ${s.titular}`,
+          proponente_id: proponente.id,
+          proponente_valor: proponente.valor,
+          tipo: 'secretaria'
+        }));     
+      }else{
+        const catalogo = await CatFunDep.findAll({
+          where: {
+            tipo: proponente.id,
+          },
+        });
+
+        dtSlctTemp = catalogo.map(data => ({
+          id: `${proponente.id}/${data.id}`,
+          id_original: data.id,
+          valor: data.nombre_titular,
+          proponente_id: proponente.id,
+          proponente_valor: proponente.valor,
+          tipo: 'funcionario'
+        }));
       }
+
+
 
       if (dtSlctTemp) {
         if (Array.isArray(dtSlctTemp)) {
@@ -989,21 +949,27 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto,
       observaciones: body.observaciones,
-      se_turna_comision: body.se_turna_comision,
+      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
     if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto: idPuntoTurnado },
-      });
 
-      if (!puntoTurnado) {
-        throw new Error('Relación de punto-comisión no encontrada');
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto: idPuntoTurnado },
+        });
+        if (!puntoTurnado) {
+          throw new Error('Relación de punto-comisión no encontrada');
+        }
+        await puntoTurnado.update({
+          id_punto_turno: puntonuevo.id,
+        });
+      }else{
+        await puntonuevo.update({
+          id_dictamen: idPuntoTurnado,
+        });
       }
-
-      await puntoTurnado.update({
-        id_punto_turno: puntonuevo.id,
-      });
+      
     }
 
     for (const item of presentaArray) {
@@ -1014,12 +980,17 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    for (const item of turnocomision) {
-      await PuntosComisiones.create({
-        id_punto: puntonuevo.id,
-        id_comision: item,
-      });
+
+    if(body.tipo_evento == 0){
+      for (const item of turnocomision) {
+        await PuntosComisiones.create({
+          id_punto: puntonuevo.id,
+          id_comision: item,
+        });
+      }
+
     }
+    
 
 
     return res.status(201).json({
@@ -1039,7 +1010,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
 
-      const puntos = await PuntosOrden.findAll({
+      const puntosRaw = await PuntosOrden.findAll({
         where: { id_evento: id },
         order: [['nopunto', 'DESC']],
         include: [
@@ -1061,17 +1032,45 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
               ["id_tipo_presenta", "id_proponente"]
             ]
           },
-          { model: PuntosComisiones, as: "turnocomision", attributes: ["id", "id_punto","id_comision","id_punto_turno"] },
+          {
+            model: PuntosComisiones,
+            as: "turnocomision",
+            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+          },
+          {
+            model: PuntosComisiones,
+            as: "puntoTurnoComision",
+            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+          },
         ]
       });
-      if (!puntos) {
+
+      if (!puntosRaw) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-     
+      console.log(puntosRaw)
+      const puntos = puntosRaw.map(punto => {
+        const data = punto.toJSON();
+
+        const turnosNormalizados =
+          data.turnocomision?.length
+            ? data.turnocomision
+            : data.puntoTurnoComision ?? [];
+
+        delete data.puntoTurnoComision;
+
+        return {
+          ...data,
+          turnocomision: turnosNormalizados
+        };
+      });
+      console.log(puntos)
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos, 
       });
+
+
     } catch (error: any) {
       console.error("Error al guardar el punto:", error);
       return res.status(500).json({ message: "Error interno del servidor" });
@@ -1083,6 +1082,9 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
+    console.log(body);
+
+
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -1104,6 +1106,8 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       .map((id: string) => id.trim()) 
       .filter((id: string) => id.length > 0);
 
+    
+    console.log(turnocomision);
 
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
@@ -1112,16 +1116,84 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
 
+    const idPuntoTurnado = body.id_punto_turnado;
+    let puntoDesc: string;
+
+    if (idPuntoTurnado != 'null') {
+      const puntoTurnadoCreate = await PuntosOrden.findOne({
+        where: { id: idPuntoTurnado },
+      });
+
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto_turno: punto.id },
+        });
+
+        if (puntoTurnado) {
+          puntoTurnado.update({
+            id_punto_turno: null
+          })
+
+        }
+
+      }else{
+        punto?.update({
+          id_dictamen: puntoTurnadoCreate?.id
+        })
+      }
+      
+
+     
+      if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
+        throw new Error('No se encontró la descripción del punto turnado');
+      }
+      puntoDesc = puntoTurnadoCreate.punto;
+      
+    } else {
+
+      if(body.tipo_evento != 0){
+        const puntoTurnado = await PuntosComisiones.findOne({
+          where: { id_punto_turno: punto.id },
+        });
+        if (puntoTurnado) {
+          puntoTurnado.update({
+            id_punto_turno: null
+          })
+
+        }
+      }else{
+        punto.update({
+          id_dictamen: 0
+        })
+      }
+      
+      puntoDesc = body.punto;
+    }
+
     await punto.update({
       nopunto: body.numpunto ?? punto.nopunto,
       id_tipo: body.tipo ?? punto.id_tipo,
       tribuna: body.tribuna ?? punto.tribuna,
       path_doc: nuevoPath,
-      punto: body.punto ?? punto.punto,
+      punto: puntoDesc,
       observaciones: body.observaciones ?? punto.observaciones,
       editado: 1,
-      se_turna_comision: body.se_turna_comision,
+      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
+
+    if (idPuntoTurnado != 'null') {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto: idPuntoTurnado },
+      });
+
+      if (!puntoTurnado) {
+        throw new Error('Relación de punto-comisión no encontrada');
+      }
+
+      await puntoTurnado.update({
+        id_punto_turno: punto.id,
+      });
+    }
 
     await PuntosPresenta.destroy({
       where: { id_punto: punto.id }
@@ -1134,17 +1206,21 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         id_presenta: item.autorId
       });
     }
-    await PuntosComisiones.destroy({
-      where: { id_punto: punto.id }
-    });
 
-     for (const item of turnocomision) {
-      await PuntosComisiones.create({
-        id_punto: punto.id,
-        id_comision: item,
+    if(body.tipo_evento == 0){
+      await PuntosComisiones.destroy({
+        where: { id_punto: punto.id }
       });
-    }
 
+      for (const item of turnocomision) {
+        await PuntosComisiones.create({
+          id_punto: punto.id,
+          id_comision: item,
+        });
+      }
+
+    }
+    
     return res.status(200).json({
       message: "Punto actualizado correctamente",
       data: punto,
@@ -1162,11 +1238,13 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
 export const eliminarpunto = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const { id, sesion } = req.params;
+    console.log(id, sesion)
     const punto = await PuntosOrden.findOne({ where: { id } });
      if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
+    
     await punto.destroy();
     return res.status(200).json({
       message: "Punto eliminado correctamente",

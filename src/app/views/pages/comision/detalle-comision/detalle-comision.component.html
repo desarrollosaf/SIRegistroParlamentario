@@ -572,6 +572,7 @@
                                                         <label class="form-label fw-semibold">Dictámenes</label>
                                                         <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
                                                             bindValue="id" formControlName="id_punto_turnado"
+                                                        <ng-select [items]="slcDictamenes" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
                                                             placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
@@ -732,6 +733,10 @@
                                                                         formControlName="id_punto_turnado"
                                                                         placeholder="Selecciona">
                                                                     </ng-select>
+                                                                <label class="form-label fw-semibold">Dictámenes</label>
+                                                                <ng-select [items]="slcDictamenes" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
+                                                                placeholder="Selecciona">
+                                                                </ng-select>
                                                                 </div>
 
 

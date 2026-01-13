@@ -12,6 +12,7 @@ import TipoCategoriaIniciativas from "./tipo_categoria_iniciativas";
 import Proponentes from "./proponentes";
 import PuntosPresenta from "./puntos_presenta";
 import Agenda from "./agendas";
+import TemasPuntosVotos from "./temas_puntos_votos";
 import PuntosComisiones from "./puntos_comisiones";
 
 
@@ -28,6 +29,7 @@ class PuntosOrden extends Model {
   declare status: boolean;
   declare punto_turno_id:  null;
   declare id_proponente:  null;
+  declare id_dictamen: number | null;
   declare dispensa: number | null;
   declare editado: number;
   declare createdAt: CreationOptional<Date>;
@@ -107,6 +109,11 @@ PuntosOrden.init(
       allowNull: false,
       defaultValue: 0,
     },
+    id_dictamen: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,
@@ -122,6 +129,18 @@ PuntosOrden.hasMany(PuntosPresenta, {
 PuntosOrden.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
 
 PuntosOrden.hasMany(PuntosComisiones, {
-  foreignKey: 'id_punto_turno', as: 'turnocomision'
+  foreignKey: 'id_punto_turno', as: 'puntoTurnoComision'
 });
+
+PuntosOrden.hasMany(PuntosComisiones, {
+  foreignKey: 'id_punto', as: 'turnocomision'
+});
+
+PuntosOrden.hasMany(TemasPuntosVotos, {
+  foreignKey: 'id_punto',  
+  as: 'temasVotos',        
+});
+
+
+
 export default PuntosOrden;
