@@ -1091,6 +1091,39 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
+export const crearreserva = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    
+    const punto = await PuntosOrden.findOne({
+      where: { id: body.punto },
+    });
+    
+    if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    
+    const nuevoTema = await TemasPuntosVotos.create({
+      id_punto: punto.id,
+      id_evento: punto.id_evento,
+      tema_votacion: body.descripcion,
+      fecha_votacion: null,
+    });
+    
+    return res.status(200).json({ 
+      message: "Reserva creada exitosamente",
+    });
+    
+  } catch (error: any) {
+    console.error("Error al crear la reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
