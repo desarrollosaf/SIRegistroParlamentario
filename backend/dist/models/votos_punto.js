@@ -22,6 +22,10 @@ VotosPunto.init({
         type: sequelize_1.DataTypes.TEXT("long"),
         allowNull: true,
     },
+    id_punto: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+    },
     id_tema_punto_voto: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
