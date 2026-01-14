@@ -861,12 +861,15 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
-        if (body.temaspunto != 'null') {
-            for (const item of body.temaspunto) {
+        if (body.reservas) {
+            const temasArray = typeof body.reservas === 'string'
+                ? JSON.parse(body.reservas)
+                : body.reservas;
+            for (const item of temasArray) {
                 yield temas_puntos_votos_1.default.create({
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
-                    tema_votacion: item.tema,
+                    tema_votacion: item.descripcion,
                     fecha_votacion: null,
                 });
             }
@@ -930,12 +933,16 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     as: "puntoTurnoComision",
                     attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
                 },
+                {
+                    model: temas_puntos_votos_1.default,
+                    as: "reservas",
+                    attributes: ["id", "tema_votacion"]
+                }
             ]
         });
         if (!puntosRaw) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
-        console.log(puntosRaw);
         const puntos = puntosRaw.map(punto => {
             var _a, _b;
             const data = punto.toJSON();
@@ -945,7 +952,6 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             delete data.puntoTurnoComision;
             return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
         });
-        console.log(puntos);
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
