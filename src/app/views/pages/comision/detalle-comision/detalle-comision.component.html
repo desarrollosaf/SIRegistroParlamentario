@@ -575,7 +575,8 @@
                                                         </ng-select> -->
 
 
-                                                        <ng-select [items]="slcDictamenes" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
+                                                        <ng-select [items]="slcDictamenes" bindLabel="punto"
+                                                            bindValue="id" formControlName="id_punto_turnado"
                                                             placeholder="Selecciona">
                                                         </ng-select>
                                                     </div>
@@ -736,10 +737,13 @@
                                                                         formControlName="id_punto_turnado"
                                                                         placeholder="Selecciona">
                                                                     </ng-select> -->
-                                                                <label class="form-label fw-semibold">Dictámenes</label>
-                                                                <ng-select [items]="slcDictamenes" bindLabel="punto" bindValue="id" formControlName="id_punto_turnado"
-                                                                placeholder="Selecciona">
-                                                                </ng-select>
+                                                                    <label
+                                                                        class="form-label fw-semibold">Dictámenes</label>
+                                                                    <ng-select [items]="slcDictamenes" bindLabel="punto"
+                                                                        bindValue="id"
+                                                                        formControlName="id_punto_turnado"
+                                                                        placeholder="Selecciona">
+                                                                    </ng-select>
                                                                 </div>
 
 
@@ -756,7 +760,16 @@
                                                                         formControlName="observaciones" rows="2"
                                                                         placeholder="Observaciones adicionales"></textarea>
                                                                 </div>
-
+                                                                <button
+                                                                    class="btn btn-outline-primary btn-sm position-relative"
+                                                                    (click)="abrirModalReservaPunto(punto)">
+                                                                    <i class="bi bi-list-task me-1"></i> Reservas
+                                                                    <span
+                                                                        class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
+                                                                        *ngIf="punto.reservas?.length > 0">
+                                                                        {{ punto.reservas.length }}
+                                                                    </span>
+                                                                </button>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Documento</label>
                                                                     <div
@@ -1583,7 +1596,7 @@
                         <tbody>
                             <tr *ngFor="let reserva of listaReservas; let i = index">
                                 <td class="text-center fw-semibold">{{ i + 1 }}</td>
-                                <td>{{ reserva.descripcion }}</td>
+                                <td>{{ reserva.tema_votacion }}</td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         (click)="eliminarReserva(reserva, i)" title="Eliminar">
