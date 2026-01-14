@@ -1123,6 +1123,31 @@ export const crearreserva = async (req: Request, res: Response): Promise<any> =>
   }
 };
 
+export const eliminarreserva = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const reserva = await TemasPuntosVotos.findOne({ 
+      where: { id }
+    });
+    if (!reserva) {
+      return res.status(404).json({ message: "Reserva no encontrada" });
+    }
+    await VotosPunto.destroy({
+      where: { id_tema_punto_voto: id }
+    });
+    await reserva.destroy();
+    return res.status(200).json({
+      message: "Reserva eliminada correctamente",
+    });  
+  } catch (error: any) {
+    console.error("Error al eliminar la reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
   try {
