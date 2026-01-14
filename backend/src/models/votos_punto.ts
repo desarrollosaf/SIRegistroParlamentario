@@ -31,6 +31,10 @@ VotosPunto.init(
       type: DataTypes.TEXT("long"),
       allowNull: true,
     },
+    id_punto: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     id_tema_punto_voto: {
       type: DataTypes.CHAR(36),
       allowNull: true,

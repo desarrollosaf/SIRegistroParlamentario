@@ -941,7 +941,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     }
 
     const puntonuevo = await PuntosOrden.create({
-      id_evento: evento.id,
+      id_evento: evento!.id,
       nopunto: body.numpunto,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
@@ -970,14 +970,17 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       }  
     }
 
-    if (body.temaspunto != 'null') {
-      for (const item of body.temaspunto) {
+    if (body.reservas) {
+      const temasArray = typeof body.reservas === 'string' 
+        ? JSON.parse(body.reservas) 
+        : body.reservas;
+      
+      for (const item of temasArray) {
         await TemasPuntosVotos.create({
           id_punto: puntonuevo.id,
-          id_evento: evento.id,
-          tema_votacion: item.tema,
+          id_evento: evento!.id,
+          tema_votacion: item.descripcion,
           fecha_votacion: null,
-          
         });
       }
     }
@@ -1051,16 +1054,19 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             as: "puntoTurnoComision",
             attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
           },
+          {
+            model: TemasPuntosVotos,
+            as: "reservas",
+            attributes: ["id", "tema_votacion"]
+          }
         ]
       });
 
       if (!puntosRaw) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-      console.log(puntosRaw)
       const puntos = puntosRaw.map(punto => {
         const data = punto.toJSON();
-
         const turnosNormalizados =
           data.turnocomision?.length
             ? data.turnocomision
@@ -1073,7 +1079,6 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           turnocomision: turnosNormalizados
         };
       });
-      console.log(puntos)
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos, 

@@ -98,4 +98,8 @@ PuntosOrden.hasMany(temas_puntos_votos_1.default, {
     foreignKey: 'id_punto',
     as: 'temasVotos',
 });
+PuntosOrden.hasMany(temas_puntos_votos_1.default, {
+    foreignKey: "id_punto",
+    as: "reservas",
+});
 exports.default = PuntosOrden;
