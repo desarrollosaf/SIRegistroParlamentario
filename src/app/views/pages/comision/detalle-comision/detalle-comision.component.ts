@@ -108,10 +108,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     docPunto: null,
   };
 
-  mostrarFormTema = false;
-  formTema!: FormGroup;
-  listaTemas: any[] = []; // Esta será temporal mientras se crea el punto
-  temasTemporales: any[] = []; // Para almacenar temas antes de guardar el punto
+  mostrarformReserva = false;
+  formReserva!: FormGroup;
+  listaReservas: any[] = []; // Esta será temporal mientras se crea el punto
+  reservasTemporales: any[] = []; // Para almacenar temas antes de guardar el punto
 
 
   constructor(
@@ -160,7 +160,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       destacada: [false]
     });
 
-    this.formTema = this.fb.group({
+    this.formReserva = this.fb.group({
       descripcion: ['', Validators.required]
     });
 
@@ -1014,11 +1014,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.abrirModalIntervencion();
   }
 
-  abrirModalTemas() {
-    this.formTema.reset();
-    this.mostrarFormTema = false;
+  abrirModalReserva() {
+    this.formReserva.reset();
+    this.mostrarformReserva = false;
     // No cargamos temas del servidor, usamos los temporales
-    this.listaTemas = [...this.temasTemporales];
+    this.listaReservas = [...this.reservasTemporales];
 
     this.modalRefT = this.modalService.open(this.xlModalT, {
       size: 'xl',
@@ -1027,16 +1027,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  // MODIFICA toggleFormTema (mantiene igual):
-  toggleFormTema() {
-    this.mostrarFormTema = !this.mostrarFormTema;
-    if (!this.mostrarFormTema) {
-      this.formTema.reset();
+  // MODIFICA toggleformReserva (mantiene igual):
+  toggleformReserva() {
+    this.mostrarformReserva = !this.mostrarformReserva;
+    if (!this.mostrarformReserva) {
+      this.formReserva.reset();
     }
   }
 
   guardarTema() {
-    if (this.formTema.invalid) {
+    if (this.formReserva.invalid) {
       Swal.fire({
         position: "center",
         icon: "warning",
@@ -1051,11 +1051,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // Agregar a la lista temporal
     const nuevoTema = {
       id: Date.now(), // ID temporal
-      descripcion: this.formTema.value.descripcion
+      descripcion: this.formReserva.value.descripcion
     };
 
-    this.listaTemas.push(nuevoTema);
-    this.temasTemporales.push(nuevoTema);
+    this.listaReservas.push(nuevoTema);
+    this.reservasTemporales.push(nuevoTema);
 
     const Toast = Swal.mixin({
       toast: true,
@@ -1066,17 +1066,17 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
     Toast.fire({
       icon: "success",
-      title: "Tema agregado (se guardará con el punto)."
+      title: "Se agregó reserva (se guardará con el punto)."
     });
 
-    this.toggleFormTema();
+    this.toggleformReserva();
   }
 
   // MODIFICA eliminarTema:
-  eliminarTema(tema: any, index: number) {
+  eliminarReserva(reserva: any, index: number) {
     Swal.fire({
       title: "¿Está seguro?",
-      text: "Se eliminará este tema de la lista",
+      text: "Se eliminará esta reserva de la lista",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -1086,10 +1086,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }).then((result) => {
       if (result.isConfirmed) {
         // Eliminar de ambas listas
-        this.listaTemas.splice(index, 1);
-        const tempIndex = this.temasTemporales.findIndex(t => t.id === tema.id);
+        this.listaReservas.splice(index, 1);
+        const tempIndex = this.reservasTemporales.findIndex(t => t.id === reserva.id);
         if (tempIndex > -1) {
-          this.temasTemporales.splice(tempIndex, 1);
+          this.reservasTemporales.splice(tempIndex, 1);
         }
 
         const Toast = Swal.mixin({
@@ -1101,7 +1101,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
         Toast.fire({
           icon: "success",
-          title: "Tema eliminado."
+          title: "Se eliminó reserva."
         });
       }
     });
@@ -1250,7 +1250,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cerrarModal() {
     this.modalRef.close();
   }
-  cerrarModalTema() {
+  cerrarModalReserva() {
     this.modalRefT.close();
   }
   // ==================== FIN DEL MODAL ====================
@@ -1302,8 +1302,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     // Limpiar temas temporales cuando se cierra el formulario
     if (!this.mostrarFormularioPunto) {
-      this.temasTemporales = [];
-      this.listaTemas = [];
+      this.reservasTemporales = [];
+      this.listaReservas = [];
     }
   }
 
@@ -1334,15 +1334,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     formData.append('tipo_evento', this.tipo_evento);
 
 
-    if (this.temasTemporales.length > 0) {
-      const temasParaEnviar = this.temasTemporales.map(t => ({
+    if (this.reservasTemporales.length > 0) {
+      const reservasParaEnviar = this.reservasTemporales.map(t => ({
         descripcion: t.descripcion
       }));
-      formData.append('temas', JSON.stringify(temasParaEnviar));
+      formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
 
     // Log para verificar
-    console.log('Temas a enviar:', this.temasTemporales);
+    console.log('reservas a enviar:', this.reservasTemporales);
 
     formData.forEach((valor, clave) => {
       console.log(clave, valor);
@@ -1362,7 +1362,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
         Toast.fire({
           icon: "success",
-          title: "Punto guardado correctamente con sus temas."
+          title: "Punto guardado correctamente."
         });
 
         // Limpiar todo
@@ -1370,8 +1370,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.formPunto.reset({
           se_turna_comision: false
         });
-        this.temasTemporales = [];
-        this.listaTemas = [];
+        this.reservasTemporales = [];
+        this.listaReservas = [];
         this.mostrarFormularioPunto = false;
         this.cargarPuntosRegistrados();
       },

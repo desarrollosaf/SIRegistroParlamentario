@@ -593,17 +593,17 @@
                                                     </div>
                                                     <div class="col-12">
                                                         <button type="button" class="btn btn-info position-relative"
-                                                            (click)="abrirModalTemas()">
-                                                            <i class="bi bi-list-task me-1"></i> Temas
+                                                            (click)="abrirModalReserva()">
+                                                            <i class="bi bi-list-task me-1"></i> Reservas
                                                             <span
                                                                 class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
-                                                                *ngIf="temasTemporales.length > 0">
-                                                                {{ temasTemporales.length }}
+                                                                *ngIf="reservasTemporales.length > 0">
+                                                                {{ reservasTemporales.length }}
                                                             </span>
                                                         </button>
                                                         <small class="text-muted ms-2"
-                                                            *ngIf="temasTemporales.length > 0">
-                                                            {{ temasTemporales.length }} tema(s) agregado(s)
+                                                            *ngIf="reservasTemporales.length > 0">
+                                                            {{ reservasTemporales.length }} reserva(s) agregada(s)
                                                         </small>
                                                     </div>
                                                 </div>
@@ -1525,37 +1525,37 @@
     <div class="modal-header modal-intervencion-header">
         <h5 class="modal-title d-flex align-items-center">
             <i class="bi bi-list-task me-2"></i>
-            Temas del Punto
+            Reservas del Punto
         </h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModalTema()"></button>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModalReserva()"></button>
     </div>
 
     <div class="modal-body">
         <div class="mb-3">
-            <button class="btn btn-primary" (click)="toggleFormTema()">
-                <i class="bi" [ngClass]="mostrarFormTema ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
-                {{ mostrarFormTema ? 'Ocultar' : 'Agregar' }} Tema
+            <button class="btn btn-primary" (click)="toggleformReserva()">
+                <i class="bi" [ngClass]="mostrarformReserva ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
+                {{ mostrarformReserva ? 'Ocultar' : 'Agregar' }} Reserva
             </button>
         </div>
 
         <!-- Formulario para agregar tema -->
-        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarFormTema">
+        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarformReserva">
             <div class="card-body">
-                <form [formGroup]="formTema">
+                <form [formGroup]="formReserva">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-chat-left-text-fill me-1"></i> Descripción del Tema
+                                <i class="bi bi-chat-left-text-fill me-1"></i> Descripción de la reserva
                             </label>
                             <textarea class="form-control" formControlName="descripcion" rows="4"
-                                placeholder="Escribe la descripción del tema...">
+                                placeholder="Escribe la descripción de reserva...">
                             </textarea>
                         </div>
                     </div>
 
                     <div class="text-end mt-3">
                         <button type="button" class="btn btn-success" (click)="guardarTema()">
-                            <i class="bi bi-save"></i> Guardar Tema
+                            <i class="bi bi-save"></i> Guardar
                         </button>
                     </div>
                 </form>
@@ -1567,7 +1567,7 @@
             <div class="card-header bg-light">
                 <h6 class="mb-0 fw-semibold">
                     <i class="bi bi-list-ul me-2"></i>
-                    Lista de Temas
+                    Lista de Reservas
                 </h6>
             </div>
             <div class="card-body p-0">
@@ -1581,20 +1581,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let tema of listaTemas; let i = index">
+                            <tr *ngFor="let reserva of listaReservas; let i = index">
                                 <td class="text-center fw-semibold">{{ i + 1 }}</td>
-                                <td>{{ tema.descripcion }}</td>
+                                <td>{{ reserva.descripcion }}</td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-outline-danger"
-                                        (click)="eliminarTema(tema, i)" title="Eliminar">
+                                        (click)="eliminarReserva(reserva, i)" title="Eliminar">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </td>
                             </tr>
-                            <tr *ngIf="listaTemas.length === 0">
+                            <tr *ngIf="listaReservas.length === 0">
                                 <td colspan="3" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                    <p class="mb-0 mt-2">No hay temas registrados</p>
+                                    <p class="mb-0 mt-2">No hay reservas</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -1605,7 +1605,7 @@
     </div>
 
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="cerrarModalTema()">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalReserva()">
             <i class="bi bi-x-lg me-1"></i> Cerrar
         </button>
     </div>
