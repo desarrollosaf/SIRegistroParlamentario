@@ -12,7 +12,7 @@ router.post("/api/eventos/gettipos/", getTiposPuntos );
 router.post("/api/eventos/savepunto/:id",upload.single("documento"), guardarpunto );
 router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/savereserva/", crearreserva );
-router.post("/api/eventos/eliminarreserva/:id",eliminarreserva );
+router.get("/api/eventos/eliminarreserva/:id",eliminarreserva );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
 router.get("/api/eventos/eliminarpunto/:id/:sesion",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
