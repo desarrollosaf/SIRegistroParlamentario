@@ -111,6 +111,11 @@ export class EventoService {
   saveReserva(data: any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savereserva/`,data)
   }
+
+   deleteReserva(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarreserva/${id}`)
+  }
+
   
 
 }
