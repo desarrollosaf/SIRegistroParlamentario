@@ -1213,41 +1213,80 @@ guardarTema() {
   // CASO 2: PUNTO EXISTENTE (GUARDAR EN BD CON SUBSCRIBE)
   // ==========================================
   const datos = {
-    id_punto: this.puntoSeleccionadoReserva.id,
+    punto: this.puntoSeleccionadoReserva.id,
     descripcion: this.formReserva.value.descripcion
   };
-
+// debugger
   // ← AQUÍ SÍ HACE SUBSCRIBE INMEDIATAMENTE
-  // this._eventoService.saveReserva(datos).subscribe({
-  //   next: (response: any) => {
-  //     const Toast = Swal.mixin({
-  //       toast: true,
-  //       position: "top-end",
-  //       showConfirmButton: false,
-  //       timer: 2000,
-  //       timerProgressBar: true
-  //     });
-  //     Toast.fire({
-  //       icon: "success",
-  //       title: "Reserva guardada correctamente."
-  //     });
+this._eventoService.saveReserva(datos).subscribe({
+  next: (response: any) => {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: "success",
+      title: "Reserva guardada correctamente."
+    });
 
-  //     this.toggleformReserva();
+    this.toggleformReserva();
+    
+    // ==========================================
+    // ACTUALIZACIÓN OPTIMISTA: Actualizar la lista del modal inmediatamente
+    // ==========================================
+    
+    // Opción 1: Si el backend devuelve la reserva creada en el response
+    if (response.data) {
+      this.listaReservas.push(response.data);
       
-  //     // Recargar puntos para actualizar el badge
-  //     this.cargarPuntosRegistrados();
-  //   },
-  //   error: (e: HttpErrorResponse) => {
-  //     const msg = e.error?.msg || 'Error desconocido';
-  //     console.error('Error del servidor:', msg);
-  //     Swal.fire({
-  //       icon: "error",
-  //       title: "Error",
-  //       text: msg,
-  //       timer: 3000
-  //     });
-  //   }
-  // });
+      // También actualizar el array de reservas del punto en memoria
+      if (this.puntoSeleccionadoReserva.reservas) {
+        this.puntoSeleccionadoReserva.reservas.push(response.data);
+      } else {
+        this.puntoSeleccionadoReserva.reservas = [response.data];
+      }
+    } 
+    // Opción 2: Si el backend NO devuelve la reserva, crearla manualmente
+    else {
+      const nuevaReserva = {
+        id: response.id || Date.now(), // Usar el ID del response o temporal
+        tema_votacion: datos.descripcion,
+
+      };
+      
+      this.listaReservas.push(nuevaReserva);
+      
+      // También actualizar el array de reservas del punto en memoria
+      if (this.puntoSeleccionadoReserva.reservas) {
+        this.puntoSeleccionadoReserva.reservas.push(nuevaReserva);
+      } else {
+        this.puntoSeleccionadoReserva.reservas = [nuevaReserva];
+      }
+    }
+    
+    // Actualizar la lista de puntos sin hacer otra petición al servidor
+    const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoReserva.id);
+    if (puntoIndex !== -1) {
+      this.listaPuntos[puntoIndex].reservas = [...this.puntoSeleccionadoReserva.reservas];
+    }
+    
+    // Forzar detección de cambios para actualizar el badge
+    this.cdr.detectChanges();
+  },
+  error: (e: HttpErrorResponse) => {
+    const msg = e.error?.msg || 'Error desconocido';
+    console.error('Error del servidor:', msg);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: msg,
+      timer: 3000
+    });
+  }
+});
 }
 
   // MODIFICA eliminarTema:

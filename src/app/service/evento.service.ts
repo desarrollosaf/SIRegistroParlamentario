@@ -107,5 +107,10 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/notasintenciapdf/${id}`)
   }
 
+  
+  saveReserva(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savereserva/`,data)
+  }
+  
 
 }
