@@ -1614,7 +1614,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
-        descripcion: t.descripcion
+        descripcion: t.tema_votacion
+        
       }));
       formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
@@ -1694,6 +1695,19 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.iniciarSegPlano();
       }
     }
+  }
+
+  getReservasPuntos(puntoId: any){
+
+    // this._eventoService.getIntegrantesVotosPunto(punto).subscribe({
+    //   next: (response: any) => {
+    //     console.log(response);
+    //   },
+    //   error: (e: HttpErrorResponse) => {
+    //     console.error('Error al cargar reservas:', e);
+    //   }
+    // });
+
   }
 
   private cargarVotantes(punto: any): void {
