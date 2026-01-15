@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 const router = Router();
 
@@ -13,6 +13,7 @@ router.post("/api/eventos/savepunto/:id",upload.single("documento"), guardarpunt
 router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/savereserva/", crearreserva );
 router.get("/api/eventos/eliminarreserva/:id",eliminarreserva );
+router.get("/api/eventos/getreservas/:id",getreservas );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
 router.get("/api/eventos/eliminarpunto/:id/:sesion",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
