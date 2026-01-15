@@ -847,14 +847,15 @@
                                             Registro de Votaciones
                                         </h5>
 
-                                        <div class="row">
-                                            <div class="col-md-8">
+                                        <div class="row g-3">
+                                            <!-- Select de Punto a Votar -->
+                                            <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Selecciona el punto a
                                                     votar</label>
                                                 <ng-select [items]="listaPuntosVotacion" bindLabel="punto"
                                                     bindValue="id" [(ngModel)]="puntoSeleccionadoVotacion"
                                                     placeholder="Selecciona un punto del orden del día"
-                                                    (change)="onPuntoVotacionChange($event)">
+                                                    (change)="getReservasPuntos($event)">
                                                     <ng-template ng-label-tmp let-item="item">
                                                         <span class="fw-semibold">Punto {{ item.nopunto }}:</span> {{
                                                         item.punto }}
@@ -868,12 +869,64 @@
                                                     </ng-template>
                                                 </ng-select>
                                             </div>
+
+                                            <!-- Select de Reserva del Punto -->
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Selecciona la reserva
+                                                    (opcional)</label>
+                                                <ng-select [items]="listaReservasPunto" bindLabel="tema_votacion"
+                                                    bindValue="id" [(ngModel)]="reservaPuntoSeleccionadoVotacion"
+                                                    placeholder="Selecciona una reserva"
+                                                    [disabled]="!puntoSeleccionadoVotacion || listaReservasPunto.length === 0"
+                                                    [notFoundText]="!puntoSeleccionadoVotacion ? 'Primero selecciona un punto' : 'No hay reservas disponibles'"
+                                                    [clearable]="true">
+                                                    <ng-template ng-label-tmp let-item="item">
+                                                        {{ item.tema_votacion }}
+                                                    </ng-template>
+
+                                                    <ng-template ng-option-tmp let-item="item">
+                                                        <div class="d-flex flex-column">
+                                                            <span class="fw-semibold">{{ item.tema_votacion }}</span>
+                                                        </div>
+                                                    </ng-template>
+                                                </ng-select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botón Iniciar Votación -->
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <button class="btn btn-primary" (click)="iniciarVotacion()"
+                                                    [disabled]="!puntoSeleccionadoVotacion">
+                                                    <i class="bi bi-play-circle me-2"></i>
+                                                    Iniciar Votación
+                                                </button>
+
+                                                <!-- Mensaje informativo cuando no hay punto seleccionado -->
+                                                <small class="text-muted ms-2" *ngIf="!puntoSeleccionadoVotacion">
+                                                    * Seleccione un punto para iniciar
+                                                </small>
+
+                                                <!-- Mostrar datos seleccionados -->
+                                                <div class="mt-2" *ngIf="votacionActual.idPunto">
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        Punto: {{ puntoSeleccionadoVotacion }}
+                                                        <span *ngIf="votacionActual.idReserva">
+                                                            | Reserva: {{ reservaPuntoSeleccionadoVotacion }}
+                                                        </span>
+                                                        <span *ngIf="!votacionActual.idReserva">
+                                                            | Sin reserva
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <br>
 
                                     <!-- CASO SESIÓN: VOTACIONES SIMPLES -->
-                                    <div *ngIf="puntoSeleccionadoVotacion && !esComision" class="fade-in">
+                                    <div *ngIf="votacionIniciada && !esComision" class="fade-in">
                                         <div class="row g-2 mb-3 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total-votacion p-1">
@@ -1081,7 +1134,7 @@
                                     </div>
 
                                     <!-- CASO COMISIÓN: VOTACIONES POR COMISIÓN -->
-                                    <div *ngIf="puntoSeleccionadoVotacion && esComision" class="fade-in">
+                                    <div *ngIf="votacionIniciada && esComision" class="fade-in">
                                         <!-- CONTADOR GENERAL -->
                                         <div class="row g-2 mb-5 small-cards justify-content-center">
                                             <div class="col-6 col-sm-4 col-md-2">
