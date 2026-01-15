@@ -1148,6 +1148,28 @@ export const eliminarreserva = async (req: Request, res: Response): Promise<any>
   }
 };
 
+export const getreservas = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const reserva = await TemasPuntosVotos.findAll({ 
+      where: { id_punto: id },
+      attributes: ["id", "tema_votacion"]
+    });
+    if (!reserva) {
+      return res.status(404).json({ message: "No tiene reservas" });
+    }
+    return res.status(200).json({
+      data: reserva,
+    });  
+  } catch (error: any) {
+    console.error("Error al obtener las reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
   try {
