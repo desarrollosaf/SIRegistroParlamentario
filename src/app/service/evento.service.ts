@@ -65,10 +65,12 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarpunto/${id}/${sesion}`)
   }
 
-  getIntegrantesVotosPunto(id: String): Observable<string> {
-    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getvotospunto/${id}`)
+  // getIntegrantesVotosPunto(id: String): Observable<string> {
+  //   return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getvotospunto/${id}`)
+  // }
+  getIntegrantesVotosPunto(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/getvotospunto/`,data)
   }
-  
   saveVotacion(data:any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/actvoto/`,data)
   }
@@ -115,7 +117,10 @@ export class EventoService {
    deleteReserva(id: String): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarreserva/${id}`)
   }
-
+  
+  getReservas(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getreservas/${id}`)
+  }
   
 
 }
