@@ -1437,13 +1437,29 @@ export const eliminarinter = async (req: Request, res: Response): Promise<any> =
 
 export const getvotacionpunto = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { id } = req.params;
+    const body = req.body;
+    let tema: string | null;
+    let puntoa: string | null;
+    let votos;
     
-    const punto = await PuntosOrden.findOne({ where: { id } });
+    if(body.idPunto && body.idReserva) {
+      tema = body.idReserva;
+      puntoa = null;
+      votos = await VotosPunto.findOne({ where: { id_tema_punto_voto: body.idReserva } });
+    } else {
+      tema = null;
+      puntoa = body.idPunto;
+      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto } });
+    }
+    
+    console.log("tema:", tema, "punto:", puntoa);
+    
+    const punto = await PuntosOrden.findOne({ where: { id: body.idPunto } });
+    
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
     }
-
+    
     const evento = await Agenda.findOne({
       where: { id: punto.id_evento },
       include: [
@@ -1455,30 +1471,20 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-
+    
     const esSesion = evento.tipoevento?.nombre === "Sesión";
     const tipoEvento = esSesion ? 'sesion' : 'comision';
-    const tipovento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-
-    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+    const tipovento = esSesion ? 1 : 2;
+    
     let mensajeRespuesta = "Punto con votos existentes";
     
-    if (!temavotos) {
+    if (!votos) {
       const listadoDiputados = await obtenerListadoDiputados(evento);
-      
-
-      //Esto se tiene que cambiar para que solo actualice la fecha de la votacion
-      temavotos = await TemasPuntosVotos.create({
-        id_punto: punto.id,
-        id_evento: punto.id_evento,
-        tema_votacion: null,
-        fecha_votacion: Sequelize.literal('CURRENT_TIMESTAMP'),
-      });
-      
       const votospunto = listadoDiputados.map((dip) => ({
         sentido: 0,
         mensaje: "PENDIENTE",
-        id_tema_punto_voto: temavotos.id,
+        id_punto: puntoa,
+        id_tema_punto_voto: tema,
         id_diputado: dip.id_diputado,
         id_partido: dip.id_partido,
         id_comision_dip: dip.comision_dip_id,
@@ -1488,12 +1494,14 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
       await VotosPunto.bulkCreate(votospunto);
       mensajeRespuesta = "Votacion creada correctamente";
     }
-
+    
+    
     const integrantes = await obtenerResultadosVotacionOptimizado(
-      temavotos.id,
+      tema,
+      puntoa,
       tipoEvento
     );
-
+    
     return res.status(200).json({
       msg: mensajeRespuesta,
       evento,
@@ -1555,24 +1563,33 @@ interface ComisionAgrupada {
 }
 
 async function obtenerResultadosVotacionOptimizado(
-  idTemaPuntoVoto: string,
+  idTemaPuntoVoto: string | null,
+  idPunto: string | null,
   tipoEvento: 'sesion' | 'comision'
 ): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
     
-  const dipasociados = await TipoCargoComision.findOne({
+    const dipasociados = await TipoCargoComision.findOne({
       where: { valor: "Diputado Asociado" }
-  });
+    });
 
-  const votosRaw = await VotosPunto.findAll({
-    where: { 
-      id_tema_punto_voto: idTemaPuntoVoto,
-    },
-    raw: true,
-  });
-  
-  if (votosRaw.length === 0) {
-    return [];
-  }
+    const whereConditions: any = {};
+    
+    if (idTemaPuntoVoto) {
+      whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
+    } else if (idPunto) {
+      whereConditions.id_punto = idPunto;
+    } else {
+      return []; // No hay nada que buscar
+    }
+
+    const votosRaw = await VotosPunto.findAll({
+      where: whereConditions,
+      raw: true,
+    });
+    
+    if (votosRaw.length === 0) {
+      return [];
+    }
 
   const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
   const diputados = await Diputado.findAll({

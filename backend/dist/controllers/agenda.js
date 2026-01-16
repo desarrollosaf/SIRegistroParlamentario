@@ -1275,8 +1275,22 @@ exports.eliminarinter = eliminarinter;
 const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { id } = req.params;
-        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        const body = req.body;
+        let tema;
+        let puntoa;
+        let votos;
+        if (body.idPunto && body.idReserva) {
+            tema = body.idReserva;
+            puntoa = null;
+            votos = yield votos_punto_1.default.findOne({ where: { id_tema_punto_voto: body.idReserva } });
+        }
+        else {
+            tema = null;
+            puntoa = body.idPunto;
+            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto } });
+        }
+        console.log("tema:", tema, "punto:", puntoa);
+        const punto = yield puntos_ordens_1.default.findOne({ where: { id: body.idPunto } });
         if (!punto) {
             return res.status(404).json({ msg: "Punto no encontrado" });
         }
@@ -1292,22 +1306,15 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         }
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
         const tipoEvento = esSesion ? 'sesion' : 'comision';
-        const tipovento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-        let temavotos = yield temas_puntos_votos_1.default.findOne({ where: { id_punto: id } });
+        const tipovento = esSesion ? 1 : 2;
         let mensajeRespuesta = "Punto con votos existentes";
-        if (!temavotos) {
+        if (!votos) {
             const listadoDiputados = yield obtenerListadoDiputados(evento);
-            //Esto se tiene que cambiar para que solo actualice la fecha de la votacion
-            temavotos = yield temas_puntos_votos_1.default.create({
-                id_punto: punto.id,
-                id_evento: punto.id_evento,
-                tema_votacion: null,
-                fecha_votacion: sequelize_2.Sequelize.literal('CURRENT_TIMESTAMP'),
-            });
             const votospunto = listadoDiputados.map((dip) => ({
                 sentido: 0,
                 mensaje: "PENDIENTE",
-                id_tema_punto_voto: temavotos.id,
+                id_punto: puntoa,
+                id_tema_punto_voto: tema,
                 id_diputado: dip.id_diputado,
                 id_partido: dip.id_partido,
                 id_comision_dip: dip.comision_dip_id,
@@ -1316,7 +1323,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
             yield votos_punto_1.default.bulkCreate(votospunto);
             mensajeRespuesta = "Votacion creada correctamente";
         }
-        const integrantes = yield obtenerResultadosVotacionOptimizado(temavotos.id, tipoEvento);
+        const integrantes = yield obtenerResultadosVotacionOptimizado(tema, puntoa, tipoEvento);
         return res.status(200).json({
             msg: mensajeRespuesta,
             evento,
@@ -1352,15 +1359,23 @@ function obtenerListadoDiputados(evento) {
         return listadoDiputados;
     });
 }
-function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, tipoEvento) {
+function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento) {
     return __awaiter(this, void 0, void 0, function* () {
         const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
             where: { valor: "Diputado Asociado" }
         });
+        const whereConditions = {};
+        if (idTemaPuntoVoto) {
+            whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
+        }
+        else if (idPunto) {
+            whereConditions.id_punto = idPunto;
+        }
+        else {
+            return []; // No hay nada que buscar
+        }
         const votosRaw = yield votos_punto_1.default.findAll({
-            where: {
-                id_tema_punto_voto: idTemaPuntoVoto,
-            },
+            where: whereConditions,
             raw: true,
         });
         if (votosRaw.length === 0) {
