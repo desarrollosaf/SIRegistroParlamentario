@@ -22,7 +22,7 @@ router.get("/api/eventos/eliminarpunto/:id/:sesion", agenda_1.eliminarpunto);
 router.post("/api/eventos/saveintervencion/", agenda_1.saveintervencion);
 router.post("/api/eventos/getintervenciones/", agenda_1.getintervenciones);
 router.post("/api/eventos/eliminarinter/:id", agenda_1.eliminarinter);
-router.get("/api/eventos/getvotospunto/:id", agenda_1.getvotacionpunto);
+router.post("/api/eventos/getvotospunto/", agenda_1.getvotacionpunto);
 router.post("/api/eventos/actvoto/", agenda_1.actualizarvoto);
 router.post("/api/eventos/reiniciavoto/", agenda_1.reiniciarvoto);
 router.get("/api/eventos/catalogossave/", agenda_1.catalogossave);

@@ -19,7 +19,7 @@ router.get("/api/eventos/eliminarpunto/:id/:sesion",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
 router.post("/api/eventos/getintervenciones/", getintervenciones );
 router.post("/api/eventos/eliminarinter/:id",eliminarinter );
-router.get("/api/eventos/getvotospunto/:id", getvotacionpunto );
+router.post("/api/eventos/getvotospunto/", getvotacionpunto );
 router.post("/api/eventos/actvoto/", actualizarvoto );
 router.post("/api/eventos/reiniciavoto/", reiniciarvoto );
 router.get("/api/eventos/catalogossave/", catalogossave );
