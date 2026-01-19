@@ -879,8 +879,7 @@
                                                     placeholder="Selecciona una reserva"
                                                     [disabled]="!puntoSeleccionadoVotacion || listaReservasPunto.length === 0"
                                                     [notFoundText]="!puntoSeleccionadoVotacion ? 'Primero selecciona un punto' : 'No hay reservas disponibles'"
-                                                    [clearable]="true"
-                                                    (change)="iniciarVotacion()">
+                                                    [clearable]="true" (change)="iniciarVotacion()">
                                                     <ng-template ng-label-tmp let-item="item">
                                                         {{ item.tema_votacion }}
                                                     </ng-template>
@@ -894,6 +893,28 @@
                                             </div>
                                         </div>
 
+                                        <div class="mt-3 text-center" *ngIf="votacionActual.idPunto">
+                                            <div class="alert alert-success d-inline-block mb-0 text-start" role="alert"
+                                                style="min-width: 400px;">
+                                                <div class="text-center mb-2">
+                                                    <strong style="font-size: 1.1rem;">Votación activa</strong>
+                                                </div>
+                                                <div class="mb-1">
+                                                    <strong>Punto:</strong>
+                                                    <span class="ms-1" style="color:black">{{
+                                                        obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
+                                                </div>
+                                                <div *ngIf="votacionActual.idReserva">
+                                                    <strong>Reserva:</strong>
+                                                    <span class="ms-1" style="color:black">{{
+                                                        obtenerTextoReserva(reservaPuntoSeleccionadoVotacion) }}</span>
+                                                </div>
+                                                <div *ngIf="!votacionActual.idReserva">
+                                                    <strong>Reserva:</strong>
+                                                    <span class="ms-1 text-muted">Sin reserva</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <!-- Botón Iniciar Votación -->
                                         <!-- <div class="row mt-3">
                                             <div class="col-12">
