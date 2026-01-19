@@ -893,27 +893,8 @@
                                             </div>
                                         </div>
 
-                                        <div class="mt-3 text-center" *ngIf="votacionActual.idPunto">
-                                            <div class="alert alert-success d-inline-block mb-0 text-start" role="alert"
-                                                style="min-width: 400px;">
-                                                <div class="text-center mb-2">
-                                                    <strong style="font-size: 1.1rem;">Votación activa</strong>
-                                                </div>
-                                                <div class="mb-1">
-                                                    <strong>Punto:</strong>
-                                                    <span class="ms-1" style="color:black">{{
-                                                        obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
-                                                </div>
-                                                <div *ngIf="votacionActual.idReserva">
-                                                    <strong>Reserva:</strong>
-                                                    <span class="ms-1" style="color:black">{{
-                                                        obtenerTextoReserva(reservaPuntoSeleccionadoVotacion) }}</span>
-                                                </div>
-                                                <div *ngIf="!votacionActual.idReserva">
-                                                    <strong>Reserva:</strong>
-                                                    <span class="ms-1 text-muted">Sin reserva</span>
-                                                </div>
-                                            </div>
+                                        <div *ngIf="votacionActual.idPunto">
+                                       
                                         </div>
                                         <!-- Botón Iniciar Votación -->
                                         <!-- <div class="row mt-3">
@@ -1032,6 +1013,7 @@
                                                 <i class="bi bi-clipboard-check me-2"></i>
                                                 Registro de Votos
                                             </h5>
+                                            
                                             <div class="d-flex gap-2 flex-wrap">
                                                 <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
@@ -1046,9 +1028,29 @@
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
                                             </div>
+                                            
                                         </div>
                                         <br>
                                         <div class="row g-3">
+                                                 <div class="comision-header-institucional mb-3">
+                                                <h5 class="fw-bold">
+                                                    <div class="mb-1">
+                                                        <strong>Punto:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
+                                                    </div>
+                                                    <div *ngIf="votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoReserva(reservaPuntoSeleccionadoVotacion)
+                                                            }}</span>
+                                                    </div>
+                                                    <div *ngIf="!votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1 text-muted">Sin reserva</span>
+                                                    </div>
+                                                </h5>
+                                            </div>
                                             <div class="col-12 col-lg-6">
                                                 <div class="table-responsive">
                                                     <table class="table table-hover mb-0">
