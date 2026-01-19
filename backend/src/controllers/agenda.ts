@@ -3281,7 +3281,9 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     }
 
     // ✅ Construir mensaje con tema de votación si existe
-    const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+    const mensajeTexto = (temaInfo 
+      ? `*VOTACION - RESERVA* ${punto.nopunto}\n\n`
+      : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
       `*Punto:* ${punto.punto || 'N/A'}\n` +
       (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
       `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +

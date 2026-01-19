@@ -2738,7 +2738,9 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             }
         }
         // ✅ Construir mensaje con tema de votación si existe
-        const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+        const mensajeTexto = (temaInfo
+            ? `*VOTACION - RESERVA* ${punto.nopunto}\n\n`
+            : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
             `*Punto:* ${punto.punto || 'N/A'}\n` +
             (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
             `*Evento:* ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'N/A'}\n` +
