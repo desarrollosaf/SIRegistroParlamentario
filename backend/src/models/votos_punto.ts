@@ -5,6 +5,7 @@ class VotosPunto extends Model {
   declare id: string;
   declare sentido: number | null;
   declare mensaje: string | null;
+  declare id_punto: ForeignKey<string> | null;
   declare id_tema_punto_voto: ForeignKey<string> | null;
   declare id_diputado: ForeignKey<string> | null;
   declare id_partido: ForeignKey<string> | null;
@@ -29,6 +30,10 @@ VotosPunto.init(
     },
     mensaje: {
       type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+    id_punto: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     id_tema_punto_voto: {

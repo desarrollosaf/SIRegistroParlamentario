@@ -849,6 +849,7 @@ export const getTiposPuntos = async (req: Request, res: Response): Promise<any> 
         const catalogo = await CatFunDep.findAll({
           where: {
             tipo: proponente.id,
+
           },
         });
 
@@ -931,18 +932,16 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       const data = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
-
       if (!data) {
         throw new Error('Punto turnado no encontrado');
       }
-
       punto = data.punto;
     } else {
       punto = body.punto;
     }
 
     const puntonuevo = await PuntosOrden.create({
-      id_evento: evento.id,
+      id_evento: evento!.id,
       nopunto: body.numpunto,
       id_tipo: body.tipo,
       tribuna: body.tribuna,
@@ -952,8 +951,8 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
-    if (idPuntoTurnado != 'null') {
 
+    if (idPuntoTurnado != 'null') {
       if(body.tipo_evento != 0){
         const puntoTurnado = await PuntosComisiones.findOne({
           where: { id_punto: idPuntoTurnado },
@@ -968,8 +967,22 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         await puntonuevo.update({
           id_dictamen: idPuntoTurnado,
         });
-      }
+      }  
+    }
+
+    if (body.reservas) {
+      const temasArray = typeof body.reservas === 'string' 
+        ? JSON.parse(body.reservas) 
+        : body.reservas;
       
+      for (const item of temasArray) {
+        await TemasPuntosVotos.create({
+          id_punto: puntonuevo.id,
+          id_evento: evento!.id,
+          tema_votacion: item.descripcion,
+          fecha_votacion: null,
+        });
+      }
     }
 
     for (const item of presentaArray) {
@@ -988,7 +1001,6 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
           id_comision: item,
         });
       }
-
     }
     
 
@@ -1042,16 +1054,19 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             as: "puntoTurnoComision",
             attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
           },
+          {
+            model: TemasPuntosVotos,
+            as: "reservas",
+            attributes: ["id", "tema_votacion"]
+          }
         ]
       });
 
       if (!puntosRaw) {
         return res.status(404).json({ message: "Evento no encontrado" });
       }
-      console.log(puntosRaw)
       const puntos = puntosRaw.map(punto => {
         const data = punto.toJSON();
-
         const turnosNormalizados =
           data.turnocomision?.length
             ? data.turnocomision
@@ -1064,7 +1079,6 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           turnocomision: turnosNormalizados
         };
       });
-      console.log(puntos)
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos, 
@@ -1076,6 +1090,86 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export const crearreserva = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    
+    const punto = await PuntosOrden.findOne({
+      where: { id: body.punto },
+    });
+    
+    if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    
+    const nuevoTema = await TemasPuntosVotos.create({
+      id_punto: punto.id,
+      id_evento: punto.id_evento,
+      tema_votacion: body.descripcion,
+      fecha_votacion: null,
+    });
+    
+    return res.status(200).json({ 
+      message: "Reserva creada exitosamente",
+    });
+    
+  } catch (error: any) {
+    console.error("Error al crear la reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const eliminarreserva = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const reserva = await TemasPuntosVotos.findOne({ 
+      where: { id }
+    });
+    if (!reserva) {
+      return res.status(404).json({ message: "Reserva no encontrada" });
+    }
+    await VotosPunto.destroy({
+      where: { id_tema_punto_voto: id }
+    });
+    await reserva.destroy();
+    return res.status(200).json({
+      message: "Reserva eliminada correctamente",
+    });  
+  } catch (error: any) {
+    console.error("Error al eliminar la reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const getreservas = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const reserva = await TemasPuntosVotos.findAll({ 
+      where: { id_punto: id },
+      attributes: ["id", "tema_votacion"]
+    });
+    if (!reserva) {
+      return res.status(404).json({ message: "No tiene reservas" });
+    }
+    return res.status(200).json({
+      data: reserva,
+    });  
+  } catch (error: any) {
+    console.error("Error al obtener las reserva:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -1120,53 +1214,35 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     let puntoDesc: string;
 
     if (idPuntoTurnado != 'null') {
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
+        })
+
+      }
+
       const puntoTurnadoCreate = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
-
-      if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto_turno: punto.id },
-        });
-
-        if (puntoTurnado) {
-          puntoTurnado.update({
-            id_punto_turno: null
-          })
-
-        }
-
-      }else{
-        punto?.update({
-          id_dictamen: puntoTurnadoCreate?.id
-        })
-      }
-      
-
-     
       if (!puntoTurnadoCreate || !puntoTurnadoCreate.punto) {
         throw new Error('No se encontró la descripción del punto turnado');
       }
       puntoDesc = puntoTurnadoCreate.punto;
       
     } else {
-
-      if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto_turno: punto.id },
-        });
-        if (puntoTurnado) {
-          puntoTurnado.update({
-            id_punto_turno: null
-          })
-
-        }
-      }else{
-        punto.update({
-          id_dictamen: 0
+      const puntoTurnado = await PuntosComisiones.findOne({
+        where: { id_punto_turno: punto.id },
+      });
+      if (puntoTurnado) {
+        puntoTurnado.update({
+          id_punto_turno: null
         })
+
       }
-      
       puntoDesc = body.punto;
     }
 
@@ -1238,13 +1314,11 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
 export const eliminarpunto = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id, sesion } = req.params;
-    console.log(id, sesion)
+    const { id } = req.params;
     const punto = await PuntosOrden.findOne({ where: { id } });
      if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
-    
     await punto.destroy();
     return res.status(200).json({
       message: "Punto eliminado correctamente",
@@ -1363,13 +1437,29 @@ export const eliminarinter = async (req: Request, res: Response): Promise<any> =
 
 export const getvotacionpunto = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { id } = req.params;
+    const body = req.body;
+    let tema: string | null;
+    let puntoa: string | null;
+    let votos;
     
-    const punto = await PuntosOrden.findOne({ where: { id } });
+    if(body.idPunto && body.idReserva) {
+      tema = body.idReserva;
+      puntoa = null;
+      votos = await VotosPunto.findOne({ where: { id_tema_punto_voto: body.idReserva } });
+    } else {
+      tema = null;
+      puntoa = body.idPunto;
+      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto } });
+    }
+    
+    console.log("tema:", tema, "punto:", puntoa);
+    
+    const punto = await PuntosOrden.findOne({ where: { id: body.idPunto } });
+    
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
     }
-
+    
     const evento = await Agenda.findOne({
       where: { id: punto.id_evento },
       include: [
@@ -1381,28 +1471,20 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-
+    
     const esSesion = evento.tipoevento?.nombre === "Sesión";
     const tipoEvento = esSesion ? 'sesion' : 'comision';
-    const tipovento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-
-    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+    const tipovento = esSesion ? 1 : 2;
+    
     let mensajeRespuesta = "Punto con votos existentes";
     
-    if (!temavotos) {
+    if (!votos) {
       const listadoDiputados = await obtenerListadoDiputados(evento);
-      
-      temavotos = await TemasPuntosVotos.create({
-        id_punto: punto.id,
-        id_evento: punto.id_evento,
-        tema_votacion: null,
-        fecha_votacion: Sequelize.literal('CURRENT_TIMESTAMP'),
-      });
-      
       const votospunto = listadoDiputados.map((dip) => ({
         sentido: 0,
         mensaje: "PENDIENTE",
-        id_tema_punto_voto: temavotos.id,
+        id_punto: puntoa,
+        id_tema_punto_voto: tema,
         id_diputado: dip.id_diputado,
         id_partido: dip.id_partido,
         id_comision_dip: dip.comision_dip_id,
@@ -1412,12 +1494,14 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
       await VotosPunto.bulkCreate(votospunto);
       mensajeRespuesta = "Votacion creada correctamente";
     }
-
+    
+    
     const integrantes = await obtenerResultadosVotacionOptimizado(
-      temavotos.id,
+      tema,
+      puntoa,
       tipoEvento
     );
-
+    
     return res.status(200).json({
       msg: mensajeRespuesta,
       evento,
@@ -1479,24 +1563,33 @@ interface ComisionAgrupada {
 }
 
 async function obtenerResultadosVotacionOptimizado(
-  idTemaPuntoVoto: string,
+  idTemaPuntoVoto: string | null,
+  idPunto: string | null,
   tipoEvento: 'sesion' | 'comision'
 ): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
     
-  const dipasociados = await TipoCargoComision.findOne({
+    const dipasociados = await TipoCargoComision.findOne({
       where: { valor: "Diputado Asociado" }
-  });
+    });
 
-  const votosRaw = await VotosPunto.findAll({
-    where: { 
-      id_tema_punto_voto: idTemaPuntoVoto,
-    },
-    raw: true,
-  });
-  
-  if (votosRaw.length === 0) {
-    return [];
-  }
+    const whereConditions: any = {};
+    
+    if (idTemaPuntoVoto) {
+      whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
+    } else if (idPunto) {
+      whereConditions.id_punto = idPunto;
+    } else {
+      return []; // No hay nada que buscar
+    }
+
+    const votosRaw = await VotosPunto.findAll({
+      where: whereConditions,
+      raw: true,
+    });
+    
+    if (votosRaw.length === 0) {
+      return [];
+    }
 
   const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
   const diputados = await Diputado.findAll({
