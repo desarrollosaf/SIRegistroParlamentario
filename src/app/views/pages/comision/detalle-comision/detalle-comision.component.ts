@@ -1740,6 +1740,7 @@ getReservasPuntos(puntoId: any) {
       // Asignar las reservas al array
       this.listaReservasPunto = response.data || response.reservas || [];
       this.cdr.detectChanges();
+      this.iniciarVotacion();
     },
     error: (e: HttpErrorResponse) => {
       console.error('Error al cargar reservas:', e);
@@ -1889,7 +1890,9 @@ iniciarVotacion(): void {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const datos = {
-      idpunto: this.agendaPunto,
+      // idpunto: this.agendaPunto,
+      idpunto: this.puntoSeleccionadoVotacion,
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null,
       sentido: sentido
     }
 
@@ -2041,6 +2044,7 @@ iniciarVotacion(): void {
   }).then((result) => {
     if (result.isConfirmed) {
       this.puntoSeleccionadoVotacion = null;
+      this.reservaPuntoSeleccionadoVotacion = null;
       this.votacionIniciada = false; // ← AGREGAR ESTA LÍNEA
 
       const Toast = Swal.mixin({
@@ -2072,7 +2076,9 @@ iniciarVotacion(): void {
       if (result.isConfirmed) {
 
         const datos = {
-          idpunto: this.idpto,
+          // idpunto: this.idpto,
+          idPunto: this.puntoSeleccionadoVotacion,
+          idReserva: this.reservaPuntoSeleccionadoVotacion || null
         }
         this._eventoService.reinicioVotacion(datos).subscribe({
           next: (response: any) => {
@@ -2119,7 +2125,10 @@ iniciarVotacion(): void {
       showConfirmButton: false,
       timer: 2000
     });
-
+   const datos = {
+      idPunto: this.puntoSeleccionadoVotacion,
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null
+    }
     // Aquí va la lógica para imprimir/descargar
     setTimeout(() => {
       console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
@@ -2142,8 +2151,12 @@ iniciarVotacion(): void {
 
 
     if (tipo == 2) {
-
-      this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
+      const datos = {
+          // idpunto: this.idpto,
+          idPunto: this.puntoSeleccionadoVotacion,
+          idReserva: this.reservaPuntoSeleccionadoVotacion || null
+        }
+      this._eventoService.notificarWhatsVotacion(datos).subscribe({
         next: (response: any) => {
 
           Swal.close();

@@ -879,7 +879,8 @@
                                                     placeholder="Selecciona una reserva"
                                                     [disabled]="!puntoSeleccionadoVotacion || listaReservasPunto.length === 0"
                                                     [notFoundText]="!puntoSeleccionadoVotacion ? 'Primero selecciona un punto' : 'No hay reservas disponibles'"
-                                                    [clearable]="true">
+                                                    [clearable]="true"
+                                                    (change)="iniciarVotacion()">
                                                     <ng-template ng-label-tmp let-item="item">
                                                         {{ item.tema_votacion }}
                                                     </ng-template>
@@ -894,7 +895,7 @@
                                         </div>
 
                                         <!-- Botón Iniciar Votación -->
-                                        <div class="row mt-3">
+                                        <!-- <div class="row mt-3">
                                             <div class="col-12">
                                                 <button class="btn btn-primary" (click)="iniciarVotacion()"
                                                     [disabled]="!puntoSeleccionadoVotacion">
@@ -902,12 +903,12 @@
                                                     Iniciar Votación
                                                 </button>
 
-                                                <!-- Mensaje informativo cuando no hay punto seleccionado -->
+                                              
                                                 <small class="text-muted ms-2" *ngIf="!puntoSeleccionadoVotacion">
                                                     * Seleccione un punto para iniciar
                                                 </small>
 
-                                                <!-- Mostrar datos seleccionados -->
+                                             
                                                 <div class="mt-2" *ngIf="votacionActual.idPunto">
                                                     <span class="badge bg-info">
                                                         <i class="bi bi-info-circle me-1"></i>
@@ -921,7 +922,7 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <br>
 
