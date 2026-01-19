@@ -1725,22 +1725,12 @@ async function obtenerResultadosVotacionOptimizado(
 export const actualizarvoto = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-
     if (!body.idpunto || !body.id|| body.sentido === undefined) {
       return res.status(400).json({
         msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
       });
     }
 
-    const temavotos = await TemasPuntosVotos.findOne({ 
-      where: { id_punto: body.idpunto } 
-    });
-
-    if (!temavotos) {
-      return res.status(404).json({
-        msg: "No se encontró el tema de votación para este punto",
-      });
-    }
 
     let nuevoSentido: number;
     let nuevoMensaje: string;
@@ -1804,41 +1794,65 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
 export const reiniciarvoto = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    if (!body.idpunto) {
+    
+    
+    if (!body.idPunto) {
       return res.status(400).json({
-        msg: "Falta el parámetro requerido: idpunto",
+        msg: "Falta el parámetro requerido: idPunto",
       });
     }
-    const temavotos = await TemasPuntosVotos.findOne({ 
-      where: { id_punto: body.idpunto } 
-    });
-
-    if (!temavotos) {
-      return res.status(404).json({
-        msg: "No se encontró el tema de votación para este punto",
+    
+   
+    let whereCondition: any;
+    
+    if (body.idReserva) {
+      const temavotos = await TemasPuntosVotos.findOne({ 
+        where: { id: body.idReserva } 
       });
+      
+      if (!temavotos) {
+        return res.status(404).json({
+          msg: "No se encontró el tema de votación",
+        });
+      }
+      
+      whereCondition = { id_tema_punto_voto: temavotos.id };
+      
+    } else {
+      const punto = await PuntosOrden.findOne({ 
+        where: { id: body.idPunto } 
+      });
+      
+      if (!punto) {
+        return res.status(404).json({
+          msg: "No se encontró el punto",
+        });
+      }
+      
+      whereCondition = { id_punto: punto.id };
     }
+    
     const [cantidadActualizada] = await VotosPunto.update(
       {
         sentido: 0,
         mensaje: "PENDIENTE",
       },
       {
-        where: {
-          id_tema_punto_voto: temavotos.id,  
-        }
+        where: whereCondition
       }
     );
+    
     if (cantidadActualizada === 0) {
       return res.status(404).json({
         msg: "No se encontraron votos para reiniciar",
       });
     }
+    
     return res.status(200).json({
       msg: `${cantidadActualizada} voto(s) reiniciado(s) correctamente a PENDIENTE`,
       estatus: 200,
     });
-
+    
   } catch (error) {
     console.error('Error al reiniciar las votaciones:', error);
     return res.status(500).json({ 
@@ -2486,8 +2500,9 @@ export const Eliminarlista = async (req: Request, res: Response): Promise<any> =
 
 export const generarPDFVotacion = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
-    
+    const body = req.body;
+    // console.log("punto",body);
+    // return 500;
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
@@ -2931,9 +2946,16 @@ function generarDetalleComision(doc: any, votos: any[], drawBackground: () => vo
 
 export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const { body } = req;
     
-    const punto = await PuntosOrden.findOne({ where: { id } });
+    // Validación inicial
+    if (!body.idPunto) {
+      return res.status(400).json({
+        msg: "Falta el parámetro requerido: idPunto",
+      });
+    }
+    
+    const punto = await PuntosOrden.findOne({ where: { id: body.idPunto } });
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
     }
@@ -2951,16 +2973,34 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
-    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
-    if (!temavotos) {
-      return res.status(404).json({ msg: "No hay votaciones para este punto" });
+    // ✅ Lógica modificada para soportar ambos casos
+    let whereCondition: any;
+    let temaInfo: any = null;
+    
+    if (body.idReserva) {
+      // Caso 1: Buscar por id_tema_punto_voto
+      const temavotos = await TemasPuntosVotos.findOne({ 
+        where: { id: body.idReserva } 
+      });
+      
+      if (!temavotos) {
+        return res.status(404).json({ msg: "No se encontró el tema de votación" });
+      }
+      
+      whereCondition = { id_tema_punto_voto: temavotos.id };
+      temaInfo = temavotos;
+      
+    } else {
+      // Caso 2: Buscar por id_punto
+      whereCondition = { id_punto: body.idPunto };
     }
+
     const dipasociados = await TipoCargoComision.findOne({
-        where: { valor: "Diputado Asociado" }
+      where: { valor: "Diputado Asociado" }
     });
+    
     const votosRaw = await VotosPunto.findAll({
-      where: { id_tema_punto_voto: temavotos.id,
-      },
+      where: whereCondition,
       raw: true,
     });
 
@@ -3014,10 +3054,10 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const getSentidoTexto = (sentido: number): string => {
       switch (sentido) {
+        case 0: return "PENDIENTE";
         case 1: return "A FAVOR";
         case 2: return "ABSTENCIÓN";
         case 3: return "EN CONTRA";
-        case 0: return "PENDIENTE";
         default: return "PENDIENTE";
       }
     };
@@ -3062,7 +3102,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
       contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
       abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
-      pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
+      pendiente: votosConDetalles.filter(v => v.sentidoNumerico === 0).length,
     };
 
     const totalVotos = votosConDetalles.length;
@@ -3074,7 +3114,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       bufferPages: true
     });
 
-    const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
+    const fileName = `votacion-punto-${body.idPunto}-${Date.now()}.pdf`;
     const outputPath = path.join(__dirname, '../../storage/pdfs', fileName);
 
     const dir = path.dirname(outputPath);
@@ -3137,6 +3177,13 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // Descripción (justificada)
     doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(punto.punto || 'N/A', { width: 500, align: "justify" });
+    
+    // ✅ Si hay tema de votación, mostrarlo
+    if (temaInfo) {
+      doc.moveDown(0.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('Reserva: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(temaInfo.tema_votacion || 'N/A', { width: 500, align: "justify" });
+    }
     
     doc.moveDown(1);
 
@@ -3220,30 +3267,32 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     }
 
     // Obtener listado de comisiones únicas si NO es sesión
-let infoComisiones = "";
-if (!esSesion) {
-  const comisionesUnicas = [...new Set(
-    votosConDetalles
-      .map(v => v.comision_nombre)
-      .filter(nombre => nombre && nombre !== 'Sin comisión')
-  )].sort();
+    let infoComisiones = "";
+    if (!esSesion) {
+      const comisionesUnicas = [...new Set(
+        votosConDetalles
+          .map(v => v.comision_nombre)
+          .filter(nombre => nombre && nombre !== 'Sin comisión')
+      )].sort();
 
-  if (comisionesUnicas.length > 0) {
-    infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
-  }
-}
+      if (comisionesUnicas.length > 0) {
+        infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+      }
+    }
 
-  const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
-  `*Punto:* ${punto.punto || 'N/A'}\n` +
-  `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
-  `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
-  `*Resultados:*\n` +
-  `A favor: ${totales.favor}\n` +
-  `En contra: ${totales.contra}\n` +
-  `Abstencion: ${totales.abstencion}\n` +
-  `Pendiente: ${totales.pendiente}\n\n` +
-  `Total de votos: ${totalVotos}\n\n` +
-  `Adjunto PDF con detalle completo`;
+    // ✅ Construir mensaje con tema de votación si existe
+    const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+      `*Punto:* ${punto.punto || 'N/A'}\n` +
+      (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
+      `*Evento:* ${evento.tipoevento?.nombre || 'N/A'}\n` +
+      `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
+      `*Resultados:*\n` +
+      `A favor: ${totales.favor}\n` +
+      `En contra: ${totales.contra}\n` +
+      `Abstencion: ${totales.abstencion}\n` +
+      `Pendiente: ${totales.pendiente}\n\n` +
+      `Total de votos: ${totalVotos}\n\n` +
+      `Adjunto PDF con detalle completo`;
 
     // Verificar que el archivo existe
     if (!fs.existsSync(outputPath)) {
@@ -3308,6 +3357,7 @@ if (!esSesion) {
     });
   }
 };
+
 
 
 //////////////////////////////////

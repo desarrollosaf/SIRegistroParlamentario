@@ -19,6 +19,7 @@ const integrante_comisions_1 = __importDefault(require("../models/integrante_com
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const sequelize_1 = require("sequelize");
 const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
+const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -137,17 +138,36 @@ const actvototodos = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 msg: "Faltan datos requeridos: idpunto y sentido",
             });
         }
-        const temavotos = yield temas_puntos_votos_1.default.findOne({
-            where: { id_punto: body.idpunto }
-        });
-        if (!temavotos) {
-            return res.status(404).json({
-                msg: "No se encontró el tema de votación para este punto",
+        let whereCondition;
+        if (body.idReserva) {
+            const temavotos = yield temas_puntos_votos_1.default.findOne({
+                where: { id: body.idReserva }
             });
+            if (!temavotos) {
+                return res.status(404).json({
+                    msg: "No se encontró el tema de votación",
+                });
+            }
+            whereCondition = { id_tema_punto_voto: temavotos.id };
+        }
+        else {
+            const punto = yield puntos_ordens_1.default.findOne({
+                where: { id: body.idpunto }
+            });
+            if (!punto) {
+                return res.status(404).json({
+                    msg: "No se encontró el punto",
+                });
+            }
+            whereCondition = { id_punto: punto.id };
         }
         let nuevoSentido;
         let nuevoMensaje;
         switch (body.sentido) {
+            case 0:
+                nuevoSentido = 0;
+                nuevoMensaje = "PENDIENTE";
+                break;
             case 1:
                 nuevoSentido = 1;
                 nuevoMensaje = "A FAVOR";
@@ -156,34 +176,28 @@ const actvototodos = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 nuevoSentido = 2;
                 nuevoMensaje = "ABSTENCIÓN";
                 break;
-            case 0:
-                nuevoSentido = 0;
-                nuevoMensaje = "PENDIENTE";
-                break;
             case 3:
                 nuevoSentido = 3;
                 nuevoMensaje = "EN CONTRA";
                 break;
             default:
                 return res.status(400).json({
-                    msg: "Sentido de voto inválido. Usa 1 (A FAVOR), 2 (ABSTENCIÓN) o 0/3 (EN CONTRA)",
+                    msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (A FAVOR), 2 (ABSTENCIÓN) o 3 (EN CONTRA)",
                 });
         }
         const [cantidadActualizada] = yield votos_punto_1.default.update({
             sentido: nuevoSentido,
             mensaje: nuevoMensaje,
         }, {
-            where: {
-                id_tema_punto_voto: temavotos.id,
-            }
+            where: whereCondition
         });
         if (cantidadActualizada === 0) {
             return res.status(404).json({
-                msg: "No se encontró el voto del diputado para este punto",
+                msg: "No se encontraron votos para actualizar",
             });
         }
         return res.status(200).json({
-            msg: "Voto actualizado correctamente",
+            msg: "Voto(s) actualizado(s) correctamente",
             estatus: 200,
             registrosActualizados: cantidadActualizada,
         });

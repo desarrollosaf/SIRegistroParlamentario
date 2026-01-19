@@ -7,6 +7,7 @@ import IntegranteComision from "../models/integrante_comisions";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import { Op } from "sequelize";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
+import PuntosOrden from "../models/puntos_ordens";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -138,27 +139,50 @@ export const actualizartodos = async (req: Request, res: Response): Promise<any>
 export const actvototodos = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-
+    
     if (!body.idpunto || body.sentido === undefined) {
       return res.status(400).json({
         msg: "Faltan datos requeridos: idpunto y sentido",
       });
     }
-
-    const temavotos = await TemasPuntosVotos.findOne({ 
-      where: { id_punto: body.idpunto } 
-    });
-
-    if (!temavotos) {
-      return res.status(404).json({
-        msg: "No se encontró el tema de votación para este punto",
+    
+    let whereCondition: any;
+    
+    if (body.idReserva) {
+      const temavotos = await TemasPuntosVotos.findOne({ 
+        where: { id: body.idReserva } 
       });
+      
+      if (!temavotos) {
+        return res.status(404).json({
+          msg: "No se encontró el tema de votación",
+        });
+      }
+      
+      whereCondition = { id_tema_punto_voto: temavotos.id };
+      
+    } else {
+      const punto = await PuntosOrden.findOne({ 
+        where: { id: body.idpunto } 
+      });
+      
+      if (!punto) {
+        return res.status(404).json({
+          msg: "No se encontró el punto",
+        });
+      }
+      
+      whereCondition = { id_punto: punto.id };
     }
-
+    
     let nuevoSentido: number;
     let nuevoMensaje: string;
-
+    
     switch (body.sentido) {
+      case 0:
+        nuevoSentido = 0;
+        nuevoMensaje = "PENDIENTE";
+        break;
       case 1:
         nuevoSentido = 1;
         nuevoMensaje = "A FAVOR";
@@ -167,44 +191,38 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
         nuevoSentido = 2;
         nuevoMensaje = "ABSTENCIÓN";
         break;
-      case 0:
-        nuevoSentido = 0;
-        nuevoMensaje = "PENDIENTE";
-        break;
       case 3:
         nuevoSentido = 3;
         nuevoMensaje = "EN CONTRA";
         break;
       default:
         return res.status(400).json({
-          msg: "Sentido de voto inválido. Usa 1 (A FAVOR), 2 (ABSTENCIÓN) o 0/3 (EN CONTRA)",
+          msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (A FAVOR), 2 (ABSTENCIÓN) o 3 (EN CONTRA)",
         });
     }
-
+    
     const [cantidadActualizada] = await VotosPunto.update(
       {
         sentido: nuevoSentido,
         mensaje: nuevoMensaje,
       },
       {
-        where: {
-          id_tema_punto_voto: temavotos.id,
-        }
+        where: whereCondition
       }
     );
-
+    
     if (cantidadActualizada === 0) {
       return res.status(404).json({
-        msg: "No se encontró el voto del diputado para este punto",
+        msg: "No se encontraron votos para actualizar",
       });
     }
-
+    
     return res.status(200).json({
-      msg: "Voto actualizado correctamente",
+      msg: "Voto(s) actualizado(s) correctamente",
       estatus: 200,
       registrosActualizados: cantidadActualizada,
     });
-
+    
   } catch (error) {
     console.error('Error al actualizar el voto:', error);
     return res.status(500).json({ 
