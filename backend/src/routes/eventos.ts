@@ -31,7 +31,7 @@ router.get("/api/eventos/votacionpunto/:id", generarPDFVotacion );
 router.get("/api/eventos/gestionintegrantes/:id", gestionIntegrantes );
 router.post("/api/eventos/agregardipasistencia/", addDipLista );
 router.get("/api/eventos/deleteintlista/:id", Eliminarlista );
-router.get("/api/eventos/enviarvotacionpunto/:id", enviarWhatsVotacionPDF );
+router.post("/api/eventos/enviarvotacionpunto", enviarWhatsVotacionPDF );
 router.get('/api/eventos/asintenciapdf/:id', generarPDFAsistencia);
 router.get('/api/eventos/notasintenciapdf/:id', enviarWhatsAsistenciaPDF);
 export default router
