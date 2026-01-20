@@ -1272,6 +1272,22 @@
                                             <!-- Encabezado de la comisión-->
                                             <div class="comision-header-institucional mb-3">
                                                 <h5 class="fw-bold">
+                                                      <div class="mb-1">
+                                                        <strong>Punto:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
+                                                    </div>
+                                                    <div *ngIf="votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoReserva(reservaPuntoSeleccionadoVotacion)
+                                                            }}</span>
+                                                    </div>
+                                                    <div *ngIf="!votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1 text-muted">Sin reserva</span>
+                                                    </div>
+                                                    <br>
                                                     <i class="bi bi-building me-2"></i>
                                                     {{ comision.nombre }}
                                                 </h5>
