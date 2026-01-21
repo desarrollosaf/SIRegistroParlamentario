@@ -879,7 +879,7 @@
                                                     placeholder="Selecciona una reserva"
                                                     [disabled]="!puntoSeleccionadoVotacion || listaReservasPunto.length === 0"
                                                     [notFoundText]="!puntoSeleccionadoVotacion ? 'Primero selecciona un punto' : 'No hay reservas disponibles'"
-                                                    [clearable]="true">
+                                                    [clearable]="true" (change)="iniciarVotacion()">
                                                     <ng-template ng-label-tmp let-item="item">
                                                         {{ item.tema_votacion }}
                                                     </ng-template>
@@ -893,8 +893,11 @@
                                             </div>
                                         </div>
 
+                                        <div *ngIf="votacionActual.idPunto">
+                                       
+                                        </div>
                                         <!-- Botón Iniciar Votación -->
-                                        <div class="row mt-3">
+                                        <!-- <div class="row mt-3">
                                             <div class="col-12">
                                                 <button class="btn btn-primary" (click)="iniciarVotacion()"
                                                     [disabled]="!puntoSeleccionadoVotacion">
@@ -902,12 +905,12 @@
                                                     Iniciar Votación
                                                 </button>
 
-                                                <!-- Mensaje informativo cuando no hay punto seleccionado -->
+                                              
                                                 <small class="text-muted ms-2" *ngIf="!puntoSeleccionadoVotacion">
                                                     * Seleccione un punto para iniciar
                                                 </small>
 
-                                                <!-- Mostrar datos seleccionados -->
+                                             
                                                 <div class="mt-2" *ngIf="votacionActual.idPunto">
                                                     <span class="badge bg-info">
                                                         <i class="bi bi-info-circle me-1"></i>
@@ -921,7 +924,7 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <br>
 
@@ -1010,6 +1013,7 @@
                                                 <i class="bi bi-clipboard-check me-2"></i>
                                                 Registro de Votos
                                             </h5>
+                                            
                                             <div class="d-flex gap-2 flex-wrap">
                                                 <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
@@ -1024,9 +1028,29 @@
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
                                             </div>
+                                            
                                         </div>
                                         <br>
                                         <div class="row g-3">
+                                                 <div class="comision-header-institucional mb-3">
+                                                <h5 class="fw-bold">
+                                                    <div class="mb-1">
+                                                        <strong>Punto:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
+                                                    </div>
+                                                    <div *ngIf="votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoReserva(reservaPuntoSeleccionadoVotacion)
+                                                            }}</span>
+                                                    </div>
+                                                    <div *ngIf="!votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1 text-muted">Sin reserva</span>
+                                                    </div>
+                                                </h5>
+                                            </div>
                                             <div class="col-12 col-lg-6">
                                                 <div class="table-responsive">
                                                     <table class="table table-hover mb-0">
@@ -1248,6 +1272,22 @@
                                             <!-- Encabezado de la comisión-->
                                             <div class="comision-header-institucional mb-3">
                                                 <h5 class="fw-bold">
+                                                      <div class="mb-1">
+                                                        <strong>Punto:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
+                                                    </div>
+                                                    <div *ngIf="votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1" style="color:black">{{
+                                                            obtenerTextoReserva(reservaPuntoSeleccionadoVotacion)
+                                                            }}</span>
+                                                    </div>
+                                                    <div *ngIf="!votacionActual.idReserva">
+                                                        <strong>Reserva:</strong>
+                                                        <span class="ms-1 text-muted">Sin reserva</span>
+                                                    </div>
+                                                    <br>
                                                     <i class="bi bi-building me-2"></i>
                                                     {{ comision.nombre }}
                                                 </h5>

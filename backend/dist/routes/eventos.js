@@ -34,7 +34,7 @@ router.get("/api/eventos/votacionpunto/:id", agenda_1.generarPDFVotacion);
 router.get("/api/eventos/gestionintegrantes/:id", agenda_1.gestionIntegrantes);
 router.post("/api/eventos/agregardipasistencia/", agenda_1.addDipLista);
 router.get("/api/eventos/deleteintlista/:id", agenda_1.Eliminarlista);
-router.get("/api/eventos/enviarvotacionpunto/:id", agenda_1.enviarWhatsVotacionPDF);
+router.post("/api/eventos/enviarvotacionpunto", agenda_1.enviarWhatsVotacionPDF);
 router.get('/api/eventos/asintenciapdf/:id', agenda_1.generarPDFAsistencia);
 router.get('/api/eventos/notasintenciapdf/:id', agenda_1.enviarWhatsAsistenciaPDF);
 exports.default = router;

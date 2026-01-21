@@ -1624,7 +1624,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
         descripcion: t.tema_votacion
-        
+
       }));
       formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
@@ -1692,27 +1692,27 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     //     console.error('Error del servidor:', msg);
     //   }
     // });
-      // Limpiar datos anteriores
-  this.puntoSeleccionadoVotacion = null;
-  this.reservaPuntoSeleccionadoVotacion = null;
-  this.listaReservasPunto = [];
-  this.votantes = [];
-  this.listaComisionesVotacion = [];
-  this.columnaVotantes1 = [];
-  this.columnaVotantes2 = [];
-  this.votacionActual = { idPunto: null, idReserva: null };
-  this.votacionIniciada = false; // ← AGREGAR ESTA LÍNEA
-  
-  // Cargar solo la lista de puntos disponibles
-  this._eventoService.getPuntos(this.idComisionRuta).subscribe({
-    next: (response: any) => {
-      this.listaPuntosVotacion = response.data || [];
-    },
-    error: (e: HttpErrorResponse) => {
-      const msg = e.error?.msg || 'Error desconocido';
-      console.error('Error del servidor:', msg);
-    }
-  });
+    // Limpiar datos anteriores
+    this.puntoSeleccionadoVotacion = null;
+    this.reservaPuntoSeleccionadoVotacion = null;
+    this.listaReservasPunto = [];
+    this.votantes = [];
+    this.listaComisionesVotacion = [];
+    this.columnaVotantes1 = [];
+    this.columnaVotantes2 = [];
+    this.votacionActual = { idPunto: null, idReserva: null };
+    this.votacionIniciada = false; // ← AGREGAR ESTA LÍNEA
+
+    // Cargar solo la lista de puntos disponibles
+    this._eventoService.getPuntos(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        this.listaPuntosVotacion = response.data || [];
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
 
   onPuntoVotacionChange(puntoId: any): void {
@@ -1727,80 +1727,81 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
-getReservasPuntos(puntoId: any) {
-  console.log(puntoId);
-  
-  // Limpiar la reserva seleccionada cuando cambies de punto
-  this.reservaPuntoSeleccionadoVotacion = null;
-  
-  // SOLO cargar las reservas, NO los votantes
-  this._eventoService.getReservas(puntoId.id).subscribe({
-    next: (response: any) => {
-      console.log('reservas', response);
-      // Asignar las reservas al array
-      this.listaReservasPunto = response.data || response.reservas || [];
-      this.cdr.detectChanges();
-    },
-    error: (e: HttpErrorResponse) => {
-      console.error('Error al cargar reservas:', e);
-      this.listaReservasPunto = [];
-    }
-  });
-}
+  getReservasPuntos(puntoId: any) {
+    console.log(puntoId);
 
+    // Limpiar la reserva seleccionada cuando cambies de punto
+    this.reservaPuntoSeleccionadoVotacion = null;
 
-iniciarVotacion(): void {
- if (!this.puntoSeleccionadoVotacion) {
-    Swal.fire({
-      position: "center",
-      icon: "warning",
-      title: "¡Atención!",
-      text: "Debe seleccionar un punto para iniciar la votación.",
-      showConfirmButton: false,
-      timer: 2000
+    // SOLO cargar las reservas, NO los votantes
+    this._eventoService.getReservas(puntoId.id).subscribe({
+      next: (response: any) => {
+        console.log('reservas', response);
+        // Asignar las reservas al array
+        this.listaReservasPunto = response.data || response.reservas || [];
+        this.cdr.detectChanges();
+        this.iniciarVotacion();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar reservas:', e);
+        this.listaReservasPunto = [];
+      }
     });
-    return;
   }
 
-  // Almacenar los datos seleccionados
-  this.votacionActual = {
-    idPunto: this.puntoSeleccionadoVotacion,
-    idReserva: this.reservaPuntoSeleccionadoVotacion || null
-  };
 
-  console.log('Datos de votación:', this.votacionActual);
+  iniciarVotacion(): void {
+    if (!this.puntoSeleccionadoVotacion) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: "Debe seleccionar un punto para iniciar la votación.",
+        showConfirmButton: false,
+        timer: 2000
+      });
+      return;
+    }
 
-  // Cargar los votantes
-  this.cargarVotantes(this.puntoSeleccionadoVotacion);
-  
-  // Actualizar idpto para el sistema de actualización automática
-  this.idpto = this.puntoSeleccionadoVotacion;
-  
-  // MARCAR QUE LA VOTACIÓN HA SIDO INICIADA
-  this.votacionIniciada = true;
-  
-  // Reiniciar el sistema de actualización automática si está activo
-  if (this.segPlanoActivo && this.step === 3) {
-    this.detenerSegPlano();
-    this.iniciarSegPlano();
+    // Almacenar los datos seleccionados
+    this.votacionActual = {
+      idPunto: this.puntoSeleccionadoVotacion,
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null
+    };
+
+    console.log('Datos de votación:', this.votacionActual);
+
+    // Cargar los votantes
+    this.cargarVotantes(this.puntoSeleccionadoVotacion);
+
+    // Actualizar idpto para el sistema de actualización automática
+    this.idpto = this.puntoSeleccionadoVotacion;
+
+    // MARCAR QUE LA VOTACIÓN HA SIDO INICIADA
+    this.votacionIniciada = true;
+
+    // Reiniciar el sistema de actualización automática si está activo
+    if (this.segPlanoActivo && this.step === 3) {
+      this.detenerSegPlano();
+      this.iniciarSegPlano();
+    }
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: "success",
+      title: "Votación iniciada correctamente"
+    });
   }
-  
-  const Toast = Swal.mixin({
-    toast: true,
-    position: "top-end",
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true
-  });
-  Toast.fire({
-    icon: "success",
-    title: "Votación iniciada correctamente"
-  });
-}
 
   private cargarVotantes(punto: any): void {
     this.idpto = punto;
-    console.log('A ENVIAG',this.votacionActual);
+    console.log('A ENVIAG', this.votacionActual);
     this._eventoService.getIntegrantesVotosPunto(this.votacionActual).subscribe({
       next: (response: any) => {
         // console.log('Respuesta votantes:', response);
@@ -1889,7 +1890,9 @@ iniciarVotacion(): void {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const datos = {
-      idpunto: this.agendaPunto,
+      // idpunto: this.agendaPunto,
+      idpunto: this.puntoSeleccionadoVotacion,
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null,
       sentido: sentido
     }
 
@@ -2029,33 +2032,35 @@ iniciarVotacion(): void {
     //     });
     //   }
     // });
-      Swal.fire({
-    title: '¿Terminar votación?',
-    text: 'Se finalizará la votación del punto seleccionado',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#28a745',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Sí, terminar',
-    cancelButtonText: 'Cancelar'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      this.puntoSeleccionadoVotacion = null;
-      this.votacionIniciada = false; // ← AGREGAR ESTA LÍNEA
-
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-      });
-      Toast.fire({
-        icon: 'success',
-        title: 'Votación finalizada correctamente'
-      });
-    }
-  });
+    Swal.fire({
+      title: '¿Terminar votación?',
+      text: 'Se finalizará la votación del punto seleccionado',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, terminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.puntoSeleccionadoVotacion = null;
+        this.reservaPuntoSeleccionadoVotacion = null;
+        this.votacionIniciada = false; 
+        
+        this.votacionActual = { idPunto: null, idReserva: null };
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: 'success',
+          title: 'Votación finalizada correctamente'
+        });
+      }
+    });
   }
 
   reiniciarVotacion(): void {
@@ -2072,7 +2077,9 @@ iniciarVotacion(): void {
       if (result.isConfirmed) {
 
         const datos = {
-          idpunto: this.idpto,
+          // idpunto: this.idpto,
+          idPunto: this.puntoSeleccionadoVotacion,
+          idReserva: this.reservaPuntoSeleccionadoVotacion || null
         }
         this._eventoService.reinicioVotacion(datos).subscribe({
           next: (response: any) => {
@@ -2119,7 +2126,10 @@ iniciarVotacion(): void {
       showConfirmButton: false,
       timer: 2000
     });
-
+    const datos = {
+      idPunto: this.puntoSeleccionadoVotacion,
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null
+    }
     // Aquí va la lógica para imprimir/descargar
     setTimeout(() => {
       console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
@@ -2142,8 +2152,12 @@ iniciarVotacion(): void {
 
 
     if (tipo == 2) {
-
-      this._eventoService.notificarWhatsVotacion(this.idpto).subscribe({
+      const datos = {
+        // idpunto: this.idpto,
+        idPunto: this.puntoSeleccionadoVotacion,
+        idReserva: this.reservaPuntoSeleccionadoVotacion || null
+      }
+      this._eventoService.notificarWhatsVotacion(datos).subscribe({
         next: (response: any) => {
 
           Swal.close();
@@ -2212,6 +2226,23 @@ iniciarVotacion(): void {
 
   }
 
+obtenerTextoPunto(idPunto: number | null): string {
+    if (!idPunto) return '';
+    
+    const punto = this.listaPuntosVotacion.find(p => p.id === idPunto);
+    if (!punto) return `Punto #${idPunto}`;
+    
+    // Mostrar número y descripción del punto
+    return `${punto.nopunto ? 'Punto ' + punto.nopunto : 'Punto'}: ${punto.punto}`;
+}
 
+obtenerTextoReserva(idReserva: string | null): string {
+    if (!idReserva) return '';
+    
+    const reserva = this.listaReservasPunto.find(r => r.id === idReserva);
+    if (!reserva) return `Reserva #${idReserva}`;
+    
+    return reserva.tema_votacion || 'Sin descripción';
+}
 
 }

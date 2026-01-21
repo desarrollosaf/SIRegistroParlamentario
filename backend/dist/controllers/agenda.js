@@ -1493,14 +1493,6 @@ const actualizarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 msg: "Faltan datos requeridos: idpunto, iddiputado y sentido",
             });
         }
-        const temavotos = yield temas_puntos_votos_1.default.findOne({
-            where: { id_punto: body.idpunto }
-        });
-        if (!temavotos) {
-            return res.status(404).json({
-                msg: "No se encontró el tema de votación para este punto",
-            });
-        }
         let nuevoSentido;
         let nuevoMensaje;
         switch (body.sentido) {
@@ -1556,26 +1548,39 @@ exports.actualizarvoto = actualizarvoto;
 const reiniciarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        if (!body.idpunto) {
+        if (!body.idPunto) {
             return res.status(400).json({
-                msg: "Falta el parámetro requerido: idpunto",
+                msg: "Falta el parámetro requerido: idPunto",
             });
         }
-        const temavotos = yield temas_puntos_votos_1.default.findOne({
-            where: { id_punto: body.idpunto }
-        });
-        if (!temavotos) {
-            return res.status(404).json({
-                msg: "No se encontró el tema de votación para este punto",
+        let whereCondition;
+        if (body.idReserva) {
+            const temavotos = yield temas_puntos_votos_1.default.findOne({
+                where: { id: body.idReserva }
             });
+            if (!temavotos) {
+                return res.status(404).json({
+                    msg: "No se encontró el tema de votación",
+                });
+            }
+            whereCondition = { id_tema_punto_voto: temavotos.id };
+        }
+        else {
+            const punto = yield puntos_ordens_1.default.findOne({
+                where: { id: body.idPunto }
+            });
+            if (!punto) {
+                return res.status(404).json({
+                    msg: "No se encontró el punto",
+                });
+            }
+            whereCondition = { id_punto: punto.id };
         }
         const [cantidadActualizada] = yield votos_punto_1.default.update({
             sentido: 0,
             mensaje: "PENDIENTE",
         }, {
-            where: {
-                id_tema_punto_voto: temavotos.id,
-            }
+            where: whereCondition
         });
         if (cantidadActualizada === 0) {
             return res.status(404).json({
@@ -2126,7 +2131,9 @@ exports.Eliminarlista = Eliminarlista;
 const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const { id } = req.params;
+        const body = req.body;
+        // console.log("punto",body);
+        // return 500;
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
             return res.status(404).json({ msg: "Punto no encontrado" });
@@ -2473,8 +2480,14 @@ function generarDetalleComision(doc, votos, drawBackground, getColorSentido) {
 const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;
     try {
-        const { id } = req.params;
-        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        const { body } = req;
+        // Validación inicial
+        if (!body.idPunto) {
+            return res.status(400).json({
+                msg: "Falta el parámetro requerido: idPunto",
+            });
+        }
+        const punto = yield puntos_ordens_1.default.findOne({ where: { id: body.idPunto } });
         if (!punto) {
             return res.status(404).json({ msg: "Punto no encontrado" });
         }
@@ -2489,16 +2502,29 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
-        let temavotos = yield temas_puntos_votos_1.default.findOne({ where: { id_punto: id } });
-        if (!temavotos) {
-            return res.status(404).json({ msg: "No hay votaciones para este punto" });
+        // ✅ Lógica modificada para soportar ambos casos
+        let whereCondition;
+        let temaInfo = null;
+        if (body.idReserva) {
+            // Caso 1: Buscar por id_tema_punto_voto
+            const temavotos = yield temas_puntos_votos_1.default.findOne({
+                where: { id: body.idReserva }
+            });
+            if (!temavotos) {
+                return res.status(404).json({ msg: "No se encontró el tema de votación" });
+            }
+            whereCondition = { id_tema_punto_voto: temavotos.id };
+            temaInfo = temavotos;
+        }
+        else {
+            // Caso 2: Buscar por id_punto
+            whereCondition = { id_punto: body.idPunto };
         }
         const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
             where: { valor: "Diputado Asociado" }
         });
         const votosRaw = yield votos_punto_1.default.findAll({
-            where: { id_tema_punto_voto: temavotos.id,
-            },
+            where: whereCondition,
             raw: true,
         });
         if (votosRaw.length === 0) {
@@ -2545,10 +2571,10 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         const getSentidoTexto = (sentido) => {
             switch (sentido) {
+                case 0: return "PENDIENTE";
                 case 1: return "A FAVOR";
                 case 2: return "ABSTENCIÓN";
                 case 3: return "EN CONTRA";
-                case 0: return "PENDIENTE";
                 default: return "PENDIENTE";
             }
         };
@@ -2578,7 +2604,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
             contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
             abstencion: votosConDetalles.filter(v => v.sentidoNumerico === 2).length,
-            pendiente: votosConDetalles.filter(v => v.mensaje === 'PENDIENTE' && v.sentidoNumerico === 0).length,
+            pendiente: votosConDetalles.filter(v => v.sentidoNumerico === 0).length,
         };
         const totalVotos = votosConDetalles.length;
         // Crear PDF
@@ -2587,7 +2613,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             margins: { top: 50, bottom: 50, left: 50, right: 50 },
             bufferPages: true
         });
-        const fileName = `votacion-punto-${id}-${Date.now()}.pdf`;
+        const fileName = `votacion-punto-${body.idPunto}-${Date.now()}.pdf`;
         const outputPath = path_1.default.join(__dirname, '../../storage/pdfs', fileName);
         const dir = path_1.default.dirname(outputPath);
         if (!fs_1.default.existsSync(dir)) {
@@ -2635,6 +2661,12 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         // Descripción (justificada)
         doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
         doc.fontSize(11).font('Helvetica').text(punto.punto || 'N/A', { width: 500, align: "justify" });
+        // ✅ Si hay tema de votación, mostrarlo
+        if (temaInfo) {
+            doc.moveDown(0.5);
+            doc.fontSize(11).font('Helvetica-Bold').text('Reserva: ', { continued: true });
+            doc.fontSize(11).font('Helvetica').text(temaInfo.tema_votacion || 'N/A', { width: 500, align: "justify" });
+        }
         doc.moveDown(1);
         // Resumen de Votación
         doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
@@ -2705,8 +2737,12 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                 infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
             }
         }
-        const mensajeTexto = `*VOTACION - Punto ${punto.nopunto}*\n\n` +
+        // ✅ Construir mensaje con tema de votación si existe
+        const mensajeTexto = (temaInfo
+            ? `*VOTACION - RESERVA* ${punto.nopunto}\n\n`
+            : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
             `*Punto:* ${punto.punto || 'N/A'}\n` +
+            (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
             `*Evento:* ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'N/A'}\n` +
             `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
             `*Resultados:*\n` +
