@@ -39,6 +39,7 @@ import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
 import ExcelJS from 'exceljs';
+import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
 
 
 
@@ -1024,7 +1025,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         : body.iniciativas;
       
       for (const item of IniciativasArray) {
-        await IniciativasArray.create({
+        await IniciativaPuntoOrden.create({
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
           tema_votacion: item.iniciativa,
