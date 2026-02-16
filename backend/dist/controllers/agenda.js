@@ -1069,11 +1069,15 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             where: { id_punto: id },
             attributes: ["id", "tema_votacion"]
         });
-        if (!reserva) {
-            return res.status(404).json({ message: "No tiene reservas" });
-        }
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { id_punto: id },
+            attributes: ["id", "iniciativa"]
+        });
         return res.status(200).json({
-            data: reserva,
+            data: {
+                reservas: reserva,
+                iniciativas: iniciativa
+            }
         });
     }
     catch (error) {
