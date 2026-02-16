@@ -6,7 +6,7 @@ const router = Router();
 router.post("/api/diputados/cargo/", cargoDiputados);
 router.post("/api/diputados/acttodosasistencia/", actualizartodos );
 router.post("/api/diputados/acttodosvotos/", actvototodos );
-router.post("/api/diputados/savereserva/", creariniciativa);
+router.post("/api/diputados/saveiniciativa/", creariniciativa);
 router.get("/api/diputados/eliminariniciativa/:id",eliminariniciativa );
 router.get("/api/diputados/getiniciativas/:id",getiniciativas );
 
