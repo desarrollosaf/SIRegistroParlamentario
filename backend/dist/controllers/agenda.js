@@ -48,6 +48,7 @@ const path_1 = __importDefault(require("path"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const exceljs_1 = __importDefault(require("exceljs"));
+const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -910,7 +911,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 ? JSON.parse(body.iniciativas)
                 : body.iniciativas;
             for (const item of IniciativasArray) {
-                yield IniciativasArray.create({
+                yield inciativas_puntos_ordens_1.default.create({
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
                     tema_votacion: item.iniciativa,
