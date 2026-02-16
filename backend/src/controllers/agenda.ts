@@ -1018,6 +1018,21 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       }
     }
 
+    if (body.iniciativas) {
+      const IniciativasArray = typeof body.iniciativas === 'string' 
+        ? JSON.parse(body.iniciativas) 
+        : body.iniciativas;
+      
+      for (const item of IniciativasArray) {
+        await IniciativasArray.create({
+          id_punto: puntonuevo.id,
+          id_evento: evento!.id,
+          tema_votacion: item.iniciativa,
+          fecha_votacion: null,
+        });
+      }
+    }
+
     for (const item of presentaArray) {
       await PuntosPresenta.create({
         id_punto: puntonuevo.id,
@@ -1289,20 +1304,20 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       editado: 1,
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
+    console.log("Holaaaaaaaaaaa", idPuntoTurnado)
+    // if (idPuntoTurnado != 'null') {
+    //   const puntoTurnado = await PuntosComisiones.findOne({
+    //     where: { id_punto: idPuntoTurnado },
+    //   });
 
-    if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto: idPuntoTurnado },
-      });
+    //   if (!puntoTurnado) {
+    //     throw new Error('Relación de punto-comisión no encontrada');
+    //   }
 
-      if (!puntoTurnado) {
-        throw new Error('Relación de punto-comisión no encontrada');
-      }
-
-      await puntoTurnado.update({
-        id_punto_turno: punto.id,
-      });
-    }
+    //   await puntoTurnado.update({
+    //     id_punto_turno: punto.id,
+    //   });
+    // }
 
     await PuntosPresenta.destroy({
       where: { id_punto: punto.id }

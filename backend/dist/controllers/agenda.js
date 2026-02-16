@@ -905,6 +905,19 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
+        if (body.iniciativas) {
+            const IniciativasArray = typeof body.iniciativas === 'string'
+                ? JSON.parse(body.iniciativas)
+                : body.iniciativas;
+            for (const item of IniciativasArray) {
+                yield IniciativasArray.create({
+                    id_punto: puntonuevo.id,
+                    id_evento: evento.id,
+                    tema_votacion: item.iniciativa,
+                    fecha_votacion: null,
+                });
+            }
+        }
         for (const item of presentaArray) {
             yield puntos_presenta_1.default.create({
                 id_punto: puntonuevo.id,
@@ -1143,17 +1156,18 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             editado: 1,
             se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
-        if (idPuntoTurnado != 'null') {
-            const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                where: { id_punto: idPuntoTurnado },
-            });
-            if (!puntoTurnado) {
-                throw new Error('Relación de punto-comisión no encontrada');
-            }
-            yield puntoTurnado.update({
-                id_punto_turno: punto.id,
-            });
-        }
+        console.log("Holaaaaaaaaaaa", idPuntoTurnado);
+        // if (idPuntoTurnado != 'null') {
+        //   const puntoTurnado = await PuntosComisiones.findOne({
+        //     where: { id_punto: idPuntoTurnado },
+        //   });
+        //   if (!puntoTurnado) {
+        //     throw new Error('Relación de punto-comisión no encontrada');
+        //   }
+        //   await puntoTurnado.update({
+        //     id_punto_turno: punto.id,
+        //   });
+        // }
         yield puntos_presenta_1.default.destroy({
             where: { id_punto: punto.id }
         });
