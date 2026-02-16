@@ -1204,11 +1204,17 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
       where: { id_punto: id },
       attributes: ["id", "tema_votacion"]
     });
-    if (!reserva) {
-      return res.status(404).json({ message: "No tiene reservas" });
-    }
+
+    const iniciativa = await IniciativaPuntoOrden.findAll({ 
+      where: { id_punto: id },
+      attributes: ["id", "iniciativa"]
+    });
+    
     return res.status(200).json({
-      data: reserva,
+      data: {
+        reservas: reserva,
+        iniciativas: iniciativa
+      }
     });  
   } catch (error: any) {
     console.error("Error al obtener las reserva:", error);
