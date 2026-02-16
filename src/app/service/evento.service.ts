@@ -116,8 +116,16 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savereserva/`,data)
   }
 
+  saveIniciativa(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/saveiniciativa/`,data)
+  }
+
    deleteReserva(id: String): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarreserva/${id}`)
+  }
+
+  deleteIniciativa(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminariniciativa/${id}`)
   }
   
   getReservas(id: String): Observable<string> {
