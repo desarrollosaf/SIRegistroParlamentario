@@ -8,6 +8,7 @@ import IntegranteLegislatura from "../models/integrante_legislaturas";
 import { Op } from "sequelize";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import PuntosOrden from "../models/puntos_ordens";
+import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -228,6 +229,86 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
     return res.status(500).json({ 
       msg: 'Error interno del servidor',
       error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+export const creariniciativa = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    
+    const punto = await PuntosOrden.findOne({
+      where: { id: body.punto },
+    });
+    
+    if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    
+    const nuevoTema = await IniciativaPuntoOrden.create({
+      id_punto: punto.id,
+      id_evento: punto.id_evento,
+      iniciativa: body.iniciativa,
+      fecha_votacion: null,
+      status: 1,
+    });
+    
+    return res.status(200).json({ 
+      message: "Iniciativa creada exitosamente",
+    });
+    
+  } catch (error: any) {
+    console.error("Error al crear la iniciativa:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const eliminariniciativa = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const iniciativa = await IniciativaPuntoOrden.findOne({ 
+      where: { id }
+    });
+    if (!iniciativa) {
+      return res.status(404).json({ message: "Iniciativa no encontrada" });
+    }
+    // await VotosPunto.destroy({
+    //   where: { id_tema_punto_voto: id }
+    // });
+    await iniciativa.destroy();
+    return res.status(200).json({
+      message: "Iniciativa eliminada correctamente",
+    });  
+  } catch (error: any) {
+    console.error("Error al eliminar la iniciativa:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const getiniciativas = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const iniciativa = await IniciativaPuntoOrden.findAll({ 
+      where: { id_punto: id },
+      attributes: ["id", "iniciativa"]
+    });
+    if (!iniciativa) {
+      return res.status(404).json({ message: "No tiene iniciativas" });
+    }
+    return res.status(200).json({
+      data: iniciativa,
+    });  
+  } catch (error: any) {
+    console.error("Error al obtener las iniciativas:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
     });
   }
 };

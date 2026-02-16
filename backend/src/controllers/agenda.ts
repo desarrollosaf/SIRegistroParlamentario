@@ -23,7 +23,7 @@ import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
 import TipoAutor from "../models/tipo_autors";
-import { comisiones } from "../models/init-models";
+import { comisiones, sedes } from "../models/init-models";
 import Municipios from "../models/municipios";
 import OtrosAutores from "../models/otros_autores";
 import MunicipiosAg from "../models/municipiosag";
@@ -38,6 +38,7 @@ import fs from 'fs';
 import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
+import ExcelJS from 'exceljs';
 
 
 
@@ -201,6 +202,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       order: [['created_at', 'DESC']],
       raw: true,
     });
+    console.log(evento.fecha)
     
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
@@ -249,6 +251,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
  * Crea asistencias para el evento
  */
 async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
+  
   const listadoDiputados: { 
     id_diputado: string; 
     id_partido: string; 
@@ -257,6 +260,11 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
   }[] = [];
 
   if (esSesion) {
+    const { Op } = require('sequelize');
+    const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
+    if (!fechaEvento) {
+      throw new Error('El evento no tiene fecha válida');
+    }
     // Para sesiones: todos los diputados de la legislatura actual
     const legislatura = await Legislatura.findOne({
       order: [["fecha_inicio", "DESC"]],
@@ -264,9 +272,32 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
 
     if (legislatura) {
       const diputados = await IntegranteLegislatura.findAll({
-        where: { legislatura_id: legislatura.id },
-        include: [{ model: Diputado, as: "diputado" }],
-      });
+          where: { 
+            legislatura_id: legislatura.id,
+            fecha_inicio: {
+              [Op.lte]: fechaEvento // El diputado ya estaba en la legislatura
+            },
+            [Op.or]: [
+              {
+                fecha_fin: {
+                  [Op.gte]: fechaEvento // Aún no había terminado su periodo
+                }
+              },
+              {
+                fecha_fin: null // O está activo (sin fecha fin)
+              }
+            ]
+          },
+          include: [
+            { 
+              model: Diputado, 
+              as: "diputado",
+              paranoid: false // Incluir diputados eliminados también
+            }
+          ],
+          paranoid: false // Si también quieres incluir diputados eliminados
+        });
+        
 
       for (const inteLegis of diputados) {
         if (inteLegis.diputado) {
@@ -361,12 +392,14 @@ async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
     Diputado.findAll({
       where: { id: diputadoIds },
       attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true
+      raw: true,
+      paranoid: false
     }),
     Partidos.findAll({
       where: { id: partidoIds },
       attributes: ["id", "siglas"],
-      raw: true
+      raw: true,
+      paranoid: false
     })
   ]);
 
@@ -4109,6 +4142,161 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       message: "Error al generar y enviar PDF de asistencia por WhatsApp",
       error: error.message,
       details: axios.isAxiosError(error) ? error.response?.data : undefined
+    });
+  }
+};
+
+export const exportdatos = async (req: Request, res: Response) => {
+  try {
+    // 1. Obtener los datos de la base de datos con las relaciones necesarias
+    const agendas = await Agenda.findAll({
+      order: [['fecha', 'DESC']],
+      include: [
+        {
+          model: Sedes,
+          as: 'sede', // Verifica que este sea el alias correcto en tu modelo
+          attributes: ['sede']
+        },
+        {
+          model: TipoEventos,
+          as: 'tipoevento', // ⬅️ Cambiado a 'tipoevento' según el error
+          attributes: ['nombre']
+        },
+        {
+          model: AnfitrionAgenda,
+          as: 'anfitrion_agendas',
+          include: [
+            {
+              model: TipoAutor,
+              as: 'tipo_autor',
+              attributes: ['valor']
+            }
+          ]
+        }
+      ]
+    });
+    
+    // 2. Crear un nuevo libro de Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Agendas');
+    
+    // 3. Definir todas las columnas
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Fecha', key: 'fecha', width: 15 },
+      { header: 'Hora', key: 'hora', width: 12 },
+      { header: 'Fecha Hora', key: 'fecha_hora', width: 20 },
+      { header: 'Fecha Hora Inicio', key: 'fecha_hora_inicio', width: 20 },
+      { header: 'Fecha Hora Fin', key: 'fecha_hora_fin', width: 20 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Sede', key: 'sede', width: 30 },
+      { header: 'Tipo Evento', key: 'tipo_evento', width: 25 },
+      { header: 'Transmisión', key: 'transmision', width: 15 },
+      { header: 'Estatus Transmisión', key: 'estatus_transmision', width: 20 },
+      { header: 'Inicio Programado', key: 'inicio_programado', width: 20 },
+      { header: 'Fin Programado', key: 'fin_programado', width: 20 },
+      { header: 'Liga', key: 'liga', width: 30 },
+      { header: 'Documentación ID', key: 'documentacion_id', width: 18 },
+      { header: 'Tipo Sesión', key: 'tipo_sesion', width: 15 },
+      { header: 'Tipo Autor', key: 'tipo_autor', width: 20 },
+      { header: 'Autor', key: 'autor', width: 30 },
+    ];
+    
+    // 4. Estilizar el encabezado
+    worksheet.getRow(1).font = { bold: true, size: 12 };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // 5. Procesar y agregar los datos
+    for (const agenda of agendas) {
+      // Obtener tipo autor y autor
+      let tipoAutorValor = '';
+      let autorNombre = '';
+      
+      if (agenda.anfitrion_agendas && agenda.anfitrion_agendas.length > 0) {
+        const anfitrion = agenda.anfitrion_agendas[0];
+        tipoAutorValor = anfitrion.tipo_autor?.valor || '';
+        
+        // Obtener nombre del autor según el tipo
+        if (anfitrion.autor_id) {
+          // Verificar si es una comisión
+          const comision = await Comision.findOne({
+            where: { id: anfitrion.autor_id },
+            attributes: ["id", "nombre"]
+          });
+          
+          if (comision) {
+            autorNombre = comision.nombre;
+          } else {
+            // Si no es comisión, es sesión
+            autorNombre = 'Sesion';
+          }
+        }
+      }
+      
+      worksheet.addRow({
+        id: agenda.id,
+        fecha: agenda.fecha,
+        hora: agenda.hora,
+        fecha_hora: agenda.fecha_hora,
+        fecha_hora_inicio: agenda.fecha_hora_inicio,
+        fecha_hora_fin: agenda.fecha_hora_fin,
+        descripcion: agenda.descripcion,
+        status: agenda.status,
+        sede: agenda.sede?.sede || '',
+        tipo_evento: agenda.tipoevento?.nombre || '', // ⬅️ Cambiado a 'tipoevento'
+        transmision: agenda.transmision,
+        estatus_transmision: agenda.estatus_transmision,
+        inicio_programado: agenda.inicio_programado,
+        fin_programado: agenda.fin_programado,
+        liga: agenda.liga,
+        documentacion_id: agenda.documentacion_id,
+        tipo_sesion: agenda.tipo_sesion,
+        tipo_autor: tipoAutorValor,
+        autor: autorNombre,
+      });
+    }
+    
+    // 6. Aplicar bordes a todas las celdas
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+    
+    // 7. Generar el buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    
+    // 8. Generar el nombre del archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const filename = `agendas_${fecha}.xlsx`;
+    
+    // 9. Configurar headers y enviar
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.setHeader('Content-Length', buffer.length);
+    
+    res.send(buffer);
+    
+  } catch (error) {
+    console.error("Error al exportar agendas:", error);
+    return res.status(500).json({
+      msg: "Error al generar el archivo Excel",
+      error: error instanceof Error ? error.message : "Error desconocido"
     });
   }
 };
