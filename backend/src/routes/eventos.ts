@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas, exportdatos} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 const router = Router();
 
@@ -34,4 +34,5 @@ router.get("/api/eventos/deleteintlista/:id", Eliminarlista );
 router.post("/api/eventos/enviarvotacionpunto", enviarWhatsVotacionPDF );
 router.get('/api/eventos/asintenciapdf/:id', generarPDFAsistencia);
 router.get('/api/eventos/notasintenciapdf/:id', enviarWhatsAsistenciaPDF);
+router.get("/api/eventos/exportevento", exportdatos );
 export default router

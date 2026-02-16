@@ -37,4 +37,5 @@ router.get("/api/eventos/deleteintlista/:id", agenda_1.Eliminarlista);
 router.post("/api/eventos/enviarvotacionpunto", agenda_1.enviarWhatsVotacionPDF);
 router.get('/api/eventos/asintenciapdf/:id', agenda_1.generarPDFAsistencia);
 router.get('/api/eventos/notasintenciapdf/:id', agenda_1.enviarWhatsAsistenciaPDF);
+router.get("/api/eventos/exportevento", agenda_1.exportdatos);
 exports.default = router;

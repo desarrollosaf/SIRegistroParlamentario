@@ -15,6 +15,8 @@ class IntegranteLegislatura extends Model {
   declare partido_id: ForeignKey<string>;
   declare distrito_id: ForeignKey<string> | null;
   declare fecha_ingreso: string | null;
+  declare fecha_inicio: string | null;
+  declare fecha_fin: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -45,6 +47,14 @@ IntegranteLegislatura.init(
       allowNull: true,
     },
     fecha_ingreso: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    fecha_inicio: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    fecha_fin: {
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
