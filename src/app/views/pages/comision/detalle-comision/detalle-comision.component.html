@@ -1753,14 +1753,20 @@
     </div>
 
     <div class="modal-body">
-        <div class="mb-3">
+        <div class="mb-3 d-flex gap-2 flex-wrap">
             <button class="btn btn-primary" (click)="toggleformIniciativa()">
                 <i class="bi" [ngClass]="mostrarformIniciativa ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
                 {{ mostrarformIniciativa ? 'Ocultar' : 'Agregar' }} Iniciativa
             </button>
+            
+            <!-- NUEVO BOTÓN: Agregar iniciativa precargada -->
+            <button class="btn btn-info" (click)="toggleSelectIniciativaPrecargada()">
+                <i class="bi" [ngClass]="mostrarSelectIniciativaPrecargada ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
+                {{ mostrarSelectIniciativaPrecargada ? 'Ocultar' : 'Agregar' }} Iniciativa Precargada
+            </button>
         </div>
 
-        <!-- Formulario para agregar iniciativa -->
+        <!-- Formulario para agregar iniciativa MANUAL -->
         <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarformIniciativa">
             <div class="card-body">
                 <form [formGroup]="formIniciativa">
@@ -1771,7 +1777,7 @@
                             </label>
                             <textarea class="form-control" formControlName="descripcion" rows="4"
                                 placeholder="Escribe la descripción de la iniciativa...">
-              </textarea>
+                            </textarea>
                         </div>
                     </div>
 
@@ -1781,6 +1787,38 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- NUEVO: Formulario para seleccionar iniciativa PRECARGADA -->
+        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarSelectIniciativaPrecargada">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-list-check me-1"></i> Selecciona una iniciativa precargada
+                        </label>
+                    <ng-select 
+    [items]="slcIniciativasPrecargadas" 
+    bindLabel="iniciativa"
+    [(ngModel)]="iniciativaPrecargadaSeleccionada"
+    placeholder="Selecciona una iniciativa"
+    [searchable]="true"
+    [clearable]="true">
+    <ng-template ng-option-tmp let-item="item">
+        <div class="d-flex flex-column py-1">
+            <span class="fw-semibold">{{ item.iniciativa }}</span>
+        </div>
+    </ng-template>
+</ng-select>
+                    </div>
+                </div>
+
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-success" (click)="guardarIniciativaPrecargada()">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
             </div>
         </div>
 
