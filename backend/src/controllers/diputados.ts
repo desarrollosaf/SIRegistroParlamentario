@@ -313,5 +313,38 @@ export const getiniciativas = async (req: Request, res: Response): Promise<any> 
   }
 };
 
+export const crariniidits = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    
+    const punto = await PuntosOrden.findOne({
+      where: { id: body.punto },
+    });
+    
+    if (!punto) {
+      return res.status(404).json({ message: "Punto no encontrado" });
+    }
+    
+    const iniciativa = await IniciativaPuntoOrden.findOne({
+      where: { id: body.iniciativa },
+    });
+
+    if(iniciativa){
+            await iniciativa.update({ id_punto: punto.id });
+       }
+    
+    return res.status(200).json({ 
+      message: "Iniciativa actualizada correctamente",
+    });
+    
+  } catch (error: any) {
+    console.error("Error al actualizar la iniciativa:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
 
 
