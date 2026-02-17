@@ -6,4 +6,8 @@ const router = (0, express_1.Router)();
 router.post("/api/diputados/cargo/", diputados_1.cargoDiputados);
 router.post("/api/diputados/acttodosasistencia/", diputados_1.actualizartodos);
 router.post("/api/diputados/acttodosvotos/", diputados_1.actvototodos);
+router.post("/api/diputados/saveiniciativa/", diputados_1.creariniciativa);
+router.get("/api/diputados/eliminariniciativa/:id", diputados_1.eliminariniciativa);
+router.get("/api/diputados/getiniciativas/:id", diputados_1.getiniciativas);
+router.post("/api/diputados/crariniidits/", diputados_1.crariniidits);
 exports.default = router;

@@ -35,6 +35,14 @@ IntegranteLegislatura.init({
         type: sequelize_1.DataTypes.DATEONLY,
         allowNull: true,
     },
+    fecha_inicio: {
+        type: sequelize_1.DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    fecha_fin: {
+        type: sequelize_1.DataTypes.DATEONLY,
+        allowNull: true,
+    },
     createdAt: {
         field: 'created_at',
         type: sequelize_1.DataTypes.DATE,

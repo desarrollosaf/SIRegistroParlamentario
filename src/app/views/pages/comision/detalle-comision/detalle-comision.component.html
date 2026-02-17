@@ -606,6 +606,21 @@
                                                             *ngIf="reservasTemporales.length > 0">
                                                             {{ reservasTemporales.length }} reserva(s) agregada(s)
                                                         </small>
+
+                                                        <button type="button"
+                                                            class="btn btn-primary position-relative ms-2"
+                                                            (click)="abrirModalIniciativa()">
+                                                            <i class="bi bi-lightbulb me-1"></i> Iniciativas
+                                                            <span
+                                                                class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
+                                                                *ngIf="iniciativasTemporales.length > 0">
+                                                                {{ iniciativasTemporales.length }}
+                                                            </span>
+                                                        </button>
+                                                        <small class="text-muted ms-2"
+                                                            *ngIf="iniciativasTemporales.length > 0">
+                                                            {{ iniciativasTemporales.length }} iniciativa(s) agregada(s)
+                                                        </small>
                                                     </div>
                                                 </div>
 
@@ -770,6 +785,16 @@
                                                                         {{ punto.reservas.length }}
                                                                     </span>
                                                                 </button>
+                                                                <button
+                                                                    class="btn btn-outline-primary  btn-sm position-relative"
+                                                                    (click)="abrirModalIniciativaPunto(punto)">
+                                                                    <i class="bi bi-lightbulb me-1"></i> Iniciativas2
+                                                                    <span
+                                                                        class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
+                                                                        *ngIf="punto.iniciativas?.length > 0">
+                                                                        {{ punto.iniciativas.length }}
+                                                                    </span>
+                                                                </button>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Documento</label>
                                                                     <div
@@ -894,7 +919,7 @@
                                         </div>
 
                                         <div *ngIf="votacionActual.idPunto">
-                                       
+
                                         </div>
                                         <!-- Botón Iniciar Votación -->
                                         <!-- <div class="row mt-3">
@@ -1013,7 +1038,7 @@
                                                 <i class="bi bi-clipboard-check me-2"></i>
                                                 Registro de Votos
                                             </h5>
-                                            
+
                                             <div class="d-flex gap-2 flex-wrap">
                                                 <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
@@ -1028,11 +1053,11 @@
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
                                             </div>
-                                            
+
                                         </div>
                                         <br>
                                         <div class="row g-3">
-                                                 <div class="comision-header-institucional mb-3">
+                                            <div class="comision-header-institucional mb-3">
                                                 <h5 class="fw-bold">
                                                     <div class="mb-1">
                                                         <strong>Punto:</strong>
@@ -1272,7 +1297,7 @@
                                             <!-- Encabezado de la comisión-->
                                             <div class="comision-header-institucional mb-3">
                                                 <h5 class="fw-bold">
-                                                      <div class="mb-1">
+                                                    <div class="mb-1">
                                                         <strong>Punto:</strong>
                                                         <span class="ms-1" style="color:black">{{
                                                             obtenerTextoPunto(puntoSeleccionadoVotacion) }}</span>
@@ -1712,6 +1737,135 @@
 
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="cerrarModalReserva()">
+            <i class="bi bi-x-lg me-1"></i> Cerrar
+        </button>
+    </div>
+</ng-template>
+
+<!-- MODAL DE INICIATIVAS -->
+<ng-template #xlModalI let-modal>
+    <div class="modal-header modal-intervencion-header">
+        <h5 class="modal-title d-flex align-items-center">
+            <i class="bi bi-lightbulb me-2"></i>
+            Iniciativas del Punto
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModalIniciativa()"></button>
+    </div>
+
+    <div class="modal-body">
+        <div class="mb-3 d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary" (click)="toggleformIniciativa()">
+                <i class="bi" [ngClass]="mostrarformIniciativa ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
+                {{ mostrarformIniciativa ? 'Ocultar' : 'Agregar' }} Iniciativa
+            </button>
+            
+            <!-- NUEVO BOTÓN: Agregar iniciativa precargada -->
+            <button class="btn btn-info" (click)="toggleSelectIniciativaPrecargada()">
+                <i class="bi" [ngClass]="mostrarSelectIniciativaPrecargada ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
+                {{ mostrarSelectIniciativaPrecargada ? 'Ocultar' : 'Agregar' }} Iniciativa Precargada
+            </button>
+        </div>
+
+        <!-- Formulario para agregar iniciativa MANUAL -->
+        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarformIniciativa">
+            <div class="card-body">
+                <form [formGroup]="formIniciativa">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text-fill me-1"></i> Descripción de la iniciativa
+                            </label>
+                            <textarea class="form-control" formControlName="descripcion" rows="4"
+                                placeholder="Escribe la descripción de la iniciativa...">
+                            </textarea>
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-success" (click)="guardarIniciativa()">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NUEVO: Formulario para seleccionar iniciativa PRECARGADA -->
+        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarSelectIniciativaPrecargada">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-list-check me-1"></i> Selecciona una iniciativa precargada
+                        </label>
+                    <ng-select 
+                    [items]="slcIniciativasDisponibles" 
+                    bindLabel="iniciativa"
+                    [(ngModel)]="iniciativaPrecargadaSeleccionada"
+                    placeholder="Selecciona una iniciativa"
+                    [searchable]="true"
+                    [clearable]="true">
+                    <ng-template ng-option-tmp let-item="item">
+                    <div class="d-flex flex-column py-1">
+                    <span class="fw-semibold">{{ item.iniciativa }}</span>
+                    </div>
+                    </ng-template>
+                    </ng-select>
+                    </div>
+                </div>
+
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-success" (click)="guardarIniciativaPrecargada()">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de iniciativas -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Lista de Iniciativas
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive tabla-intervenciones-wrapper">
+                    <table class="table table-hover mb-0 tabla-intervenciones">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Descripción</th>
+                                <th class="text-center" style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+               <tbody>
+    <tr *ngFor="let iniciativa of listaIniciativas; let i = index">
+        <td class="text-center fw-semibold">{{ i + 1 }}</td>
+        <td>{{ iniciativa.iniciativa || iniciativa.descripcion }}</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                (click)="eliminarIniciativa(iniciativa, i)" title="Eliminar">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </td>
+    </tr>
+    <tr *ngIf="listaIniciativas.length === 0">
+        <td colspan="3" class="text-center text-muted py-4">
+            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+            <p class="mb-0 mt-2">No hay iniciativas</p>
+        </td>
+    </tr>
+</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalIniciativa()">
             <i class="bi bi-x-lg me-1"></i> Cerrar
         </button>
     </div>

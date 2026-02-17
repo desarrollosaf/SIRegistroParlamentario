@@ -48,6 +48,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
+  @ViewChild('xlModalI') xlModalI!: TemplateRef<any>;
+  
   step = 1;
   stepNames = [
     { numero: 1, nombre: 'Asistencia' },
@@ -99,6 +101,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   modalRef!: NgbModalRef;
   modalRefT!: NgbModalRef;
+  modalRefI!: NgbModalRef;
+  
   formIntervencion!: FormGroup;
   mostrarFormIntervencion = false;
   tipoIntervencionActual: number = 1;
@@ -125,6 +129,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionadoReserva: any = null;
 
 
+  mostrarformIniciativa = false;
+  formIniciativa!: FormGroup;
+  listaIniciativas: any[] = []; // Temporal mientras se crea el punto
+  iniciativasTemporales: any[] = []; // Para almacenar antes de guardar el punto
+  puntoSeleccionadoIniciativa: any = null;
+
+  slcIniciativasPrecargadas: any[] = []; // NUEVO: para el select de iniciativas precargadas
+  mostrarSelectIniciativaPrecargada = false; // NUEVO: para mostrar/ocultar el select
+  iniciativaPrecargadaSeleccionada: any = null; // NUEVO: iniciativa seleccionada del select
+  slcIniciativasDisponibles: any[] = [];
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -175,6 +189,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       descripcion: ['', Validators.required]
     });
 
+    this.formIniciativa = this.fb.group({
+    descripcion: ['', Validators.required]
+    });
+
   }
 
   ngOnInit(): void {
@@ -200,8 +218,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
     this.cargarDatosIniciales();
+
+    
   }
 
+  actualizarIniciativasDisponibles() {
+    const idsAgregados = this.listaIniciativas.map(ini => ini.id);
+    this.slcIniciativasDisponibles = this.slcIniciativasPrecargadas.filter(
+      ini => !idsAgregados.includes(ini.id)
+    );
+  }
 
   ngOnDestroy(): void {
     console.log('Limpiando');
@@ -403,7 +429,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   // ============================================================
 
   private actualizarVotacionesAutomaticamente(): void {
-    this._eventoService.getIntegrantesVotosPunto(this.idpto).subscribe({
+    console.log(this.idpto);
+    this._eventoService.getIntegrantesVotosPunto(this.votacionActual).subscribe({
       next: (response: any) => {
         if (this.esComision) {
           // CASO COMISIÓN: Actualizar lista de comisiones
@@ -742,10 +769,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
+
   cargarPuntosRegistrados(): void {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log('Response completo:', response);
+ 
+      //iniciativas precargadas
+      this.slcIniciativasPrecargadas = response.selectini || [];
+      console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
+      this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -790,6 +823,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             ...punto,
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
+            iniciativas: punto.iniciativas || [], 
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -845,6 +879,347 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
     this.cdr.detectChanges();
   }
+
+
+
+
+
+
+  //**********************************INICIATIVAS******************************************************** */
+
+
+// NUEVO: Toggle para mostrar/ocultar el select de iniciativas precargadas
+toggleSelectIniciativaPrecargada() {
+  this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
+  if (!this.mostrarSelectIniciativaPrecargada) {
+    this.iniciativaPrecargadaSeleccionada = null;
+  }
+}
+
+guardarIniciativaPrecargada() {
+  if (!this.iniciativaPrecargadaSeleccionada) {
+    Swal.fire({
+      position: "center",
+      icon: "warning",
+      title: "¡Atención!",
+      text: "Debe seleccionar una iniciativa.",
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  if (!this.puntoSeleccionadoIniciativa) {
+    Swal.fire({
+      position: "center",
+      icon: "error",
+      title: "Error",
+      text: "No se puede agregar iniciativa sin un punto seleccionado.",
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  // ✅ GUARDAR LA INICIATIVA COMPLETA ANTES DE LIMPIAR
+  const iniciativaSeleccionada = { ...this.iniciativaPrecargadaSeleccionada };
+
+  const datos = {
+    punto: this.puntoSeleccionadoIniciativa.id,
+    iniciativa: iniciativaSeleccionada.id
+  };
+
+  console.log(datos);
+  
+  this._eventoService.saveIniciativasCargadas(datos).subscribe({
+    next: (response: any) => {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Iniciativa guardada correctamente."
+      });
+
+      // ✅ LIMPIAR DESPUÉS DE COPIAR
+      this.iniciativaPrecargadaSeleccionada = null;
+
+      // Actualización optimista de la UI
+      if (response.data) {
+        this.listaIniciativas.push(response.data);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+        }
+      } else {
+        // ✅ USAR LA COPIA QUE GUARDAMOS
+        const nuevaIniciativa = {
+          id: response.id || iniciativaSeleccionada.id,
+          iniciativa: iniciativaSeleccionada.iniciativa
+        };
+
+        this.listaIniciativas.push(nuevaIniciativa);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+        }
+      }
+
+      const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+      if (puntoIndex !== -1) {
+        this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+      }
+
+      // ✅ ACTUALIZAR LAS DISPONIBLES DESPUÉS DE AGREGAR
+      this.actualizarIniciativasDisponibles();
+
+      this.cdr.detectChanges();
+    },
+    error: (e: HttpErrorResponse) => {
+      const msg = e.error?.msg || 'Error desconocido';
+      console.error('Error del servidor:', msg);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: msg,
+        timer: 3000
+      });
+    }
+  });
+}
+
+abrirModalIniciativa() {
+  this.formIniciativa.reset();
+  this.mostrarformIniciativa = false;
+  this.puntoSeleccionadoIniciativa = null;
+  this.listaIniciativas = [...this.iniciativasTemporales];
+
+  this.modalRefI = this.modalService.open(this.xlModalI, {
+    size: 'xl',
+    windowClass: 'modal-top-centered',
+    backdrop: 'static'
+  });
+}
+
+abrirModalIniciativaPunto(punto: any) {
+  this.formIniciativa.reset();
+  this.mostrarformIniciativa = false;
+  this.mostrarSelectIniciativaPrecargada = false; // NUEVO: Limpiar el select
+  this.iniciativaPrecargadaSeleccionada = null; // NUEVO: Limpiar selección
+  this.puntoSeleccionadoIniciativa = punto;
+  this.listaIniciativas = [...(punto.iniciativas || [])];
+
+  this.actualizarIniciativasDisponibles();
+  this.modalRefI = this.modalService.open(this.xlModalI, {
+    size: 'xl',
+    windowClass: 'modal-top-centered',
+    backdrop: 'static'
+  });
+}
+toggleformIniciativa() {
+  this.mostrarformIniciativa = !this.mostrarformIniciativa;
+  if (!this.mostrarformIniciativa) {
+    this.formIniciativa.reset();
+  }
+}
+
+guardarIniciativa() {
+  if (this.formIniciativa.invalid) {
+    Swal.fire({
+      position: "center",
+      icon: "warning",
+      title: "¡Atención!",
+      text: "Debe escribir la descripción de la iniciativa.",
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
+  if (!this.puntoSeleccionadoIniciativa) {
+    const nuevaIniciativa = {
+      id: Date.now(),
+      descripcion: this.formIniciativa.value.descripcion
+    };
+
+    this.listaIniciativas.push(nuevaIniciativa);
+    this.iniciativasTemporales.push(nuevaIniciativa);
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: "success",
+      title: "Se agregó iniciativa (se guardará con el punto)."
+    });
+
+    this.toggleformIniciativa();
+    return;
+  }
+
+  // CASO 2: PUNTO EXISTENTE (GUARDAR EN BD)
+  const datos = {
+    punto: this.puntoSeleccionadoIniciativa.id,
+    descripcion: this.formIniciativa.value.descripcion
+  };
+
+  this._eventoService.saveIniciativa(datos).subscribe({
+    next: (response: any) => {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Iniciativa guardada correctamente."
+      });
+
+      this.toggleformIniciativa();
+
+      if (response.data) {
+        this.listaIniciativas.push(response.data);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+        }
+      } else {
+        const nuevaIniciativa = {
+          id: response.id || Date.now(),
+          descripcion: datos.descripcion
+        };
+
+        this.listaIniciativas.push(nuevaIniciativa);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+        }
+      }
+
+      const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+      if (puntoIndex !== -1) {
+        this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+      }
+
+      this.cdr.detectChanges();
+    },
+    error: (e: HttpErrorResponse) => {
+      const msg = e.error?.msg || 'Error desconocido';
+      console.error('Error del servidor:', msg);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: msg,
+        timer: 3000
+      });
+    }
+  });
+}
+
+eliminarIniciativa(iniciativa: any, index: number) {
+  Swal.fire({
+    title: "¿Está seguro?",
+    text: "Se eliminará esta iniciativa",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Confirmar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      
+      // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
+      if (!this.puntoSeleccionadoIniciativa) {
+        this.listaIniciativas.splice(index, 1);
+        const tempIndex = this.iniciativasTemporales.findIndex(t => t.id === iniciativa.id);
+        if (tempIndex > -1) {
+          this.iniciativasTemporales.splice(tempIndex, 1);
+        }
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Iniciativa eliminada."
+        });
+        this.actualizarIniciativasDisponibles();
+        return;
+      }
+
+      // CASO 2: PUNTO EXISTENTE (ELIMINAR DE BD)
+      this._eventoService.deleteIniciativa(iniciativa.id).subscribe({
+        next: (response: any) => {
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+          });
+          Toast.fire({
+            icon: "success",
+            title: "Iniciativa eliminada correctamente."
+          });
+
+          this.listaIniciativas.splice(index, 1);
+
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            const iniciativaIndex = this.puntoSeleccionadoIniciativa.iniciativas.findIndex(
+              (r: any) => r.id === iniciativa.id
+            );
+            if (iniciativaIndex !== -1) {
+              this.puntoSeleccionadoIniciativa.iniciativas.splice(iniciativaIndex, 1);
+            }
+          }
+
+          const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+          if (puntoIndex !== -1) {
+            this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+          }
+          this.actualizarIniciativasDisponibles();
+          this.cdr.detectChanges();
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: msg,
+            timer: 3000
+          });
+        }
+      });
+    }
+  });
+}
+
+cerrarModalIniciativa() {
+  this.modalRefI.close();
+}
+
+
 
   // cargarPuntosRegistrados(): void {
   //   this._eventoService.getPuntos(this.idComisionRuta).subscribe({
@@ -1580,19 +1955,21 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     inputRef.value = '';
   }
 
-  toggleFormularioPunto() {
-    this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
-    this.documentos['docPunto'] = null;
-    this.formPunto.reset({
-      se_turna_comision: false
-    });
+ toggleFormularioPunto() {
+  this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+  this.documentos['docPunto'] = null;
+  this.formPunto.reset({
+    se_turna_comision: false
+  });
 
-    // Limpiar temas temporales cuando se cierra el formulario
-    if (!this.mostrarFormularioPunto) {
-      this.reservasTemporales = [];
-      this.listaReservas = [];
-    }
+  // Limpiar temporales cuando se cierra el formulario
+  if (!this.mostrarFormularioPunto) {
+    this.reservasTemporales = [];
+    this.listaReservas = [];
+    this.iniciativasTemporales = []; // AGREGAR ESTA LÍNEA
+    this.listaIniciativas = [];       // AGREGAR ESTA LÍNEA
   }
+}
 
   guardarPunto() {
     if (this.formPunto.invalid) {
@@ -1628,6 +2005,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       }));
       formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
+    if (this.iniciativasTemporales.length > 0) {
+      const iniciativasParaEnviar = this.iniciativasTemporales.map(i => ({
+        descripcion: i.descripcion
+      }));
+      formData.append('iniciativas', JSON.stringify(iniciativasParaEnviar));
+    }
 
     // Log para verificar
     console.log('reservas a enviar:', this.reservasTemporales);
@@ -1660,6 +2043,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
         this.reservasTemporales = [];
         this.listaReservas = [];
+        this.iniciativasTemporales = [];  
+        this.listaIniciativas = [];       
         this.mostrarFormularioPunto = false;
         this.cargarPuntosRegistrados();
       },

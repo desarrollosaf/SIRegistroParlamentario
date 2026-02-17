@@ -23,7 +23,7 @@ import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import { Sequelize } from "sequelize";
 import TipoAutor from "../models/tipo_autors";
-import { comisiones } from "../models/init-models";
+import { comisiones, sedes } from "../models/init-models";
 import Municipios from "../models/municipios";
 import OtrosAutores from "../models/otros_autores";
 import MunicipiosAg from "../models/municipiosag";
@@ -38,6 +38,8 @@ import fs from 'fs';
 import path from 'path';
 import PuntosComisiones from "../models/puntos_comisiones";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
+import ExcelJS from 'exceljs';
+import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
 
 
 
@@ -167,9 +169,11 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       
       if (anfitriones.length > 0) { // ✅ Validar antes de continuar
         const puntosturnados = await PuntosComisiones.findAll({
-          where: { 
-            id_comision: anfitriones.map(a => a.autor_id),
-          }
+          where: Sequelize.literal(
+            `(${anfitriones.map(a => 
+              `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
+            ).join(' OR ')})`
+          )
         });
         
         if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
@@ -201,6 +205,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       order: [['created_at', 'DESC']],
       raw: true,
     });
+    console.log(evento.fecha)
     
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
@@ -249,6 +254,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
  * Crea asistencias para el evento
  */
 async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
+  
   const listadoDiputados: { 
     id_diputado: string; 
     id_partido: string; 
@@ -257,6 +263,11 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
   }[] = [];
 
   if (esSesion) {
+    const { Op } = require('sequelize');
+    const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
+    if (!fechaEvento) {
+      throw new Error('El evento no tiene fecha válida');
+    }
     // Para sesiones: todos los diputados de la legislatura actual
     const legislatura = await Legislatura.findOne({
       order: [["fecha_inicio", "DESC"]],
@@ -264,9 +275,32 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
 
     if (legislatura) {
       const diputados = await IntegranteLegislatura.findAll({
-        where: { legislatura_id: legislatura.id },
-        include: [{ model: Diputado, as: "diputado" }],
-      });
+          where: { 
+            legislatura_id: legislatura.id,
+            fecha_inicio: {
+              [Op.lte]: fechaEvento // El diputado ya estaba en la legislatura
+            },
+            [Op.or]: [
+              {
+                fecha_fin: {
+                  [Op.gte]: fechaEvento // Aún no había terminado su periodo
+                }
+              },
+              {
+                fecha_fin: null // O está activo (sin fecha fin)
+              }
+            ]
+          },
+          include: [
+            { 
+              model: Diputado, 
+              as: "diputado",
+              paranoid: false // Incluir diputados eliminados también
+            }
+          ],
+          paranoid: false // Si también quieres incluir diputados eliminados
+        });
+        
 
       for (const inteLegis of diputados) {
         if (inteLegis.diputado) {
@@ -361,12 +395,14 @@ async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
     Diputado.findAll({
       where: { id: diputadoIds },
       attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true
+      raw: true,
+      paranoid: false
     }),
     Partidos.findAll({
       where: { id: partidoIds },
       attributes: ["id", "siglas"],
-      raw: true
+      raw: true,
+      paranoid: false
     })
   ]);
 
@@ -985,6 +1021,21 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       }
     }
 
+    if (body.iniciativas) {
+      const IniciativasArray = typeof body.iniciativas === 'string' 
+        ? JSON.parse(body.iniciativas) 
+        : body.iniciativas;
+      
+      for (const item of IniciativasArray) {
+        await IniciativaPuntoOrden.create({
+          id_punto: puntonuevo.id,
+          id_evento: evento!.id,
+          tema_votacion: item.descripcion,
+          fecha_votacion: null,
+        });
+      }
+    }
+
     for (const item of presentaArray) {
       await PuntosPresenta.create({
         id_punto: puntonuevo.id,
@@ -993,15 +1044,22 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-
     if(body.tipo_evento == 0){
-      for (const item of turnocomision) {
-        await PuntosComisiones.create({
-          id_punto: puntonuevo.id,
-          id_comision: item,
-        });
-      }
+      const comisionesString = `[${turnocomision.join(',')}]`;
+      await PuntosComisiones.create({
+        id_punto: puntonuevo.id,
+        id_comision: comisionesString,
+      });
     }
+
+    // if(body.tipo_evento == 0){
+    //   for (const item of turnocomision) {
+    //     await PuntosComisiones.create({
+    //       id_punto: puntonuevo.id,
+    //       id_comision: item,
+    //     });
+    //   }
+    // }
     
 
 
@@ -1058,6 +1116,11 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             model: TemasPuntosVotos,
             as: "reservas",
             attributes: ["id", "tema_votacion"]
+          },
+          {
+            model: IniciativaPuntoOrden,
+            as: "iniciativas",
+            attributes: ["id", "iniciativa"]
           }
         ]
       });
@@ -1067,21 +1130,64 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       }
       const puntos = puntosRaw.map(punto => {
         const data = punto.toJSON();
+        
         const turnosNormalizados =
           data.turnocomision?.length
             ? data.turnocomision
             : data.puntoTurnoComision ?? [];
-
+        
         delete data.puntoTurnoComision;
-
+        
+        // Expandir cada turno en múltiples registros según las comisiones
+        const turnosExpandidos: any[] = [];
+        
+        turnosNormalizados.forEach((turno: any) => {
+          if (turno.id_comision && typeof turno.id_comision === 'string') {
+            // Convertir "[id1,id2,id3]" a ["id1", "id2", "id3"]
+            const comisionesArray = turno.id_comision
+              .replace(/[\[\]]/g, '')
+              .split(',')
+              .map((id: string) => id.trim())
+              .filter((id: string) => id);
+            
+            // Crear un registro por cada comisión
+            comisionesArray.forEach(comisionId => {
+              turnosExpandidos.push({
+                id: turno.id,
+                id_punto: turno.id_punto,
+                id_comision: comisionId,
+                id_punto_turno: turno.id_punto_turno
+              });
+            });
+          } else {
+            // Si no tiene el formato string, mantener el original
+            turnosExpandidos.push(turno);
+          }
+        });
+        
         return {
           ...data,
-          turnocomision: turnosNormalizados
+          turnocomision: turnosExpandidos
         };
+      });
+
+      const selects = await IniciativaPuntoOrden.findAll({
+        where: { 
+          id_evento: id,
+          id_punto: {
+            [Op.or]: [
+              null,
+              '',
+              '0'
+            ]
+          }
+        },
+        attributes: ["id", "iniciativa"]
       });
       return res.status(201).json({
         message: "Se encontraron registros",
-        data: puntos, 
+        data: puntos,
+        selectini: selects
       });
 
 
@@ -1155,11 +1261,17 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
       where: { id_punto: id },
       attributes: ["id", "tema_votacion"]
     });
-    if (!reserva) {
-      return res.status(404).json({ message: "No tiene reservas" });
-    }
+
+    const iniciativa = await IniciativaPuntoOrden.findAll({ 
+      where: { id_punto: id },
+      attributes: ["id", "iniciativa"]
+    });
+    
     return res.status(200).json({
-      data: reserva,
+      data: {
+        reservas: reserva,
+        iniciativas: iniciativa
+      }
     });  
   } catch (error: any) {
     console.error("Error al obtener las reserva:", error);
@@ -1256,20 +1368,20 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       editado: 1,
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
+    console.log("Holaaaaaaaaaaa", idPuntoTurnado)
+    // if (idPuntoTurnado != 'null') {
+    //   const puntoTurnado = await PuntosComisiones.findOne({
+    //     where: { id_punto: idPuntoTurnado },
+    //   });
 
-    if (idPuntoTurnado != 'null') {
-      const puntoTurnado = await PuntosComisiones.findOne({
-        where: { id_punto: idPuntoTurnado },
-      });
+    //   if (!puntoTurnado) {
+    //     throw new Error('Relación de punto-comisión no encontrada');
+    //   }
 
-      if (!puntoTurnado) {
-        throw new Error('Relación de punto-comisión no encontrada');
-      }
-
-      await puntoTurnado.update({
-        id_punto_turno: punto.id,
-      });
-    }
+    //   await puntoTurnado.update({
+    //     id_punto_turno: punto.id,
+    //   });
+    // }
 
     await PuntosPresenta.destroy({
       where: { id_punto: punto.id }
@@ -1287,13 +1399,20 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       await PuntosComisiones.destroy({
         where: { id_punto: punto.id }
       });
+      
+      const comisionesString = `[${turnocomision.join(',')}]`;
+      await PuntosComisiones.create({
+        id_punto: punto.id,
+        id_comision: comisionesString,
+      });
+   
 
-      for (const item of turnocomision) {
-        await PuntosComisiones.create({
-          id_punto: punto.id,
-          id_comision: item,
-        });
-      }
+      // for (const item of turnocomision) {
+      //   await PuntosComisiones.create({
+      //     id_punto: punto.id,
+      //     id_comision: item,
+      //   });
+      // }
 
     }
     
@@ -4109,6 +4228,161 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       message: "Error al generar y enviar PDF de asistencia por WhatsApp",
       error: error.message,
       details: axios.isAxiosError(error) ? error.response?.data : undefined
+    });
+  }
+};
+
+export const exportdatos = async (req: Request, res: Response) => {
+  try {
+    // 1. Obtener los datos de la base de datos con las relaciones necesarias
+    const agendas = await Agenda.findAll({
+      order: [['fecha', 'DESC']],
+      include: [
+        {
+          model: Sedes,
+          as: 'sede', // Verifica que este sea el alias correcto en tu modelo
+          attributes: ['sede']
+        },
+        {
+          model: TipoEventos,
+          as: 'tipoevento', // ⬅️ Cambiado a 'tipoevento' según el error
+          attributes: ['nombre']
+        },
+        {
+          model: AnfitrionAgenda,
+          as: 'anfitrion_agendas',
+          include: [
+            {
+              model: TipoAutor,
+              as: 'tipo_autor',
+              attributes: ['valor']
+            }
+          ]
+        }
+      ]
+    });
+    
+    // 2. Crear un nuevo libro de Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Agendas');
+    
+    // 3. Definir todas las columnas
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Fecha', key: 'fecha', width: 15 },
+      { header: 'Hora', key: 'hora', width: 12 },
+      { header: 'Fecha Hora', key: 'fecha_hora', width: 20 },
+      { header: 'Fecha Hora Inicio', key: 'fecha_hora_inicio', width: 20 },
+      { header: 'Fecha Hora Fin', key: 'fecha_hora_fin', width: 20 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Sede', key: 'sede', width: 30 },
+      { header: 'Tipo Evento', key: 'tipo_evento', width: 25 },
+      { header: 'Transmisión', key: 'transmision', width: 15 },
+      { header: 'Estatus Transmisión', key: 'estatus_transmision', width: 20 },
+      { header: 'Inicio Programado', key: 'inicio_programado', width: 20 },
+      { header: 'Fin Programado', key: 'fin_programado', width: 20 },
+      { header: 'Liga', key: 'liga', width: 30 },
+      { header: 'Documentación ID', key: 'documentacion_id', width: 18 },
+      { header: 'Tipo Sesión', key: 'tipo_sesion', width: 15 },
+      { header: 'Tipo Autor', key: 'tipo_autor', width: 20 },
+      { header: 'Autor', key: 'autor', width: 30 },
+    ];
+    
+    // 4. Estilizar el encabezado
+    worksheet.getRow(1).font = { bold: true, size: 12 };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // 5. Procesar y agregar los datos
+    for (const agenda of agendas) {
+      // Obtener tipo autor y autor
+      let tipoAutorValor = '';
+      let autorNombre = '';
+      
+      if (agenda.anfitrion_agendas && agenda.anfitrion_agendas.length > 0) {
+        const anfitrion = agenda.anfitrion_agendas[0];
+        tipoAutorValor = anfitrion.tipo_autor?.valor || '';
+        
+        // Obtener nombre del autor según el tipo
+        if (anfitrion.autor_id) {
+          // Verificar si es una comisión
+          const comision = await Comision.findOne({
+            where: { id: anfitrion.autor_id },
+            attributes: ["id", "nombre"]
+          });
+          
+          if (comision) {
+            autorNombre = comision.nombre;
+          } else {
+            // Si no es comisión, es sesión
+            autorNombre = 'Sesion';
+          }
+        }
+      }
+      
+      worksheet.addRow({
+        id: agenda.id,
+        fecha: agenda.fecha,
+        hora: agenda.hora,
+        fecha_hora: agenda.fecha_hora,
+        fecha_hora_inicio: agenda.fecha_hora_inicio,
+        fecha_hora_fin: agenda.fecha_hora_fin,
+        descripcion: agenda.descripcion,
+        status: agenda.status,
+        sede: agenda.sede?.sede || '',
+        tipo_evento: agenda.tipoevento?.nombre || '', // ⬅️ Cambiado a 'tipoevento'
+        transmision: agenda.transmision,
+        estatus_transmision: agenda.estatus_transmision,
+        inicio_programado: agenda.inicio_programado,
+        fin_programado: agenda.fin_programado,
+        liga: agenda.liga,
+        documentacion_id: agenda.documentacion_id,
+        tipo_sesion: agenda.tipo_sesion,
+        tipo_autor: tipoAutorValor,
+        autor: autorNombre,
+      });
+    }
+    
+    // 6. Aplicar bordes a todas las celdas
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+    
+    // 7. Generar el buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    
+    // 8. Generar el nombre del archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const filename = `agendas_${fecha}.xlsx`;
+    
+    // 9. Configurar headers y enviar
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.setHeader('Content-Length', buffer.length);
+    
+    res.send(buffer);
+    
+  } catch (error) {
+    console.error("Error al exportar agendas:", error);
+    return res.status(500).json({
+      msg: "Error al generar el archivo Excel",
+      error: error instanceof Error ? error.message : "Error desconocido"
     });
   }
 };
