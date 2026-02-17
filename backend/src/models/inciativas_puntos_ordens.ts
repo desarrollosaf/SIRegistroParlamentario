@@ -80,7 +80,7 @@ IniciativaPuntoOrden.init(
   }
 );
 
-IniciativaPuntoOrden.belongsTo(PuntosOrden, { foreignKey: 'id_punto', as: 'punto' });
+// IniciativaPuntoOrden.belongsTo(PuntosOrden, { foreignKey: 'id_punto', as: 'punto' });
 IniciativaPuntoOrden.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
 
 export default IniciativaPuntoOrden;

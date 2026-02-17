@@ -914,7 +914,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 yield inciativas_puntos_ordens_1.default.create({
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
-                    tema_votacion: item.iniciativa,
+                    tema_votacion: item.descripcion,
                     fecha_votacion: null,
                 });
             }
@@ -982,6 +982,11 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: temas_puntos_votos_1.default,
                     as: "reservas",
                     attributes: ["id", "tema_votacion"]
+                },
+                {
+                    model: inciativas_puntos_ordens_1.default,
+                    as: "iniciativas",
+                    attributes: ["id", "iniciativa"]
                 }
             ]
         });

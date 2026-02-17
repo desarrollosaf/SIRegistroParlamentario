@@ -9,6 +9,7 @@ const puntos_presenta_1 = __importDefault(require("./puntos_presenta"));
 const agendas_1 = __importDefault(require("./agendas"));
 const temas_puntos_votos_1 = __importDefault(require("./temas_puntos_votos"));
 const puntos_comisiones_1 = __importDefault(require("./puntos_comisiones"));
+const inciativas_puntos_ordens_1 = __importDefault(require("./inciativas_puntos_ordens"));
 class PuntosOrden extends sequelize_1.Model {
 }
 PuntosOrden.init({
@@ -101,5 +102,9 @@ PuntosOrden.hasMany(temas_puntos_votos_1.default, {
 PuntosOrden.hasMany(temas_puntos_votos_1.default, {
     foreignKey: "id_punto",
     as: "reservas",
+});
+PuntosOrden.hasMany(inciativas_puntos_ordens_1.default, {
+    foreignKey: "id_punto",
+    as: "iniciativas",
 });
 exports.default = PuntosOrden;
