@@ -1133,9 +1133,24 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           turnocomision: turnosNormalizados
         };
       });
+
+      const selects = await IniciativaPuntoOrden.findAll({
+        where: { 
+          id_evento: id,
+          id_punto: {
+            [Op.or]: [
+              null,
+              '',
+              '0'
+            ]
+          }
+        },
+        attributes: ["id", "iniciativa"]
+      });
       return res.status(201).json({
         message: "Se encontraron registros",
-        data: puntos, 
+        data: puntos,
+        selectini: selects
       });
 
 
