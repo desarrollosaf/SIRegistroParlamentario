@@ -1002,9 +1002,23 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             delete data.puntoTurnoComision;
             return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
         });
+        const selects = yield inciativas_puntos_ordens_1.default.findAll({
+            where: {
+                id_evento: id,
+                id_punto: {
+                    [sequelize_1.Op.or]: [
+                        null,
+                        '',
+                        '0'
+                    ]
+                }
+            },
+            attributes: ["id", "iniciativa"]
+        });
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
+            selectini: selects
         });
     }
     catch (error) {
