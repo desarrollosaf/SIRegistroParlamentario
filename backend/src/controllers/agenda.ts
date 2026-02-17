@@ -1028,7 +1028,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         await IniciativaPuntoOrden.create({
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
-          tema_votacion: item.iniciativa,
+          tema_votacion: item.descripcion,
           fecha_votacion: null,
         });
       }
@@ -1107,6 +1107,11 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             model: TemasPuntosVotos,
             as: "reservas",
             attributes: ["id", "tema_votacion"]
+          },
+          {
+            model: IniciativaPuntoOrden,
+            as: "iniciativas",
+            attributes: ["id", "iniciativa"]
           }
         ]
       });

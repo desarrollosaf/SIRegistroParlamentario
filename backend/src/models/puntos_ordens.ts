@@ -14,6 +14,7 @@ import PuntosPresenta from "./puntos_presenta";
 import Agenda from "./agendas";
 import TemasPuntosVotos from "./temas_puntos_votos";
 import PuntosComisiones from "./puntos_comisiones";
+import IniciativaPuntoOrden from "./inciativas_puntos_ordens";
 
 
 
@@ -144,6 +145,11 @@ PuntosOrden.hasMany(TemasPuntosVotos, {
 PuntosOrden.hasMany(TemasPuntosVotos, {
   foreignKey: "id_punto",
   as: "reservas",
+});
+
+PuntosOrden.hasMany(IniciativaPuntoOrden, {
+  foreignKey: "id_punto",
+  as: "iniciativas",
 });
 
 
