@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
@@ -290,3 +290,31 @@ const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getiniciativas = getiniciativas;
+const crariniidits = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const punto = yield puntos_ordens_1.default.findOne({
+            where: { id: body.punto },
+        });
+        if (!punto) {
+            return res.status(404).json({ message: "Punto no encontrado" });
+        }
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
+            where: { id: body.iniciativa },
+        });
+        if (iniciativa) {
+            yield iniciativa.update({ id_punto: punto.id });
+        }
+        return res.status(200).json({
+            message: "Iniciativa actualizada correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al actualizar la iniciativa:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.crariniidits = crariniidits;
