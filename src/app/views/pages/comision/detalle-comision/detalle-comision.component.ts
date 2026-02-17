@@ -138,7 +138,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcIniciativasPrecargadas: any[] = []; // NUEVO: para el select de iniciativas precargadas
   mostrarSelectIniciativaPrecargada = false; // NUEVO: para mostrar/ocultar el select
   iniciativaPrecargadaSeleccionada: any = null; // NUEVO: iniciativa seleccionada del select
-
+  slcIniciativasDisponibles: any[] = [];
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -218,8 +218,16 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
     this.cargarDatosIniciales();
+
+    
   }
 
+  actualizarIniciativasDisponibles() {
+    const idsAgregados = this.listaIniciativas.map(ini => ini.id);
+    this.slcIniciativasDisponibles = this.slcIniciativasPrecargadas.filter(
+      ini => !idsAgregados.includes(ini.id)
+    );
+  }
 
   ngOnDestroy(): void {
     console.log('Limpiando');
@@ -770,7 +778,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       //iniciativas precargadas
       this.slcIniciativasPrecargadas = response.selectini || [];
       console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
-
+      this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -913,13 +921,17 @@ guardarIniciativaPrecargada() {
     return;
   }
 
-  // ✅ Acceso directo al objeto completo (NO necesitas find())
+  // ✅ GUARDAR LA INICIATIVA COMPLETA ANTES DE LIMPIAR
+  const iniciativaSeleccionada = { ...this.iniciativaPrecargadaSeleccionada };
+
   const datos = {
     punto: this.puntoSeleccionadoIniciativa.id,
-    iniciativa: this.iniciativaPrecargadaSeleccionada.id  // ✅
+    iniciativa: iniciativaSeleccionada.id
   };
-console.log(datos);
-  this._eventoService.saveIniciativa(datos).subscribe({
+
+  console.log(datos);
+  
+  this._eventoService.saveIniciativasCargadas(datos).subscribe({
     next: (response: any) => {
       const Toast = Swal.mixin({
         toast: true,
@@ -933,7 +945,7 @@ console.log(datos);
         title: "Iniciativa guardada correctamente."
       });
 
-      this.toggleSelectIniciativaPrecargada();
+      // ✅ LIMPIAR DESPUÉS DE COPIAR
       this.iniciativaPrecargadaSeleccionada = null;
 
       // Actualización optimista de la UI
@@ -945,10 +957,10 @@ console.log(datos);
           this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
         }
       } else {
-        // ✅ Acceso directo a .iniciativa
+        // ✅ USAR LA COPIA QUE GUARDAMOS
         const nuevaIniciativa = {
-          id: response.id || Date.now(),
-          descripcion: this.iniciativaPrecargadaSeleccionada.iniciativa  // ✅
+          id: response.id || iniciativaSeleccionada.id,
+          iniciativa: iniciativaSeleccionada.iniciativa
         };
 
         this.listaIniciativas.push(nuevaIniciativa);
@@ -963,6 +975,9 @@ console.log(datos);
       if (puntoIndex !== -1) {
         this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
       }
+
+      // ✅ ACTUALIZAR LAS DISPONIBLES DESPUÉS DE AGREGAR
+      this.actualizarIniciativasDisponibles();
 
       this.cdr.detectChanges();
     },
@@ -1000,6 +1015,7 @@ abrirModalIniciativaPunto(punto: any) {
   this.puntoSeleccionadoIniciativa = punto;
   this.listaIniciativas = [...(punto.iniciativas || [])];
 
+  this.actualizarIniciativasDisponibles();
   this.modalRefI = this.modalService.open(this.xlModalI, {
     size: 'xl',
     windowClass: 'modal-top-centered',
@@ -1147,6 +1163,7 @@ eliminarIniciativa(iniciativa: any, index: number) {
           icon: "success",
           title: "Iniciativa eliminada."
         });
+        this.actualizarIniciativasDisponibles();
         return;
       }
 
@@ -1180,7 +1197,7 @@ eliminarIniciativa(iniciativa: any, index: number) {
           if (puntoIndex !== -1) {
             this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
           }
-
+          this.actualizarIniciativasDisponibles();
           this.cdr.detectChanges();
         },
         error: (e: HttpErrorResponse) => {
