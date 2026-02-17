@@ -244,6 +244,7 @@ exports.creariniciativa = creariniciativa;
 const eliminariniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
+        console.log(id);
         const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
             where: { id }
         });

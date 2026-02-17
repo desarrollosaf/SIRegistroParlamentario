@@ -269,6 +269,7 @@ export const creariniciativa = async (req: Request, res: Response): Promise<any>
 export const eliminariniciativa = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
+    console.log(id);
     const iniciativa = await IniciativaPuntoOrden.findOne({ 
       where: { id }
     });
