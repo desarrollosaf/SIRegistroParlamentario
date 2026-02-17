@@ -49,7 +49,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
   @ViewChild('xlModalI') xlModalI!: TemplateRef<any>;
-  
+
   step = 1;
   stepNames = [
     { numero: 1, nombre: 'Asistencia' },
@@ -102,7 +102,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   modalRef!: NgbModalRef;
   modalRefT!: NgbModalRef;
   modalRefI!: NgbModalRef;
-  
+
   formIntervencion!: FormGroup;
   mostrarFormIntervencion = false;
   tipoIntervencionActual: number = 1;
@@ -190,36 +190,37 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
     this.formIniciativa = this.fb.group({
-    descripcion: ['', Validators.required]
+      descripcion: ['', Validators.required]
     });
 
   }
 
   ngOnInit(): void {
     this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
-      if (!value) {
-        this.formPunto.get('punto')?.setValue('');
-        this.formPunto.get('punto')?.enable();
-        return;
-      }
+      // console.log('jkasdhjksdfajkhasd');
+      // if (!value) {
+      //   this.formPunto.get('punto')?.setValue('');
+      //   this.formPunto.get('punto')?.enable();
+      //   return;
+      // }
 
-      let selectedOption;
+      // let selectedOption;
 
-      if (this.esComision) {
-        selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
-      } else {
-        selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
-      }
+      // if (this.esComision) {
+      //   selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
+      // } else {
+      //   selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
+      // }
 
-      const textoSeleccionado = selectedOption?.punto || '';
+      // const textoSeleccionado = selectedOption?.punto || '';
 
-      this.formPunto.get('punto')?.setValue(textoSeleccionado);
-      this.formPunto.get('punto')?.disable();
+      // this.formPunto.get('punto')?.setValue(textoSeleccionado);
+      // this.formPunto.get('punto')?.disable();
     });
 
     this.cargarDatosIniciales();
 
-    
+
   }
 
   actualizarIniciativasDisponibles() {
@@ -774,11 +775,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log('Response completo:', response);
- 
-      //iniciativas precargadas
-      this.slcIniciativasPrecargadas = response.selectini || [];
-      console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
-      this.actualizarIniciativasDisponibles();
+
+        //iniciativas precargadas
+        this.slcIniciativasPrecargadas = response.selectini || [];
+        console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
+        this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -823,7 +824,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             ...punto,
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
-            iniciativas: punto.iniciativas || [], 
+            iniciativas: punto.iniciativas || [],
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -888,270 +889,51 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   //**********************************INICIATIVAS******************************************************** */
 
 
-// NUEVO: Toggle para mostrar/ocultar el select de iniciativas precargadas
-toggleSelectIniciativaPrecargada() {
-  this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
-  if (!this.mostrarSelectIniciativaPrecargada) {
-    this.iniciativaPrecargadaSeleccionada = null;
-  }
-}
-
-guardarIniciativaPrecargada() {
-  if (!this.iniciativaPrecargadaSeleccionada) {
-    Swal.fire({
-      position: "center",
-      icon: "warning",
-      title: "¡Atención!",
-      text: "Debe seleccionar una iniciativa.",
-      showConfirmButton: false,
-      timer: 2000
-    });
-    return;
-  }
-
-  if (!this.puntoSeleccionadoIniciativa) {
-    Swal.fire({
-      position: "center",
-      icon: "error",
-      title: "Error",
-      text: "No se puede agregar iniciativa sin un punto seleccionado.",
-      showConfirmButton: false,
-      timer: 2000
-    });
-    return;
-  }
-
-  // ✅ GUARDAR LA INICIATIVA COMPLETA ANTES DE LIMPIAR
-  const iniciativaSeleccionada = { ...this.iniciativaPrecargadaSeleccionada };
-
-  const datos = {
-    punto: this.puntoSeleccionadoIniciativa.id,
-    iniciativa: iniciativaSeleccionada.id
-  };
-
-  console.log(datos);
-  
-  this._eventoService.saveIniciativasCargadas(datos).subscribe({
-    next: (response: any) => {
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
-      });
-      Toast.fire({
-        icon: "success",
-        title: "Iniciativa guardada correctamente."
-      });
-
-      // ✅ LIMPIAR DESPUÉS DE COPIAR
+  // NUEVO: Toggle para mostrar/ocultar el select de iniciativas precargadas
+  toggleSelectIniciativaPrecargada() {
+    this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
+    if (!this.mostrarSelectIniciativaPrecargada) {
       this.iniciativaPrecargadaSeleccionada = null;
+    }
+  }
 
-      // Actualización optimista de la UI
-      if (response.data) {
-        this.listaIniciativas.push(response.data);
-        if (this.puntoSeleccionadoIniciativa.iniciativas) {
-          this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
-        } else {
-          this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
-        }
-      } else {
-        // ✅ USAR LA COPIA QUE GUARDAMOS
-        const nuevaIniciativa = {
-          id: response.id || iniciativaSeleccionada.id,
-          iniciativa: iniciativaSeleccionada.iniciativa
-        };
-
-        this.listaIniciativas.push(nuevaIniciativa);
-        if (this.puntoSeleccionadoIniciativa.iniciativas) {
-          this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
-        } else {
-          this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
-        }
-      }
-
-      const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
-      if (puntoIndex !== -1) {
-        this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
-      }
-
-      // ✅ ACTUALIZAR LAS DISPONIBLES DESPUÉS DE AGREGAR
-      this.actualizarIniciativasDisponibles();
-
-      this.cdr.detectChanges();
-    },
-    error: (e: HttpErrorResponse) => {
-      const msg = e.error?.msg || 'Error desconocido';
-      console.error('Error del servidor:', msg);
+  guardarIniciativaPrecargada() {
+    if (!this.iniciativaPrecargadaSeleccionada) {
       Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: "Debe seleccionar una iniciativa.",
+        showConfirmButton: false,
+        timer: 2000
+      });
+      return;
+    }
+
+    if (!this.puntoSeleccionadoIniciativa) {
+      Swal.fire({
+        position: "center",
         icon: "error",
         title: "Error",
-        text: msg,
-        timer: 3000
+        text: "No se puede agregar iniciativa sin un punto seleccionado.",
+        showConfirmButton: false,
+        timer: 2000
       });
+      return;
     }
-  });
-}
 
-abrirModalIniciativa() {
-  this.formIniciativa.reset();
-  this.mostrarformIniciativa = false;
-  this.puntoSeleccionadoIniciativa = null;
-  this.listaIniciativas = [...this.iniciativasTemporales];
+    // ✅ GUARDAR LA INICIATIVA COMPLETA ANTES DE LIMPIAR
+    const iniciativaSeleccionada = { ...this.iniciativaPrecargadaSeleccionada };
 
-  this.modalRefI = this.modalService.open(this.xlModalI, {
-    size: 'xl',
-    windowClass: 'modal-top-centered',
-    backdrop: 'static'
-  });
-}
-
-abrirModalIniciativaPunto(punto: any) {
-  this.formIniciativa.reset();
-  this.mostrarformIniciativa = false;
-  this.mostrarSelectIniciativaPrecargada = false; // NUEVO: Limpiar el select
-  this.iniciativaPrecargadaSeleccionada = null; // NUEVO: Limpiar selección
-  this.puntoSeleccionadoIniciativa = punto;
-  this.listaIniciativas = [...(punto.iniciativas || [])];
-
-  this.actualizarIniciativasDisponibles();
-  this.modalRefI = this.modalService.open(this.xlModalI, {
-    size: 'xl',
-    windowClass: 'modal-top-centered',
-    backdrop: 'static'
-  });
-}
-toggleformIniciativa() {
-  this.mostrarformIniciativa = !this.mostrarformIniciativa;
-  if (!this.mostrarformIniciativa) {
-    this.formIniciativa.reset();
-  }
-}
-
-guardarIniciativa() {
-  if (this.formIniciativa.invalid) {
-    Swal.fire({
-      position: "center",
-      icon: "warning",
-      title: "¡Atención!",
-      text: "Debe escribir la descripción de la iniciativa.",
-      showConfirmButton: false,
-      timer: 2000
-    });
-    return;
-  }
-
-  // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
-  if (!this.puntoSeleccionadoIniciativa) {
-    const nuevaIniciativa = {
-      id: Date.now(),
-      descripcion: this.formIniciativa.value.descripcion
+    const datos = {
+      punto: this.puntoSeleccionadoIniciativa.id,
+      iniciativa: iniciativaSeleccionada.id
     };
 
-    this.listaIniciativas.push(nuevaIniciativa);
-    this.iniciativasTemporales.push(nuevaIniciativa);
+    console.log(datos);
 
-    const Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    Toast.fire({
-      icon: "success",
-      title: "Se agregó iniciativa (se guardará con el punto)."
-    });
-
-    this.toggleformIniciativa();
-    return;
-  }
-
-  // CASO 2: PUNTO EXISTENTE (GUARDAR EN BD)
-  const datos = {
-    punto: this.puntoSeleccionadoIniciativa.id,
-    descripcion: this.formIniciativa.value.descripcion
-  };
-
-  this._eventoService.saveIniciativa(datos).subscribe({
-    next: (response: any) => {
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
-      });
-      Toast.fire({
-        icon: "success",
-        title: "Iniciativa guardada correctamente."
-      });
-
-      this.toggleformIniciativa();
-
-      if (response.data) {
-        this.listaIniciativas.push(response.data);
-        if (this.puntoSeleccionadoIniciativa.iniciativas) {
-          this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
-        } else {
-          this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
-        }
-      } else {
-        const nuevaIniciativa = {
-          id: response.id || Date.now(),
-          descripcion: datos.descripcion
-        };
-
-        this.listaIniciativas.push(nuevaIniciativa);
-        if (this.puntoSeleccionadoIniciativa.iniciativas) {
-          this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
-        } else {
-          this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
-        }
-      }
-
-      const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
-      if (puntoIndex !== -1) {
-        this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
-      }
-
-      this.cdr.detectChanges();
-    },
-    error: (e: HttpErrorResponse) => {
-      const msg = e.error?.msg || 'Error desconocido';
-      console.error('Error del servidor:', msg);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: msg,
-        timer: 3000
-      });
-    }
-  });
-}
-
-eliminarIniciativa(iniciativa: any, index: number) {
-  Swal.fire({
-    title: "¿Está seguro?",
-    text: "Se eliminará esta iniciativa",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Confirmar",
-    cancelButtonText: "Cancelar"
-  }).then((result) => {
-    if (result.isConfirmed) {
-      
-      // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
-      if (!this.puntoSeleccionadoIniciativa) {
-        this.listaIniciativas.splice(index, 1);
-        const tempIndex = this.iniciativasTemporales.findIndex(t => t.id === iniciativa.id);
-        if (tempIndex > -1) {
-          this.iniciativasTemporales.splice(tempIndex, 1);
-        }
-
+    this._eventoService.saveIniciativasCargadas(datos).subscribe({
+      next: (response: any) => {
         const Toast = Swal.mixin({
           toast: true,
           position: "top-end",
@@ -1161,15 +943,216 @@ eliminarIniciativa(iniciativa: any, index: number) {
         });
         Toast.fire({
           icon: "success",
-          title: "Iniciativa eliminada."
+          title: "Iniciativa guardada correctamente."
         });
-        this.actualizarIniciativasDisponibles();
-        return;
-      }
 
-      // CASO 2: PUNTO EXISTENTE (ELIMINAR DE BD)
-      this._eventoService.deleteIniciativa(iniciativa.id).subscribe({
-        next: (response: any) => {
+        // ✅ LIMPIAR DESPUÉS DE COPIAR
+        this.iniciativaPrecargadaSeleccionada = null;
+
+        // Actualización optimista de la UI
+        if (response.data) {
+          this.listaIniciativas.push(response.data);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+          }
+        } else {
+          // ✅ USAR LA COPIA QUE GUARDAMOS
+          const nuevaIniciativa = {
+            id: response.id || iniciativaSeleccionada.id,
+            iniciativa: iniciativaSeleccionada.iniciativa
+          };
+
+          this.listaIniciativas.push(nuevaIniciativa);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+          }
+        }
+
+        const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+        if (puntoIndex !== -1) {
+          this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+        }
+
+        // ✅ ACTUALIZAR LAS DISPONIBLES DESPUÉS DE AGREGAR
+        this.actualizarIniciativasDisponibles();
+
+        this.cdr.detectChanges();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: msg,
+          timer: 3000
+        });
+      }
+    });
+  }
+
+  abrirModalIniciativa() {
+    this.formIniciativa.reset();
+    this.mostrarformIniciativa = false;
+    this.puntoSeleccionadoIniciativa = null;
+    this.listaIniciativas = [...this.iniciativasTemporales];
+
+    this.modalRefI = this.modalService.open(this.xlModalI, {
+      size: 'xl',
+      windowClass: 'modal-top-centered',
+      backdrop: 'static'
+    });
+  }
+
+  abrirModalIniciativaPunto(punto: any) {
+    this.formIniciativa.reset();
+    this.mostrarformIniciativa = false;
+    this.mostrarSelectIniciativaPrecargada = false; // NUEVO: Limpiar el select
+    this.iniciativaPrecargadaSeleccionada = null; // NUEVO: Limpiar selección
+    this.puntoSeleccionadoIniciativa = punto;
+    this.listaIniciativas = [...(punto.iniciativas || [])];
+
+    this.actualizarIniciativasDisponibles();
+    this.modalRefI = this.modalService.open(this.xlModalI, {
+      size: 'xl',
+      windowClass: 'modal-top-centered',
+      backdrop: 'static'
+    });
+  }
+  toggleformIniciativa() {
+    this.mostrarformIniciativa = !this.mostrarformIniciativa;
+    if (!this.mostrarformIniciativa) {
+      this.formIniciativa.reset();
+    }
+  }
+
+  guardarIniciativa() {
+    if (this.formIniciativa.invalid) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "¡Atención!",
+        text: "Debe escribir la descripción de la iniciativa.",
+        showConfirmButton: false,
+        timer: 2000
+      });
+      return;
+    }
+
+    // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
+    if (!this.puntoSeleccionadoIniciativa) {
+      const nuevaIniciativa = {
+        id: Date.now(),
+        descripcion: this.formIniciativa.value.descripcion
+      };
+
+      this.listaIniciativas.push(nuevaIniciativa);
+      this.iniciativasTemporales.push(nuevaIniciativa);
+
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Se agregó iniciativa (se guardará con el punto)."
+      });
+
+      this.toggleformIniciativa();
+      return;
+    }
+
+    // CASO 2: PUNTO EXISTENTE (GUARDAR EN BD)
+    const datos = {
+      punto: this.puntoSeleccionadoIniciativa.id,
+      descripcion: this.formIniciativa.value.descripcion
+    };
+
+    this._eventoService.saveIniciativa(datos).subscribe({
+      next: (response: any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Iniciativa guardada correctamente."
+        });
+
+        this.toggleformIniciativa();
+
+        if (response.data) {
+          this.listaIniciativas.push(response.data);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+          }
+        } else {
+          const nuevaIniciativa = {
+            id: response.id || Date.now(),
+            descripcion: datos.descripcion
+          };
+
+          this.listaIniciativas.push(nuevaIniciativa);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+          }
+        }
+
+        const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+        if (puntoIndex !== -1) {
+          this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: msg,
+          timer: 3000
+        });
+      }
+    });
+  }
+
+  eliminarIniciativa(iniciativa: any, index: number) {
+    Swal.fire({
+      title: "¿Está seguro?",
+      text: "Se eliminará esta iniciativa",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+
+        // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
+        if (!this.puntoSeleccionadoIniciativa) {
+          this.listaIniciativas.splice(index, 1);
+          const tempIndex = this.iniciativasTemporales.findIndex(t => t.id === iniciativa.id);
+          if (tempIndex > -1) {
+            this.iniciativasTemporales.splice(tempIndex, 1);
+          }
+
           const Toast = Swal.mixin({
             toast: true,
             position: "top-end",
@@ -1179,45 +1162,63 @@ eliminarIniciativa(iniciativa: any, index: number) {
           });
           Toast.fire({
             icon: "success",
-            title: "Iniciativa eliminada correctamente."
+            title: "Iniciativa eliminada."
           });
-
-          this.listaIniciativas.splice(index, 1);
-
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            const iniciativaIndex = this.puntoSeleccionadoIniciativa.iniciativas.findIndex(
-              (r: any) => r.id === iniciativa.id
-            );
-            if (iniciativaIndex !== -1) {
-              this.puntoSeleccionadoIniciativa.iniciativas.splice(iniciativaIndex, 1);
-            }
-          }
-
-          const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
-          if (puntoIndex !== -1) {
-            this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
-          }
           this.actualizarIniciativasDisponibles();
-          this.cdr.detectChanges();
-        },
-        error: (e: HttpErrorResponse) => {
-          const msg = e.error?.msg || 'Error desconocido';
-          console.error('Error del servidor:', msg);
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: msg,
-            timer: 3000
-          });
+          return;
         }
-      });
-    }
-  });
-}
 
-cerrarModalIniciativa() {
-  this.modalRefI.close();
-}
+        // CASO 2: PUNTO EXISTENTE (ELIMINAR DE BD)
+        this._eventoService.deleteIniciativa(iniciativa.id).subscribe({
+          next: (response: any) => {
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true
+            });
+            Toast.fire({
+              icon: "success",
+              title: "Iniciativa eliminada correctamente."
+            });
+
+            this.listaIniciativas.splice(index, 1);
+
+            if (this.puntoSeleccionadoIniciativa.iniciativas) {
+              const iniciativaIndex = this.puntoSeleccionadoIniciativa.iniciativas.findIndex(
+                (r: any) => r.id === iniciativa.id
+              );
+              if (iniciativaIndex !== -1) {
+                this.puntoSeleccionadoIniciativa.iniciativas.splice(iniciativaIndex, 1);
+              }
+            }
+
+            const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+            if (puntoIndex !== -1) {
+              this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+            }
+            this.actualizarIniciativasDisponibles();
+            this.cdr.detectChanges();
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error del servidor:', msg);
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: msg,
+              timer: 3000
+            });
+          }
+        });
+      }
+    });
+  }
+
+  cerrarModalIniciativa() {
+    this.modalRefI.close();
+  }
 
 
 
@@ -1331,25 +1332,29 @@ cerrarModalIniciativa() {
   //   this.cdr.detectChanges();
   // }
 
+
+
+
+
   aplicarPuntoTurnado(form: FormGroup, value: any): void {
-    if (!value) {
-      form.get('punto')?.setValue('');
-      form.get('punto')?.enable();
-      return;
-    }
+    // if (!value) {
+    //   form.get('punto')?.setValue('');
+    //   form.get('punto')?.enable();
+    //   return;
+    // }
 
-    let selectedOption;
+    // let selectedOption;
 
-    if (this.esComision) {
-      selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
-    } else {
-      selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
-    }
+    // if (this.esComision) {
+    //   selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+    // } else {
+    //   selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
+    // }
 
-    const textoSeleccionado = selectedOption?.punto || '';
+    // const textoSeleccionado = selectedOption?.punto || '';
 
-    form.get('punto')?.setValue(textoSeleccionado);
-    form.get('punto')?.disable();
+    // form.get('punto')?.setValue(textoSeleccionado);
+    // form.get('punto')?.disable();
   }
 
 
@@ -1955,21 +1960,21 @@ cerrarModalIniciativa() {
     inputRef.value = '';
   }
 
- toggleFormularioPunto() {
-  this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
-  this.documentos['docPunto'] = null;
-  this.formPunto.reset({
-    se_turna_comision: false
-  });
+  toggleFormularioPunto() {
+    this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+    this.documentos['docPunto'] = null;
+    this.formPunto.reset({
+      se_turna_comision: false
+    });
 
-  // Limpiar temporales cuando se cierra el formulario
-  if (!this.mostrarFormularioPunto) {
-    this.reservasTemporales = [];
-    this.listaReservas = [];
-    this.iniciativasTemporales = []; // AGREGAR ESTA LÍNEA
-    this.listaIniciativas = [];       // AGREGAR ESTA LÍNEA
+    // Limpiar temporales cuando se cierra el formulario
+    if (!this.mostrarFormularioPunto) {
+      this.reservasTemporales = [];
+      this.listaReservas = [];
+      this.iniciativasTemporales = []; // AGREGAR ESTA LÍNEA
+      this.listaIniciativas = [];       // AGREGAR ESTA LÍNEA
+    }
   }
-}
 
   guardarPunto() {
     if (this.formPunto.invalid) {
@@ -2043,8 +2048,8 @@ cerrarModalIniciativa() {
         });
         this.reservasTemporales = [];
         this.listaReservas = [];
-        this.iniciativasTemporales = [];  
-        this.listaIniciativas = [];       
+        this.iniciativasTemporales = [];
+        this.listaIniciativas = [];
         this.mostrarFormularioPunto = false;
         this.cargarPuntosRegistrados();
       },
@@ -2430,8 +2435,8 @@ cerrarModalIniciativa() {
       if (result.isConfirmed) {
         this.puntoSeleccionadoVotacion = null;
         this.reservaPuntoSeleccionadoVotacion = null;
-        this.votacionIniciada = false; 
-        
+        this.votacionIniciada = false;
+
         this.votacionActual = { idPunto: null, idReserva: null };
         const Toast = Swal.mixin({
           toast: true,
@@ -2611,23 +2616,23 @@ cerrarModalIniciativa() {
 
   }
 
-obtenerTextoPunto(idPunto: number | null): string {
+  obtenerTextoPunto(idPunto: number | null): string {
     if (!idPunto) return '';
-    
+
     const punto = this.listaPuntosVotacion.find(p => p.id === idPunto);
     if (!punto) return `Punto #${idPunto}`;
-    
+
     // Mostrar número y descripción del punto
     return `${punto.nopunto ? 'Punto ' + punto.nopunto : 'Punto'}: ${punto.punto}`;
-}
+  }
 
-obtenerTextoReserva(idReserva: string | null): string {
+  obtenerTextoReserva(idReserva: string | null): string {
     if (!idReserva) return '';
-    
+
     const reserva = this.listaReservasPunto.find(r => r.id === idReserva);
     if (!reserva) return `Reserva #${idReserva}`;
-    
+
     return reserva.tema_votacion || 'Sin descripción';
-}
+  }
 
 }
