@@ -634,11 +634,13 @@
                                     </div>
 
                                     <div *ngFor="let iniciativas of consoleiniciativas; let i = index">
-                                        {{ iniciativas.iniciativa }}
+                                        <br>
+                                        <span class="fw-semibold">{{ iniciativas.iniciativa }}</span> 
 
 
+<br>
                                     </div>
-                                    <br>
+                                    
                                     <div *ngIf="listaPuntos.length > 0" ngbAccordion [closeOthers]="true" class="mt-4">
                                         <div *ngFor="let punto of listaPuntos; let i = index" ngbAccordionItem
                                             [collapsed]="true">
