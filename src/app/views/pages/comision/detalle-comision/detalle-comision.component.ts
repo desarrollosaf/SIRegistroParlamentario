@@ -135,6 +135,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   iniciativasTemporales: any[] = []; // Para almacenar antes de guardar el punto
   puntoSeleccionadoIniciativa: any = null;
 
+  slcIniciativasPrecargadas: any[] = []; // NUEVO: para el select de iniciativas precargadas
+  mostrarSelectIniciativaPrecargada = false; // NUEVO: para mostrar/ocultar el select
+  iniciativaPrecargadaSeleccionada: any = null; // NUEVO: iniciativa seleccionada del select
+
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -762,6 +766,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log('Response completo:', response);
+ 
+      //iniciativas precargadas
+      this.slcIniciativasPrecargadas = response.selectini || [];
+      console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
+
         this.listaPuntos = response.data || [];
         this.listaPuntos = this.listaPuntos.map(punto => {
 
@@ -863,7 +872,113 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+
+
+
+
+
   //**********************************INICIATIVAS******************************************************** */
+
+
+// NUEVO: Toggle para mostrar/ocultar el select de iniciativas precargadas
+toggleSelectIniciativaPrecargada() {
+  this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
+  if (!this.mostrarSelectIniciativaPrecargada) {
+    this.iniciativaPrecargadaSeleccionada = null;
+  }
+}
+
+guardarIniciativaPrecargada() {
+  if (!this.iniciativaPrecargadaSeleccionada) {
+    Swal.fire({
+      position: "center",
+      icon: "warning",
+      title: "¡Atención!",
+      text: "Debe seleccionar una iniciativa.",
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  if (!this.puntoSeleccionadoIniciativa) {
+    Swal.fire({
+      position: "center",
+      icon: "error",
+      title: "Error",
+      text: "No se puede agregar iniciativa sin un punto seleccionado.",
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  // ✅ Acceso directo al objeto completo (NO necesitas find())
+  const datos = {
+    punto: this.puntoSeleccionadoIniciativa.id,
+    iniciativa: this.iniciativaPrecargadaSeleccionada.id  // ✅
+  };
+console.log(datos);
+  this._eventoService.saveIniciativa(datos).subscribe({
+    next: (response: any) => {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Iniciativa guardada correctamente."
+      });
+
+      this.toggleSelectIniciativaPrecargada();
+      this.iniciativaPrecargadaSeleccionada = null;
+
+      // Actualización optimista de la UI
+      if (response.data) {
+        this.listaIniciativas.push(response.data);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+        }
+      } else {
+        // ✅ Acceso directo a .iniciativa
+        const nuevaIniciativa = {
+          id: response.id || Date.now(),
+          descripcion: this.iniciativaPrecargadaSeleccionada.iniciativa  // ✅
+        };
+
+        this.listaIniciativas.push(nuevaIniciativa);
+        if (this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+        } else {
+          this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+        }
+      }
+
+      const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+      if (puntoIndex !== -1) {
+        this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+      }
+
+      this.cdr.detectChanges();
+    },
+    error: (e: HttpErrorResponse) => {
+      const msg = e.error?.msg || 'Error desconocido';
+      console.error('Error del servidor:', msg);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: msg,
+        timer: 3000
+      });
+    }
+  });
+}
+
 abrirModalIniciativa() {
   this.formIniciativa.reset();
   this.mostrarformIniciativa = false;
@@ -880,6 +995,8 @@ abrirModalIniciativa() {
 abrirModalIniciativaPunto(punto: any) {
   this.formIniciativa.reset();
   this.mostrarformIniciativa = false;
+  this.mostrarSelectIniciativaPrecargada = false; // NUEVO: Limpiar el select
+  this.iniciativaPrecargadaSeleccionada = null; // NUEVO: Limpiar selección
   this.puntoSeleccionadoIniciativa = punto;
   this.listaIniciativas = [...(punto.iniciativas || [])];
 
@@ -889,7 +1006,6 @@ abrirModalIniciativaPunto(punto: any) {
     backdrop: 'static'
   });
 }
-
 toggleformIniciativa() {
   this.mostrarformIniciativa = !this.mostrarformIniciativa;
   if (!this.mostrarformIniciativa) {
