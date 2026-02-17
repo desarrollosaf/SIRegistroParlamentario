@@ -139,6 +139,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   mostrarSelectIniciativaPrecargada = false; // NUEVO: para mostrar/ocultar el select
   iniciativaPrecargadaSeleccionada: any = null; // NUEVO: iniciativa seleccionada del select
   slcIniciativasDisponibles: any[] = [];
+
+
+  consoleiniciativas: any[] = [];
   constructor(
     private fb: FormBuilder,
     private aRouter: ActivatedRoute,
@@ -777,6 +780,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         console.log('Response completo:', response);
 
         //iniciativas precargadas
+        this.consoleiniciativas = response.selectini || [];
         this.slcIniciativasPrecargadas = response.selectini || [];
         console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
         this.actualizarIniciativasDisponibles();
