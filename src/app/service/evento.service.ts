@@ -132,5 +132,11 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getreservas/${id}`)
   }
   
+  saveIniciativasCargadas(data: any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/crariniidits/`,data)
+  }
 
+
+
+  
 }
