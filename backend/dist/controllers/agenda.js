@@ -151,9 +151,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             if (anfitriones.length > 0) { // ✅ Validar antes de continuar
                 const puntosturnados = yield puntos_comisiones_1.default.findAll({
-                    where: {
-                        id_comision: anfitriones.map(a => a.autor_id),
-                    }
+                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' OR ')})`)
                 });
                 if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
                     puntos = yield puntos_ordens_1.default.findAll({
@@ -927,13 +925,20 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         if (body.tipo_evento == 0) {
-            for (const item of turnocomision) {
-                yield puntos_comisiones_1.default.create({
-                    id_punto: puntonuevo.id,
-                    id_comision: item,
-                });
-            }
+            const comisionesString = `[${turnocomision.join(',')}]`;
+            yield puntos_comisiones_1.default.create({
+                id_punto: puntonuevo.id,
+                id_comision: comisionesString,
+            });
         }
+        // if(body.tipo_evento == 0){
+        //   for (const item of turnocomision) {
+        //     await PuntosComisiones.create({
+        //       id_punto: puntonuevo.id,
+        //       id_comision: item,
+        //     });
+        //   }
+        // }
         return res.status(201).json({
             message: "Punto creado correctamente",
             data: puntonuevo,
@@ -1000,7 +1005,32 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 ? data.turnocomision
                 : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
             delete data.puntoTurnoComision;
-            return Object.assign(Object.assign({}, data), { turnocomision: turnosNormalizados });
+            // Expandir cada turno en múltiples registros según las comisiones
+            const turnosExpandidos = [];
+            turnosNormalizados.forEach((turno) => {
+                if (turno.id_comision && typeof turno.id_comision === 'string') {
+                    // Convertir "[id1,id2,id3]" a ["id1", "id2", "id3"]
+                    const comisionesArray = turno.id_comision
+                        .replace(/[\[\]]/g, '')
+                        .split(',')
+                        .map((id) => id.trim())
+                        .filter((id) => id);
+                    // Crear un registro por cada comisión
+                    comisionesArray.forEach(comisionId => {
+                        turnosExpandidos.push({
+                            id: turno.id,
+                            id_punto: turno.id_punto,
+                            id_comision: comisionId,
+                            id_punto_turno: turno.id_punto_turno
+                        });
+                    });
+                }
+                else {
+                    // Si no tiene el formato string, mantener el original
+                    turnosExpandidos.push(turno);
+                }
+            });
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos });
         });
         const selects = yield inciativas_puntos_ordens_1.default.findAll({
             where: {
@@ -1206,12 +1236,17 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             yield puntos_comisiones_1.default.destroy({
                 where: { id_punto: punto.id }
             });
-            for (const item of turnocomision) {
-                yield puntos_comisiones_1.default.create({
-                    id_punto: punto.id,
-                    id_comision: item,
-                });
-            }
+            const comisionesString = `[${turnocomision.join(',')}]`;
+            yield puntos_comisiones_1.default.create({
+                id_punto: punto.id,
+                id_comision: comisionesString,
+            });
+            // for (const item of turnocomision) {
+            //   await PuntosComisiones.create({
+            //     id_punto: punto.id,
+            //     id_comision: item,
+            //   });
+            // }
         }
         return res.status(200).json({
             message: "Punto actualizado correctamente",

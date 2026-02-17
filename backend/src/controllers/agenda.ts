@@ -169,9 +169,11 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       
       if (anfitriones.length > 0) { // ✅ Validar antes de continuar
         const puntosturnados = await PuntosComisiones.findAll({
-          where: { 
-            id_comision: anfitriones.map(a => a.autor_id),
-          }
+          where: Sequelize.literal(
+            `(${anfitriones.map(a => 
+              `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
+            ).join(' OR ')})`
+          )
         });
         
         if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
@@ -1042,15 +1044,22 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-
     if(body.tipo_evento == 0){
-      for (const item of turnocomision) {
-        await PuntosComisiones.create({
-          id_punto: puntonuevo.id,
-          id_comision: item,
-        });
-      }
+      const comisionesString = `[${turnocomision.join(',')}]`;
+      await PuntosComisiones.create({
+        id_punto: puntonuevo.id,
+        id_comision: comisionesString,
+      });
     }
+
+    // if(body.tipo_evento == 0){
+    //   for (const item of turnocomision) {
+    //     await PuntosComisiones.create({
+    //       id_punto: puntonuevo.id,
+    //       id_comision: item,
+    //     });
+    //   }
+    // }
     
 
 
@@ -1121,16 +1130,44 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       }
       const puntos = puntosRaw.map(punto => {
         const data = punto.toJSON();
+        
         const turnosNormalizados =
           data.turnocomision?.length
             ? data.turnocomision
             : data.puntoTurnoComision ?? [];
-
+        
         delete data.puntoTurnoComision;
-
+        
+        // Expandir cada turno en múltiples registros según las comisiones
+        const turnosExpandidos: any[] = [];
+        
+        turnosNormalizados.forEach((turno: any) => {
+          if (turno.id_comision && typeof turno.id_comision === 'string') {
+            // Convertir "[id1,id2,id3]" a ["id1", "id2", "id3"]
+            const comisionesArray = turno.id_comision
+              .replace(/[\[\]]/g, '')
+              .split(',')
+              .map((id: string) => id.trim())
+              .filter((id: string) => id);
+            
+            // Crear un registro por cada comisión
+            comisionesArray.forEach(comisionId => {
+              turnosExpandidos.push({
+                id: turno.id,
+                id_punto: turno.id_punto,
+                id_comision: comisionId,
+                id_punto_turno: turno.id_punto_turno
+              });
+            });
+          } else {
+            // Si no tiene el formato string, mantener el original
+            turnosExpandidos.push(turno);
+          }
+        });
+        
         return {
           ...data,
-          turnocomision: turnosNormalizados
+          turnocomision: turnosExpandidos
         };
       });
 
@@ -1362,13 +1399,20 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       await PuntosComisiones.destroy({
         where: { id_punto: punto.id }
       });
+      
+      const comisionesString = `[${turnocomision.join(',')}]`;
+      await PuntosComisiones.create({
+        id_punto: punto.id,
+        id_comision: comisionesString,
+      });
+   
 
-      for (const item of turnocomision) {
-        await PuntosComisiones.create({
-          id_punto: punto.id,
-          id_comision: item,
-        });
-      }
+      // for (const item of turnocomision) {
+      //   await PuntosComisiones.create({
+      //     id_punto: punto.id,
+      //     id_comision: item,
+      //   });
+      // }
 
     }
     
