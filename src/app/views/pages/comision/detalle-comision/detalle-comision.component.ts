@@ -198,24 +198,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
       // console.log('jkasdhjksdfajkhasd');
-      // if (!value) {
-      //   this.formPunto.get('punto')?.setValue('');
-      //   this.formPunto.get('punto')?.enable();
-      //   return;
-      // }
+      if (!value) {
+        this.formPunto.get('punto')?.setValue('');
+        this.formPunto.get('punto')?.enable();
+        return;
+      }
 
-      // let selectedOption;
+      let selectedOption;
 
-      // if (this.esComision) {
-      //   selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
-      // } else {
-      //   selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
-      // }
+      if (this.esComision) {
+        selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
+      } else {
+        selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
+      }
 
-      // const textoSeleccionado = selectedOption?.punto || '';
+      const textoSeleccionado = selectedOption?.punto || '';
 
-      // this.formPunto.get('punto')?.setValue(textoSeleccionado);
-      // this.formPunto.get('punto')?.disable();
+      this.formPunto.get('punto')?.setValue(textoSeleccionado);
+      this.formPunto.get('punto')?.disable();
     });
 
     this.cargarDatosIniciales();
@@ -1337,24 +1337,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   aplicarPuntoTurnado(form: FormGroup, value: any): void {
-    // if (!value) {
-    //   form.get('punto')?.setValue('');
-    //   form.get('punto')?.enable();
-    //   return;
-    // }
+    if (!value) {
+      form.get('punto')?.setValue('');
+      form.get('punto')?.enable();
+      return;
+    }
 
-    // let selectedOption;
+    let selectedOption;
 
-    // if (this.esComision) {
-    //   selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
-    // } else {
-    //   selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
-    // }
+    if (this.esComision) {
+      selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+    } else {
+      selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
+    }
 
-    // const textoSeleccionado = selectedOption?.punto || '';
+    const textoSeleccionado = selectedOption?.punto || '';
 
-    // form.get('punto')?.setValue(textoSeleccionado);
-    // form.get('punto')?.disable();
+    form.get('punto')?.setValue(textoSeleccionado);
+    form.get('punto')?.disable();
   }
 
 
