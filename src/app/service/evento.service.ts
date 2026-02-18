@@ -140,5 +140,10 @@ export class EventoService {
   getIniciativasList(): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl1}/selectiniciativas/`)
   }
-  
+
+
+  getInfinIciativa(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl1}/getinfiniciativa/${id}`)
+  }
+
 }
