@@ -15,6 +15,7 @@ import Comision from "../models/comisions";
 import ComisionUsuario from "../models/comision_usuarios";
 import { comisiones } from "../models/init-models";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
+import PuntosComisiones from "../models/puntos_comisiones";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -371,17 +372,86 @@ export const selectiniciativas = async (req: Request, res: Response): Promise<an
 };
 
 
+const formatearFecha = (fecha: string): string => {
+  if (!fecha) return '';
+  const meses = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+  const date = new Date(fecha);
+  const dia = date.getUTCDate();
+  const mes = meses[date.getUTCMonth()];
+  const anio = date.getUTCFullYear();
+  return `${dia} de ${mes} de ${anio}`;
+};
+
+const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
+  if (!eventoId || tipoEventoNombre === 'Sesión') return {};
+
+  const anfitriones = await AnfitrionAgenda.findAll({
+    where: { agenda_id: eventoId },
+    attributes: ["autor_id"],
+    raw: true
+  });
+
+  const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
+  if (comisionIds.length === 0) return { comisiones: null };
+
+  const comisiones = await Comision.findAll({
+    where: { id: comisionIds },
+    attributes: ['nombre'],
+    raw: true,
+  });
+
+  return {
+    comisiones: comisiones.map((c: any) => c.nombre).join(', ')
+  };
+};
+
+const getComisionesTurnado = async (puntoId: string) => {
+  if (!puntoId) return { turnado: false, comisiones_turnado: null };
+
+  const puntosComisiones = await PuntosComisiones.findAll({
+    where: { id_punto: puntoId },
+    attributes: ["id_comision"],
+    raw: true
+  });
+
+  if (puntosComisiones.length === 0) return { turnado: false, comisiones_turnado: null };
+
+  const idsRaw = (puntosComisiones[0] as any).id_comision || '';
+  const comisionIds = idsRaw
+    .replace(/[\[\]]/g, '')
+    .split(',')
+    .map((id: string) => id.trim())
+    .filter(Boolean);
+
+  if (comisionIds.length === 0) return { turnado: false, comisiones_turnado: null };
+
+  const comisiones = await Comision.findAll({
+    where: { id: comisionIds },
+    attributes: ['nombre'],
+    raw: true,
+  });
+
+  return {
+    turnado: true,
+    comisiones_turnado: comisiones.map((c: any) => c.nombre).join(', ')
+  };
+};
+
 export const getifnini = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const iniciativas = await IniciativaPuntoOrden.findAll({ 
+
+    const iniciativas = await IniciativaPuntoOrden.findAll({
       where: { id: id },
       attributes: ["id", "iniciativa", "createdAt"],
       include: [
         {
           model: PuntosOrden,
           as: 'punto',
-          attributes: ["punto", "nopunto"]
+          attributes: ["id", "punto", "nopunto"],
         },
         {
           model: Agenda,
@@ -424,44 +494,21 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         }
       ]
     });
-    
+
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
-      
+
       const estudios = data.estudio?.filter((e: any) => e.status === "1") || [];
       const dictamenes = data.estudio?.filter((e: any) => e.status === "2") || [];
 
-      // Función para obtener anfitriones de un evento
-      const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
-        if (!eventoId || tipoEventoNombre === 'Sesión') return {};
-        
-        const anfitriones = await AnfitrionAgenda.findAll({
-          where: { agenda_id: eventoId },
-          attributes: ["autor_id"],
-          raw: true
-        });
-
-        const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
-        if (comisionIds.length === 0) return { comisiones: null };
-
-        const comisiones = await Comision.findAll({
-          where: { id: comisionIds },
-          attributes: ['nombre'],
-          raw: true,
-        });
-
-        return {
-          comisiones: comisiones.map((c: any) => c.nombre).join(', ')
-        };
-      };
-
-      // Anfitriones del evento principal (nació)
+      // Anfitriones y turnado del nació
       const anfitrionesNacio = await getAnfitriones(
         data.evento?.id,
         data.evento?.tipoevento?.nombre
       );
+      const turnadoInfo = await getComisionesTurnado(data.punto?.id);
 
-      // Mapear estudios con su info de evento
+      // Estudios con info de evento y anfitriones
       const estudiosConInfo = await Promise.all(estudios.map(async (e: any) => {
         const eventoEstudio = e.puntoEvento?.evento;
         const anfitriones = await getAnfitriones(eventoEstudio?.id, eventoEstudio?.tipoevento?.nombre);
@@ -477,7 +524,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         };
       }));
 
-      // Mapear dictámenes con su info de evento
+      // Dictámenes con info de evento y anfitriones
       const dictamenesConInfo = await Promise.all(dictamenes.map(async (d: any) => {
         const eventoDict = d.puntoEvento?.evento;
         const anfitriones = await getAnfitriones(eventoDict?.id, eventoDict?.tipoevento?.nombre);
@@ -500,6 +547,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           descripcion_evento: data.evento?.descripcion,
           numpunto: data.punto?.nopunto,
           punto: data.punto?.punto,
+          ...turnadoInfo,
           ...anfitrionesNacio
         },
         estudio: estudiosConInfo,
@@ -507,35 +555,18 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         cierre: null
       };
     }));
-    
+
     return res.status(200).json({
       data: trazaIniciativas
     });
-    
+
   } catch (error: any) {
     console.error("Error al obtener las iniciativas:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: "Error interno del servidor",
-      error: error.message 
+      error: error.message
     });
   }
 };
-
-const formatearFecha = (fecha: string): string => {
-  if (!fecha) return '';
-  
-  const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-  ];
-  
-  const date = new Date(fecha);
-  const dia = date.getUTCDate();
-  const mes = meses[date.getUTCMonth()];
-  const anio = date.getUTCFullYear();
-  
-  return `${dia} de ${mes} de ${anio}`;
-};
-
 
 
