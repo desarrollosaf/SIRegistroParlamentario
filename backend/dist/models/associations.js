@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const proponentes_1 = __importDefault(require("./proponentes"));
 const ProponentesTipoCategoriaDetalle_1 = __importDefault(require("./ProponentesTipoCategoriaDetalle"));
 const tipo_categoria_iniciativas_1 = __importDefault(require("./tipo_categoria_iniciativas"));
+const puntos_ordens_1 = __importDefault(require("./puntos_ordens"));
+const inciativas_puntos_ordens_1 = __importDefault(require("./inciativas_puntos_ordens"));
+const iniciativas_estudio_1 = __importDefault(require("./iniciativas_estudio"));
 // Desde Proponentes al catálogo
 proponentes_1.default.belongsToMany(tipo_categoria_iniciativas_1.default, {
     through: ProponentesTipoCategoriaDetalle_1.default,
@@ -30,3 +33,21 @@ ProponentesTipoCategoriaDetalle_1.default.belongsTo(tipo_categoria_iniciativas_1
     foreignKey: 'tipo_categoria_id',
     as: 'tipoCategoria',
 });
+puntos_ordens_1.default.hasMany(inciativas_puntos_ordens_1.default, {
+    foreignKey: "id_punto",
+    as: "iniciativas",
+});
+inciativas_puntos_ordens_1.default.belongsTo(puntos_ordens_1.default, {
+    foreignKey: 'id_punto',
+    as: 'punto'
+});
+inciativas_puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'id_iniciativa', as: 'estudio' });
+iniciativas_estudio_1.default.belongsTo(inciativas_puntos_ordens_1.default, {
+    foreignKey: 'id_iniciativa',
+    as: 'iniciativa'
+});
+exports.default = {
+    PuntosOrden: puntos_ordens_1.default,
+    IniciativaPuntoOrden: inciativas_puntos_ordens_1.default,
+    IniciativaEstudio: iniciativas_estudio_1.default
+};

@@ -3,6 +3,7 @@
 // import Dependencia from "./models/saf/t_dependencia"
 // import Direccion from "./models/saf/t_direccion"
 import Server from "./models/server"
+import './models/associations'
 
 const server =  new Server()
 
