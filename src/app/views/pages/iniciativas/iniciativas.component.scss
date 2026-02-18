@@ -1,0 +1,52 @@
+ng-select-large {
+  ::ng-deep {
+    // Control principal (campo seleccionado)
+    .ng-select-container {
+      min-height: 60px;  // Altura mínima mayor
+      height: auto;       // Altura automática
+      
+      .ng-value-container {
+        padding: 8px 12px;
+        
+        .ng-value {
+          white-space: normal;  // Permite múltiples líneas
+          line-height: 1.4;
+        }
+      }
+    }
+
+    // Dropdown menu
+    .ng-dropdown-panel {
+      max-width: 100%;
+      
+      .ng-dropdown-panel-items {
+        max-height: 400px;  // Aumentar altura del dropdown
+      }
+    }
+
+    // Opciones individuales
+    .ng-option {
+      white-space: normal;  // Permite wrap
+      padding: 12px 16px;   // Más padding
+      min-height: 60px;     // Altura mínima
+      height: auto;          // Altura automática
+      
+      &:hover {
+        background-color: #f8f9fa;
+      }
+      
+      &.ng-option-selected {
+        background-color: #e7f3ff;
+      }
+    }
+  }
+}
+
+// Clase para las opciones con texto largo
+.iniciativa-option {
+  .fw-semibold {
+    word-break: break-word;  // Rompe palabras largas
+    line-height: 1.3;
+    max-width: 100%;
+  }
+}
