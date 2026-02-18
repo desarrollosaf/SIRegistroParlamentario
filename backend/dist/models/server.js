@@ -63,7 +63,8 @@ class Server {
                 '/api/eventos/gettipos/',
                 '/api/diputados/cargo/',
                 '/api/eventos/savereserva/',
-                '/api/eventos/eliminarreserva/'
+                '/api/eventos/eliminarreserva/',
+                '/api/diputados/getinfiniciativa/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
