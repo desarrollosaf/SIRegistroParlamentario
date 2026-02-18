@@ -62,6 +62,10 @@ export const routes: Routes = [
        path: 'catalogos',
        loadChildren: () => import('./views/pages/catalogos/comision.route')
       },
+       {
+       path: 'iniciativas',
+       loadChildren: () => import('./views/pages/iniciativas/iniciativas.route')
+      },
     ]
   },
   {

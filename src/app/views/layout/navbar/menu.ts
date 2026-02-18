@@ -48,6 +48,24 @@ export const MENU: MenuItem[] = [
       
     ]
   },
-  
+    {
+    label: 'Reportes',
+    icon: 'mail',
+    subMenus: [
+      {
+        subMenuItems: [
+          {
+            label: 'Reportes',
+            isTitle: true,
+          },
+          {
+            label: 'Iniciativas',
+            link: '/iniciativas'
+          }
+        ]
+      },
+      
+    ]
+  },
   
 ];
