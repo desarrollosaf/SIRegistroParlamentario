@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+const agendas_1 = __importDefault(require("../models/agendas"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
@@ -21,6 +22,11 @@ const sequelize_1 = require("sequelize");
 const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
+const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
+const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
+const comisions_1 = __importDefault(require("../models/comisions"));
+const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
+const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -318,3 +324,178 @@ const crariniidits = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.crariniidits = crariniidits;
+const selectiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { id: '1072' },
+            attributes: ["id", "iniciativa"]
+        });
+        return res.status(200).json({
+            data: iniciativa,
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener las iniciativas:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.selectiniciativas = selectiniciativas;
+const formatearFecha = (fecha) => {
+    if (!fecha)
+        return '';
+    const meses = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    const date = new Date(fecha);
+    const dia = date.getUTCDate();
+    const mes = meses[date.getUTCMonth()];
+    const anio = date.getUTCFullYear();
+    return `${dia} de ${mes} de ${anio}`;
+};
+const getAnfitriones = (eventoId, tipoEventoNombre) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!eventoId || tipoEventoNombre === 'Sesión')
+        return {};
+    const anfitriones = yield anfitrion_agendas_1.default.findAll({
+        where: { agenda_id: eventoId },
+        attributes: ["autor_id"],
+        raw: true
+    });
+    const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
+    if (comisionIds.length === 0)
+        return { comisiones: null };
+    const comisiones = yield comisions_1.default.findAll({
+        where: { id: comisionIds },
+        attributes: ['nombre'],
+        raw: true,
+    });
+    return {
+        comisiones: comisiones.map((c) => c.nombre).join(', ')
+    };
+});
+const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!puntoId)
+        return { turnado: false, comisiones_turnado: null };
+    const puntosComisiones = yield puntos_comisiones_1.default.findAll({
+        where: { id_punto: puntoId },
+        attributes: ["id_comision"],
+        raw: true
+    });
+    if (puntosComisiones.length === 0)
+        return { turnado: false, comisiones_turnado: null };
+    const idsRaw = puntosComisiones[0].id_comision || '';
+    const comisionIds = idsRaw
+        .replace(/[\[\]]/g, '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+    if (comisionIds.length === 0)
+        return { turnado: false, comisiones_turnado: null };
+    const comisiones = yield comisions_1.default.findAll({
+        where: { id: comisionIds },
+        attributes: ['nombre'],
+        raw: true,
+    });
+    return {
+        turnado: true,
+        comisiones_turnado: comisiones.map((c) => c.nombre).join(', ')
+    };
+});
+const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { id: id },
+            attributes: ["id", "iniciativa", "createdAt"],
+            include: [
+                {
+                    model: puntos_ordens_1.default,
+                    as: 'punto',
+                    attributes: ["id", "punto", "nopunto"],
+                },
+                {
+                    model: agendas_1.default,
+                    as: 'evento',
+                    attributes: ["id", "fecha", "descripcion"],
+                    include: [
+                        {
+                            model: tipo_eventos_1.default,
+                            as: 'tipoevento',
+                            attributes: ["nombre"]
+                        }
+                    ]
+                },
+                {
+                    model: iniciativas_estudio_1.default,
+                    as: 'estudio',
+                    attributes: ["id", "status", "createdAt"],
+                    required: false,
+                    include: [
+                        {
+                            model: puntos_ordens_1.default,
+                            as: 'puntoEvento',
+                            attributes: ["id", "punto", "nopunto"],
+                            include: [
+                                {
+                                    model: agendas_1.default,
+                                    as: 'evento',
+                                    attributes: ["id", "fecha", "descripcion"],
+                                    include: [
+                                        {
+                                            model: tipo_eventos_1.default,
+                                            as: 'tipoevento',
+                                            attributes: ["nombre"]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+        const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+            const data = iniciativa.toJSON();
+            const estudios = ((_a = data.estudio) === null || _a === void 0 ? void 0 : _a.filter((e) => e.status === "1")) || [];
+            const dictamenes = ((_b = data.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "2")) || [];
+            // Anfitriones y turnado del nació
+            const anfitrionesNacio = yield getAnfitriones((_c = data.evento) === null || _c === void 0 ? void 0 : _c.id, (_e = (_d = data.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre);
+            const turnadoInfo = yield getComisionesTurnado((_f = data.punto) === null || _f === void 0 ? void 0 : _f.id);
+            // Estudios con info de evento y anfitriones
+            const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d, _e;
+                const eventoEstudio = (_a = e.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                const anfitriones = yield getAnfitriones(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, (_b = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
+                return Object.assign({ id: e.id, fecha: formatearFecha(e.createdAt), tipo_evento: (_c = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.fecha), descripcion_evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.descripcion, numpunto: (_d = e.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = e.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
+            })));
+            // Dictámenes con info de evento y anfitriones
+            const dictamenesConInfo = yield Promise.all(dictamenes.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d, _e;
+                const eventoDict = (_a = d.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                const anfitriones = yield getAnfitriones(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, (_b = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
+                return Object.assign({ id: d.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_d = d.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = d.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
+            })));
+            return {
+                nacio: Object.assign(Object.assign({ tipo_evento: (_h = (_g = data.evento) === null || _g === void 0 ? void 0 : _g.tipoevento) === null || _h === void 0 ? void 0 : _h.nombre, fecha: formatearFecha((_j = data.evento) === null || _j === void 0 ? void 0 : _j.fecha), descripcion_evento: (_k = data.evento) === null || _k === void 0 ? void 0 : _k.descripcion, numpunto: (_l = data.punto) === null || _l === void 0 ? void 0 : _l.nopunto, punto: (_m = data.punto) === null || _m === void 0 ? void 0 : _m.punto }, turnadoInfo), anfitrionesNacio),
+                estudio: estudiosConInfo,
+                dictamen: dictamenesConInfo,
+                cierre: null
+            };
+        })));
+        return res.status(200).json({
+            data: trazaIniciativas
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener las iniciativas:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.getifnini = getifnini;

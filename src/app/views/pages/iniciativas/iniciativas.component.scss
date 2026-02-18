@@ -1,0 +1,253 @@
+// Estilos para el ng-select más largo
+.ng-select-large {
+  ::ng-deep {
+    .ng-select-container {
+      min-height: 60px;
+      height: auto;
+      max-height: 120px;
+      overflow: hidden;
+      
+      .ng-value-container {
+        padding: 8px 12px;
+        
+        .ng-value {
+          white-space: normal;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      }
+    }
+
+    .ng-dropdown-panel {
+      max-width: 100%;
+      
+      .ng-dropdown-panel-items {
+        max-height: 400px;
+      }
+    }
+
+    .ng-option {
+      white-space: normal;
+      padding: 12px 16px;
+      min-height: 60px;
+      height: auto;
+      max-height: 150px;
+      
+      &:hover {
+        background-color: #f8f9fa;
+      }
+      
+      &.ng-option-selected {
+        background-color: #e7f3ff;
+      }
+    }
+  }
+}
+
+.iniciativa-option {
+  .fw-semibold {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+}
+
+// Timeline Styles
+.timeline-container {
+  position: relative;
+  padding: 20px 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 60px;
+  padding-bottom: 40px;
+  
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timeline-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 2;
+  box-shadow: 0 0 0 4px #fff;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: -40px;
+  width: 2px;
+  z-index: 1;
+}
+
+.timeline-content {
+  position: relative;
+}
+
+.timeline-card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-title {
+  font-weight: 600;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.timeline-date {
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.timeline-body {
+  p {
+    margin-bottom: 8px;
+    color: #495057;
+    line-height: 1.6;
+  }
+}
+
+// Colores para diferentes tipos
+.timeline-primary {
+  .timeline-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+  }
+  
+  .timeline-line {
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+  }
+  
+  .timeline-card {
+    border-left: 3px solid #667eea;
+  }
+}
+
+.timeline-info {
+  .timeline-icon {
+    background: linear-gradient(135deg, #17a2b8 0%, #00bcd4 100%);
+    color: #fff;
+  }
+  
+  .timeline-line {
+    background: linear-gradient(to bottom, #17a2b8, #00bcd4);
+  }
+  
+  .timeline-card {
+    border-left: 3px solid #17a2b8;
+  }
+}
+
+.timeline-warning {
+  .timeline-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: #fff;
+  }
+  
+  .timeline-line {
+    background: linear-gradient(to bottom, #ffc107, #ff9800);
+  }
+  
+  .timeline-card {
+    border-left: 3px solid #ffc107;
+  }
+}
+
+.timeline-success {
+  .timeline-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #fff;
+  }
+  
+  .timeline-line {
+    background: linear-gradient(to bottom, #28a745, #20c997);
+  }
+  
+  .timeline-card {
+    border-left: 3px solid #28a745;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .timeline-item {
+    padding-left: 50px;
+  }
+  
+  .timeline-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+  
+  .timeline-line {
+    left: 16px;
+  }
+  
+  .timeline-header {
+    flex-direction: column;
+  }
+}
+
+// Animación para el collapse
+.collapse-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+
+  &.show {
+    max-height: 1000px;
+    transition: max-height 0.5s ease-in;
+  }
+}
+
+.alert-light {
+  border-left: 3px solid #667eea;
+  background-color: #f8f9ff;
+  
+  strong {
+    color: #667eea;
+  }
+  
+  small {
+    line-height: 1.5;
+    display: block;
+  }
+}

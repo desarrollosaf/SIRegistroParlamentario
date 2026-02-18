@@ -147,10 +147,10 @@ PuntosOrden.hasMany(TemasPuntosVotos, {
   as: "reservas",
 });
 
-PuntosOrden.hasMany(IniciativaPuntoOrden, {
-  foreignKey: "id_punto",
-  as: "iniciativas",
-});
+// PuntosOrden.hasMany(IniciativaPuntoOrden, {
+//   foreignKey: "id_punto",
+//   as: "iniciativas",
+// });
 
 
 
