@@ -84,7 +84,6 @@
                             <i class="bi bi-clock-history me-2"></i>
                             Historial de la Iniciativa
                         </h5>
-
                         <div class="timeline-container">
                             <div class="timeline-item"
                                 *ngFor="let item of timelineData; let i = index; let isLast = last; let isFirst = first"
@@ -95,7 +94,7 @@
                                     <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
                                 </div>
 
-                                <!-- Línea conectora (no mostrar en el último) -->
+                                <!-- Línea conectora -->
                                 <div class="timeline-line" *ngIf="!isLast"></div>
 
                                 <!-- Contenido -->
@@ -117,33 +116,47 @@
                                                 </span>
                                             </div>
 
-                                            <!-- ✅ SOLO EN EL PRIMERO: Mostrar punto completo arriba -->
-                                            <div class="alert alert-light mb-3" *ngIf="isFirst && item.punto">
+                                            <!--  PRIMERO Y ÚLTIMO: Mostrar punto completo arriba -->
+                                            <div class="alert alert-light mb-3"
+                                                *ngIf="(isFirst || isLast) && item.punto">
                                                 <strong class="d-block mb-2">
                                                     <i class="bi bi-file-text me-1"></i>
-                                                    Punto:
+                                                    {{ isFirst ? 'Punto:' : 'Resolución:' }}
                                                 </strong>
-                                                <small class="text-muted">{{ item.punto }}</small>
+                                                <small class="text-dark">{{ item.punto }}</small>
                                             </div>
 
-                                            <!-- ❌ EN LOS DEMÁS: Mostrar número de punto -->
-                                            <p class="mb-2" *ngIf="!isFirst && item.numpunto">
+                                            <!--  EN LOS DEMÁS (del medio): Mostrar número de punto -->
+                                            <!-- <p class="mb-2" *ngIf="!isFirst && !isLast && item.numpunto">
                                                 <strong>Punto #{{ item.numpunto }}</strong>
-                                            </p>
+                                            </p> -->
 
                                             <!-- Descripción del evento -->
                                             <p class="mb-2">{{ item.descripcion }}</p>
 
-                                            <!-- Comisiones -->
-                                            <div class="mt-2" *ngIf="item.comisiones">
+                                            <!--  COMISIONES TURNADO (solo en "nació" si existe) -->
+                                            <div class="alert alert-info mb-2"
+                                                *ngIf="isFirst && item.turnado && item.comisiones_turnado">
+                                                <div class="d-flex align-items-start">
+                                                    <i
+                                                        class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
+                                                    <div>
+                                                        <strong class="d-block">Turnada a comisiones:</strong>
+                                                        <small class="text-dark">{{ item.comisiones_turnado }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Comisiones (para los items del medio) -->
+                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.comisiones">
                                                 <small class="text-muted">
                                                     <i class="bi bi-building me-1"></i>
                                                     <strong>Comisiones:</strong> {{ item.comisiones }}
                                                 </small>
                                             </div>
 
-                                            <!-- ✅ PUNTO COLAPSABLE: Solo mostrar si NO es el primero -->
-                                            <div class="mt-2" *ngIf="!isFirst && item.punto">
+                                            <!--  PUNTO COLAPSABLE: Solo para los items del MEDIO -->
+                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.punto">
                                                 <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none"
                                                     type="button" (click)="toggleCollapse(i)">
                                                     <small>

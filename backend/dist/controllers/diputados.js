@@ -458,13 +458,14 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             ]
         });
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
             const data = iniciativa.toJSON();
             const estudios = ((_a = data.estudio) === null || _a === void 0 ? void 0 : _a.filter((e) => e.status === "1")) || [];
             const dictamenes = ((_b = data.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "2")) || [];
+            const cierres = ((_c = data.estudio) === null || _c === void 0 ? void 0 : _c.filter((e) => e.status === "3")) || [];
             // Anfitriones y turnado del nació
-            const anfitrionesNacio = yield getAnfitriones((_c = data.evento) === null || _c === void 0 ? void 0 : _c.id, (_e = (_d = data.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre);
-            const turnadoInfo = yield getComisionesTurnado((_f = data.punto) === null || _f === void 0 ? void 0 : _f.id);
+            const anfitrionesNacio = yield getAnfitriones((_d = data.evento) === null || _d === void 0 ? void 0 : _d.id, (_f = (_e = data.evento) === null || _e === void 0 ? void 0 : _e.tipoevento) === null || _f === void 0 ? void 0 : _f.nombre);
+            const turnadoInfo = yield getComisionesTurnado((_g = data.punto) === null || _g === void 0 ? void 0 : _g.id);
             // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
@@ -479,11 +480,22 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 const anfitriones = yield getAnfitriones(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, (_b = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
                 return Object.assign({ id: d.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_d = d.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = d.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
             })));
+            const cierresConInfo = yield Promise.all(cierres.map((c) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d;
+                const eventoCierre = (_a = c.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                return {
+                    tipo_evento: (_b = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
+                    fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
+                    descripcion_evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.descripcion,
+                    numpunto: (_c = c.puntoEvento) === null || _c === void 0 ? void 0 : _c.nopunto,
+                    punto: (_d = c.puntoEvento) === null || _d === void 0 ? void 0 : _d.punto,
+                };
+            })));
             return {
-                nacio: Object.assign(Object.assign({ tipo_evento: (_h = (_g = data.evento) === null || _g === void 0 ? void 0 : _g.tipoevento) === null || _h === void 0 ? void 0 : _h.nombre, fecha: formatearFecha((_j = data.evento) === null || _j === void 0 ? void 0 : _j.fecha), descripcion_evento: (_k = data.evento) === null || _k === void 0 ? void 0 : _k.descripcion, numpunto: (_l = data.punto) === null || _l === void 0 ? void 0 : _l.nopunto, punto: (_m = data.punto) === null || _m === void 0 ? void 0 : _m.punto }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ tipo_evento: (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre, fecha: formatearFecha((_k = data.evento) === null || _k === void 0 ? void 0 : _k.fecha), descripcion_evento: (_l = data.evento) === null || _l === void 0 ? void 0 : _l.descripcion, numpunto: (_m = data.punto) === null || _m === void 0 ? void 0 : _m.nopunto, punto: (_o = data.punto) === null || _o === void 0 ? void 0 : _o.punto }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
-                cierre: null
+                cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
             };
         })));
         return res.status(200).json({
