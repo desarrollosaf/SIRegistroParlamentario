@@ -11,7 +11,7 @@ router.get("/api/diputados/eliminariniciativa/:id",eliminariniciativa );
 router.get("/api/diputados/getiniciativas/:id",getiniciativas );
 router.post("/api/diputados/crariniidits/", crariniidits);
 router.get("/api/diputados/selectiniciativas/", selectiniciativas);
-router.post("/api/diputados/getinfiniciativa/:id", getifnini);
+router.get("/api/diputados/getinfiniciativa/:id", getifnini);
 
 
 export default router
