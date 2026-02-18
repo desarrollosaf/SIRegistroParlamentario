@@ -26,8 +26,9 @@ interface TimelineItem {
   punto?: string;
   comisiones?: string;
   tipo_evento?: string;
+  turnado?: boolean;
+  comisiones_turnado?: string;
 }
-
 
 @Component({
   selector: 'app-iniciativas',
@@ -120,7 +121,9 @@ export class IniciativasComponent implements OnInit {
         tipo: 'nacio',
         numpunto: data.nacio.numpunto,
         punto: data.nacio.punto,
-        tipo_evento: data.nacio.tipo_evento
+        tipo_evento: data.nacio.tipo_evento,
+        turnado: data.nacio.turnado,
+        comisiones_turnado: data.nacio.comisiones_turnado
       });
     }
 
