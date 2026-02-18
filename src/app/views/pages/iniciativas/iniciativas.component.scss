@@ -1,63 +1,3 @@
-// Estilos para el ng-select más largo
-.ng-select-large {
-  ::ng-deep {
-    .ng-select-container {
-      min-height: 60px;
-      height: auto;
-      max-height: 120px;
-      overflow: hidden;
-      
-      .ng-value-container {
-        padding: 8px 12px;
-        
-        .ng-value {
-          white-space: normal;
-          line-height: 1.4;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      }
-    }
-
-    .ng-dropdown-panel {
-      max-width: 100%;
-      
-      .ng-dropdown-panel-items {
-        max-height: 400px;
-      }
-    }
-
-    .ng-option {
-      white-space: normal;
-      padding: 12px 16px;
-      min-height: 60px;
-      height: auto;
-      max-height: 150px;
-      
-      &:hover {
-        background-color: #f8f9fa;
-      }
-      
-      &.ng-option-selected {
-        background-color: #e7f3ff;
-      }
-    }
-  }
-}
-
-.iniciativa-option {
-  .fw-semibold {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-    line-height: 1.3;
-  }
-}
-
 // Timeline Styles
 .timeline-container {
   position: relative;
@@ -141,6 +81,51 @@
     margin-bottom: 8px;
     color: #495057;
     line-height: 1.6;
+    text-align: justify;  // ✅ AGREGAR JUSTIFICADO
+  }
+
+  // ✅ JUSTIFICAR TEXTOS EN SMALL
+  small {
+    text-align: justify;
+    display: block;
+    line-height: 1.5;
+  }
+}
+
+// ✅ JUSTIFICAR TEXTOS EN LOS ALERTS
+.alert-light {
+  border-left: 3px solid #667eea;
+  background-color: #f8f9ff;
+  
+  strong {
+    color: #667eea;
+  }
+  
+  small {
+    line-height: 1.5;
+    display: block;
+    text-align: justify;  // ✅ JUSTIFICADO
+    color: #000;
+  }
+}
+
+.alert-info {
+  background-color: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-left: 3px solid #17a2b8;
+  
+  i {
+    color: #17a2b8;
+  }
+  
+  strong {
+    color: #0c5460;
+  }
+  
+  small {
+    line-height: 1.5;
+    text-align: justify;  // ✅ JUSTIFICADO
+    color: #000;
   }
 }
 
@@ -205,6 +190,41 @@
   }
 }
 
+// ✅ Si agregaste el color morado para cierre
+.timeline-purple {
+  .timeline-icon {
+    background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+    color: #fff;
+  }
+  
+  .timeline-line {
+    background: linear-gradient(to bottom, #6f42c1, #8b5cf6);
+  }
+  
+  .timeline-card {
+    border-left: 3px solid #6f42c1;
+  }
+}
+
+// Animación para el collapse
+.collapse-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+
+  &.show {
+    max-height: 1000px;
+    transition: max-height 0.5s ease-in;
+  }
+
+  // ✅ JUSTIFICAR TEXTO EN EL COLAPSABLE
+  .card-body {
+    small {
+      text-align: justify;
+    }
+  }
+}
+
 // Responsive
 @media (max-width: 768px) {
   .timeline-item {
@@ -226,47 +246,62 @@
   }
 }
 
-// Animación para el collapse
-.collapse-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
+// ✅ ESTILOS PARA EL NG-SELECT
+.ng-select-large {
+  ::ng-deep {
+    .ng-select-container {
+      min-height: 60px;
+      height: auto;
+      max-height: 120px;
+      overflow: hidden;
+      
+      .ng-value-container {
+        padding: 8px 12px;
+        
+        .ng-value {
+          white-space: normal;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      }
+    }
 
-  &.show {
-    max-height: 1000px;
-    transition: max-height 0.5s ease-in;
+    .ng-dropdown-panel {
+      max-width: 100%;
+      
+      .ng-dropdown-panel-items {
+        max-height: 400px;
+      }
+    }
+
+    .ng-option {
+      white-space: normal;
+      padding: 12px 16px;
+      min-height: 60px;
+      height: auto;
+      max-height: 150px;
+      
+      &:hover {
+        background-color: #f8f9fa;
+      }
+      
+      &.ng-option-selected {
+        background-color: #e7f3ff;
+      }
+    }
   }
 }
 
-.alert-light {
-  border-left: 3px solid #667eea;
-  background-color: #f8f9ff;
-  
-  strong {
-    color: #667eea;
-  }
-  
-  small {
-    line-height: 1.5;
-    display: block;
-  }
-}
-
-
-.alert-info {
-  background-color: #e7f3ff;
-  border: 1px solid #b3d9ff;
-  border-left: 3px solid #17a2b8;
-  
-  i {
-    color: #17a2b8;
-  }
-  
-  strong {
-    color: #0c5460;
-  }
-  
-  small {
-    line-height: 1.5;
+.iniciativa-option {
+  .fw-semibold {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    line-height: 1.3;
   }
 }
