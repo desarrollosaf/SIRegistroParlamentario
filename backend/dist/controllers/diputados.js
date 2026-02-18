@@ -402,7 +402,6 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const dictamenes = ((_b = data.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "2")) || [];
             // Función para obtener anfitriones de un evento
             const getAnfitriones = (eventoId, tipoEventoNombre) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b, _c;
                 if (!eventoId || tipoEventoNombre === 'Sesión')
                     return {};
                 const anfitriones = yield anfitrion_agendas_1.default.findAll({
@@ -412,16 +411,14 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
                 const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
                 if (comisionIds.length === 0)
-                    return {};
+                    return { comisiones: null };
                 const comisiones = yield comisions_1.default.findAll({
                     where: { id: comisionIds },
-                    attributes: ['id', 'nombre'],
+                    attributes: ['nombre'],
                     raw: true,
                 });
                 return {
-                    comision1: ((_a = comisiones[0]) === null || _a === void 0 ? void 0 : _a.nombre) || null,
-                    comision2: ((_b = comisiones[1]) === null || _b === void 0 ? void 0 : _b.nombre) || null,
-                    comision3: ((_c = comisiones[2]) === null || _c === void 0 ? void 0 : _c.nombre) || null,
+                    comisiones: comisiones.map((c) => c.nombre).join(', ')
                 };
             });
             // Anfitriones del evento principal (nació)

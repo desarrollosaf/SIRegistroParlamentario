@@ -442,18 +442,16 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         });
 
         const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
-        if (comisionIds.length === 0) return {};
+        if (comisionIds.length === 0) return { comisiones: null };
 
         const comisiones = await Comision.findAll({
           where: { id: comisionIds },
-          attributes: ['id', 'nombre'],
+          attributes: ['nombre'],
           raw: true,
         });
 
         return {
-          comision1: comisiones[0]?.nombre || null,
-          comision2: comisiones[1]?.nombre || null,
-          comision3: comisiones[2]?.nombre || null,
+          comisiones: comisiones.map((c: any) => c.nombre).join(', ')
         };
       };
 
