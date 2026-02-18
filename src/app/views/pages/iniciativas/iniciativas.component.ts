@@ -14,7 +14,6 @@ interface Iniciativa {
   fecha_creacion?: string;
   proponente?: string;
   estatus?: string;
-  // Agrega las propiedades que necesites mostrar en el timeline
 }
 
 interface TimelineItem {
@@ -63,7 +62,7 @@ export class IniciativasComponent implements OnInit {
     this._eventoService.getIniciativasList().subscribe({
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
-        console.log('Iniciativas cargadas:', this.listaIniciativas);
+        // console.log('Iniciativas cargadas:', this.listaIniciativas);
         this.cargando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -90,7 +89,7 @@ export class IniciativasComponent implements OnInit {
 
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        console.log('Respuesta del historial:', response);
+        // console.log('Respuesta del historial:', response);
 
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0]);
@@ -160,21 +159,21 @@ export class IniciativasComponent implements OnInit {
     }
 
     // 4. CIERRE (aprobada/rechazada)
-    if (data.cierre) {
-      this.timelineData.push({
-        fecha: data.cierre.fecha_evento,
-        titulo: data.cierre.estatus === 'aprobada' ? '✅ Aprobada' : '❌ Rechazada',
-        descripcion: data.cierre.descripcion_evento,
-        tipo: 'cierre',
-        numpunto: data.cierre.numpunto,
-        punto: data.cierre.punto,
-        tipo_evento: data.cierre.tipo_evento
-      });
-    }
+   if (data.cierre) {
+    this.timelineData.push({
+      fecha: data.cierre.fecha,  
+      titulo: '⚖️ Cierre', 
+      descripcion: data.cierre.descripcion_evento,
+      tipo: 'cierre',
+      numpunto: data.cierre.numpunto,
+      punto: data.cierre.punto,
+      tipo_evento: data.cierre.tipo_evento
+    });
+  }
     this.timelineData.forEach((_, index) => {
       this.isCollapsed[index] = true;
     });
-    console.log('Timeline procesado:', this.timelineData);
+    // console.log('Timeline procesado:', this.timelineData);
   }
   toggleCollapse(index: number): void {
     this.isCollapsed[index] = !this.isCollapsed[index];
