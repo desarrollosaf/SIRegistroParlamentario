@@ -10,4 +10,6 @@ router.post("/api/diputados/saveiniciativa/", diputados_1.creariniciativa);
 router.get("/api/diputados/eliminariniciativa/:id", diputados_1.eliminariniciativa);
 router.get("/api/diputados/getiniciativas/:id", diputados_1.getiniciativas);
 router.post("/api/diputados/crariniidits/", diputados_1.crariniidits);
+router.get("/api/diputados/selectiniciativas/", diputados_1.selectiniciativas);
+router.post("/api/diputados/getinfiniciativa/:id", diputados_1.getifnini);
 exports.default = router;

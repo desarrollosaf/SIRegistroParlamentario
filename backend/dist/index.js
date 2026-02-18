@@ -8,6 +8,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import Dependencia from "./models/saf/t_dependencia"
 // import Direccion from "./models/saf/t_direccion"
 const server_1 = __importDefault(require("./models/server"));
+require("./models/associations");
 const server = new server_1.default();
 const models = {
 // SUsuario,

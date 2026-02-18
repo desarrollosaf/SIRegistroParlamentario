@@ -9,6 +9,12 @@ import { Op } from "sequelize";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import PuntosOrden from "../models/puntos_ordens";
 import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
+import IniciativaEstudio from "../models/iniciativas_estudio";
+import TipoEventos from "../models/tipo_eventos";
+import Comision from "../models/comisions";
+import ComisionUsuario from "../models/comision_usuarios";
+import { comisiones } from "../models/init-models";
+import AnfitrionAgenda from "../models/anfitrion_agendas";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -344,6 +350,193 @@ export const crariniidits = async (req: Request, res: Response): Promise<any> =>
       error: error.message 
     });
   }
+};
+
+export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const iniciativa = await IniciativaPuntoOrden.findAll({ 
+      where: { id:  '1072'},
+      attributes: ["id", "iniciativa"]
+    });
+    return res.status(200).json({
+      data: iniciativa,
+    });  
+  } catch (error: any) {
+    console.error("Error al obtener las iniciativas:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+
+export const getifnini = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const iniciativas = await IniciativaPuntoOrden.findAll({ 
+      where: { id: id },
+      attributes: ["id", "iniciativa", "createdAt"],
+      include: [
+        {
+          model: PuntosOrden,
+          as: 'punto',
+          attributes: ["punto", "nopunto"]
+        },
+        {
+          model: Agenda,
+          as: 'evento',
+          attributes: ["id", "fecha", "descripcion"],
+          include: [
+            {
+              model: TipoEventos,
+              as: 'tipoevento',
+              attributes: ["nombre"]
+            }
+          ]
+        },
+        {
+          model: IniciativaEstudio,
+          as: 'estudio',
+          attributes: ["id", "status", "createdAt"],
+          required: false,
+          include: [
+            {
+              model: PuntosOrden,
+              as: 'puntoEvento',
+              attributes: ["id", "punto", "nopunto"],
+              include: [
+                {
+                  model: Agenda,
+                  as: 'evento',
+                  attributes: ["id", "fecha", "descripcion"],
+                  include: [
+                    {
+                      model: TipoEventos,
+                      as: 'tipoevento',
+                      attributes: ["nombre"]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+    
+    const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
+      const data = iniciativa.toJSON();
+      
+      const estudios = data.estudio?.filter((e: any) => e.status === "1") || [];
+      const dictamenes = data.estudio?.filter((e: any) => e.status === "2") || [];
+
+      // Función para obtener anfitriones de un evento
+      const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
+        if (!eventoId || tipoEventoNombre === 'Sesión') return {};
+        
+        const anfitriones = await AnfitrionAgenda.findAll({
+          where: { agenda_id: eventoId },
+          attributes: ["autor_id"],
+          raw: true
+        });
+
+        const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
+        if (comisionIds.length === 0) return {};
+
+        const comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ['id', 'nombre'],
+          raw: true,
+        });
+
+        return {
+          comision1: comisiones[0]?.nombre || null,
+          comision2: comisiones[1]?.nombre || null,
+          comision3: comisiones[2]?.nombre || null,
+        };
+      };
+
+      // Anfitriones del evento principal (nació)
+      const anfitrionesNacio = await getAnfitriones(
+        data.evento?.id,
+        data.evento?.tipoevento?.nombre
+      );
+
+      // Mapear estudios con su info de evento
+      const estudiosConInfo = await Promise.all(estudios.map(async (e: any) => {
+        const eventoEstudio = e.puntoEvento?.evento;
+        const anfitriones = await getAnfitriones(eventoEstudio?.id, eventoEstudio?.tipoevento?.nombre);
+        return {
+          id: e.id,
+          fecha: formatearFecha(e.createdAt),
+          tipo_evento: eventoEstudio?.tipoevento?.nombre,
+          fecha_evento: formatearFecha(eventoEstudio?.fecha),
+          descripcion_evento: eventoEstudio?.descripcion,
+          numpunto: e.puntoEvento?.nopunto,
+          punto: e.puntoEvento?.punto,
+          ...anfitriones
+        };
+      }));
+
+      // Mapear dictámenes con su info de evento
+      const dictamenesConInfo = await Promise.all(dictamenes.map(async (d: any) => {
+        const eventoDict = d.puntoEvento?.evento;
+        const anfitriones = await getAnfitriones(eventoDict?.id, eventoDict?.tipoevento?.nombre);
+        return {
+          id: d.id,
+          fecha: formatearFecha(d.createdAt),
+          tipo_evento: eventoDict?.tipoevento?.nombre,
+          fecha_evento: formatearFecha(eventoDict?.fecha),
+          descripcion_evento: eventoDict?.descripcion,
+          numpunto: d.puntoEvento?.nopunto,
+          punto: d.puntoEvento?.punto,
+          ...anfitriones
+        };
+      }));
+
+      return {
+        nacio: {
+          tipo_evento: data.evento?.tipoevento?.nombre,
+          fecha: formatearFecha(data.evento?.fecha),
+          descripcion_evento: data.evento?.descripcion,
+          numpunto: data.punto?.nopunto,
+          punto: data.punto?.punto,
+          ...anfitrionesNacio
+        },
+        estudio: estudiosConInfo,
+        dictamen: dictamenesConInfo,
+        cierre: null
+      };
+    }));
+    
+    return res.status(200).json({
+      data: trazaIniciativas
+    });
+    
+  } catch (error: any) {
+    console.error("Error al obtener las iniciativas:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+const formatearFecha = (fecha: string): string => {
+  if (!fecha) return '';
+  
+  const meses = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+  
+  const date = new Date(fecha);
+  const dia = date.getUTCDate();
+  const mes = meses[date.getUTCMonth()];
+  const anio = date.getUTCFullYear();
+  
+  return `${dia} de ${mes} de ${anio}`;
 };
 
 
