@@ -137,6 +137,8 @@ export class EventoService {
   }
 
 
-
+  getIniciativasList(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl1}/selectiniciativas/`)
+  }
   
 }
