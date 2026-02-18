@@ -500,7 +500,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
       const estudios = data.estudio?.filter((e: any) => e.status === "1") || [];
       const dictamenes = data.estudio?.filter((e: any) => e.status === "2") || [];
-
+      const cierres = data.estudio?.filter((e: any) => e.status === "3") || [];
       // Anfitriones y turnado del nació
       const anfitrionesNacio = await getAnfitriones(
         data.evento?.id,
@@ -540,6 +540,17 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         };
       }));
 
+      const cierresConInfo = await Promise.all(cierres.map(async (c: any) => {
+        const eventoCierre = c.puntoEvento?.evento;
+        return {
+          tipo_evento: eventoCierre?.tipoevento?.nombre,
+          fecha: formatearFecha(eventoCierre?.fecha),
+          descripcion_evento: eventoCierre?.descripcion,
+          numpunto: c.puntoEvento?.nopunto,
+          punto: c.puntoEvento?.punto,
+        };
+      }));
+
       return {
         nacio: {
           tipo_evento: data.evento?.tipoevento?.nombre,
@@ -552,7 +563,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         },
         estudio: estudiosConInfo,
         dictamen: dictamenesConInfo,
-        cierre: null
+        cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
       };
     }));
 
