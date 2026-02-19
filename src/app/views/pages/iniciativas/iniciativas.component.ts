@@ -89,7 +89,7 @@ export class IniciativasComponent implements OnInit {
 
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta del historial:', response);
+        console.log('Respuesta del historial:', response);
 
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0]);
