@@ -514,6 +514,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         const anfitriones = await getAnfitriones(eventoEstudio?.id, eventoEstudio?.tipoevento?.nombre);
         return {
           id: e.id,
+          evento: eventoEstudio?.id,
           fecha: formatearFecha(e.createdAt),
           tipo_evento: eventoEstudio?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoEstudio?.fecha),
@@ -531,6 +532,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         const anfitriones = await getAnfitriones(eventoDict?.id, eventoDict?.tipoevento?.nombre);
         return {
           id: d.id,
+          evento: eventoDict?.id,
           fecha: formatearFecha(d.createdAt),
           tipo_evento: eventoDict?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoDict?.fecha),
@@ -546,6 +548,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       const cierresConInfo = await Promise.all(cierres.map(async (c: any) => {
         const eventoCierre = c.puntoEvento?.evento;
         return {
+          evento: eventoCierre?.id,
           tipo_evento: eventoCierre?.tipoevento?.nombre,
           fecha: formatearFecha(eventoCierre?.fecha),
           descripcion_evento: eventoCierre?.descripcion,
@@ -557,6 +560,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
       return {
         nacio: {
+          evento: data.evento?.id,
           tipo_evento: data.evento?.tipoevento?.nombre,
           fecha: formatearFecha(data.evento?.fecha),
           descripcion_evento: data.evento?.descripcion,
@@ -572,20 +576,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       };
     }));
     
-    const ini = await IniciativaPuntoOrden.findOne({
-      where: { id: id },
-      attributes: ["id", "iniciativa","id_evento","createdAt"],
-    });
-    let evento = null;
-    if(ini){
-      evento = await Agenda.findOne({  
-        where: { id: ini.id_evento },
-        attributes: ["id"],
-      });
-    }
-
+   
     return res.status(200).json({
-      evento,
       data: trazaIniciativas
     });
 
