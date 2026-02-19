@@ -27,6 +27,7 @@ interface TimelineItem {
   tipo_evento?: string;
   turnado?: boolean;
   comisiones_turnado?: string;
+  liga?: string;
 }
 
 @Component({
