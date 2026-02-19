@@ -356,7 +356,11 @@ export const crariniidits = async (req: Request, res: Response): Promise<any> =>
 export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
   try {
     const iniciativa = await IniciativaPuntoOrden.findAll({ 
-      // where: { id:  '1072'},
+      where: { 
+        id: {
+          [Op.in]: ['1072', '792']
+        }
+      },
       attributes: ["id", "iniciativa"]
     });
     return res.status(200).json({
