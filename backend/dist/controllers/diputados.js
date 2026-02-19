@@ -327,7 +327,7 @@ exports.crariniidits = crariniidits;
 const selectiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
-            where: { id: '1072' },
+            // where: { id:  '1072'},
             attributes: ["id", "iniciativa"]
         });
         return res.status(200).json({
