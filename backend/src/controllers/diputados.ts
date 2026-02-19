@@ -356,11 +356,11 @@ export const crariniidits = async (req: Request, res: Response): Promise<any> =>
 export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
   try {
     const iniciativa = await IniciativaPuntoOrden.findAll({ 
-      where: { 
-        id: {
-          [Op.in]: ['1072', '792']
-        }
-      },
+      // where: { 
+      //   id: {
+      //     [Op.in]: ['1072', '792','']
+      //   }
+      // },
       attributes: ["id", "iniciativa"]
     });
     return res.status(200).json({
@@ -557,6 +557,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           fecha: formatearFecha(eventoCierre?.fecha),
           descripcion_evento: eventoCierre?.descripcion,
           liga: eventoCierre?.liga,
+          votacionid: c.puntoEvento?.id,
           numpunto: c.puntoEvento?.nopunto,
           punto: c.puntoEvento?.punto,
         };
