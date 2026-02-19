@@ -468,7 +468,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         {
           model: IniciativaEstudio,
           as: 'estudio',
-          attributes: ["id", "status", "createdAt"],
+          attributes: ["id", "status", "createdAt","id_punto_evento"],
           required: false,
           include: [
             {
@@ -535,6 +535,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           tipo_evento: eventoDict?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoDict?.fecha),
           liga: eventoDict?.liga,
+          votacionid: d.puntoEvento?.id,
           descripcion_evento: eventoDict?.descripcion,
           numpunto: d.puntoEvento?.nopunto,
           punto: d.puntoEvento?.punto,
