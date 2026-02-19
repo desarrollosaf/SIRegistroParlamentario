@@ -147,9 +147,11 @@ export class EventoService {
   }
 
   generarPDFVotacionPunto(id: string): Observable<Blob> {
-    return this.http.get(`${this.myAppUrl}${this.myAPIUrl}/votacionpunto/${id}`, {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl}/asintenciapdf/${id}`, {
       responseType: 'blob'
     });
   }
+
+
 
 }

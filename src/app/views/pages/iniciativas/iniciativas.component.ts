@@ -204,24 +204,24 @@ export class IniciativasComponent implements OnInit {
 descargarAsistencia(item: TimelineItem, tipo: string): void {
   const key = `asistencia_${tipo}_${item.fecha}`;
   this.descargando[key] = true;
-  console.log(tipo);
-  if(tipo == 'nacio'){
-    this._eventoService.generarPDFVotacionPunto(this.idEvento).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        this.descargando[key] = false;
-      },
-      error: (e) => {
-        console.error('Error al descargar asistencia:', e);
-        this.descargando[key] = false;
-      }
-    });
-  }
+  console.log(item);
+  // if(tipo == 'nacio'){
+  //   this._eventoService.generarPDFVotacionPunto(this.idEvento).subscribe({
+  //     next: (blob: Blob) => {
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+  //       a.click();
+  //       window.URL.revokeObjectURL(url);
+  //       this.descargando[key] = false;
+  //     },
+  //     error: (e) => {
+  //       console.error('Error al descargar asistencia:', e);
+  //       this.descargando[key] = false;
+  //     }
+  //   });
+  // }
 
 }
 
