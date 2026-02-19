@@ -456,7 +456,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         {
           model: Agenda,
           as: 'evento',
-          attributes: ["id", "fecha", "descripcion"],
+          attributes: ["id", "fecha", "descripcion","liga"],
           include: [
             {
               model: TipoEventos,
@@ -479,7 +479,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: Agenda,
                   as: 'evento',
-                  attributes: ["id", "fecha", "descripcion"],
+                  attributes: ["id", "fecha", "descripcion","liga"],
                   include: [
                     {
                       model: TipoEventos,
@@ -494,7 +494,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         }
       ]
     });
-
+    
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
 
@@ -517,6 +517,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           fecha: formatearFecha(e.createdAt),
           tipo_evento: eventoEstudio?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoEstudio?.fecha),
+          liga: eventoEstudio?.liga,
           descripcion_evento: eventoEstudio?.descripcion,
           numpunto: e.puntoEvento?.nopunto,
           punto: e.puntoEvento?.punto,
@@ -533,6 +534,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           fecha: formatearFecha(d.createdAt),
           tipo_evento: eventoDict?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoDict?.fecha),
+          liga: eventoDict?.liga,
           descripcion_evento: eventoDict?.descripcion,
           numpunto: d.puntoEvento?.nopunto,
           punto: d.puntoEvento?.punto,
@@ -546,6 +548,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           tipo_evento: eventoCierre?.tipoevento?.nombre,
           fecha: formatearFecha(eventoCierre?.fecha),
           descripcion_evento: eventoCierre?.descripcion,
+          liga: eventoCierre?.liga,
           numpunto: c.puntoEvento?.nopunto,
           punto: c.puntoEvento?.punto,
         };
@@ -558,6 +561,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           descripcion_evento: data.evento?.descripcion,
           numpunto: data.punto?.nopunto,
           punto: data.punto?.punto,
+          liga: data.evento?.liga,
           ...turnadoInfo,
           ...anfitrionesNacio
         },
@@ -566,8 +570,21 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
       };
     }));
+    
+    const ini = await IniciativaPuntoOrden.findOne({
+      where: { id: id },
+      attributes: ["id", "iniciativa","id_evento","createdAt"],
+    });
+    let evento = null;
+    if(ini){
+      evento = await Agenda.findOne({  
+        where: { id: ini.id_evento },
+        attributes: ["id"],
+      });
+    }
 
     return res.status(200).json({
+      evento,
       data: trazaIniciativas
     });
 
