@@ -327,11 +327,11 @@ exports.crariniidits = crariniidits;
 const selectiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
-            where: {
-                id: {
-                    [sequelize_1.Op.in]: ['1072', '792']
-                }
-            },
+            // where: { 
+            //   id: {
+            //     [Op.in]: ['1072', '792','']
+            //   }
+            // },
             attributes: ["id", "iniciativa"]
         });
         return res.status(200).json({
@@ -485,7 +485,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 return Object.assign({ id: d.id, evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), liga: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.liga, votacionid: (_d = d.puntoEvento) === null || _d === void 0 ? void 0 : _d.id, descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_e = d.puntoEvento) === null || _e === void 0 ? void 0 : _e.nopunto, punto: (_f = d.puntoEvento) === null || _f === void 0 ? void 0 : _f.punto }, anfitriones);
             })));
             const cierresConInfo = yield Promise.all(cierres.map((c) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b, _c, _d;
+                var _a, _b, _c, _d, _e;
                 const eventoCierre = (_a = c.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
                 return {
                     evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.id,
@@ -493,8 +493,9 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
                     descripcion_evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.descripcion,
                     liga: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.liga,
-                    numpunto: (_c = c.puntoEvento) === null || _c === void 0 ? void 0 : _c.nopunto,
-                    punto: (_d = c.puntoEvento) === null || _d === void 0 ? void 0 : _d.punto,
+                    votacionid: (_c = c.puntoEvento) === null || _c === void 0 ? void 0 : _c.id,
+                    numpunto: (_d = c.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto,
+                    punto: (_e = c.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto,
                 };
             })));
             return {
