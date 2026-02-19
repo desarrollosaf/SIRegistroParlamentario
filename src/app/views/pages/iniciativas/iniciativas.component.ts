@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import Swal from 'sweetalert2';
 
 interface Iniciativa {
   id: string;
@@ -211,25 +211,43 @@ export class IniciativasComponent implements OnInit {
 
 
   descargarAsistencia(item: TimelineItem, tipo: string): void {
-    const key = `asistencia_${tipo}_${item.fecha}`;
-    this.descargando[key] = true;
-    console.log(item.evento);
-    const evento = item.evento;
-    this._eventoService.generarPDFVotacionPunto(item.evento!).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        this.descargando[key] = false;
-      },
-      error: (e) => {
+    if (!item.evento) return;
+
+  const key = `asistencia_${tipo}_${item.fecha}`;
+  this.descargando[key] = true;
+
+  this._eventoService.generarPDFVotacionPunto(item.evento!).subscribe({
+    next: (blob: Blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      this.descargando[key] = false;
+    },
+    error: (e: HttpErrorResponse) => {
+      this.descargando[key] = false;
+      if (e.status === 404) {
+        Swal.fire({
+          icon: 'info',
+          title: 'Sin registros',
+          text: 'No se encontraron registros de asistencia para esta sesión.',
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#800048',
+        });
+      } else {
         console.error('Error al descargar asistencia:', e);
-        this.descargando[key] = false;
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#800048',
+        });
       }
-    });
+    }
+  });
 
 
   }
