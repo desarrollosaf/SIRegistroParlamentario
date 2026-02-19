@@ -29,6 +29,7 @@ interface TimelineItem {
   turnado?: boolean;
   comisiones_turnado?: string;
   liga?: string;
+  votacionid?: string;
 }
 
 @Component({
@@ -161,7 +162,8 @@ export class IniciativasComponent implements OnInit {
           comisiones: item.comisiones,
           tipo_evento: item.tipo_evento,
           evento: item.evento,
-          liga: item.liga
+          liga: item.liga,
+          votacionid: item.votacionid
         });
       });
     }
@@ -177,7 +179,8 @@ export class IniciativasComponent implements OnInit {
         punto: data.cierre.punto,
         tipo_evento: data.cierre.tipo_evento,
         evento: data.cierre.evento,
-        liga: data.cierre.liga
+        liga: data.cierre.liga,
+        votacionid: data.cierre.votacionid
       });
     }
     this.timelineData.forEach((_, index) => {
@@ -211,66 +214,85 @@ export class IniciativasComponent implements OnInit {
 
 
   descargarAsistencia(item: TimelineItem, tipo: string): void {
-    if (!item.evento) return;
+    // if (!item.evento) return;
 
-  const key = `asistencia_${tipo}_${item.fecha}`;
-  this.descargando[key] = true;
+    const key = `asistencia_${tipo}_${item.fecha}`;
+    this.descargando[key] = true;
 
-  this._eventoService.generarPDFVotacionPunto(item.evento!).subscribe({
-    next: (blob: Blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      this.descargando[key] = false;
-    },
-    error: (e: HttpErrorResponse) => {
-      this.descargando[key] = false;
-      if (e.status === 404) {
-        Swal.fire({
-          icon: 'info',
-          title: 'Sin registros',
-          text: 'No se encontraron registros de asistencia para esta sesión.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#800048',
-        });
-      } else {
-        console.error('Error al descargar asistencia:', e);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#800048',
-        });
+    this._eventoService.generarPDFAsistenciaPunto(item.evento!).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargando[key] = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.descargando[key] = false;
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de asistencia para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar asistencia:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
       }
-    }
-  });
+    });
 
 
   }
 
   descargarVotacion(item: TimelineItem, tipo: string): void {
+    // if (!item.votacionid) return;
+
     const key = `votacion_${tipo}_${item.fecha}`;
     this.descargando[key] = true;
 
-    // this._eventoService.descargarVotacion(this.iniciativaSeleccionada!.id, tipo).subscribe({
-    //   next: (blob: Blob) => {
-    //     const url = window.URL.createObjectURL(blob);
-    //     const a = document.createElement('a');
-    //     a.href = url;
-    //     a.download = `votacion_${tipo}_${item.fecha}.pdf`;
-    //     a.click();
-    //     window.URL.revokeObjectURL(url);
-    //     this.descargando[key] = false;
-    //   },
-    //   error: (e) => {
-    //     console.error('Error al descargar votación:', e);
-    //     this.descargando[key] = false;
-    //   }
-    // });
+    this._eventoService.generarPDFVotacion(item.votacionid!).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `votacion_${tipo}_${item.fecha}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargando[key] = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.descargando[key] = false;
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de votación para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar votación:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+      }
+    });
   }
 
 
