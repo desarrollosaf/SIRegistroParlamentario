@@ -27,6 +27,7 @@ interface TimelineItem {
   tipo_evento?: string;
   turnado?: boolean;
   comisiones_turnado?: string;
+  liga?: string;
 }
 
 @Component({
@@ -43,7 +44,7 @@ export class IniciativasComponent implements OnInit {
   timelineData: TimelineItem[] = [];
   isCollapsed: { [key: number]: boolean } = {};
   descargando: { [key: string]: boolean } = {};
-
+  idEvento:any;
 
 
 
@@ -90,7 +91,8 @@ export class IniciativasComponent implements OnInit {
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
         console.log('Respuesta del historial:', response);
-
+        console.log('Respuesta del historial:', response.evento.id);
+        this.idEvento = response.evento.id;
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0]);
         } else {
@@ -162,7 +164,7 @@ export class IniciativasComponent implements OnInit {
    if (data.cierre) {
     this.timelineData.push({
       fecha: data.cierre.fecha,  
-      titulo: '⚖️ Cierre', 
+      titulo: '⚖️ Resolución ', 
       descripcion: data.cierre.descripcion_evento,
       tipo: 'cierre',
       numpunto: data.cierre.numpunto,
@@ -203,22 +205,25 @@ export class IniciativasComponent implements OnInit {
 descargarAsistencia(item: TimelineItem, tipo: string): void {
   const key = `asistencia_${tipo}_${item.fecha}`;
   this.descargando[key] = true;
+  console.log(item);
+  // if(tipo == 'nacio'){
+  //   this._eventoService.generarPDFVotacionPunto(this.idEvento).subscribe({
+  //     next: (blob: Blob) => {
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+  //       a.click();
+  //       window.URL.revokeObjectURL(url);
+  //       this.descargando[key] = false;
+  //     },
+  //     error: (e) => {
+  //       console.error('Error al descargar asistencia:', e);
+  //       this.descargando[key] = false;
+  //     }
+  //   });
+  // }
 
-  // this._eventoService.descargarAsistencia(this.iniciativaSeleccionada!.id, tipo).subscribe({
-  //   next: (blob: Blob) => {
-  //     const url = window.URL.createObjectURL(blob);
-  //     const a = document.createElement('a');
-  //     a.href = url;
-  //     a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
-  //     a.click();
-  //     window.URL.revokeObjectURL(url);
-  //     this.descargando[key] = false;
-  //   },
-  //   error: (e) => {
-  //     console.error('Error al descargar asistencia:', e);
-  //     this.descargando[key] = false;
-  //   }
-  // });
 }
 
 descargarVotacion(item: TimelineItem, tipo: string): void {

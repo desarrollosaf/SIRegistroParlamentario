@@ -146,10 +146,12 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl1}/getinfiniciativa/${id}`)
   }
 
-    generarPDFVotacionPunto(id: string): Observable<Blob> {
-    return this.http.get(`${this.myAppUrl}${this.myAPIUrl}/votacionpunto/${id}`, {
-      responseType: 'blob' as 'blob',
+  generarPDFVotacionPunto(id: string): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl}/asintenciapdf/${id}`, {
+      responseType: 'blob'
     });
   }
+
+
 
 }
