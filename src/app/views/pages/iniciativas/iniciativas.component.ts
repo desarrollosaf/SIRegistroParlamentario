@@ -42,7 +42,7 @@ export class IniciativasComponent implements OnInit {
   iniciativaSeleccionada: Iniciativa | null = null;
   timelineData: TimelineItem[] = [];
   isCollapsed: { [key: number]: boolean } = {};
-
+  descargando: { [key: string]: boolean } = {};
 
 
 
@@ -62,7 +62,7 @@ export class IniciativasComponent implements OnInit {
     this._eventoService.getIniciativasList().subscribe({
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
-        // console.log('Iniciativas cargadas:', this.listaIniciativas);
+        console.log('Iniciativas cargadas:', this.listaIniciativas);
         this.cargando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -198,5 +198,59 @@ export class IniciativasComponent implements OnInit {
       default: return 'timeline-secondary';
     }
   }
+
+
+descargarAsistencia(item: TimelineItem, tipo: string): void {
+  const key = `asistencia_${tipo}_${item.fecha}`;
+  this.descargando[key] = true;
+
+  // this._eventoService.descargarAsistencia(this.iniciativaSeleccionada!.id, tipo).subscribe({
+  //   next: (blob: Blob) => {
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+  //     a.click();
+  //     window.URL.revokeObjectURL(url);
+  //     this.descargando[key] = false;
+  //   },
+  //   error: (e) => {
+  //     console.error('Error al descargar asistencia:', e);
+  //     this.descargando[key] = false;
+  //   }
+  // });
+}
+
+descargarVotacion(item: TimelineItem, tipo: string): void {
+  const key = `votacion_${tipo}_${item.fecha}`;
+  this.descargando[key] = true;
+
+  // this._eventoService.descargarVotacion(this.iniciativaSeleccionada!.id, tipo).subscribe({
+  //   next: (blob: Blob) => {
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = `votacion_${tipo}_${item.fecha}.pdf`;
+  //     a.click();
+  //     window.URL.revokeObjectURL(url);
+  //     this.descargando[key] = false;
+  //   },
+  //   error: (e) => {
+  //     console.error('Error al descargar votación:', e);
+  //     this.descargando[key] = false;
+  //   }
+  // });
+}
+
+
+
+
+
+
+
+
+
+
+
 
 }

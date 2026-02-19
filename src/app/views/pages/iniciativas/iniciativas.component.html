@@ -107,72 +107,127 @@
                                                 {{ item.fecha }}
                                             </small>
                                         </div>
-                                        <div class="timeline-body">
-                                            <!-- Tipo de evento -->
-                                            <div class="mb-2" *ngIf="item.tipo_evento">
-                                                <span class="badge bg-secondary">
-                                                    <i class="bi bi-tag me-1"></i>
-                                                    {{ item.tipo_evento }}
-                                                </span>
-                                            </div>
+                                       <div class="timeline-body">
+  <!-- Tipo de evento -->
+  <div class="mb-2" *ngIf="item.tipo_evento">
+    <span class="badge bg-secondary">
+      <i class="bi bi-tag me-1"></i>
+      {{ item.tipo_evento }}
+    </span>
+  </div>
 
-                                            <!--  PRIMERO Y ÚLTIMO: Mostrar punto completo arriba -->
-                                            <div class="alert alert-light mb-3"
-                                                *ngIf="(isFirst || isLast) && item.punto">
-                                                <strong class="d-block mb-2">
-                                                    <i class="bi bi-file-text me-1"></i>
-                                                    {{ isFirst ? 'Punto:' : 'Resolución:' }}
-                                                </strong>
-                                                <small class="text-dark">{{ item.punto }}</small>
-                                            </div>
+  <!-- PRIMERO Y ÚLTIMO: Mostrar punto completo arriba -->
+  <div class="alert alert-light mb-3" *ngIf="(isFirst || isLast) && item.punto">
+    <strong class="d-block mb-2">
+      <i class="bi bi-file-text me-1"></i>
+      {{ isFirst ? 'Punto:' : 'Resolución:' }}
+    </strong>
+    <small class="text-dark">{{ item.punto }}</small>
+  </div>
 
-                                            <!--  EN LOS DEMÁS (del medio): Mostrar número de punto -->
-                                            <!-- <p class="mb-2" *ngIf="!isFirst && !isLast && item.numpunto">
-                                                <strong>Punto #{{ item.numpunto }}</strong>
-                                            </p> -->
+  <!-- Descripción del evento -->
+  <p class="mb-2">{{ item.descripcion }}</p>
 
-                                            <!-- Descripción del evento -->
-                                            <p class="mb-2">{{ item.descripcion }}</p>
+  <!-- COMISIONES TURNADO (solo en "nació") -->
+  <div class="alert alert-info mb-2" *ngIf="isFirst && item.turnado && item.comisiones_turnado">
+    <div class="d-flex align-items-start">
+      <i class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
+      <div>
+        <strong class="d-block">Turnada a comisiones:</strong>
+        <small class="text-dark">{{ item.comisiones_turnado }}</small>
+      </div>
+    </div>
+  </div>
 
-                                            <!--  COMISIONES TURNADO (solo en "nació" si existe) -->
-                                            <div class="alert alert-info mb-2"
-                                                *ngIf="isFirst && item.turnado && item.comisiones_turnado">
-                                                <div class="d-flex align-items-start">
-                                                    <i
-                                                        class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
-                                                    <div>
-                                                        <strong class="d-block">Turnada a comisiones:</strong>
-                                                        <small class="text-dark">{{ item.comisiones_turnado }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
+  <!-- Comisiones (items del medio) -->
+  <div class="mt-2" *ngIf="!isFirst && !isLast && item.comisiones">
+    <small class="text-muted">
+      <i class="bi bi-building me-1"></i>
+      <strong>Comisiones:</strong> {{ item.comisiones }}
+    </small>
+  </div>
 
-                                            <!-- Comisiones (para los items del medio) -->
-                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.comisiones">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-building me-1"></i>
-                                                    <strong>Comisiones:</strong> {{ item.comisiones }}
-                                                </small>
-                                            </div>
+  <!-- PUNTO COLAPSABLE: Solo para items del MEDIO -->
+  <div class="mt-2" *ngIf="!isFirst && !isLast && item.punto">
+    <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none" type="button" (click)="toggleCollapse(i)">
+      <small>
+        <i class="bi me-1" [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+        {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
+      </small>
+    </button>
+    <div class="collapse-content" [class.show]="!isCollapsed[i]">
+      <div class="card card-body bg-light mt-2">
+        <small>{{ item.punto }}</small>
+      </div>
+    </div>
+  </div>
 
-                                            <!--  PUNTO COLAPSABLE: Solo para los items del MEDIO -->
-                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.punto">
-                                                <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none"
-                                                    type="button" (click)="toggleCollapse(i)">
-                                                    <small>
-                                                        <i class="bi me-1"
-                                                            [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
-                                                        {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
-                                                    </small>
-                                                </button>
+  <!-- ===================== BOTONES DE DESCARGA ===================== -->
+<!-- NACIÓ: solo asistencia -->
+<div class="d-flex gap-2 mt-3 flex-wrap" *ngIf="item.tipo === 'nacio'">
+  <button class="btn btn-sm btn-download"
+    (click)="descargarAsistencia(item, 'nacio')"
+    [disabled]="descargando['asistencia_nacio_' + item.fecha]">
+    <span *ngIf="descargando['asistencia_nacio_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_nacio_' + item.fecha]"></i>
+    Asistencia
+  </button>
+</div>
 
-                                                <div class="collapse-content" [class.show]="!isCollapsed[i]">
-                                                    <div class="card card-body bg-light mt-2">
-                                                        <small>{{ item.punto }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+<!-- ESTUDIO: solo asistencia comisión -->
+<div class="d-flex gap-2 mt-3 flex-wrap" *ngIf="item.tipo === 'estudio'">
+  <button class="btn btn-sm btn-download"
+    (click)="descargarAsistencia(item, 'estudio')"
+    [disabled]="descargando['asistencia_estudio_' + item.fecha]">
+    <span *ngIf="descargando['asistencia_estudio_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_estudio_' + item.fecha]"></i>
+    Asistencia Comisión
+  </button>
+</div>
+
+<!-- DICTAMEN: asistencia + votación -->
+<div class="d-flex gap-2 mt-3 flex-wrap" *ngIf="item.tipo === 'dictamen'">
+  <button class="btn btn-sm btn-download"
+    (click)="descargarAsistencia(item, 'dictamen')"
+    [disabled]="descargando['asistencia_dictamen_' + item.fecha]">
+    <span *ngIf="descargando['asistencia_dictamen_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_dictamen_' + item.fecha]"></i>
+    Asistencia
+  </button>
+  <button class="btn btn-sm btn-download"
+    (click)="descargarVotacion(item, 'dictamen')"
+    [disabled]="descargando['votacion_dictamen_' + item.fecha]">
+    <span *ngIf="descargando['votacion_dictamen_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['votacion_dictamen_' + item.fecha]"></i>
+    Votación
+  </button>
+</div>
+
+<!-- CIERRE: asistencia + votación -->
+<div class="d-flex gap-2 mt-3 flex-wrap" *ngIf="item.tipo === 'cierre'">
+  <button class="btn btn-sm btn-download"
+    (click)="descargarAsistencia(item, 'cierre')"
+    [disabled]="descargando['asistencia_cierre_' + item.fecha]">
+    <span *ngIf="descargando['asistencia_cierre_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_cierre_' + item.fecha]"></i>
+    Asistencia
+  </button>
+  <button class="btn btn-sm btn-download"
+    (click)="descargarVotacion(item, 'cierre')"
+    [disabled]="descargando['votacion_cierre_' + item.fecha]">
+    <span *ngIf="descargando['votacion_cierre_' + item.fecha]"
+      class="spinner-border spinner-border-sm me-1" role="status"></span>
+    <i class="bi bi-download me-1" *ngIf="!descargando['votacion_cierre_' + item.fecha]"></i>
+    Votación
+  </button>
+</div>
+
+</div>
                                     </div>
                                 </div>
                             </div>
