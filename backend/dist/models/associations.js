@@ -41,9 +41,13 @@ inciativas_puntos_ordens_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'id_punto',
     as: 'punto'
 });
-inciativas_puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'id_iniciativa', as: 'estudio' });
-iniciativas_estudio_1.default.belongsTo(inciativas_puntos_ordens_1.default, {
-    foreignKey: 'id_iniciativa',
+puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'punto_origen_id', as: 'estudio' });
+iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
+    foreignKey: 'punto_origen_id',
+    as: 'iniciativaorigen'
+});
+iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
+    foreignKey: 'punto_destino_id',
     as: 'iniciativa'
 });
 exports.default = {

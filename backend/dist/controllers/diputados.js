@@ -419,6 +419,35 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: puntos_ordens_1.default,
                     as: 'punto',
                     attributes: ["id", "punto", "nopunto"],
+                    include: [
+                        {
+                            model: iniciativas_estudio_1.default,
+                            as: 'estudio',
+                            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id"], // 👈 cambió de id_punto_evento
+                            required: false,
+                            include: [
+                                {
+                                    model: puntos_ordens_1.default,
+                                    as: 'iniciativa', // 👈 cambió de 'puntoEvento'
+                                    attributes: ["id", "punto", "nopunto"],
+                                    include: [
+                                        {
+                                            model: agendas_1.default,
+                                            as: 'evento',
+                                            attributes: ["id", "fecha", "descripcion", "liga"],
+                                            include: [
+                                                {
+                                                    model: tipo_eventos_1.default,
+                                                    as: 'tipoevento',
+                                                    attributes: ["nombre"]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     model: agendas_1.default,
@@ -431,75 +460,49 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             attributes: ["nombre"]
                         }
                     ]
-                },
-                {
-                    model: iniciativas_estudio_1.default,
-                    as: 'estudio',
-                    attributes: ["id", "status", "createdAt", "id_punto_evento"],
-                    required: false,
-                    include: [
-                        {
-                            model: puntos_ordens_1.default,
-                            as: 'puntoEvento',
-                            attributes: ["id", "punto", "nopunto"],
-                            include: [
-                                {
-                                    model: agendas_1.default,
-                                    as: 'evento',
-                                    attributes: ["id", "fecha", "descripcion", "liga"],
-                                    include: [
-                                        {
-                                            model: tipo_eventos_1.default,
-                                            as: 'tipoevento',
-                                            attributes: ["nombre"]
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
                 }
             ]
         });
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
             const data = iniciativa.toJSON();
-            const estudios = ((_a = data.estudio) === null || _a === void 0 ? void 0 : _a.filter((e) => e.status === "1")) || [];
-            const dictamenes = ((_b = data.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "2")) || [];
-            const cierres = ((_c = data.estudio) === null || _c === void 0 ? void 0 : _c.filter((e) => e.status === "3")) || [];
+            const estudios = ((_b = (_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "1")) || [];
+            const dictamenes = ((_d = (_c = data.punto) === null || _c === void 0 ? void 0 : _c.estudio) === null || _d === void 0 ? void 0 : _d.filter((e) => e.status === "2")) || [];
+            const cierres = ((_f = (_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) === null || _f === void 0 ? void 0 : _f.filter((e) => e.status === "3")) || [];
             // Anfitriones y turnado del nació
-            const anfitrionesNacio = yield getAnfitriones((_d = data.evento) === null || _d === void 0 ? void 0 : _d.id, (_f = (_e = data.evento) === null || _e === void 0 ? void 0 : _e.tipoevento) === null || _f === void 0 ? void 0 : _f.nombre);
-            const turnadoInfo = yield getComisionesTurnado((_g = data.punto) === null || _g === void 0 ? void 0 : _g.id);
+            const anfitrionesNacio = yield getAnfitriones((_g = data.evento) === null || _g === void 0 ? void 0 : _g.id, (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre);
+            const turnadoInfo = yield getComisionesTurnado((_k = data.punto) === null || _k === void 0 ? void 0 : _k.id);
             // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
-                const eventoEstudio = (_a = e.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                const eventoEstudio = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento; // 👈 cambió de e.puntoEvento?.evento
                 const anfitriones = yield getAnfitriones(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, (_b = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
-                return Object.assign({ id: e.id, evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, fecha: formatearFecha(e.createdAt), tipo_evento: (_c = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.fecha), liga: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.liga, descripcion_evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.descripcion, numpunto: (_d = e.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = e.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
+                return Object.assign({ id: e.id, evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, fecha: formatearFecha(e.createdAt), tipo_evento: (_c = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.fecha), liga: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.liga, descripcion_evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.descripcion, numpunto: (_d = e.iniciativa) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = e.iniciativa) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
             })));
             // Dictámenes con info de evento y anfitriones
             const dictamenesConInfo = yield Promise.all(dictamenes.map((d) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f;
-                const eventoDict = (_a = d.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                const eventoDict = (_a = d.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
                 const anfitriones = yield getAnfitriones(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, (_b = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
-                return Object.assign({ id: d.id, evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), liga: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.liga, votacionid: (_d = d.puntoEvento) === null || _d === void 0 ? void 0 : _d.id, descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_e = d.puntoEvento) === null || _e === void 0 ? void 0 : _e.nopunto, punto: (_f = d.puntoEvento) === null || _f === void 0 ? void 0 : _f.punto }, anfitriones);
+                return Object.assign({ id: d.id, evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), liga: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.liga, votacionid: (_d = d.iniciativa) === null || _d === void 0 ? void 0 : _d.id, descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_e = d.iniciativa) === null || _e === void 0 ? void 0 : _e.nopunto, punto: (_f = d.iniciativa) === null || _f === void 0 ? void 0 : _f.punto }, anfitriones);
             })));
+            // Cierres con info de evento
             const cierresConInfo = yield Promise.all(cierres.map((c) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
-                const eventoCierre = (_a = c.puntoEvento) === null || _a === void 0 ? void 0 : _a.evento;
+                const eventoCierre = (_a = c.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
                 return {
                     evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.id,
                     tipo_evento: (_b = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
                     fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
                     descripcion_evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.descripcion,
                     liga: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.liga,
-                    votacionid: (_c = c.puntoEvento) === null || _c === void 0 ? void 0 : _c.id,
-                    numpunto: (_d = c.puntoEvento) === null || _d === void 0 ? void 0 : _d.nopunto,
-                    punto: (_e = c.puntoEvento) === null || _e === void 0 ? void 0 : _e.punto,
+                    votacionid: (_c = c.iniciativa) === null || _c === void 0 ? void 0 : _c.id,
+                    numpunto: (_d = c.iniciativa) === null || _d === void 0 ? void 0 : _d.nopunto,
+                    punto: (_e = c.iniciativa) === null || _e === void 0 ? void 0 : _e.punto,
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ evento: (_h = data.evento) === null || _h === void 0 ? void 0 : _h.id, tipo_evento: (_k = (_j = data.evento) === null || _j === void 0 ? void 0 : _j.tipoevento) === null || _k === void 0 ? void 0 : _k.nombre, fecha: formatearFecha((_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha), descripcion_evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.descripcion, numpunto: (_o = data.punto) === null || _o === void 0 ? void 0 : _o.nopunto, punto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.punto, liga: (_q = data.evento) === null || _q === void 0 ? void 0 : _q.liga }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ evento: (_l = data.evento) === null || _l === void 0 ? void 0 : _l.id, tipo_evento: (_o = (_m = data.evento) === null || _m === void 0 ? void 0 : _m.tipoevento) === null || _o === void 0 ? void 0 : _o.nombre, fecha: formatearFecha((_p = data.evento) === null || _p === void 0 ? void 0 : _p.fecha), descripcion_evento: (_q = data.evento) === null || _q === void 0 ? void 0 : _q.descripcion, numpunto: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.nopunto, punto: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.punto, liga: (_t = data.evento) === null || _t === void 0 ? void 0 : _t.liga }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null

@@ -456,11 +456,40 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           model: PuntosOrden,
           as: 'punto',
           attributes: ["id", "punto", "nopunto"],
+          include: [
+            {
+              model: IniciativaEstudio,
+              as: 'estudio',
+              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id"], // 👈 cambió de id_punto_evento
+              required: false,
+              include: [
+                {
+                  model: PuntosOrden,
+                  as: 'iniciativa', // 👈 cambió de 'puntoEvento'
+                  attributes: ["id", "punto", "nopunto"],
+                  include: [
+                    {
+                      model: Agenda,
+                      as: 'evento',
+                      attributes: ["id", "fecha", "descripcion", "liga"],
+                      include: [
+                        {
+                          model: TipoEventos,
+                          as: 'tipoevento',
+                          attributes: ["nombre"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
         {
           model: Agenda,
           as: 'evento',
-          attributes: ["id", "fecha", "descripcion","liga"],
+          attributes: ["id", "fecha", "descripcion", "liga"],
           include: [
             {
               model: TipoEventos,
@@ -468,43 +497,17 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               attributes: ["nombre"]
             }
           ]
-        },
-        {
-          model: IniciativaEstudio,
-          as: 'estudio',
-          attributes: ["id", "status", "createdAt","id_punto_evento"],
-          required: false,
-          include: [
-            {
-              model: PuntosOrden,
-              as: 'puntoEvento',
-              attributes: ["id", "punto", "nopunto"],
-              include: [
-                {
-                  model: Agenda,
-                  as: 'evento',
-                  attributes: ["id", "fecha", "descripcion","liga"],
-                  include: [
-                    {
-                      model: TipoEventos,
-                      as: 'tipoevento',
-                      attributes: ["nombre"]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
         }
       ]
     });
-    
+
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
 
-      const estudios = data.estudio?.filter((e: any) => e.status === "1") || [];
-      const dictamenes = data.estudio?.filter((e: any) => e.status === "2") || [];
-      const cierres = data.estudio?.filter((e: any) => e.status === "3") || [];
+      const estudios   = data.punto?.estudio?.filter((e: any) => e.status === "1") || [];
+      const dictamenes = data.punto?.estudio?.filter((e: any) => e.status === "2") || [];
+      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || [];
+
       // Anfitriones y turnado del nació
       const anfitrionesNacio = await getAnfitriones(
         data.evento?.id,
@@ -514,7 +517,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
       // Estudios con info de evento y anfitriones
       const estudiosConInfo = await Promise.all(estudios.map(async (e: any) => {
-        const eventoEstudio = e.puntoEvento?.evento;
+        const eventoEstudio = e.iniciativa?.evento; // 👈 cambió de e.puntoEvento?.evento
         const anfitriones = await getAnfitriones(eventoEstudio?.id, eventoEstudio?.tipoevento?.nombre);
         return {
           id: e.id,
@@ -524,15 +527,15 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           fecha_evento: formatearFecha(eventoEstudio?.fecha),
           liga: eventoEstudio?.liga,
           descripcion_evento: eventoEstudio?.descripcion,
-          numpunto: e.puntoEvento?.nopunto,
-          punto: e.puntoEvento?.punto,
+          numpunto: e.iniciativa?.nopunto,   // 👈 cambió de e.puntoEvento?.nopunto
+          punto: e.iniciativa?.punto,        // 👈 cambió de e.puntoEvento?.punto
           ...anfitriones
         };
       }));
 
       // Dictámenes con info de evento y anfitriones
       const dictamenesConInfo = await Promise.all(dictamenes.map(async (d: any) => {
-        const eventoDict = d.puntoEvento?.evento;
+        const eventoDict = d.iniciativa?.evento; 
         const anfitriones = await getAnfitriones(eventoDict?.id, eventoDict?.tipoevento?.nombre);
         return {
           id: d.id,
@@ -541,25 +544,26 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           tipo_evento: eventoDict?.tipoevento?.nombre,
           fecha_evento: formatearFecha(eventoDict?.fecha),
           liga: eventoDict?.liga,
-          votacionid: d.puntoEvento?.id,
+          votacionid: d.iniciativa?.id,      
           descripcion_evento: eventoDict?.descripcion,
-          numpunto: d.puntoEvento?.nopunto,
-          punto: d.puntoEvento?.punto,
+          numpunto: d.iniciativa?.nopunto,   
+          punto: d.iniciativa?.punto,       
           ...anfitriones
         };
       }));
 
+      // Cierres con info de evento
       const cierresConInfo = await Promise.all(cierres.map(async (c: any) => {
-        const eventoCierre = c.puntoEvento?.evento;
+        const eventoCierre = c.iniciativa?.evento; 
         return {
           evento: eventoCierre?.id,
           tipo_evento: eventoCierre?.tipoevento?.nombre,
           fecha: formatearFecha(eventoCierre?.fecha),
           descripcion_evento: eventoCierre?.descripcion,
           liga: eventoCierre?.liga,
-          votacionid: c.puntoEvento?.id,
-          numpunto: c.puntoEvento?.nopunto,
-          punto: c.puntoEvento?.punto,
+          votacionid: c.iniciativa?.id,      
+          numpunto: c.iniciativa?.nopunto,   
+          punto: c.iniciativa?.punto,       
         };
       }));
 
@@ -580,8 +584,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
       };
     }));
-    
-   
+
     return res.status(200).json({
       data: trazaIniciativas
     });
