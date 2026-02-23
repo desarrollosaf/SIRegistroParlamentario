@@ -8,15 +8,14 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
-      id_iniciativa: {
+      type: {
+        type: Sequelize.CHAR(36),
+      },
+      punto_origen_id: {
         type: Sequelize.CHAR(36),
         allowNull: true,
-        references: {
-          model: 'inciativas_puntos_ordens',
-          key: 'id'
-        },
       },
-      id_punto_evento: {
+      punto_destino_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
