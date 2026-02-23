@@ -18,7 +18,7 @@ module.exports = {
         },
       },
       punto_origen_sesion_id: {
-        type: Sequelize.CHAR(36),
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: 'puntos_ordens',

@@ -12,10 +12,6 @@ module.exports = {
       evento_comision_id: {
         type: Sequelize.CHAR(36),
         allowNull: true,
-        references: {
-          model: 'agendas',
-          key: 'id'
-        },
       },
       descripcion: {
         type: Sequelize.STRING
