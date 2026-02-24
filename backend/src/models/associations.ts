@@ -33,7 +33,6 @@ ProponentesTipoCategoriaDetalle.belongsTo(TipoCategoriaIniciativas, {
   as: 'tipoCategoria', 
 });
 
-
 PuntosOrden.hasMany(IniciativaPuntoOrden, {
   foreignKey: "id_punto",
   as: "iniciativas",
@@ -44,12 +43,21 @@ IniciativaPuntoOrden.belongsTo(PuntosOrden, {
   as: 'punto' 
 });
 
-IniciativaPuntoOrden.hasMany(IniciativaEstudio, { foreignKey: 'id_iniciativa', as: 'estudio' });
 
-IniciativaEstudio.belongsTo(IniciativaPuntoOrden, { 
-  foreignKey: 'id_iniciativa', 
+PuntosOrden.hasMany(IniciativaEstudio, { foreignKey: 'punto_origen_id', as: 'estudio' });
+
+IniciativaEstudio.belongsTo(PuntosOrden, { 
+  foreignKey: 'punto_origen_id', 
+  as: 'iniciativaorigen' 
+});
+
+
+IniciativaEstudio.belongsTo(PuntosOrden, { 
+  foreignKey: 'punto_destino_id', 
   as: 'iniciativa' 
 });
+
+
 
 export default {
   PuntosOrden,

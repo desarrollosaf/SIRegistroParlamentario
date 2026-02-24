@@ -808,7 +808,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         //iniciativas precargadas
         this.consoleiniciativas = response.selectini || [];
         this.slcIniciativasPrecargadas = response.selectini || [];
-        debugger
+        // debugger
         console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
         // this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
@@ -2154,9 +2154,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // SOLO cargar las reservas, NO los votantes
     this._eventoService.getReservas(puntoId.id).subscribe({
       next: (response: any) => {
-        console.log('reservas', response);
+        console.log('reservas', response.data.reservas);
         // Asignar las reservas al array
-        this.listaReservasPunto = response.data || response.reservas || [];
+        this.listaReservasPunto =  response.data.reservas || [];
         this.cdr.detectChanges();
         this.iniciarVotacion();
       },

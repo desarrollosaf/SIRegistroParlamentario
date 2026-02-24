@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import Swal from 'sweetalert2';
 
 interface Iniciativa {
   id: string;
@@ -19,6 +19,7 @@ interface Iniciativa {
 interface TimelineItem {
   fecha: string;
   titulo: string;
+  evento?: string;
   descripcion: string;
   tipo: 'nacio' | 'estudio' | 'dictamen' | 'cierre';
   numpunto?: number;
@@ -27,6 +28,8 @@ interface TimelineItem {
   tipo_evento?: string;
   turnado?: boolean;
   comisiones_turnado?: string;
+  liga?: string;
+  votacionid?: string;
 }
 
 @Component({
@@ -42,7 +45,7 @@ export class IniciativasComponent implements OnInit {
   iniciativaSeleccionada: Iniciativa | null = null;
   timelineData: TimelineItem[] = [];
   isCollapsed: { [key: number]: boolean } = {};
-
+  descargando: { [key: string]: boolean } = {};
 
 
 
@@ -62,7 +65,7 @@ export class IniciativasComponent implements OnInit {
     this._eventoService.getIniciativasList().subscribe({
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
-        // console.log('Iniciativas cargadas:', this.listaIniciativas);
+        console.log('Iniciativas cargadas:', this.listaIniciativas);
         this.cargando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -89,7 +92,7 @@ export class IniciativasComponent implements OnInit {
 
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta del historial:', response);
+        console.log('Respuesta del historial:', response);
 
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0]);
@@ -122,7 +125,9 @@ export class IniciativasComponent implements OnInit {
         punto: data.nacio.punto,
         tipo_evento: data.nacio.tipo_evento,
         turnado: data.nacio.turnado,
-        comisiones_turnado: data.nacio.comisiones_turnado
+        comisiones_turnado: data.nacio.comisiones_turnado,
+        evento: data.nacio.evento,
+        liga: data.nacio.liga
       });
     }
 
@@ -137,7 +142,9 @@ export class IniciativasComponent implements OnInit {
           numpunto: item.numpunto,
           punto: item.punto,
           comisiones: item.comisiones,
-          tipo_evento: item.tipo_evento
+          tipo_evento: item.tipo_evento,
+          evento: item.evento,
+          liga: item.liga
         });
       });
     }
@@ -153,23 +160,29 @@ export class IniciativasComponent implements OnInit {
           numpunto: item.numpunto,
           punto: item.punto,
           comisiones: item.comisiones,
-          tipo_evento: item.tipo_evento
+          tipo_evento: item.tipo_evento,
+          evento: item.evento,
+          liga: item.liga,
+          votacionid: item.votacionid
         });
       });
     }
 
     // 4. CIERRE (aprobada/rechazada)
-   if (data.cierre) {
-    this.timelineData.push({
-      fecha: data.cierre.fecha,  
-      titulo: '⚖️ Cierre', 
-      descripcion: data.cierre.descripcion_evento,
-      tipo: 'cierre',
-      numpunto: data.cierre.numpunto,
-      punto: data.cierre.punto,
-      tipo_evento: data.cierre.tipo_evento
-    });
-  }
+    if (data.cierre) {
+      this.timelineData.push({
+        fecha: data.cierre.fecha,
+        titulo: '⚖️ Resolución ',
+        descripcion: data.cierre.descripcion_evento,
+        tipo: 'cierre',
+        numpunto: data.cierre.numpunto,
+        punto: data.cierre.punto,
+        tipo_evento: data.cierre.tipo_evento,
+        evento: data.cierre.evento,
+        liga: data.cierre.liga,
+        votacionid: data.cierre.votacionid
+      });
+    }
     this.timelineData.forEach((_, index) => {
       this.isCollapsed[index] = true;
     });
@@ -198,5 +211,99 @@ export class IniciativasComponent implements OnInit {
       default: return 'timeline-secondary';
     }
   }
+
+
+  descargarAsistencia(item: TimelineItem, tipo: string): void {
+    // if (!item.evento) return;
+
+    const key = `asistencia_${tipo}_${item.fecha}`;
+    this.descargando[key] = true;
+
+    this._eventoService.generarPDFAsistenciaPunto(item.evento!).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `asistencia_${tipo}_${item.fecha}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargando[key] = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.descargando[key] = false;
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de asistencia para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar asistencia:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+      }
+    });
+
+
+  }
+
+  descargarVotacion(item: TimelineItem, tipo: string): void {
+    // if (!item.votacionid) return;
+
+    const key = `votacion_${tipo}_${item.fecha}`;
+    this.descargando[key] = true;
+
+    this._eventoService.generarPDFVotacion(item.votacionid!).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `votacion_${tipo}_${item.fecha}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargando[key] = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.descargando[key] = false;
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de votación para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar votación:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+      }
+    });
+  }
+
+
+
+
+
+
+
+
+
+
+
 
 }

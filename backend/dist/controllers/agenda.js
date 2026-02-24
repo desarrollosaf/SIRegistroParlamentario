@@ -2235,8 +2235,9 @@ exports.Eliminarlista = Eliminarlista;
 const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const body = req.body;
-        // console.log("punto",body);
+        const { id } = req.params;
+        // const body = req.body;
+        console.log("punto", id);
         // return 500;
         const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
         if (!punto) {
@@ -2254,12 +2255,12 @@ const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
         // Determinar tipo de evento
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
-        let temavotos = yield temas_puntos_votos_1.default.findOne({ where: { id_punto: id } });
-        if (!temavotos) {
-            return res.status(404).json({ msg: "No hay votaciones para este punto" });
-        }
+        // let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+        // if (!temavotos) {
+        //   return res.status(404).json({ msg: "No hay votaciones para este punto" });
+        // }
         const votosRaw = yield votos_punto_1.default.findAll({
-            where: { id_tema_punto_voto: temavotos.id },
+            where: { id_punto: punto.id },
             raw: true,
         });
         if (votosRaw.length === 0) {

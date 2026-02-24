@@ -1,205 +1,329 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <div class="row">
-    <div class="col-md-12 stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <!-- Header -->
-                <div class="text-center mb-4">
-                    <h4 class="card-title fw-bold text-uppercase d-inline-block mb-2"
-                        style="color: #800048; letter-spacing: 1.5px; border-bottom: 3px solid #800048; padding-bottom: 8px;">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        Seguimiento de Iniciativas
-                    </h4>
-                    <p class="text-muted mt-2">Selecciona una iniciativa para ver su historial</p>
-                </div>
-
-                <!-- Select de Iniciativas -->
-                <div class="row mb-4">
-                    <div class="col-md-10 offset-md-1">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-search me-2"></i>
-                            Buscar Iniciativa
-                        </label>
-                        <ng-select [items]="listaIniciativas" bindLabel="iniciativa"
-                            [(ngModel)]="iniciativaSeleccionada" placeholder="Escribe para buscar una iniciativa..."
-                            [searchable]="true" [clearable]="true" [loading]="cargando"
-                            (change)="onIniciativaChange($event)" class="ng-select-large">
-
-                            <ng-template ng-label-tmp let-item="item">
-                                <div class="d-flex align-items-start py-1">
-                                    <i class="bi bi-lightbulb-fill text-warning me-2 mt-1 flex-shrink-0"></i>
-                                    <span class="fw-semibold text-wrap">{{ item.iniciativa }}</span>
-                                </div>
-                            </ng-template>
-
-                            <ng-template ng-option-tmp let-item="item" let-index="index">
-                                <div class="py-2 iniciativa-option">
-                                    <div class="d-flex align-items-start">
-                                        <div class="flex-shrink-0">
-                                            <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <div class="fw-semibold text-wrap lh-sm">{{ item.iniciativa }}</div>
-                                            <small class="text-muted text-wrap d-block mt-1" *ngIf="item.descripcion">
-                                                {{ item.descripcion | slice:0:100 }}{{ item.descripcion.length > 100 ?
-                                                '...' : '' }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ng-template>
-
-                            <ng-template ng-notfound-tmp>
-                                <div class="text-center py-3">
-                                    <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
-                                    <p class="text-muted mb-0 mt-2">No se encontraron iniciativas</p>
-                                </div>
-                            </ng-template>
-                        </ng-select>
-                    </div>
-                </div>
-
-                <!-- Timeline -->
-                <div class="row" *ngIf="iniciativaSeleccionada && !cargando && timelineData.length > 0">
-                    <div class="col-md-10 offset-md-1">
-                        <!-- Info de la iniciativa seleccionada -->
-                        <div class="card mb-4" style="border-left: 4px solid #800048;">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary mb-3">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    Información de la Iniciativa
-                                </h5>
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <p class="mb-2">
-                                            <strong>Título:</strong> {{ iniciativaSeleccionada.iniciativa }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Timeline bonito -->
-                        <h5 class="mb-4">
-                            <i class="bi bi-clock-history me-2"></i>
-                            Historial de la Iniciativa
-                        </h5>
-                        <div class="timeline-container">
-                            <div class="timeline-item"
-                                *ngFor="let item of timelineData; let i = index; let isLast = last; let isFirst = first"
-                                [ngClass]="getTipoColor(item.tipo)">
-
-                                <!-- Icono -->
-                                <div class="timeline-icon">
-                                    <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
-                                </div>
-
-                                <!-- Línea conectora -->
-                                <div class="timeline-line" *ngIf="!isLast"></div>
-
-                                <!-- Contenido -->
-                                <div class="timeline-content">
-                                    <div class="timeline-card">
-                                        <div class="timeline-header">
-                                            <h6 class="timeline-title mb-1">{{ item.titulo }}</h6>
-                                            <small class="timeline-date">
-                                                <i class="bi bi-calendar3 me-1"></i>
-                                                {{ item.fecha }}
-                                            </small>
-                                        </div>
-                                        <div class="timeline-body">
-                                            <!-- Tipo de evento -->
-                                            <div class="mb-2" *ngIf="item.tipo_evento">
-                                                <span class="badge bg-secondary">
-                                                    <i class="bi bi-tag me-1"></i>
-                                                    {{ item.tipo_evento }}
-                                                </span>
-                                            </div>
-
-                                            <!--  PRIMERO Y ÚLTIMO: Mostrar punto completo arriba -->
-                                            <div class="alert alert-light mb-3"
-                                                *ngIf="(isFirst || isLast) && item.punto">
-                                                <strong class="d-block mb-2">
-                                                    <i class="bi bi-file-text me-1"></i>
-                                                    {{ isFirst ? 'Punto:' : 'Resolución:' }}
-                                                </strong>
-                                                <small class="text-dark">{{ item.punto }}</small>
-                                            </div>
-
-                                            <!--  EN LOS DEMÁS (del medio): Mostrar número de punto -->
-                                            <!-- <p class="mb-2" *ngIf="!isFirst && !isLast && item.numpunto">
-                                                <strong>Punto #{{ item.numpunto }}</strong>
-                                            </p> -->
-
-                                            <!-- Descripción del evento -->
-                                            <p class="mb-2">{{ item.descripcion }}</p>
-
-                                            <!--  COMISIONES TURNADO (solo en "nació" si existe) -->
-                                            <div class="alert alert-info mb-2"
-                                                *ngIf="isFirst && item.turnado && item.comisiones_turnado">
-                                                <div class="d-flex align-items-start">
-                                                    <i
-                                                        class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
-                                                    <div>
-                                                        <strong class="d-block">Turnada a comisiones:</strong>
-                                                        <small class="text-dark">{{ item.comisiones_turnado }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Comisiones (para los items del medio) -->
-                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.comisiones">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-building me-1"></i>
-                                                    <strong>Comisiones:</strong> {{ item.comisiones }}
-                                                </small>
-                                            </div>
-
-                                            <!--  PUNTO COLAPSABLE: Solo para los items del MEDIO -->
-                                            <div class="mt-2" *ngIf="!isFirst && !isLast && item.punto">
-                                                <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none"
-                                                    type="button" (click)="toggleCollapse(i)">
-                                                    <small>
-                                                        <i class="bi me-1"
-                                                            [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
-                                                        {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
-                                                    </small>
-                                                </button>
-
-                                                <div class="collapse-content" [class.show]="!isCollapsed[i]">
-                                                    <div class="card card-body bg-light mt-2">
-                                                        <small>{{ item.punto }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mensaje si no hay timeline -->
-                <div class="text-center py-5" *ngIf="iniciativaSeleccionada && !cargando && timelineData.length === 0">
-                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-3">No hay historial disponible para esta iniciativa</p>
-                </div>
-
-                <!-- Loading State -->
-                <div class="text-center py-5" *ngIf="cargando">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="text-muted mt-3">Cargando información...</p>
-                </div>
-
-                <!-- Estado inicial -->
-                <div class="text-center py-5" *ngIf="!iniciativaSeleccionada && !cargando">
-                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-3">Selecciona una iniciativa para ver su historial</p>
-                </div>
-            </div>
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- Header -->
+        <div class="text-center mb-4">
+          <h4 class="card-title fw-bold text-uppercase d-inline-block mb-2"
+            style="color: #800048; letter-spacing: 1.5px; border-bottom: 3px solid #800048; padding-bottom: 8px;">
+            <i class="bi bi-lightbulb me-2"></i>
+            Seguimiento de Iniciativas
+          </h4>
+          <p class="text-muted mt-2">Selecciona una iniciativa para ver su historial</p>
         </div>
+
+        <!-- Select de Iniciativas -->
+        <div class="row mb-4">
+          <div class="col-md-10 offset-md-1">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-search me-2"></i>
+              Buscar Iniciativa
+            </label>
+            <ng-select [items]="listaIniciativas" bindLabel="iniciativa" [(ngModel)]="iniciativaSeleccionada"
+              placeholder="Escribe para buscar una iniciativa..." [searchable]="true" [clearable]="true"
+              [loading]="cargando" (change)="onIniciativaChange($event)" class="ng-select-large">
+
+              <ng-template ng-label-tmp let-item="item">
+                <div class="d-flex align-items-start py-1">
+                  <i class="bi bi-lightbulb-fill text-warning me-2 mt-1 flex-shrink-0"></i>
+                  <span class="fw-semibold text-wrap">{{ item.iniciativa }}</span>
+                </div>
+              </ng-template>
+
+              <ng-template ng-option-tmp let-item="item" let-index="index">
+                <div class="py-2 iniciativa-option">
+                  <div class="d-flex align-items-start">
+                    <div class="flex-shrink-0">
+                      <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                      <div class="fw-semibold text-wrap lh-sm">{{ item.iniciativa }}</div>
+                      <small class="text-muted text-wrap d-block mt-1" *ngIf="item.descripcion">
+                        {{ item.descripcion | slice:0:100 }}{{ item.descripcion.length > 100 ?
+                        '...' : '' }}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+
+              <ng-template ng-notfound-tmp>
+                <div class="text-center py-3">
+                  <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                  <p class="text-muted mb-0 mt-2">No se encontraron iniciativas</p>
+                </div>
+              </ng-template>
+            </ng-select>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="row" *ngIf="iniciativaSeleccionada && !cargando && timelineData.length > 0">
+          <div class="col-md-10 offset-md-1">
+            <!-- Info de la iniciativa seleccionada -->
+            <div class="card mb-4" style="border-left: 4px solid #800048;">
+              <div class="card-body">
+                <h5 class="card-title text-primary mb-3">
+                  <i class="bi bi-info-circle me-2"></i>
+                  Información de la Iniciativa
+                </h5>
+                <div class="row">
+                  <div class="col-md-12">
+                    <p class="mb-2">
+                      <strong>Título:</strong> {{ iniciativaSeleccionada.iniciativa }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline bonito -->
+            <h5 class="mb-4">
+              <i class="bi bi-clock-history me-2"></i>
+              Historial de la Iniciativa
+            </h5>
+            <div class="timeline-container">
+              <div class="timeline-item"
+                *ngFor="let item of timelineData; let i = index; let isLast = last; let isFirst = first"
+                [ngClass]="getTipoColor(item.tipo)">
+
+                <!-- Icono -->
+                <div class="timeline-icon">
+                  <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
+                </div>
+
+                <!-- Línea conectora -->
+                <div class="timeline-line" *ngIf="!isLast"></div>
+
+                <!-- Contenido -->
+                <div class="timeline-content">
+                  <div class="timeline-card">
+                    <div class="timeline-header">
+                      <h6 class="timeline-title mb-1">{{ item.titulo }}</h6>
+                      <small class="timeline-date">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        {{ item.fecha }}
+                      </small>
+                    </div>
+                    <div class="timeline-body">
+
+                      <!-- ══════════════ NACIÓ ══════════════ -->
+                      <ng-container *ngIf="item.tipo === 'nacio'">
+                        <p class="timeline-desc mb-2">{{ item.descripcion }}</p>
+                        <div class="mb-3" *ngIf="item.tipo_evento">
+                          <span class="badge badge-tipo">
+                            <i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}
+                          </span>
+                        </div>
+                        <div class="alert alert-light mb-3" *ngIf="item.punto">
+                          <strong class="d-block mb-2">
+                            <i class="bi bi-file-text me-1"></i> Punto:
+                          </strong>
+                          <small class="text-dark">{{ item.punto }}</small>
+                        </div>
+                        <div class="alert alert-info mb-3" *ngIf="item.turnado && item.comisiones_turnado">
+                          <div class="d-flex align-items-start">
+                            <i class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
+                            <div>
+                              <strong class="d-block">Turnada a comisiones:</strong>
+                              <small class="text-dark">{{ item.comisiones_turnado }}</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Liga YouTube -->
+                        <div class="mt-3 mb-2" *ngIf="item.liga">
+                          <a [href]="item.liga" target="_blank" rel="noopener noreferrer" class="btn-liga-yt">
+                            <i class="bi bi-youtube me-2"></i>
+                            Ver sesión en video
+                            <i class="bi bi-box-arrow-up-right ms-2 liga-arrow"></i>
+                          </a>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                          <button class="btn btn-sm btn-download" (click)="descargarAsistencia(item, 'nacio')"
+                            [disabled]="descargando['asistencia_nacio_' + item.fecha]">
+                            <span *ngIf="descargando['asistencia_nacio_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_nacio_' + item.fecha]"></i>
+                            Asistencia
+                          </button>
+                        </div>
+                      </ng-container>
+
+                      <!-- ══════════════ ESTUDIO ══════════════ -->
+                      <ng-container *ngIf="item.tipo === 'estudio'">
+                        <p class="timeline-desc mb-2" *ngIf="item.comisiones">
+                          <i class="bi bi-building me-1 text-muted"></i>
+                          <strong>Comisiones:</strong> {{ item.comisiones }}
+                        </p>
+                        <div class="mb-3" *ngIf="item.tipo_evento">
+                          <span class="badge badge-tipo">
+                            <i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}
+                          </span>
+                        </div>
+                        <p class="timeline-desc mb-2">{{ item.descripcion }}</p>
+                        <div class="mt-2" *ngIf="item.punto">
+                          <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none" type="button"
+                            (click)="toggleCollapse(i)">
+                            <small>
+                              <i class="bi me-1" [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+                              {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
+                            </small>
+                          </button>
+                          <div class="collapse-content" [class.show]="!isCollapsed[i]">
+                            <div class="card card-body bg-light mt-2">
+                              <small>{{ item.punto }}</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Liga YouTube -->
+                        <div class="mt-3 mb-2" *ngIf="item.liga">
+                          <a [href]="item.liga" target="_blank" rel="noopener noreferrer" class="btn-liga-yt">
+                            <i class="bi bi-youtube me-2"></i>
+                            Ver sesión en video
+                            <i class="bi bi-box-arrow-up-right ms-2 liga-arrow"></i>
+                          </a>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                          <button class="btn btn-sm btn-download" (click)="descargarAsistencia(item, 'estudio')"
+                            [disabled]="descargando['asistencia_estudio_' + item.fecha]">
+                            <span *ngIf="descargando['asistencia_estudio_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_estudio_' + item.fecha]"></i>
+                            Asistencia Comisión
+                          </button>
+                        </div>
+                      </ng-container>
+
+                      <!-- ══════════════ DICTAMEN ══════════════ -->
+                      <ng-container *ngIf="item.tipo === 'dictamen'">
+                        <p class="timeline-desc mb-2" *ngIf="item.comisiones">
+                          <i class="bi bi-building me-1 text-muted"></i>
+                          <strong>Comisiones:</strong> {{ item.comisiones }}
+                        </p>
+                        <div class="mb-3" *ngIf="item.tipo_evento">
+                          <span class="badge badge-tipo">
+                            <i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}
+                          </span>
+                        </div>
+                        <p class="timeline-desc mb-2">{{ item.descripcion }}</p>
+                        <div class="mt-2" *ngIf="item.punto">
+                          <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none" type="button"
+                            (click)="toggleCollapse(i)">
+                            <small>
+                              <i class="bi me-1" [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+                              {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
+                            </small>
+                          </button>
+                          <div class="collapse-content" [class.show]="!isCollapsed[i]">
+                            <div class="card card-body bg-light mt-2">
+                              <small>{{ item.punto }}</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Liga YouTube -->
+                        <div class="mt-3 mb-2" *ngIf="item.liga">
+                          <a [href]="item.liga" target="_blank" rel="noopener noreferrer" class="btn-liga-yt">
+                            <i class="bi bi-youtube me-2"></i>
+                            Ver sesión en video
+                            <i class="bi bi-box-arrow-up-right ms-2 liga-arrow"></i>
+                          </a>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                          <button class="btn btn-sm btn-download" (click)="descargarAsistencia(item, 'dictamen')"
+                            [disabled]="descargando['asistencia_dictamen_' + item.fecha]">
+                            <span *ngIf="descargando['asistencia_dictamen_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1"
+                              *ngIf="!descargando['asistencia_dictamen_' + item.fecha]"></i>
+                            Asistencia
+                          </button>
+                          <button class="btn btn-sm btn-download" (click)="descargarVotacion(item, 'dictamen')"
+                            [disabled]="descargando['votacion_dictamen_' + item.fecha]">
+                            <span *ngIf="descargando['votacion_dictamen_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['votacion_dictamen_' + item.fecha]"></i>
+                            Votación
+                          </button>
+                        </div>
+                      </ng-container>
+
+                      <!-- ══════════════ CIERRE ══════════════ -->
+                      <ng-container *ngIf="item.tipo === 'cierre'">
+                        <p class="timeline-desc mb-2">{{ item.descripcion }}</p>
+                        <div class="mb-3" *ngIf="item.tipo_evento">
+                          <span class="badge badge-tipo">
+                            <i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}
+                          </span>
+                        </div>
+                        <div class="alert alert-light mb-3" *ngIf="item.punto">
+                          <strong class="d-block mb-2">
+                            <i class="bi bi-file-text me-1"></i> Resolución:
+                          </strong>
+                          <small class="text-dark">{{ item.punto }}</small>
+                        </div>
+
+                        <!-- Liga YouTube -->
+                        <div class="mt-3 mb-2" *ngIf="item.liga">
+                          <a [href]="item.liga" target="_blank" rel="noopener noreferrer" class="btn-liga-yt">
+                            <i class="bi bi-youtube me-2"></i>
+                            Ver sesión en video
+                            <i class="bi bi-box-arrow-up-right ms-2 liga-arrow"></i>
+                          </a>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                          <button class="btn btn-sm btn-download" (click)="descargarAsistencia(item, 'cierre')"
+                            [disabled]="descargando['asistencia_cierre_' + item.fecha]">
+                            <span *ngIf="descargando['asistencia_cierre_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_cierre_' + item.fecha]"></i>
+                            Asistencia
+                          </button>
+                          <button class="btn btn-sm btn-download" (click)="descargarVotacion(item, 'cierre')"
+                            [disabled]="descargando['votacion_cierre_' + item.fecha]">
+                            <span *ngIf="descargando['votacion_cierre_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['votacion_cierre_' + item.fecha]"></i>
+                            Votación
+                          </button>
+                        </div>
+                      </ng-container>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje si no hay timeline -->
+        <div class="text-center py-5" *ngIf="iniciativaSeleccionada && !cargando && timelineData.length === 0">
+          <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+          <p class="text-muted mt-3">No hay historial disponible para esta iniciativa</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="text-center py-5" *ngIf="cargando">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="text-muted mt-3">Cargando información...</p>
+        </div>
+
+        <!-- Estado inicial -->
+        <div class="text-center py-5" *ngIf="!iniciativaSeleccionada && !cargando">
+          <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+          <p class="text-muted mt-3">Selecciona una iniciativa para ver su historial</p>
+        </div>
+      </div>
     </div>
+  </div>
 </div>

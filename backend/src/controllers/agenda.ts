@@ -2619,8 +2619,9 @@ export const Eliminarlista = async (req: Request, res: Response): Promise<any> =
 
 export const generarPDFVotacion = async (req: Request, res: Response): Promise<any> => {
   try {
-    const body = req.body;
-    // console.log("punto",body);
+    const { id } = req.params;
+    // const body = req.body;
+    console.log("punto",id);
     // return 500;
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
@@ -2641,13 +2642,13 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     // Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
-    let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
-    if (!temavotos) {
-      return res.status(404).json({ msg: "No hay votaciones para este punto" });
-    }
+    // let temavotos = await TemasPuntosVotos.findOne({ where: { id_punto: id } });
+    // if (!temavotos) {
+    //   return res.status(404).json({ msg: "No hay votaciones para este punto" });
+    // }
 
     const votosRaw = await VotosPunto.findAll({
-      where: { id_tema_punto_voto: temavotos.id },
+      where: { id_punto: punto.id },
       raw: true,
     });
 
