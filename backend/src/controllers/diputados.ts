@@ -628,7 +628,10 @@ export const terminarvotacion = async (req: Request, res: Response): Promise<any
       }) as any; 
       
       const votos = await VotosPunto.findAll({
-        where: { id_punto: id },
+        where: { 
+          id_punto: id,
+          id_tema_punto_voto: null
+        }
       })
       
       if(votos.length > 0 && punto){
