@@ -961,20 +961,20 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
-    const idPuntoTurnado = body.id_punto_turnado;
-    let punto: string;
+    const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
+    // let punto: string;
 
-    if (idPuntoTurnado != 'null') {
-      const data = await PuntosOrden.findOne({
-        where: { id: idPuntoTurnado },
-      });
-      if(!data) {
-        return res.status(404).json({ message: "Evento no encontrado" });
-      }  
-      punto = data.punto;
-    } else {
-      punto = body.punto;
-    }
+    // if (idPuntoTurnado != 'null') {
+    //   const data = await PuntosOrden.findOne({
+    //     where: { id: idPuntoTurnado },
+    //   });
+    //   if(!data) {
+    //     return res.status(404).json({ message: "Evento no encontrado" });
+    //   }  
+    //   punto = data.punto;
+    // } else {
+    //   punto = body.punto;
+    // }
 
     const puntonuevo = await PuntosOrden.create({
       id_evento: evento!.id,
@@ -982,20 +982,25 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       id_tipo: body.tipo,
       tribuna: body.tribuna,
       path_doc: file ? `storage/puntos/${file.filename}` : null,
-      punto: punto,
+      punto: body.punto,
       observaciones: body.observaciones,
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
 
-    if (idPuntoTurnado != 'null') {
+    if (puntosTurnadosArray.length > 0) {
       if(body.tipo_evento != 0){
-        const estudio = await IniciativaEstudio.create({
-          type: "1",
-          punto_origen_id: body.id_punto_turnado,
-          punto_destino_id: puntonuevo.id,
-          status: 1,
-        });
+        if (puntosTurnadosArray.length === 1) {
+          const estudio = await IniciativaEstudio.create({
+            type: "1",
+            punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+            punto_destino_id: puntonuevo.id,
+            status: 1,
+          });
+          
+        } else {
+          // funcion expediente
+        }
       }else{
         const termino = await IniciativaEstudio.create({
           punto_origen_id: body.id_punto_turnado,

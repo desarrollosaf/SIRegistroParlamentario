@@ -37,7 +37,7 @@ class PuntosOrden extends Model {
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
 
-
+  
   declare tipo?: NonAttribute<TipoCategoriaIniciativas>;
   declare proponente?: NonAttribute<Proponentes>;
 

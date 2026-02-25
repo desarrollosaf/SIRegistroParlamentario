@@ -12,8 +12,9 @@ import PuntosOrden from "./puntos_ordens";
 
 class IniciativaEstudio extends Model {
   declare id: string;
-  declare id_iniciativa: ForeignKey<string> | null;
-  declare id_punto_evento: ForeignKey<number> | null;
+  declare type: string;
+  declare punto_origen_id: ForeignKey<string> | null;
+  declare punto_destino_id: ForeignKey<number> | null;
   declare status: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -32,16 +33,21 @@ class IniciativaEstudio extends Model {
 IniciativaEstudio.init(
   {
     id: {
-      type: DataTypes.CHAR(36),
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
       primaryKey: true,
     },
-    id_iniciativa: {
+    type: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    punto_origen_id: {
       type: DataTypes.CHAR(36),
       allowNull: true,
     },
-    id_punto_evento: {
-      type: DataTypes.INTEGER,
+    punto_destino_id: {
+      type: DataTypes.CHAR(36),
       allowNull: true,
     },
     status: {
@@ -69,9 +75,9 @@ IniciativaEstudio.init(
   }
 );
 
-IniciativaEstudio.belongsTo(PuntosOrden, { 
-  foreignKey: 'id_punto_evento', 
-  as: 'puntoEvento' 
-});
+// IniciativaEstudio.belongsTo(PuntosOrden, { 
+//   foreignKey: 'id_punto_evento', 
+//   as: 'puntoEvento' 
+// });
 
 export default IniciativaEstudio;

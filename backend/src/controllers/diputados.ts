@@ -16,6 +16,7 @@ import ComisionUsuario from "../models/comision_usuarios";
 import { comisiones } from "../models/init-models";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
 import PuntosComisiones from "../models/puntos_comisiones";
+import TipoAutor from "../models/tipo_autors";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -598,4 +599,62 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+export const terminarvotacion = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { id } = req.params;
+      
+      const iniestudio = await IniciativaEstudio.findOne({
+        where: { punto_destino_id: id },
+      })
+      if (!iniestudio) {
+        return res.status(404).json({ message: "No tiene ninguna iniciativa" });
+      }
 
+      const punto = await PuntosOrden.findOne({
+        where: { id: id },
+        include: [
+           {
+              model: Agenda,
+              as: 'evento',
+              include: [
+                {
+                  model: TipoEventos,
+                  as: 'tipoevento', 
+                  attributes: ['nombre']
+                }
+              ]
+            }
+        ]
+      }) as any; 
+      
+      const votos = await VotosPunto.findAll({
+        where: { id_punto: id },
+      })
+      
+      if(votos.length > 0 && punto){
+        let condicion: number;
+        const totalVotos = votos.length;
+        const votosAFavor = votos.filter((v: any) => v.sentido === 1).length;
+        const mayoria = Math.floor(totalVotos / 2) + 1;
+        const aprobado = votosAFavor >= mayoria;
+           
+        if(punto.evento.tipoevento.nombre == "Comisión"){
+          condicion = aprobado ? 3 : 4;
+        } else {
+          condicion = aprobado ? 6 : 5;
+        }
+
+        await iniestudio.update({ status: condicion });
+        return res.status(200).json("actualizado");
+      }
+
+      return res.status(404).json({ message: "Sin votos" });
+
+    } catch (error) {
+      console.error('Error al terminar la votacion:', error);
+      return res.status(500).json({ 
+        msg: 'Error interno del servidor',
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
+  };
