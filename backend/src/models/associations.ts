@@ -57,6 +57,10 @@ IniciativaEstudio.belongsTo(PuntosOrden, {
   as: 'iniciativa' 
 });
 
+PuntosOrden.hasMany(IniciativaEstudio, {
+  foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+
 
 
 export default {

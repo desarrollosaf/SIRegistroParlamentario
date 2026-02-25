@@ -10,16 +10,21 @@ class IniciativaEstudio extends sequelize_1.Model {
 }
 IniciativaEstudio.init({
     id: {
-        type: sequelize_1.DataTypes.CHAR(36),
+        type: sequelize_1.DataTypes.UUID,
+        defaultValue: sequelize_1.DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
     },
-    id_iniciativa: {
+    type: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: false,
+    },
+    punto_origen_id: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
-    id_punto_evento: {
-        type: sequelize_1.DataTypes.INTEGER,
+    punto_destino_id: {
+        type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
     status: {

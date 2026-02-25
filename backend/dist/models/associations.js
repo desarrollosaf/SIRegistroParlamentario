@@ -50,6 +50,9 @@ iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'punto_destino_id',
     as: 'iniciativa'
 });
+puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, {
+    foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
 exports.default = {
     PuntosOrden: puntos_ordens_1.default,
     IniciativaPuntoOrden: inciativas_puntos_ordens_1.default,
