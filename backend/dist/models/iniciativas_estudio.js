@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
-const puntos_ordens_1 = __importDefault(require("./puntos_ordens"));
 class IniciativaEstudio extends sequelize_1.Model {
 }
 IniciativaEstudio.init({
@@ -49,8 +48,8 @@ IniciativaEstudio.init({
     timestamps: true,
     paranoid: true,
 });
-IniciativaEstudio.belongsTo(puntos_ordens_1.default, {
-    foreignKey: 'id_punto_evento',
-    as: 'puntoEvento'
-});
+// IniciativaEstudio.belongsTo(PuntosOrden, { 
+//   foreignKey: 'id_punto_evento', 
+//   as: 'puntoEvento' 
+// });
 exports.default = IniciativaEstudio;
