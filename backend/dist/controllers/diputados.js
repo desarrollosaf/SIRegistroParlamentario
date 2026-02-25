@@ -547,7 +547,10 @@ const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, functio
             ]
         });
         const votos = yield votos_punto_1.default.findAll({
-            where: { id_punto: id },
+            where: {
+                id_punto: id,
+                id_tema_punto_voto: null
+            }
         });
         if (votos.length > 0 && punto) {
             let condicion;
