@@ -49,6 +49,7 @@ const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const exceljs_1 = __importDefault(require("exceljs"));
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
+const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -151,7 +152,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             if (anfitriones.length > 0) { // ✅ Validar antes de continuar
                 const puntosturnados = yield puntos_comisiones_1.default.findAll({
-                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' OR ')})`)
+                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
                 });
                 if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
                     puntos = yield puntos_ordens_1.default.findAll({
@@ -179,7 +180,6 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             order: [['created_at', 'DESC']],
             raw: true,
         });
-        console.log(evento.fecha);
         // 5. Si NO existen asistencias, crearlas
         if (asistenciasExistentes.length === 0) {
             yield crearAsistencias(evento, esSesion);
@@ -206,7 +206,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             evento,
             integrantes,
             titulo,
-            tipoEvento, // ✅ Faltaba la coma aquí
+            tipoEvento,
             puntos
         });
     }
@@ -856,7 +856,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 where: { id: idPuntoTurnado },
             });
             if (!data) {
-                throw new Error('Punto turnado no encontrado');
+                return res.status(404).json({ message: "Evento no encontrado" });
             }
             punto = data.punto;
         }
@@ -869,25 +869,25 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             id_tipo: body.tipo,
             tribuna: body.tribuna,
             path_doc: file ? `storage/puntos/${file.filename}` : null,
-            punto,
+            punto: punto,
             observaciones: body.observaciones,
             se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
         if (idPuntoTurnado != 'null') {
             if (body.tipo_evento != 0) {
-                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                    where: { id_punto: idPuntoTurnado },
-                });
-                if (!puntoTurnado) {
-                    throw new Error('Relación de punto-comisión no encontrada');
-                }
-                yield puntoTurnado.update({
-                    id_punto_turno: puntonuevo.id,
+                const estudio = yield iniciativas_estudio_1.default.create({
+                    type: "1",
+                    punto_origen_id: body.id_punto_turnado,
+                    punto_destino_id: puntonuevo.id,
+                    status: 1,
                 });
             }
             else {
-                yield puntonuevo.update({
-                    id_dictamen: idPuntoTurnado,
+                const termino = yield iniciativas_estudio_1.default.create({
+                    punto_origen_id: body.id_punto_turnado,
+                    type: "1",
+                    punto_destino_id: puntonuevo.id,
+                    status: 3,
                 });
             }
         }
@@ -992,6 +992,18 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
                     attributes: ["id", "iniciativa"]
+                },
+                {
+                    model: iniciativas_estudio_1.default,
+                    as: "puntosestudiados",
+                    attributes: ["id", "punto_origen_id", "punto_destino_id"],
+                    include: [
+                        {
+                            model: puntos_ordens_1.default,
+                            as: "iniciativaorigen",
+                            attributes: ["id", "punto"]
+                        }
+                    ]
                 }
             ]
         });

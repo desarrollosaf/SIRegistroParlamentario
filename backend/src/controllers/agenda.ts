@@ -40,6 +40,7 @@ import PuntosComisiones from "../models/puntos_comisiones";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
 import ExcelJS from 'exceljs';
 import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
+import IniciativaEstudio from "../models/iniciativas_estudio";
 
 
 
@@ -172,7 +173,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
           where: Sequelize.literal(
             `(${anfitriones.map(a => 
               `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
-            ).join(' OR ')})`
+            ).join(' AND ')})`
           )
         });
         
@@ -205,7 +206,6 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       order: [['created_at', 'DESC']],
       raw: true,
     });
-    console.log(evento.fecha)
     
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
@@ -237,7 +237,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       evento,
       integrantes,
       titulo,
-      tipoEvento, // ✅ Faltaba la coma aquí
+      tipoEvento, 
       puntos
     });
     
@@ -968,9 +968,9 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       const data = await PuntosOrden.findOne({
         where: { id: idPuntoTurnado },
       });
-      if (!data) {
-        throw new Error('Punto turnado no encontrado');
-      }
+      if(!data) {
+        return res.status(404).json({ message: "Evento no encontrado" });
+      }  
       punto = data.punto;
     } else {
       punto = body.punto;
@@ -982,7 +982,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       id_tipo: body.tipo,
       tribuna: body.tribuna,
       path_doc: file ? `storage/puntos/${file.filename}` : null,
-      punto,
+      punto: punto,
       observaciones: body.observaciones,
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
@@ -990,18 +990,18 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
 
     if (idPuntoTurnado != 'null') {
       if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto: idPuntoTurnado },
-        });
-        if (!puntoTurnado) {
-          throw new Error('Relación de punto-comisión no encontrada');
-        }
-        await puntoTurnado.update({
-          id_punto_turno: puntonuevo.id,
+        const estudio = await IniciativaEstudio.create({
+          type: "1",
+          punto_origen_id: body.id_punto_turnado,
+          punto_destino_id: puntonuevo.id,
+          status: 1,
         });
       }else{
-        await puntonuevo.update({
-          id_dictamen: idPuntoTurnado,
+        const termino = await IniciativaEstudio.create({
+          punto_origen_id: body.id_punto_turnado,
+          type: "1",
+          punto_destino_id: puntonuevo.id,
+          status: 3,
         });
       }  
     }
@@ -1121,6 +1121,18 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             model: IniciativaPuntoOrden,
             as: "iniciativas",
             attributes: ["id", "iniciativa"]
+          },
+          {
+            model: IniciativaEstudio,
+            as: "puntosestudiados",
+            attributes: ["id", "punto_origen_id","punto_destino_id"],
+            include: [
+              {
+                model: PuntosOrden,
+                as: "iniciativaorigen",
+                attributes: ["id", "punto"]
+              }
+            ]
           }
         ]
       });
@@ -2648,7 +2660,9 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     // }
 
     const votosRaw = await VotosPunto.findAll({
-      where: { id_punto: punto.id },
+      where: { id_punto
+        
+        : punto.id },
       raw: true,
     });
 
