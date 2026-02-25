@@ -809,7 +809,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         //iniciativas precargadas
         this.consoleiniciativas = response.selectini || [];
         this.slcIniciativasPrecargadas = response.selectini || [];
-        // debugger
+
         console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
         // this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
@@ -1641,7 +1641,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: this.puntoSeleccionadoReserva.id,
       descripcion: this.formReserva.value.descripcion
     };
-    // debugger
+
     // ← AQUÍ SÍ HACE SUBSCRIBE INMEDIATAMENTE
     this._eventoService.saveReserva(datos).subscribe({
       next: (response: any) => {
@@ -2157,7 +2157,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   getReservasPuntos(puntoId: any) {
-    console.log(puntoId);
+    // console.log(puntoId);
 
     // Limpiar la reserva seleccionada cuando cambies de punto
     this.reservaPuntoSeleccionadoVotacion = null;
@@ -2472,25 +2472,44 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.puntoSeleccionadoVotacion = null;
-        this.reservaPuntoSeleccionadoVotacion = null;
-        this.votacionIniciada = false;
-
-        this.votacionActual = { idPunto: null, idReserva: null };
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: 'success',
-          title: 'Votación finalizada correctamente'
+        this._eventoService.terminarVotacion(this.idpto).subscribe({
+          next: (response: any) => {
+            console.log(response);
+            this.finalizarVotacion();
+          },
+          error: (e: HttpErrorResponse) => {
+            if (e.status === 404) {
+              this.finalizarVotacion();
+            } else {
+              console.error('Error al terminar votación:', e);
+            }
+          }
         });
       }
     });
   }
+
+  
+
+  private finalizarVotacion(): void {
+    this.puntoSeleccionadoVotacion = null;
+    this.reservaPuntoSeleccionadoVotacion = null;
+    this.votacionIniciada = false;
+    this.votacionActual = { idPunto: null, idReserva: null };
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: 'success',
+      title: 'Votación finalizada correctamente'
+    });
+  }
+
 
   reiniciarVotacion(): void {
     Swal.fire({
@@ -2547,22 +2566,53 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   imprimirVotacion(): void {
-    Swal.fire({
-      position: 'center',
-      icon: 'info',
-      title: 'Generando reporte...',
-      text: 'Se descargará el reporte de votación',
-      showConfirmButton: false,
-      timer: 2000
+    // Swal.fire({
+    //   position: 'center',
+    //   icon: 'info',
+    //   title: 'Generando reporte...',
+    //   text: 'Se descargará el reporte de votación',
+    //   showConfirmButton: false,
+    //   timer: 2000
+    // });
+    // const datos = {
+    //   idPunto: this.puntoSeleccionadoVotacion,
+    //   idReserva: this.reservaPuntoSeleccionadoVotacion || null
+    // }
+    // // Aquí va la lógica para imprimir/descargar
+    // setTimeout(() => {
+    //   console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
+    // }, 2000);
+    
+    this._eventoService.generarPDFVotacion(this.idpto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `votacion_.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (e: HttpErrorResponse) => {
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de votación para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar votación:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+      }
     });
-    const datos = {
-      idPunto: this.puntoSeleccionadoVotacion,
-      idReserva: this.reservaPuntoSeleccionadoVotacion || null
-    }
-    // Aquí va la lógica para imprimir/descargar
-    setTimeout(() => {
-      console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
-    }, 2000);
   }
 
 

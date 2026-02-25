@@ -158,6 +158,10 @@ export class EventoService {
     });
   }
 
+  terminarVotacion(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl1}/terminarvotacion/${id}`)
+  }
+
 
 
 }
