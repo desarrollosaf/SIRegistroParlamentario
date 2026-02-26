@@ -40,6 +40,7 @@ import PuntosComisiones from "../models/puntos_comisiones";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
 import ExcelJS from 'exceljs';
 import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
+import IniciativaEstudio from "../models/iniciativas_estudio";
 
 
 
@@ -172,7 +173,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
           where: Sequelize.literal(
             `(${anfitriones.map(a => 
               `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
-            ).join(' OR ')})`
+            ).join(' AND ')})`
           )
         });
         
@@ -205,12 +206,12 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       order: [['created_at', 'DESC']],
       raw: true,
     });
-    console.log(evento.fecha)
     
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
       await crearAsistencias(evento, esSesion);
-      
+      const io = req.app.get('io');
+      io.emit('evento_iniciado', { id });
       // Volver a consultar las asistencias recién creadas
       const asistenciasNuevas = await AsistenciaVoto.findAll({
         where: { id_agenda: id },
@@ -237,7 +238,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       evento,
       integrantes,
       titulo,
-      tipoEvento, // ✅ Faltaba la coma aquí
+      tipoEvento, 
       puntos
     });
     
@@ -961,20 +962,20 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
-    const idPuntoTurnado = body.id_punto_turnado;
-    let punto: string;
+    const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
+    // let punto: string;
 
-    if (idPuntoTurnado != 'null') {
-      const data = await PuntosOrden.findOne({
-        where: { id: idPuntoTurnado },
-      });
-      if (!data) {
-        throw new Error('Punto turnado no encontrado');
-      }
-      punto = data.punto;
-    } else {
-      punto = body.punto;
-    }
+    // if (idPuntoTurnado != 'null') {
+    //   const data = await PuntosOrden.findOne({
+    //     where: { id: idPuntoTurnado },
+    //   });
+    //   if(!data) {
+    //     return res.status(404).json({ message: "Evento no encontrado" });
+    //   }  
+    //   punto = data.punto;
+    // } else {
+    //   punto = body.punto;
+    // }
 
     const puntonuevo = await PuntosOrden.create({
       id_evento: evento!.id,
@@ -982,26 +983,31 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       id_tipo: body.tipo,
       tribuna: body.tribuna,
       path_doc: file ? `storage/puntos/${file.filename}` : null,
-      punto,
+      punto: body.punto,
       observaciones: body.observaciones,
       se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
     });
 
 
-    if (idPuntoTurnado != 'null') {
+    if (puntosTurnadosArray.length > 0) {
       if(body.tipo_evento != 0){
-        const puntoTurnado = await PuntosComisiones.findOne({
-          where: { id_punto: idPuntoTurnado },
-        });
-        if (!puntoTurnado) {
-          throw new Error('Relación de punto-comisión no encontrada');
+        if (puntosTurnadosArray.length === 1) {
+          const estudio = await IniciativaEstudio.create({
+            type: "1",
+            punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+            punto_destino_id: puntonuevo.id,
+            status: 1,
+          });
+          
+        } else {
+          // funcion expediente
         }
-        await puntoTurnado.update({
-          id_punto_turno: puntonuevo.id,
-        });
       }else{
-        await puntonuevo.update({
-          id_dictamen: idPuntoTurnado,
+        const termino = await IniciativaEstudio.create({
+          punto_origen_id: body.id_punto_turnado,
+          type: "1",
+          punto_destino_id: puntonuevo.id,
+          status: 3,
         });
       }  
     }
@@ -1121,6 +1127,18 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             model: IniciativaPuntoOrden,
             as: "iniciativas",
             attributes: ["id", "iniciativa"]
+          },
+          {
+            model: IniciativaEstudio,
+            as: "puntosestudiados",
+            attributes: ["id", "punto_origen_id","punto_destino_id"],
+            include: [
+              {
+                model: PuntosOrden,
+                as: "iniciativaorigen",
+                attributes: ["id", "punto"]
+              }
+            ]
           }
         ]
       });
@@ -2204,6 +2222,89 @@ export const getAgenda = async (req: Request, res: Response) => {
 };
 
 
+export const getAgendaHoy = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { fecha } = req.params;
+    console.log(fecha)
+
+    const eventos = await Agenda.findAll(
+      {
+        where: {
+          fecha: {
+            [Op.between]: [
+              fecha+' 00:00:00',
+              fecha+' 23:59:59'
+            ]
+          }
+        },
+        include: [
+          {
+            model: Sedes,
+            as: "sede",
+            attributes: ["id", "sede"]
+          },
+          {
+            model: TipoEventos,
+            as: "tipoevento",
+            attributes: ["id", "nombre"],
+          }
+        ],
+
+        order: [['fecha', 'DESC']]  
+      }
+    );
+    console.log(eventos)
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
+    return res.status(200).json({
+      msg: "listoooo :v ",
+      eventos: eventosConComisiones
+    });
+  } catch (error) {
+    console.error("Error obteniendo eventos:", error);
+    return res.status(500).json({
+      msg: "Ocurrió un error al obtener los eventos",
+      error: (error as Error).message
+    });
+  }
+};
+
+
+
 export const updateAgenda = async (req: Request, res: Response) => {
   try {
     const agendaId = req.params.id; 
@@ -2648,7 +2749,9 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
     // }
 
     const votosRaw = await VotosPunto.findAll({
-      where: { id_punto: punto.id },
+      where: { id_punto
+        
+        : punto.id },
       raw: true,
     });
 

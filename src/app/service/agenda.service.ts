@@ -33,5 +33,9 @@ export class AgendaService {
     return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl}/editagenda/${id}`,data)  
   }
 
+  getAgendasHoy(fecha: any): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getagendaHoy/${fecha}`)
+  }
+
   
 }

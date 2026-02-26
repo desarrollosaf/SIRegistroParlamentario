@@ -558,14 +558,75 @@
                                                             [closeOnSelect]="false">
                                                         </ng-select>
                                                     </div>
-
+                                                    <!-- 
                                                     <div class="col-12" *ngIf="esComision">
-                                                        <label class="form-label fw-semibold">Puntos turnados a
-                                                            comisión</label>
+                                                        <label class="form-label fw-semibold">Puntos turnados a comisión</label>
                                                         <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
                                                             bindValue="id" formControlName="id_punto_turnado"
                                                             placeholder="Selecciona">
                                                         </ng-select>
+                                                    </div> -->
+                                                    <div class="col-12" *ngIf="esComision">
+                                                        <label class="form-label fw-semibold">Puntos turnados a
+                                                            comisión</label>
+                                                        <div class="d-flex gap-2 align-items-start">
+                                                            <div style="min-width: 0; flex: 1;">
+                                                                <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
+                                                                    bindValue="id" formControlName="id_punto_turnado"
+                                                                    placeholder="Selecciona">
+                                                                </ng-select>
+                                                            </div>
+                                                            <button type="button"
+                                                                class="btn btn-primary btn-sm flex-shrink-0"
+                                                                style="height: 38px; margin-top: 1px;"
+                                                                (click)="agregarPuntoTurnado()" title="Agregar punto">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <div *ngIf="puntosTurnadosSeleccionados.length > 0"
+                                                            class="mt-2 rounded border overflow-hidden">
+                                                            <div style="max-height: 200px; overflow-y: auto;">
+                                                                <table class="table table-sm mb-0">
+                                                                    <thead
+                                                                        style="background-color: #f0e6ed; position: sticky; top: 0; z-index: 1;">
+                                                                        <tr>
+                                                                            <th class="ps-2" style="width:36px;">#</th>
+                                                                            <th>Punto</th>
+                                                                            <th class="text-center" style="width:50px;">
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr
+                                                                            *ngFor="let pt of puntosTurnadosSeleccionados; let i = index">
+                                                                            <td
+                                                                                class="ps-2 fw-semibold text-muted align-middle">
+                                                                                {{ i + 1 }}</td>
+                                                                            <td class="align-middle"
+                                                                                style="word-break: break-word; white-space: normal; font-size: 0.82rem;">
+                                                                                {{ pt.punto }}</td>
+                                                                            <td class="text-center align-middle">
+                                                                                <button type="button"
+                                                                                    class="btn btn-sm btn-outline-danger"
+                                                                                    style="padding: 2px 6px; line-height: 1;"
+                                                                                    (click)="quitarPuntoTurnado(i)"
+                                                                                    title="Quitar">
+                                                                                    <i class="bi bi-trash3"
+                                                                                        style="font-size: 0.8rem;"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+
+                                                        <small class="text-muted d-block mt-1"
+                                                            *ngIf="puntosTurnadosSeleccionados.length === 0">
+                                                            <i class="bi bi-info-circle me-1"></i>Selecciona y presiona
+                                                            <i class="bi bi-plus-lg"></i> para agregar.
+                                                        </small>
                                                     </div>
 
                                                     <div class="col-12" *ngIf="!esComision">
@@ -607,7 +668,7 @@
                                                             {{ reservasTemporales.length }} reserva(s) agregada(s)
                                                         </small>
 
-                                                        <button type="button"
+                                                        <button type="button" *ngIf="!esComision"
                                                             class="btn btn-primary position-relative ms-2"
                                                             (click)="abrirModalIniciativa()">
                                                             <i class="bi bi-lightbulb me-1"></i> Iniciativas
@@ -742,7 +803,7 @@
                                                                 </div>
 
 
-                                                                <div class="col-12" *ngIf="esComision">
+                                                                <!-- <div class="col-12" *ngIf="esComision">
                                                                     <label class="form-label fw-semibold">Puntos
                                                                         turnados a comisión</label>
                                                                     <ng-select [items]="slcPuntosTurnados"
@@ -750,6 +811,75 @@
                                                                         formControlName="id_punto_turnado"
                                                                         placeholder="Selecciona">
                                                                     </ng-select>
+                                                                </div> -->
+
+                                                                <div class="col-12" *ngIf="esComision">
+                                                                    <label class="form-label fw-semibold">Puntos
+                                                                        turnados a comisión</label>
+                                                                    <div class="d-flex gap-2 align-items-start">
+                                                                        <div style="min-width: 0; flex: 1;">
+                                                                            <ng-select [items]="slcPuntosTurnados"
+                                                                                bindLabel="punto" bindValue="id"
+                                                                                formControlName="id_punto_turnado"
+                                                                                placeholder="Selecciona">
+                                                                            </ng-select>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                            class="btn btn-primary btn-sm flex-shrink-0"
+                                                                            style="height: 38px; margin-top: 1px;"
+                                                                            (click)="agregarPuntoTurnadoPunto(punto)"
+                                                                            title="Agregar punto">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div *ngIf="punto.puntosTurnadosSeleccionados?.length > 0"
+                                                                        class="mt-2 rounded border overflow-hidden">
+                                                                        <div
+                                                                            style="max-height: 200px; overflow-y: auto;">
+                                                                            <table class="table table-sm mb-0">
+                                                                                <thead
+                                                                                    style="background-color: #f0e6ed; position: sticky; top: 0; z-index: 1;">
+                                                                                    <tr>
+                                                                                        <th class="ps-2"
+                                                                                            style="width:36px;">#</th>
+                                                                                        <th>Punto</th>
+                                                                                        <th class="text-center"
+                                                                                            style="width:50px;"></th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    <tr
+                                                                                        *ngFor="let pt of punto.puntosTurnadosSeleccionados; let j = index">
+                                                                                        <td
+                                                                                            class="ps-2 fw-semibold text-muted align-middle">
+                                                                                            {{ j + 1 }}</td>
+                                                                                        <td class="align-middle"
+                                                                                            style="word-break: break-word; white-space: normal; font-size: 0.82rem;">
+                                                                                            {{ pt.punto }}</td>
+                                                                                        <td
+                                                                                            class="text-center align-middle">
+                                                                                            <button type="button"
+                                                                                                class="btn btn-sm btn-outline-danger"
+                                                                                                style="padding: 2px 6px; line-height: 1;"
+                                                                                                (click)="quitarPuntoTurnadoPunto(punto, j)"
+                                                                                                title="Quitar">
+                                                                                                <i class="bi bi-trash3"
+                                                                                                    style="font-size: 0.8rem;"></i>
+                                                                                            </button>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <small class="text-muted d-block mt-1"
+                                                                        *ngIf="!punto.puntosTurnadosSeleccionados?.length">
+                                                                        <i class="bi bi-info-circle me-1"></i>Selecciona
+                                                                        y presiona <i class="bi bi-plus-lg"></i> para
+                                                                        agregar.
+                                                                    </small>
                                                                 </div>
 
                                                                 <div class="col-12" *ngIf="!esComision">
@@ -793,7 +923,7 @@
                                                                         {{ punto.reservas.length }}
                                                                     </span>
                                                                 </button>
-                                                                <button
+                                                                <button *ngIf="!esComision"
                                                                     class="btn btn-outline-primary  btn-sm position-relative"
                                                                     (click)="abrirModalIniciativaPunto(punto)">
                                                                     <i class="bi bi-lightbulb me-1"></i> Iniciativas

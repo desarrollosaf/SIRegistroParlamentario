@@ -7,20 +7,45 @@ import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 class Server {
 
     private app: Application
     private port: string
     
+    private httpServer: http.Server;
+    private io: SocketIOServer;
 
     constructor(){
         this.app = express()
         this.port = process.env.PORT || '3013'
+        this.httpServer = http.createServer(this.app);
+        this.io = new SocketIOServer(this.httpServer, {
+        cors: {
+            origin: ['http://localhost:4200'],
+            credentials: true
+        }
+        });
+
+        this.setupSocket(); 
+
         this.midlewares();
         this.router();
         this.DBconnetc();
         this.listen();  
+    }
+
+    private setupSocket() {
+        this.io.on('connection', (socket) => {
+        console.log('Socket conectado:', socket.id);
+
+        socket.on('disconnect', () => {
+            console.log('Socket desconectado:', socket.id);
+        });
+        });
+        this.app.set('io', this.io);
     }
 
     listen(){
@@ -62,7 +87,10 @@ class Server {
                 '/api/diputados/cargo/',
                 '/api/eventos/savereserva/',
                 '/api/eventos/eliminarreserva/',
-                '/api/diputados/getinfiniciativa/'
+                '/api/diputados/getinfiniciativa/',
+                '/api/eventos/asintenciapdf/',
+                '/api/diputados/getinfiniciativa/',
+                '/api/eventos/votacionpunto/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));

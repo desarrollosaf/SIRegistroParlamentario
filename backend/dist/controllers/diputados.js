@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
@@ -521,3 +521,60 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getifnini = getifnini;
+const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const iniestudio = yield iniciativas_estudio_1.default.findOne({
+            where: { punto_destino_id: id },
+        });
+        if (!iniestudio) {
+            return res.status(404).json({ message: "No tiene ninguna iniciativa" });
+        }
+        const punto = yield puntos_ordens_1.default.findOne({
+            where: { id: id },
+            include: [
+                {
+                    model: agendas_1.default,
+                    as: 'evento',
+                    include: [
+                        {
+                            model: tipo_eventos_1.default,
+                            as: 'tipoevento',
+                            attributes: ['nombre']
+                        }
+                    ]
+                }
+            ]
+        });
+        const votos = yield votos_punto_1.default.findAll({
+            where: {
+                id_punto: id,
+                id_tema_punto_voto: null
+            }
+        });
+        if (votos.length > 0 && punto) {
+            let condicion;
+            const totalVotos = votos.length;
+            const votosAFavor = votos.filter((v) => v.sentido === 1).length;
+            const mayoria = Math.floor(totalVotos / 2) + 1;
+            const aprobado = votosAFavor >= mayoria;
+            if (punto.evento.tipoevento.nombre == "Comisión") {
+                condicion = aprobado ? 3 : 4;
+            }
+            else {
+                condicion = aprobado ? 6 : 5;
+            }
+            yield iniestudio.update({ status: condicion });
+            return res.status(200).json("actualizado");
+        }
+        return res.status(404).json({ message: "Sin votos" });
+    }
+    catch (error) {
+        console.error('Error al terminar la votacion:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.terminarvotacion = terminarvotacion;

@@ -140,6 +140,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   iniciativaPrecargadaSeleccionada: any = null; // NUEVO: iniciativa seleccionada del select
   // slcIniciativasDisponibles: any[] = [];
 
+  puntosTurnadosSeleccionados: any[] = [];
 
   consoleiniciativas: any[] = [];
   constructor(
@@ -199,27 +200,27 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
-      // console.log('jkasdhjksdfajkhasd');
-      if (!value) {
-        this.formPunto.get('punto')?.setValue('');
-        this.formPunto.get('punto')?.enable();
-        return;
-      }
+    // this.formPunto.get('id_punto_turnado')?.valueChanges.subscribe(value => {
+    //   // console.log('jkasdhjksdfajkhasd');
+    //   if (!value) {
+    //     this.formPunto.get('punto')?.setValue('');
+    //     this.formPunto.get('punto')?.enable();
+    //     return;
+    //   }
 
-      let selectedOption;
+    //   let selectedOption;
 
-      if (this.esComision) {
-        selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
-      } else {
-        selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
-      }
+    //   if (this.esComision) {
+    //     selectedOption = this.slcPuntosTurnados?.find((p: any) => p.id === value);
+    //   } else {
+    //     selectedOption = this.slcDictamenes?.find((d: any) => d.id === value);
+    //   }
 
-      const textoSeleccionado = selectedOption?.punto || '';
+    //   const textoSeleccionado = selectedOption?.punto || '';
 
-      this.formPunto.get('punto')?.setValue(textoSeleccionado);
-      this.formPunto.get('punto')?.disable();
-    });
+    //   this.formPunto.get('punto')?.setValue(textoSeleccionado);
+    //   this.formPunto.get('punto')?.disable();
+    // });
 
     this.cargarDatosIniciales();
 
@@ -808,7 +809,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         //iniciativas precargadas
         this.consoleiniciativas = response.selectini || [];
         this.slcIniciativasPrecargadas = response.selectini || [];
-        // debugger
+
         console.log('Iniciativas precargadas:', this.slcIniciativasPrecargadas);
         // this.actualizarIniciativasDisponibles();
         this.listaPuntos = response.data || [];
@@ -856,6 +857,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
+            puntosTurnadosSeleccionados: (punto.turnocomision || []).map((tc: any) => {
+              const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+              return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+            }),
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -886,15 +891,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           });
 
           // PARA id_punto_turnado
-          puntoMapeado.form.get('id_punto_turnado')?.valueChanges.subscribe((value: any) => {
-            this.aplicarPuntoTurnado(puntoMapeado.form, value);
-          });
+          // puntoMapeado.form.get('id_punto_turnado')?.valueChanges.subscribe((value: any) => {
+          //   this.aplicarPuntoTurnado(puntoMapeado.form, value);
+          // });
 
           // LÓGICA INICIAL SI YA HAY UN VALOR
-          const valorInicial = puntoMapeado.form.get('id_punto_turnado')?.value;
-          if (valorInicial) {
-            this.aplicarPuntoTurnado(puntoMapeado.form, valorInicial);
-          }
+          // const valorInicial = puntoMapeado.form.get('id_punto_turnado')?.value;
+          // if (valorInicial) {
+          //   this.aplicarPuntoTurnado(puntoMapeado.form, valorInicial);
+          // }
 
           // Cargar tipos UNA SOLA VEZ con el array completo de proponentes
           if (proponentesIds.length > 0) {
@@ -1364,26 +1369,26 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
 
-  aplicarPuntoTurnado(form: FormGroup, value: any): void {
-    if (!value) {
-      form.get('punto')?.setValue('');
-      form.get('punto')?.enable();
-      return;
-    }
+  // aplicarPuntoTurnado(form: FormGroup, value: any): void {
+  //   if (!value) {
+  //     form.get('punto')?.setValue('');
+  //     form.get('punto')?.enable();
+  //     return;
+  //   }
 
-    let selectedOption;
+  //   let selectedOption;
 
-    if (this.esComision) {
-      selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
-    } else {
-      selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
-    }
+  //   if (this.esComision) {
+  //     selectedOption = this.slcPuntosTurnados.find((p: any) => p.id === value);
+  //   } else {
+  //     selectedOption = this.slcDictamenes.find((d: any) => d.id === value);
+  //   }
 
-    const textoSeleccionado = selectedOption?.punto || '';
+  //   const textoSeleccionado = selectedOption?.punto || '';
 
-    form.get('punto')?.setValue(textoSeleccionado);
-    form.get('punto')?.disable();
-  }
+  //   form.get('punto')?.setValue(textoSeleccionado);
+  //   form.get('punto')?.disable();
+  // }
 
 
   getTipoPParaPunto(event: any, punto: any): void {
@@ -1465,6 +1470,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
     formData.append('tipo_evento', this.tipo_evento);
 
+
+    const idsPuntosTurnados = (punto.puntosTurnadosSeleccionados || []).map((p: any) => p.id);
+    formData.append('puntos_turnados', JSON.stringify(idsPuntosTurnados));
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
     // });
@@ -1633,7 +1641,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: this.puntoSeleccionadoReserva.id,
       descripcion: this.formReserva.value.descripcion
     };
-    // debugger
+
     // ← AQUÍ SÍ HACE SUBSCRIBE INMEDIATAMENTE
     this._eventoService.saveReserva(datos).subscribe({
       next: (response: any) => {
@@ -1990,6 +1998,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
+    this.puntosTurnadosSeleccionados = [];
     this.documentos['docPunto'] = null;
     this.formPunto.reset({
       se_turna_comision: false
@@ -2030,6 +2039,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
     formData.append('tipo_evento', this.tipo_evento);
 
+    const idsPuntosTurnados = this.puntosTurnadosSeleccionados.map(p => p.id);
+    formData.append('puntos_turnados', JSON.stringify(idsPuntosTurnados));
 
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
@@ -2119,7 +2130,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.columnaVotantes1 = [];
     this.columnaVotantes2 = [];
     this.votacionActual = { idPunto: null, idReserva: null };
-    this.votacionIniciada = false; // ← AGREGAR ESTA LÍNEA
+    this.votacionIniciada = false;
 
     // Cargar solo la lista de puntos disponibles
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
@@ -2146,7 +2157,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   getReservasPuntos(puntoId: any) {
-    console.log(puntoId);
+    // console.log(puntoId);
 
     // Limpiar la reserva seleccionada cuando cambies de punto
     this.reservaPuntoSeleccionadoVotacion = null;
@@ -2156,7 +2167,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         console.log('reservas', response.data.reservas);
         // Asignar las reservas al array
-        this.listaReservasPunto =  response.data.reservas || [];
+        this.listaReservasPunto = response.data.reservas || [];
         this.cdr.detectChanges();
         this.iniciarVotacion();
       },
@@ -2461,25 +2472,44 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.puntoSeleccionadoVotacion = null;
-        this.reservaPuntoSeleccionadoVotacion = null;
-        this.votacionIniciada = false;
-
-        this.votacionActual = { idPunto: null, idReserva: null };
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: 'success',
-          title: 'Votación finalizada correctamente'
+        this._eventoService.terminarVotacion(this.idpto).subscribe({
+          next: (response: any) => {
+            console.log(response);
+            this.finalizarVotacion();
+          },
+          error: (e: HttpErrorResponse) => {
+            if (e.status === 404) {
+              this.finalizarVotacion();
+            } else {
+              console.error('Error al terminar votación:', e);
+            }
+          }
         });
       }
     });
   }
+
+  
+
+  private finalizarVotacion(): void {
+    this.puntoSeleccionadoVotacion = null;
+    this.reservaPuntoSeleccionadoVotacion = null;
+    this.votacionIniciada = false;
+    this.votacionActual = { idPunto: null, idReserva: null };
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: 'success',
+      title: 'Votación finalizada correctamente'
+    });
+  }
+
 
   reiniciarVotacion(): void {
     Swal.fire({
@@ -2536,22 +2566,53 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   imprimirVotacion(): void {
-    Swal.fire({
-      position: 'center',
-      icon: 'info',
-      title: 'Generando reporte...',
-      text: 'Se descargará el reporte de votación',
-      showConfirmButton: false,
-      timer: 2000
+    // Swal.fire({
+    //   position: 'center',
+    //   icon: 'info',
+    //   title: 'Generando reporte...',
+    //   text: 'Se descargará el reporte de votación',
+    //   showConfirmButton: false,
+    //   timer: 2000
+    // });
+    // const datos = {
+    //   idPunto: this.puntoSeleccionadoVotacion,
+    //   idReserva: this.reservaPuntoSeleccionadoVotacion || null
+    // }
+    // // Aquí va la lógica para imprimir/descargar
+    // setTimeout(() => {
+    //   console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
+    // }, 2000);
+    
+    this._eventoService.generarPDFVotacion(this.idpto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `votacion_.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (e: HttpErrorResponse) => {
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros de votación para esta sesión.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar votación:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+      }
     });
-    const datos = {
-      idPunto: this.puntoSeleccionadoVotacion,
-      idReserva: this.reservaPuntoSeleccionadoVotacion || null
-    }
-    // Aquí va la lógica para imprimir/descargar
-    setTimeout(() => {
-      console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
-    }, 2000);
   }
 
 
@@ -2661,6 +2722,47 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (!reserva) return `Reserva #${idReserva}`;
 
     return reserva.tema_votacion || 'Sin descripción';
+  }
+
+
+  agregarPuntoTurnado(): void {
+    const valor = this.formPunto.get('id_punto_turnado')?.value;
+    if (!valor) return;
+
+    const yaAgregado = this.puntosTurnadosSeleccionados.find(p => p.id === valor);
+    if (yaAgregado) return;
+
+    const opcion = this.slcPuntosTurnados?.find((p: any) => p.id === valor);
+    if (opcion) {
+      this.puntosTurnadosSeleccionados.push({ ...opcion });
+      this.formPunto.get('id_punto_turnado')?.setValue(null);
+    }
+  }
+
+  quitarPuntoTurnado(index: number): void {
+    this.puntosTurnadosSeleccionados.splice(index, 1);
+  }
+
+
+  // ACCORDION (punto existente)
+  agregarPuntoTurnadoPunto(punto: any): void {
+    const valor = punto.form.get('id_punto_turnado')?.value;
+    if (!valor) return;
+
+    if (!punto.puntosTurnadosSeleccionados) punto.puntosTurnadosSeleccionados = [];
+
+    const yaAgregado = punto.puntosTurnadosSeleccionados.find((p: any) => p.id === valor);
+    if (yaAgregado) return;
+
+    const opcion = this.slcPuntosTurnados?.find((p: any) => p.id === valor);
+    if (opcion) {
+      punto.puntosTurnadosSeleccionados.push({ ...opcion });
+      punto.form.get('id_punto_turnado')?.setValue(null);
+    }
+  }
+
+  quitarPuntoTurnadoPunto(punto: any, index: number): void {
+    punto.puntosTurnadosSeleccionados.splice(index, 1);
   }
 
 }

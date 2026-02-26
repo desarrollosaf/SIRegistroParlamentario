@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportdatos = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.exportdatos = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -49,6 +49,7 @@ const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const exceljs_1 = __importDefault(require("exceljs"));
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
+const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -151,7 +152,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             if (anfitriones.length > 0) { // ✅ Validar antes de continuar
                 const puntosturnados = yield puntos_comisiones_1.default.findAll({
-                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' OR ')})`)
+                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
                 });
                 if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
                     puntos = yield puntos_ordens_1.default.findAll({
@@ -179,10 +180,11 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             order: [['created_at', 'DESC']],
             raw: true,
         });
-        console.log(evento.fecha);
         // 5. Si NO existen asistencias, crearlas
         if (asistenciasExistentes.length === 0) {
             yield crearAsistencias(evento, esSesion);
+            const io = req.app.get('io');
+            io.emit('evento_iniciado', { id });
             // Volver a consultar las asistencias recién creadas
             const asistenciasNuevas = yield asistencia_votos_1.default.findAll({
                 where: { id_agenda: id },
@@ -206,7 +208,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             evento,
             integrantes,
             titulo,
-            tipoEvento, // ✅ Faltaba la coma aquí
+            tipoEvento,
             puntos
         });
     }
@@ -849,45 +851,49 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
-        const idPuntoTurnado = body.id_punto_turnado;
-        let punto;
-        if (idPuntoTurnado != 'null') {
-            const data = yield puntos_ordens_1.default.findOne({
-                where: { id: idPuntoTurnado },
-            });
-            if (!data) {
-                throw new Error('Punto turnado no encontrado');
-            }
-            punto = data.punto;
-        }
-        else {
-            punto = body.punto;
-        }
+        const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
+        // let punto: string;
+        // if (idPuntoTurnado != 'null') {
+        //   const data = await PuntosOrden.findOne({
+        //     where: { id: idPuntoTurnado },
+        //   });
+        //   if(!data) {
+        //     return res.status(404).json({ message: "Evento no encontrado" });
+        //   }  
+        //   punto = data.punto;
+        // } else {
+        //   punto = body.punto;
+        // }
         const puntonuevo = yield puntos_ordens_1.default.create({
             id_evento: evento.id,
             nopunto: body.numpunto,
             id_tipo: body.tipo,
             tribuna: body.tribuna,
             path_doc: file ? `storage/puntos/${file.filename}` : null,
-            punto,
+            punto: body.punto,
             observaciones: body.observaciones,
             se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
         });
-        if (idPuntoTurnado != 'null') {
+        if (puntosTurnadosArray.length > 0) {
             if (body.tipo_evento != 0) {
-                const puntoTurnado = yield puntos_comisiones_1.default.findOne({
-                    where: { id_punto: idPuntoTurnado },
-                });
-                if (!puntoTurnado) {
-                    throw new Error('Relación de punto-comisión no encontrada');
+                if (puntosTurnadosArray.length === 1) {
+                    const estudio = yield iniciativas_estudio_1.default.create({
+                        type: "1",
+                        punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+                        punto_destino_id: puntonuevo.id,
+                        status: 1,
+                    });
                 }
-                yield puntoTurnado.update({
-                    id_punto_turno: puntonuevo.id,
-                });
+                else {
+                    // funcion expediente
+                }
             }
             else {
-                yield puntonuevo.update({
-                    id_dictamen: idPuntoTurnado,
+                const termino = yield iniciativas_estudio_1.default.create({
+                    punto_origen_id: body.id_punto_turnado,
+                    type: "1",
+                    punto_destino_id: puntonuevo.id,
+                    status: 3,
                 });
             }
         }
@@ -992,6 +998,18 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
                     attributes: ["id", "iniciativa"]
+                },
+                {
+                    model: iniciativas_estudio_1.default,
+                    as: "puntosestudiados",
+                    attributes: ["id", "punto_origen_id", "punto_destino_id"],
+                    include: [
+                        {
+                            model: puntos_ordens_1.default,
+                            as: "iniciativaorigen",
+                            attributes: ["id", "punto"]
+                        }
+                    ]
                 }
             ]
         });
@@ -1882,6 +1900,69 @@ const getAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getAgenda = getAgenda;
+const getAgendaHoy = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { fecha } = req.params;
+        console.log(fecha);
+        const eventos = yield agendas_1.default.findAll({
+            where: {
+                fecha: {
+                    [sequelize_1.Op.between]: [
+                        fecha + ' 00:00:00',
+                        fecha + ' 23:59:59'
+                    ]
+                }
+            },
+            include: [
+                {
+                    model: sedes_1.default,
+                    as: "sede",
+                    attributes: ["id", "sede"]
+                },
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+        console.log(eventos);
+        const eventosConComisiones = [];
+        for (const evento of eventos) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            let titulo = '';
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
+            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
+                titulo }));
+        }
+        return res.status(200).json({
+            msg: "listoooo :v ",
+            eventos: eventosConComisiones
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo eventos:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener los eventos",
+            error: error.message
+        });
+    }
+});
+exports.getAgendaHoy = getAgendaHoy;
 const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const agendaId = req.params.id;
