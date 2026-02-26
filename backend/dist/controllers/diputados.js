@@ -527,6 +527,7 @@ const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const iniestudio = yield iniciativas_estudio_1.default.findOne({
             where: { punto_destino_id: id },
         });
+        console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio);
         if (!iniestudio) {
             return res.status(404).json({ message: "No tiene ninguna iniciativa" });
         }
@@ -559,10 +560,10 @@ const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, functio
             const mayoria = Math.floor(totalVotos / 2) + 1;
             const aprobado = votosAFavor >= mayoria;
             if (punto.evento.tipoevento.nombre == "Comisión") {
-                condicion = aprobado ? 3 : 4;
+                condicion = aprobado ? 2 : 4;
             }
             else {
-                condicion = aprobado ? 6 : 5;
+                condicion = aprobado ? 3 : 5;
             }
             yield iniestudio.update({ status: condicion });
             return res.status(200).json("actualizado");

@@ -624,24 +624,18 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           raw: true,
         });
         
-        const dictamenes = await PuntosOrden.findAll({
-          where: { id_tipo: 6 },
+        
+         const dictamenes = await PuntosOrden.findAll({
+          where: { id_dictamen: 0 },
           include: [
             {
-              model: TemasPuntosVotos,
-              as: 'temasVotos',
-              include: [
-                {
-                  model: VotosPunto,
-                  as: 'votospuntos',
-                  where: { sentido: 1 },
-                  required: false,
-                }
-              ],
-              required: false
+              model: IniciativaEstudio,
+              as: 'puntosestudiados', 
+              where: { status: 2 },
             }
           ]
         });
+
         
         const legislatura = await Legislatura.findOne({
           order: [["fecha_inicio", "DESC"]],
@@ -929,7 +923,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    console.log(body);
+    // console.log(body);
     // return 500;
 
   
@@ -984,32 +978,43 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
-      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
+      se_turna_comision: body.se_turna_comision ? 1 : 0
     });
 
+    if(body.tipo_evento != 0){
+      if (puntosTurnadosArray.length > 0) {
+          if (puntosTurnadosArray.length === 1) {
+            const estudio = await IniciativaEstudio.create({
+              type: "1",
+              punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+              punto_destino_id: puntonuevo.id,
+              status: 1,
+            });
+            
+          } else {
+            // funcion expediente
+          } 
+      }
+    }else{
+      
 
-    if (puntosTurnadosArray.length > 0) {
-      if(body.tipo_evento != 0){
-        if (puntosTurnadosArray.length === 1) {
-          const estudio = await IniciativaEstudio.create({
-            type: "1",
-            punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+        const data = await IniciativaEstudio.findOne({
+          where: { punto_destino_id: body.id_punto_turnado },
+        })
+        
+        if(data){
+          await PuntosOrden.update(
+            { id_dictamen: puntonuevo.id },
+            { where: { id: data.punto_destino_id } }
+          );
+          const termino = await IniciativaEstudio.create({
+            punto_origen_id: data.punto_origen_id,
+            type: 1,
             punto_destino_id: puntonuevo.id,
-            status: 1,
+            status: 6,
           });
-          
-        } else {
-          // funcion expediente
         }
-      }else{
-        const termino = await IniciativaEstudio.create({
-          punto_origen_id: body.id_punto_turnado,
-          type: "1",
-          punto_destino_id: puntonuevo.id,
-          status: 3,
-        });
-      }  
-    }
+    } 
 
     if (body.reservas) {
       const temasArray = typeof body.reservas === 'string' 
@@ -1209,7 +1214,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
 
 
     } catch (error: any) {
-      console.error("Error al guardar el punto:", error);
+      console.error("Error al traer los puntos:", error);
       return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
@@ -1383,7 +1388,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       punto: puntoDesc,
       observaciones: body.observaciones ?? punto.observaciones,
       editado: 1,
-      se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision:0,
+      se_turna_comision: body.se_turna_comision ? 1 : 0,
     });
     console.log("Holaaaaaaaaaaa", idPuntoTurnado)
     // if (idPuntoTurnado != 'null') {
