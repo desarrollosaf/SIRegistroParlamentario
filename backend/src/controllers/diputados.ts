@@ -602,10 +602,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 export const terminarvotacion = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
-      
+      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:")
       const iniestudio = await IniciativaEstudio.findOne({
         where: { punto_destino_id: id },
       })
+    
       if (!iniestudio) {
         return res.status(404).json({ message: "No tiene ninguna iniciativa" });
       }
@@ -642,9 +643,9 @@ export const terminarvotacion = async (req: Request, res: Response): Promise<any
         const aprobado = votosAFavor >= mayoria;
            
         if(punto.evento.tipoevento.nombre == "Comisión"){
-          condicion = aprobado ? 3 : 4;
+          condicion = aprobado ? 2 : 4;
         } else {
-          condicion = aprobado ? 6 : 5;
+          condicion = aprobado ? 3 : 5;
         }
 
         await iniestudio.update({ status: condicion });
