@@ -602,11 +602,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 export const terminarvotacion = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
-      
+      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:")
       const iniestudio = await IniciativaEstudio.findOne({
         where: { punto_destino_id: id },
       })
-      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio)
+    
       if (!iniestudio) {
         return res.status(404).json({ message: "No tiene ninguna iniciativa" });
       }

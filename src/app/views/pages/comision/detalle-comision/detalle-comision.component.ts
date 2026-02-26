@@ -2472,6 +2472,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
+        console.log('me voy')
         this._eventoService.terminarVotacion(this.idpto).subscribe({
           next: (response: any) => {
             console.log(response);
