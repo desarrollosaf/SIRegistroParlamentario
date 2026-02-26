@@ -21,18 +21,37 @@ const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
         this.port = process.env.PORT || '3013';
+        this.httpServer = http_1.default.createServer(this.app);
+        this.io = new socket_io_1.Server(this.httpServer, {
+            cors: {
+                origin: ['http://localhost:4200'],
+                credentials: true
+            }
+        });
+        this.setupSocket();
         this.midlewares();
         this.router();
         this.DBconnetc();
         this.listen();
     }
+    setupSocket() {
+        this.io.on('connection', (socket) => {
+            console.log('Socket conectado:', socket.id);
+            socket.on('disconnect', () => {
+                console.log('Socket desconectado:', socket.id);
+            });
+        });
+        this.app.set('io', this.io);
+    }
     listen() {
-        this.app.listen(this.port, () => {
-            console.log("La aplicación se esta corriendo exitosamente en el puerto => " + this.port);
+        this.httpServer.listen(this.port, () => {
+            console.log("Servidor corriendo en el puerto " + this.port);
         });
     }
     router() {

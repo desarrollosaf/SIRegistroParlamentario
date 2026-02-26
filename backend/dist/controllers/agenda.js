@@ -183,6 +183,8 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // 5. Si NO existen asistencias, crearlas
         if (asistenciasExistentes.length === 0) {
             yield crearAsistencias(evento, esSesion);
+            const io = req.app.get('io');
+            io.emit('evento_iniciado', { id });
             // Volver a consultar las asistencias recién creadas
             const asistenciasNuevas = yield asistencia_votos_1.default.findAll({
                 where: { id_agenda: id },

@@ -210,7 +210,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
       await crearAsistencias(evento, esSesion);
-      
+      const io = req.app.get('io');
+      io.emit('evento_iniciado', { id });
       // Volver a consultar las asistencias recién creadas
       const asistenciasNuevas = await AsistenciaVoto.findAll({
         where: { id_agenda: id },
