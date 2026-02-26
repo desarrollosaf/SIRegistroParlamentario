@@ -49,9 +49,9 @@ class Server {
     }
 
     listen(){
-        this.httpServer.listen(this.port, () => {
-            console.log("Servidor corriendo en el puerto " + this.port);
-        });
+        this.app.listen(this.port, () => {
+            console.log("La aplicación se esta corriendo exitosamente en el puerto => "+ this.port)           
+        })
     }
 
     router(){
