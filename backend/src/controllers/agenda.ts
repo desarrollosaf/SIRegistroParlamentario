@@ -2221,6 +2221,89 @@ export const getAgenda = async (req: Request, res: Response) => {
 };
 
 
+export const getAgendaHoy = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { fecha } = req.params;
+    console.log(fecha)
+
+    const eventos = await Agenda.findAll(
+      {
+        where: {
+          fecha: {
+            [Op.between]: [
+              fecha+' 00:00:00',
+              fecha+' 23:59:59'
+            ]
+          }
+        },
+        include: [
+          {
+            model: Sedes,
+            as: "sede",
+            attributes: ["id", "sede"]
+          },
+          {
+            model: TipoEventos,
+            as: "tipoevento",
+            attributes: ["id", "nombre"],
+          }
+        ],
+
+        order: [['fecha', 'DESC']]  
+      }
+    );
+    console.log(eventos)
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
+    return res.status(200).json({
+      msg: "listoooo :v ",
+      eventos: eventosConComisiones
+    });
+  } catch (error) {
+    console.error("Error obteniendo eventos:", error);
+    return res.status(500).json({
+      msg: "Ocurrió un error al obtener los eventos",
+      error: (error as Error).message
+    });
+  }
+};
+
+
+
 export const updateAgenda = async (req: Request, res: Response) => {
   try {
     const agendaId = req.params.id; 

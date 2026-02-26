@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportdatos = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.exportdatos = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -1898,6 +1898,69 @@ const getAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getAgenda = getAgenda;
+const getAgendaHoy = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { fecha } = req.params;
+        console.log(fecha);
+        const eventos = yield agendas_1.default.findAll({
+            where: {
+                fecha: {
+                    [sequelize_1.Op.between]: [
+                        fecha + ' 00:00:00',
+                        fecha + ' 23:59:59'
+                    ]
+                }
+            },
+            include: [
+                {
+                    model: sedes_1.default,
+                    as: "sede",
+                    attributes: ["id", "sede"]
+                },
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+        console.log(eventos);
+        const eventosConComisiones = [];
+        for (const evento of eventos) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            let titulo = '';
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
+            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
+                titulo }));
+        }
+        return res.status(200).json({
+            msg: "listoooo :v ",
+            eventos: eventosConComisiones
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo eventos:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener los eventos",
+            error: error.message
+        });
+    }
+});
+exports.getAgendaHoy = getAgendaHoy;
 const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const agendaId = req.params.id;
