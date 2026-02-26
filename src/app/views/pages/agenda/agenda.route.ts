@@ -17,5 +17,9 @@ export default [
     {
         path: 'sesion/:id',
         loadComponent: () => import('./sesion/sesion.component').then(c => c.SesionComponent)
+    },
+    {
+        path: 'eventos',
+        loadComponent: () => import('./eventos/eventos.component').then(c => c.EventosComponent)
     }
 ] as Routes;
