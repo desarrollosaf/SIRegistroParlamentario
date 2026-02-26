@@ -542,20 +542,12 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             raw: true,
         });
         const dictamenes = yield puntos_ordens_1.default.findAll({
-            where: { id_tipo: 6 },
+            where: { id_dictamen: 0 },
             include: [
                 {
-                    model: temas_puntos_votos_1.default,
-                    as: 'temasVotos',
-                    include: [
-                        {
-                            model: votos_punto_1.default,
-                            as: 'votospuntos',
-                            where: { sentido: 1 },
-                            required: false,
-                        }
-                    ],
-                    required: false
+                    model: iniciativas_estudio_1.default,
+                    as: 'puntosestudiados',
+                    where: { status: 2 },
                 }
             ]
         });
@@ -826,7 +818,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(body);
+        // console.log(body);
         // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
@@ -872,10 +864,10 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
-            se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
+            se_turna_comision: body.se_turna_comision ? 1 : 0
         });
-        if (puntosTurnadosArray.length > 0) {
-            if (body.tipo_evento != 0) {
+        if (body.tipo_evento != 0) {
+            if (puntosTurnadosArray.length > 0) {
                 if (puntosTurnadosArray.length === 1) {
                     const estudio = yield iniciativas_estudio_1.default.create({
                         type: "1",
@@ -888,12 +880,18 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     // funcion expediente
                 }
             }
-            else {
+        }
+        else {
+            const data = yield iniciativas_estudio_1.default.findOne({
+                where: { punto_destino_id: body.id_punto_turnado },
+            });
+            if (data) {
+                yield puntos_ordens_1.default.update({ id_dictamen: puntonuevo.id }, { where: { id: data.punto_destino_id } });
                 const termino = yield iniciativas_estudio_1.default.create({
-                    punto_origen_id: body.id_punto_turnado,
-                    type: "1",
+                    punto_origen_id: data.punto_origen_id,
+                    type: 1,
                     punto_destino_id: puntonuevo.id,
-                    status: 3,
+                    status: 6,
                 });
             }
         }
@@ -1070,7 +1068,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
     }
     catch (error) {
-        console.error("Error al guardar el punto:", error);
+        console.error("Error al traer los puntos:", error);
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 });
@@ -1226,7 +1224,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             punto: puntoDesc,
             observaciones: (_d = body.observaciones) !== null && _d !== void 0 ? _d : punto.observaciones,
             editado: 1,
-            se_turna_comision: body.tipo_evento == 0 ? body.se_turna_comision : 0,
+            se_turna_comision: body.se_turna_comision ? 1 : 0,
         });
         console.log("Holaaaaaaaaaaa", idPuntoTurnado);
         // if (idPuntoTurnado != 'null') {
