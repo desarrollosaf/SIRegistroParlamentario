@@ -14,6 +14,8 @@ interface Iniciativa {
   fecha_creacion?: string;
   proponente?: string;
   estatus?: string;
+  presentaString?: string;
+  proponentesString?: string;
 }
 
 interface TimelineItem {
@@ -65,7 +67,7 @@ export class IniciativasComponent implements OnInit {
     this._eventoService.getIniciativasList().subscribe({
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
-        console.log('Iniciativas cargadas:', this.listaIniciativas);
+        // console.log('Iniciativas cargadas:', this.listaIniciativas);
         this.cargando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -92,10 +94,10 @@ export class IniciativasComponent implements OnInit {
 
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        console.log('Respuesta del historial:', response);
+        // console.log('Respuesta del historial:', response);
 
         if (response.data && response.data.length > 0) {
-          this.procesarTimeline(response.data[0]);
+          this.procesarTimeline(response.data[0], response);
         } else {
           this.timelineData = [];
         }
@@ -111,10 +113,15 @@ export class IniciativasComponent implements OnInit {
     });
   }
 
-  procesarTimeline(data: any): void {
+  procesarTimeline(data: any, data1: any): void {
     this.timelineData = [];
     this.isCollapsed = {};
     // 1. NACIÓ (donde se presentó)
+      if (this.iniciativaSeleccionada) {
+        this.iniciativaSeleccionada.presentaString = data1.presentaString || '';
+        this.iniciativaSeleccionada.proponentesString = data1.proponentesString || '';
+      }
+
     if (data.nacio) {
       this.timelineData.push({
         fecha: data.nacio.fecha,
