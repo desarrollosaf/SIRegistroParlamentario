@@ -41,6 +41,10 @@ Intervencion.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
     },
+    liga: {
+        type: sequelize_1.DataTypes.TEXT("long"),
+        allowNull: true,
+    },
     destacado: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,

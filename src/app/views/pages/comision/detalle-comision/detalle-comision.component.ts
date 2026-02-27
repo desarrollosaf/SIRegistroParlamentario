@@ -186,7 +186,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id_diputado: [[]],
       id_tipo_intervencion: [null],
       comentario: [{ value: '', disabled: true }],
-      destacada: [false]
+      destacada: [false],
+      liga: ['']
     });
 
     this.formReserva = this.fb.group({
@@ -1822,7 +1823,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id_diputado: [],
       id_tipo_intervencion: [],
       comentario: { value: '', disabled: true },
-      destacada: false
+      destacada: false,
+      liga: ''
     });
     this.mostrarFormIntervencion = false;
     this.cargarIntervenciones();
@@ -1841,7 +1843,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         id_diputado: [],
         id_tipo_intervencion: [],
         comentario: { value: '', disabled: true },
-        destacada: false
+        destacada: false,
+        liga: ''
       });
     }
   }
@@ -2490,7 +2493,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  
+
 
   private finalizarVotacion(): void {
     this.puntoSeleccionadoVotacion = null;
@@ -2583,7 +2586,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // setTimeout(() => {
     //   console.log('Imprimir votación del punto:', this.puntoSeleccionadoVotacion);
     // }, 2000);
-    
+
     this._eventoService.generarPDFVotacion(this.idpto).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);

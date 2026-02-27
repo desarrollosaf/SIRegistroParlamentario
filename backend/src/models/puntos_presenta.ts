@@ -8,6 +8,7 @@ import {
 
 import sequelize from '../database/registrocomisiones';
 import type PuntosOrdens from './puntos_ordens';
+import Proponentes from './proponentes';
 
 export class PuntosPresenta extends Model<
   InferAttributes<PuntosPresenta>,
@@ -66,4 +67,5 @@ PuntosPresenta.init(
   }
 );
 
+PuntosPresenta.belongsTo(Proponentes, { foreignKey: 'id_tipo_presenta', as: 'tipo_presenta' });
 export default PuntosPresenta;
