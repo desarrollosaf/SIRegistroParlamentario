@@ -1691,6 +1691,7 @@
                             </ng-select>
                         </div>
 
+
                         <div class="col-12" *ngIf="formIntervencion.get('comentario')?.enabled">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-chat-left-text-fill me-1"></i> Comentario
@@ -1699,7 +1700,18 @@
                                 placeholder="Escribe el comentario...">
                             </textarea>
                         </div>
-
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-youtube me-1 text-danger"></i> Liga
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-danger text-white border-0">
+                                    <i class="bi bi-play-circle-fill"></i>
+                                </span>
+                                <input type="url" class="form-control" formControlName="liga"
+                                    placeholder="https://www.youtube.com/watch?v=..." />
+                            </div>
+                        </div>
                         <div class="col-12">
                             <div class="form-check form-switch destacar-switch">
                                 <input class="form-check-input" type="checkbox" id="destacar"
@@ -1730,47 +1742,70 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive tabla-intervenciones-wrapper">
-                    <table class="table table-hover mb-0 tabla-intervenciones">
+                    <table class="table table-hover mb-0 tabla-intervenciones"
+                        style="table-layout: fixed; width: 100%;">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 30px;"></th>
-                                <th>Tipo de Intervención</th>
-                                <th>Diputado(s)</th>
-                                <th class="text-center" style="width: 100px;">Acciones</th>
+                                <th style="width: 35px;"></th>
+                                <th style="width: 220px;">Tipo / Comentario</th>
+                                <th style="width: 180px;">Diputado(s)</th>
+                                <th style="width: 140px;">Liga</th>
+                                <th style="width: 70px;" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let intervencion of listaIntervenciones; let i = index"
                                 [class.destacado]="intervencion.destacado">
-                                <td class="text-center">
+
+                                <!-- Estrella destacado -->
+                                <td class="text-center align-top pt-3">
                                     <i class="bi bi-star-fill text-warning" *ngIf="intervencion.destacado"></i>
                                 </td>
-                                <td>
+
+                                <!-- Tipo + comentario -->
+                                <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
                                     <span class="badge-tipo-intervencion" [ngClass]="{
-                                        'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
-                                        'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
-                                        'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
-                                    }">
+            'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
+            'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
+            'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
+        }">
                                         {{ intervencion.tipointerven.valor }}
                                     </span>
-
-                                    <small class="d-block text-muted mt-1" *ngIf="intervencion.mensaje">
+                                    <small class="d-block text-muted mt-2" *ngIf="intervencion.mensaje"
+                                        style="white-space: normal; word-break: break-word; line-height: 1.5;">
                                         {{ intervencion.mensaje }}
                                     </small>
                                 </td>
-                                <td>
-                                    <span class="fw-medium">{{intervencion.diputado}}</span>
 
+                                <!-- Diputado -->
+                                <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
+                                    <span class="fw-medium" style="line-height: 1.5;">
+                                        {{ intervencion.diputado }}
+                                    </span>
                                 </td>
-                                <td class="text-center">
+
+                                <!-- Liga YouTube -->
+                                <td class="align-top pt-3">
+                                    <a *ngIf="intervencion.liga" [href]="intervencion.liga" target="_blank"
+                                        class="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-1"
+                                        style="font-size: 0.75rem;">
+                                        <i class="bi bi-youtube"></i>
+                                        <span>Ver video</span>
+                                    </a>
+                                    <span *ngIf="!intervencion.liga" class="text-muted small">—</span>
+                                </td>
+
+                                <!-- Acciones -->
+                                <td class="text-center align-top pt-3">
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         (click)="eliminarIntervencion(intervencion, i)" title="Eliminar">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </td>
                             </tr>
+
                             <tr *ngIf="listaIntervenciones.length === 0">
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td colspan="5" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox" style="font-size: 2rem;"></i>
                                     <p class="mb-0 mt-2">No hay intervenciones registradas</p>
                                 </td>
