@@ -962,7 +962,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const { id } = req.params;
         const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
-            order: [['nopunto', 'DESC']],
+            order: [['nopunto', 'ASC']],
             include: [
                 {
                     model: puntos_presenta_1.default,
