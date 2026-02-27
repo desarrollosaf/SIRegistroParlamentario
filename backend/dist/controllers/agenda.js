@@ -1299,6 +1299,7 @@ exports.eliminarpunto = eliminarpunto;
 const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
+        //console.log(body)
         const registros = body.id_diputado.map((diputadoId) => ({
             id_punto: body.id_punto,
             id_evento: body.id_evento,
@@ -1306,8 +1307,10 @@ const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, functio
             id_tipo_intervencion: body.id_tipo_intervencion,
             mensaje: body.comentario,
             tipo: body.tipo,
+            liga: body.liga,
             destacado: body.destacada,
         }));
+        console.log(registros);
         const nuevasIntervenciones = yield intervenciones_1.default.bulkCreate(registros, {
             returning: true,
         });
@@ -1361,6 +1364,7 @@ const getintervenciones = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 tipo: inte.tipo,
                 destacado: inte.destacado,
                 tipointerven: inte.tipointerven,
+                liga: inte.liga,
                 diputado: nombreCompletoDiputado,
             };
         })));

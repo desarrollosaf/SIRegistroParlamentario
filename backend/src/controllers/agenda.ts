@@ -1474,7 +1474,7 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
 export const saveintervencion = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-
+    //console.log(body)
     const registros = body.id_diputado.map((diputadoId: string) => ({
       id_punto: body.id_punto,
       id_evento: body.id_evento,
@@ -1482,9 +1482,10 @@ export const saveintervencion = async (req: Request, res: Response): Promise<any
       id_tipo_intervencion: body.id_tipo_intervencion,
       mensaje: body.comentario,
       tipo: body.tipo,
+      liga: body.liga,
       destacado: body.destacada, 
     }));
-
+    console.log(registros)
     const nuevasIntervenciones = await Intervencion.bulkCreate(registros, {
       returning: true,
     });
@@ -1544,6 +1545,7 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
             tipo: inte.tipo,
             destacado: inte.destacado,
             tipointerven: inte.tipointerven, 
+            liga: inte.liga,
             diputado: nombreCompletoDiputado,
           };
         })
