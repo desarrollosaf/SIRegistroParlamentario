@@ -27,6 +27,14 @@ const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
+const puntos_presenta_1 = __importDefault(require("../models/puntos_presenta"));
+const proponentes_1 = __importDefault(require("../models/proponentes"));
+const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
+const secretarias_1 = __importDefault(require("../models/secretarias"));
+const legislaturas_1 = __importDefault(require("../models/legislaturas"));
+const partidos_1 = __importDefault(require("../models/partidos"));
+const municipiosag_1 = __importDefault(require("../models/municipiosag"));
+const diputado_1 = __importDefault(require("../models/diputado"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -409,16 +417,17 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
     };
 });
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     try {
         const { id } = req.params;
         const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id: id },
-            attributes: ["id", "iniciativa", "createdAt"],
+            attributes: ["id", "iniciativa", "createdAt", "id_punto"],
             include: [
                 {
                     model: puntos_ordens_1.default,
                     as: 'punto',
-                    attributes: ["id", "punto", "nopunto"],
+                    attributes: ["id", "punto", "nopunto", "tribuna"],
                     include: [
                         {
                             model: iniciativas_estudio_1.default,
@@ -463,6 +472,66 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             ]
         });
+        let presentan = null;
+        let proponentesString = ''; // 👈 declarar aquí
+        let presentaString = '';
+        if (((_a = iniciativas[0]) === null || _a === void 0 ? void 0 : _a.id_punto) != null) {
+            presentan = yield puntos_presenta_1.default.findAll({
+                where: { id_punto: iniciativas[0].id_punto },
+                include: [{
+                        model: proponentes_1.default,
+                        as: 'tipo_presenta',
+                        attributes: ["valor"]
+                    }]
+            });
+        }
+        if (presentan) {
+            const proponentesUnicos = new Map(); // para no repetir
+            const presentanData = [];
+            for (const p of presentan) {
+                const tipoValor = p.tipo_presenta.valor;
+                let valor = '';
+                if (tipoValor === 'Diputadas y Diputados') {
+                    const dip = yield diputado_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = `${(_b = dip === null || dip === void 0 ? void 0 : dip.apaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = dip === null || dip === void 0 ? void 0 : dip.amaterno) !== null && _c !== void 0 ? _c : ''} ${(_d = dip === null || dip === void 0 ? void 0 : dip.nombres) !== null && _d !== void 0 ? _d : ''}`.trim();
+                }
+                else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
+                    const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = (_e = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _e !== void 0 ? _e : '';
+                }
+                else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
+                    const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = (_f = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _f !== void 0 ? _f : '';
+                }
+                else if (tipoValor === 'Grupo Parlamentario') {
+                    const partido = yield partidos_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : '';
+                }
+                else if (tipoValor === 'Legislatura') {
+                    const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = (_h = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _h !== void 0 ? _h : '';
+                }
+                else if (tipoValor === 'Secretarías del GEM') {
+                    const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = `${(_j = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _j !== void 0 ? _j : ''} / ${(_k = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _k !== void 0 ? _k : ''}`;
+                }
+                else {
+                    const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta } });
+                    valor = (_l = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _l !== void 0 ? _l : '';
+                }
+                // Proponente único (sin repetir)
+                if (!proponentesUnicos.has(tipoValor)) {
+                    proponentesUnicos.set(tipoValor, tipoValor);
+                }
+                presentanData.push({
+                    proponente: tipoValor,
+                    valor,
+                    id_presenta: p.id_presenta,
+                });
+            }
+            proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
+            presentaString = presentanData.map(p => p.valor).join(', ');
+        }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
             const data = iniciativa.toJSON();
@@ -509,7 +578,9 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             };
         })));
         return res.status(200).json({
-            data: trazaIniciativas
+            proponentesString,
+            presentaString,
+            data: trazaIniciativas,
         });
     }
     catch (error) {
@@ -524,10 +595,10 @@ exports.getifnini = getifnini;
 const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:");
         const iniestudio = yield iniciativas_estudio_1.default.findOne({
             where: { punto_destino_id: id },
         });
+        console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio);
         if (!iniestudio) {
             return res.status(404).json({ message: "No tiene ninguna iniciativa" });
         }

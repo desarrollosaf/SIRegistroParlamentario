@@ -17,6 +17,14 @@ import { comisiones } from "../models/init-models";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
 import PuntosComisiones from "../models/puntos_comisiones";
 import TipoAutor from "../models/tipo_autors";
+import PuntosPresenta from "../models/puntos_presenta";
+import Proponentes from "../models/proponentes";
+import CatFunDep from "../models/cat_fun_dep";
+import Secretarias from "../models/secretarias";
+import Legislatura from "../models/legislaturas";
+import Partidos from "../models/partidos";
+import MunicipiosAg from "../models/municipiosag";
+import Diputado from "../models/diputado";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -451,12 +459,12 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     const iniciativas = await IniciativaPuntoOrden.findAll({
       where: { id: id },
-      attributes: ["id", "iniciativa", "createdAt"],
+      attributes: ["id", "iniciativa", "createdAt", "id_punto"],
       include: [
         {
           model: PuntosOrden,
           as: 'punto',
-          attributes: ["id", "punto", "nopunto"],
+          attributes: ["id", "punto", "nopunto","tribuna"],
           include: [
             {
               model: IniciativaEstudio,
@@ -501,6 +509,72 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         }
       ]
     });
+
+    let presentan = null;
+    let proponentesString = ''; // 👈 declarar aquí
+    let presentaString = ''; 
+
+    if (iniciativas[0]?.id_punto != null) {
+      presentan = await PuntosPresenta.findAll({
+        where: { id_punto: iniciativas[0].id_punto },
+        include: [{
+          model: Proponentes,
+          as: 'tipo_presenta',
+          attributes: ["valor"]
+        }]
+      });
+    }
+
+    if (presentan) {
+      const proponentesUnicos = new Map<string, string>(); // para no repetir
+      const presentanData: any[] = [];
+
+      for (const p of presentan as any[]) {
+        const tipoValor = p.tipo_presenta.valor;
+        let valor = '';
+
+        if (tipoValor === 'Diputadas y Diputados') {
+          const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
+          valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
+
+        } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
+          const comi = await Comision.findOne({ where: { id: p.id_presenta } });
+          valor = comi?.nombre ?? '';
+
+        } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
+          const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
+          valor = muni?.nombre ?? '';
+
+        } else if (tipoValor === 'Grupo Parlamentario') {
+          const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
+          valor = partido?.nombre ?? '';
+
+        } else if (tipoValor === 'Legislatura') {
+          const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
+          valor = leg?.numero ?? '';
+
+        } else if (tipoValor === 'Secretarías del GEM') {
+          const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
+          valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
+
+        } else {
+          const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
+          valor = cat?.nombre_titular ?? '';
+        }
+
+        // Proponente único (sin repetir)
+        if (!proponentesUnicos.has(tipoValor)) {
+          proponentesUnicos.set(tipoValor, tipoValor);
+        }
+        presentanData.push({
+          proponente: tipoValor,
+          valor,
+          id_presenta: p.id_presenta,
+        });
+      }
+      proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
+      presentaString = presentanData.map(p => p.valor).join(', ');
+    }
 
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
@@ -587,7 +661,10 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     }));
 
     return res.status(200).json({
-      data: trazaIniciativas
+      proponentesString,
+      presentaString,
+      data: trazaIniciativas,
+      
     });
 
   } catch (error: any) {
@@ -602,11 +679,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 export const terminarvotacion = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
-      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:")
+      
       const iniestudio = await IniciativaEstudio.findOne({
         where: { punto_destino_id: id },
       })
-    
+      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio)
       if (!iniestudio) {
         return res.status(404).json({ message: "No tiene ninguna iniciativa" });
       }
