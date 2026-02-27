@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PuntosPresenta = void 0;
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
+const proponentes_1 = __importDefault(require("./proponentes"));
 class PuntosPresenta extends sequelize_1.Model {
 }
 exports.PuntosPresenta = PuntosPresenta;
@@ -45,4 +46,5 @@ PuntosPresenta.init({
     tableName: 'puntos_presenta',
     timestamps: true,
 });
+PuntosPresenta.belongsTo(proponentes_1.default, { foreignKey: 'id_tipo_presenta', as: 'tipo_presenta' });
 exports.default = PuntosPresenta;

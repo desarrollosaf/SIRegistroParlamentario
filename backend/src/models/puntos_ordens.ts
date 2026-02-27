@@ -15,6 +15,7 @@ import Agenda from "./agendas";
 import TemasPuntosVotos from "./temas_puntos_votos";
 import PuntosComisiones from "./puntos_comisiones";
 import IniciativaPuntoOrden from "./inciativas_puntos_ordens";
+import Diputado from "./diputado";
 
 
 
