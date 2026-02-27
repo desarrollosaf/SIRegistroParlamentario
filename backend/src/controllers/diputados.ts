@@ -475,7 +475,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: PuntosOrden,
                   as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto"],
+                  attributes: ["id", "punto", "nopunto","tribuna"],
                   include: [
                     {
                       model: Agenda,
@@ -582,12 +582,22 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       const estudios   = data.punto?.estudio?.filter((e: any) => e.status === "1") || [];
       const dictamenes = data.punto?.estudio?.filter((e: any) => e.status === "2") || [];
       const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || [];
+      const rechazadocomi  = data.punto?.estudio?.filter((e: any) => e.status === "4") || [];
+      const rechazosesion  = data.punto?.estudio?.filter((e: any) => e.status === "5") || [];
 
       // Anfitriones y turnado del nació
       const anfitrionesNacio = await getAnfitriones(
         data.evento?.id,
         data.evento?.tipoevento?.nombre
       );
+      const tribunainicio = await Diputado.findOne({
+           where: { id: data.punto?.tribuna },
+        })
+        const tribuna = tribunainicio
+        ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
+            .filter(Boolean)
+            .join(" ")
+        : null;
       const turnadoInfo = await getComisionesTurnado(data.punto?.id);
 
       // Estudios con info de evento y anfitriones
@@ -630,6 +640,14 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       // Cierres con info de evento
       const cierresConInfo = await Promise.all(cierres.map(async (c: any) => {
         const eventoCierre = c.iniciativa?.evento; 
+        const tribuna1 = await Diputado.findOne({
+           where: { id: c.iniciativa?.tribuna },
+        })
+        const tribuna = tribuna1
+        ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+            .filter(Boolean)
+            .join(" ")
+        : null;
         return {
           evento: eventoCierre?.id,
           tipo_evento: eventoCierre?.tipoevento?.nombre,
@@ -638,7 +656,32 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           liga: eventoCierre?.liga,
           votacionid: c.iniciativa?.id,      
           numpunto: c.iniciativa?.nopunto,   
-          punto: c.iniciativa?.punto,       
+          punto: c.iniciativa?.punto,   
+          tribuna,    
+        };
+      }));
+
+      // Rechazado de evento 
+      const ReSesion = await Promise.all(rechazosesion.map(async (s: any) => {
+        const eventoCierre = s.iniciativa?.evento; 
+        const tribuna1 = await Diputado.findOne({
+           where: { id: s.iniciativa?.tribuna },
+        })
+        const tribuna = tribuna1
+        ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+            .filter(Boolean)
+            .join(" ")
+        : null;
+        return {
+          evento: eventoCierre?.id,
+          tipo_evento: eventoCierre?.tipoevento?.nombre,
+          fecha: formatearFecha(eventoCierre?.fecha),
+          descripcion_evento: eventoCierre?.descripcion,
+          liga: eventoCierre?.liga,
+          votacionid: s.iniciativa?.id,      
+          numpunto: s.iniciativa?.nopunto,   
+          punto: s.iniciativa?.punto,   
+          tribuna,    
         };
       }));
 
@@ -651,12 +694,14 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           numpunto: data.punto?.nopunto,
           punto: data.punto?.punto,
           liga: data.evento?.liga,
+          tribuna,
           ...turnadoInfo,
           ...anfitrionesNacio
         },
         estudio: estudiosConInfo,
         dictamen: dictamenesConInfo,
-        cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
+        cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
+        rechazadose: ReSesion,
       };
     }));
 
