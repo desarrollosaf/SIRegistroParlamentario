@@ -438,7 +438,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                                 {
                                     model: puntos_ordens_1.default,
                                     as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                                    attributes: ["id", "punto", "nopunto"],
+                                    attributes: ["id", "punto", "nopunto", "tribuna"],
                                     include: [
                                         {
                                             model: agendas_1.default,
@@ -533,14 +533,24 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = presentanData.map(p => p.valor).join(', ');
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
             const data = iniciativa.toJSON();
             const estudios = ((_b = (_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) === null || _b === void 0 ? void 0 : _b.filter((e) => e.status === "1")) || [];
             const dictamenes = ((_d = (_c = data.punto) === null || _c === void 0 ? void 0 : _c.estudio) === null || _d === void 0 ? void 0 : _d.filter((e) => e.status === "2")) || [];
             const cierres = ((_f = (_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) === null || _f === void 0 ? void 0 : _f.filter((e) => e.status === "3")) || [];
+            const rechazadocomi = ((_h = (_g = data.punto) === null || _g === void 0 ? void 0 : _g.estudio) === null || _h === void 0 ? void 0 : _h.filter((e) => e.status === "4")) || [];
+            const rechazosesion = ((_k = (_j = data.punto) === null || _j === void 0 ? void 0 : _j.estudio) === null || _k === void 0 ? void 0 : _k.filter((e) => e.status === "5")) || [];
             // Anfitriones y turnado del nació
-            const anfitrionesNacio = yield getAnfitriones((_g = data.evento) === null || _g === void 0 ? void 0 : _g.id, (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre);
-            const turnadoInfo = yield getComisionesTurnado((_k = data.punto) === null || _k === void 0 ? void 0 : _k.id);
+            const anfitrionesNacio = yield getAnfitriones((_l = data.evento) === null || _l === void 0 ? void 0 : _l.id, (_o = (_m = data.evento) === null || _m === void 0 ? void 0 : _m.tipoevento) === null || _o === void 0 ? void 0 : _o.nombre);
+            const tribunainicio = yield diputado_1.default.findOne({
+                where: { id: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.tribuna },
+            });
+            const tribuna = tribunainicio
+                ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
+                    .filter(Boolean)
+                    .join(" ")
+                : null;
+            const turnadoInfo = yield getComisionesTurnado((_q = data.punto) === null || _q === void 0 ? void 0 : _q.id);
             // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
@@ -557,24 +567,58 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             })));
             // Cierres con info de evento
             const cierresConInfo = yield Promise.all(cierres.map((c) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b, _c, _d, _e;
+                var _a, _b, _c, _d, _e, _f;
                 const eventoCierre = (_a = c.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
+                const tribuna1 = yield diputado_1.default.findOne({
+                    where: { id: (_b = c.iniciativa) === null || _b === void 0 ? void 0 : _b.tribuna },
+                });
+                const tribuna = tribuna1
+                    ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+                        .filter(Boolean)
+                        .join(" ")
+                    : null;
                 return {
                     evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.id,
-                    tipo_evento: (_b = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
+                    tipo_evento: (_c = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre,
                     fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
                     descripcion_evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.descripcion,
                     liga: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.liga,
-                    votacionid: (_c = c.iniciativa) === null || _c === void 0 ? void 0 : _c.id,
-                    numpunto: (_d = c.iniciativa) === null || _d === void 0 ? void 0 : _d.nopunto,
-                    punto: (_e = c.iniciativa) === null || _e === void 0 ? void 0 : _e.punto,
+                    votacionid: (_d = c.iniciativa) === null || _d === void 0 ? void 0 : _d.id,
+                    numpunto: (_e = c.iniciativa) === null || _e === void 0 ? void 0 : _e.nopunto,
+                    punto: (_f = c.iniciativa) === null || _f === void 0 ? void 0 : _f.punto,
+                    tribuna,
+                };
+            })));
+            // Rechazado de evento 
+            const ReSesion = yield Promise.all(rechazosesion.map((s) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d, _e, _f;
+                const eventoCierre = (_a = s.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
+                const tribuna1 = yield diputado_1.default.findOne({
+                    where: { id: (_b = s.iniciativa) === null || _b === void 0 ? void 0 : _b.tribuna },
+                });
+                const tribuna = tribuna1
+                    ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+                        .filter(Boolean)
+                        .join(" ")
+                    : null;
+                return {
+                    evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.id,
+                    tipo_evento: (_c = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre,
+                    fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
+                    descripcion_evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.descripcion,
+                    liga: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.liga,
+                    votacionid: (_d = s.iniciativa) === null || _d === void 0 ? void 0 : _d.id,
+                    numpunto: (_e = s.iniciativa) === null || _e === void 0 ? void 0 : _e.nopunto,
+                    punto: (_f = s.iniciativa) === null || _f === void 0 ? void 0 : _f.punto,
+                    tribuna,
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ evento: (_l = data.evento) === null || _l === void 0 ? void 0 : _l.id, tipo_evento: (_o = (_m = data.evento) === null || _m === void 0 ? void 0 : _m.tipoevento) === null || _o === void 0 ? void 0 : _o.nombre, fecha: formatearFecha((_p = data.evento) === null || _p === void 0 ? void 0 : _p.fecha), descripcion_evento: (_q = data.evento) === null || _q === void 0 ? void 0 : _q.descripcion, numpunto: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.nopunto, punto: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.punto, liga: (_t = data.evento) === null || _t === void 0 ? void 0 : _t.liga }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ evento: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.id, tipo_evento: (_t = (_s = data.evento) === null || _s === void 0 ? void 0 : _s.tipoevento) === null || _t === void 0 ? void 0 : _t.nombre, fecha: formatearFecha((_u = data.evento) === null || _u === void 0 ? void 0 : _u.fecha), descripcion_evento: (_v = data.evento) === null || _v === void 0 ? void 0 : _v.descripcion, numpunto: (_w = data.punto) === null || _w === void 0 ? void 0 : _w.nopunto, punto: (_x = data.punto) === null || _x === void 0 ? void 0 : _x.punto, liga: (_y = data.evento) === null || _y === void 0 ? void 0 : _y.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
-                cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null
+                cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
+                rechazadose: ReSesion,
             };
         })));
         return res.status(200).json({
