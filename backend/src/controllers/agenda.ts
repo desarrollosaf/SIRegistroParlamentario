@@ -1093,7 +1093,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
 
       const puntosRaw = await PuntosOrden.findAll({
         where: { id_evento: id },
-        order: [['nopunto', 'DESC']],
+        order: [['nopunto', 'ASC']],
         include: [
           {
             model: PuntosPresenta,
