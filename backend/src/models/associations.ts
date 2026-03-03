@@ -4,6 +4,7 @@ import TipoCategoriaIniciativas from './tipo_categoria_iniciativas';
 import PuntosOrden from "./puntos_ordens";
 import IniciativaPuntoOrden from "./inciativas_puntos_ordens";
 import IniciativaEstudio from './iniciativas_estudio';
+import ExpedienteEstudiosPuntos from './expedientes_estudio_puntos';
 
 // Desde Proponentes al catálogo
 Proponentes.belongsToMany(TipoCategoriaIniciativas, {
@@ -59,6 +60,21 @@ IniciativaEstudio.belongsTo(PuntosOrden, {
 
 PuntosOrden.hasMany(IniciativaEstudio, {
   foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+
+
+////////// relaciones para la linea 
+
+IniciativaPuntoOrden.hasMany(ExpedienteEstudiosPuntos, { 
+  foreignKey: 'punto_origen_sesion_id',  
+  sourceKey: 'id_punto',                 
+  as: 'expedienteturno' 
+});
+
+ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
+  foreignKey: 'punto_origen_id',        
+  sourceKey: 'expediente_id',  
+  as: 'estudio'
 });
 
 
