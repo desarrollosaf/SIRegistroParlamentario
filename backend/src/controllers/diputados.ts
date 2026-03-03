@@ -785,3 +785,36 @@ export const terminarvotacion = async (req: Request, res: Response): Promise<any
       });
     }
   };
+
+export const deleteEvento = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const puntos = await PuntosOrden.findAll({
+      where: { id_evento: id },
+      attributes: ['id']
+    });
+
+    const puntoIds = puntos.map((p: any) => p.id);
+
+    if (puntoIds.length > 0) {
+      await IniciativaPuntoOrden.destroy({ where: { id_punto: puntoIds } });
+      await IniciativaEstudio.destroy({ where: { punto_origen_id: puntoIds } });
+      await IniciativaEstudio.destroy({ where: { punto_destino_id: puntoIds } });
+      await PuntosPresenta.destroy({ where: { id_punto: puntoIds } });
+      await PuntosComisiones.destroy({ where: { id_punto: puntoIds } });
+      await PuntosOrden.destroy({ where: { id_evento: id } });
+    }
+    await AnfitrionAgenda.destroy({ where: { agenda_id: id } });
+    const deleted = await Agenda.destroy({ where: { id } });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Evento eliminado correctamente" });
+
+  } catch (error: any) {
+    console.error("Error al eliminar el evento:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
