@@ -195,7 +195,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
     this.formIniciativa = this.fb.group({
-      descripcion: ['', Validators.required]
+      descripcion: ['', Validators.required],
+      id_proponente: [null],
+      id_presenta: [null]
     });
 
   }
@@ -859,11 +861,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
             puntosTurnadosSeleccionados: punto.puntosestudiado
-            ? [{ id: punto.puntosestudiado.id, punto: punto.puntosestudiado.punto }]
-            : (punto.turnocomision || []).map((tc: any) => {
-            const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
-            return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
-            }),
+              ? [{ id: punto.puntosestudiado.id, punto: punto.puntosestudiado.punto }]
+              : (punto.turnocomision || []).map((tc: any) => {
+                const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+                return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+              }),
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -933,6 +935,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
     if (!this.mostrarSelectIniciativaPrecargada) {
       this.iniciativaPrecargadaSeleccionada = null;
+      this.formIniciativa.get('id_proponente')?.setValue(null);
+      this.formIniciativa.get('id_presenta')?.setValue(null);
+      this.slcPresenta = null;
     }
   }
 
@@ -965,9 +970,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     const datos = {
       punto: this.puntoSeleccionadoIniciativa.id,
-      iniciativa: iniciativaSeleccionada.id
+      iniciativa: iniciativaSeleccionada.id,
+      id_proponente: this.formIniciativa.value?.id_proponente || null,
+      id_presenta: this.formIniciativa.value?.id_presenta || null
     };
-
     console.log(datos);
 
     this._eventoService.saveIniciativasCargadas(datos).subscribe({
@@ -1066,6 +1072,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+
+
   guardarIniciativa() {
     if (this.formIniciativa.invalid) {
       Swal.fire({
@@ -1083,7 +1091,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (!this.puntoSeleccionadoIniciativa) {
       const nuevaIniciativa = {
         id: Date.now(),
-        descripcion: this.formIniciativa.value.descripcion
+        descripcion: this.formIniciativa.value.descripcion,
+        id_proponente: this.formIniciativa.value.id_proponente,
+        id_presenta: this.formIniciativa.value.id_presenta,
+        // Para mostrar en la tabla:
+        proponente: this.slctProponentes?.find((p: any) => p.id === this.formIniciativa.value.id_proponente)?.valor || '',
+        presenta: this.slcPresenta?.find((p: any) => p.id === this.formIniciativa.value.id_presenta)?.valor || ''
       };
 
       this.listaIniciativas.push(nuevaIniciativa);
@@ -1108,7 +1121,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // CASO 2: PUNTO EXISTENTE (GUARDAR EN BD)
     const datos = {
       punto: this.puntoSeleccionadoIniciativa.id,
-      descripcion: this.formIniciativa.value.descripcion
+      descripcion: this.formIniciativa.value.descripcion,
+      id_proponente: this.formIniciativa.value.id_proponente,
+      id_presenta: this.formIniciativa.value.id_presenta
     };
 
     this._eventoService.saveIniciativa(datos).subscribe({
@@ -1970,7 +1985,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   getTipoP(id?: any): void {
     // this.formPunto.get('tipo')?.setValue(null);
     // this.formPunto.get('presenta')?.setValue(null);
-
+    this.formIniciativa.get('id_presenta')?.setValue(null); // solo limpia el de iniciativa
     this._eventoService.getTipo(id).subscribe({
       next: (response: any) => {
         console.log('response de los presenta y tipo de crear: ', response);
