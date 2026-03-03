@@ -9,10 +9,10 @@ class Expediente extends sequelize_1.Model {
 }
 Expediente.init({
     id: {
-        type: sequelize_1.DataTypes.UUID,
-        defaultValue: sequelize_1.DataTypes.UUIDV4,
-        allowNull: false,
+        type: sequelize_1.DataTypes.BIGINT.UNSIGNED,
+        autoIncrement: true,
         primaryKey: true,
+        allowNull: false
     },
     evento_comision_id: {
         type: sequelize_1.DataTypes.INTEGER,
@@ -24,11 +24,11 @@ Expediente.init({
     },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
-        field: 'created_at',
+        field: 'createdAt',
     },
     updatedAt: {
         type: sequelize_1.DataTypes.DATE,
-        field: 'updated_at',
+        field: 'updatedAt',
     }
 }, {
     sequelize: registrocomisiones_1.default,

@@ -11,6 +11,8 @@ import AsistenciaVoto from "../models/asistencia_votos";
 import { setEngine } from "node:crypto";
 import Partidos from "../models/partidos";
 import Proponentes from "../models/proponentes";
+import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
+import Expediente from "../models/expediente";
 import TipoCategoriaIniciativas  from "../models/tipo_categoria_iniciativas";
 import Comision from "../models/comisions";
 import TipoComisions from "../models/tipo_comisions";
@@ -993,7 +995,31 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
             });
             
           } else {
-            // funcion expediente
+           
+            const expediente  =  await Expediente.create({
+              evento_comision_id: evento!.id,
+              descripcion: "Inicitativas en conjunto"
+            });
+            for (const item of puntosTurnadosArray) {
+              console.log(item)
+              const iniciativas = await IniciativaPuntoOrden.findAll({
+                where: {
+                  id_punto: item,
+                },
+              });
+              for ( const data of iniciativas){
+                  data.update({
+                    expediente: expediente.id
+                  })
+              } 
+              await ExpedienteEstudiosPuntos.create({
+                expediente_id: expediente.id,
+                punto_origen_sesion_id: item
+              });
+            } 
+
+
+
           } 
       }
     }else{

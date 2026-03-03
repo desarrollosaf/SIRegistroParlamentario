@@ -15,10 +15,10 @@ class ExpedienteEstudiosPuntos extends Model {
 ExpedienteEstudiosPuntos.init(
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      allowNull: false,
+      type: DataTypes.BIGINT.UNSIGNED,
+      autoIncrement: true,
       primaryKey: true,
+      allowNull: false
     },
     expediente_id: {
       type: DataTypes.INTEGER,
@@ -30,11 +30,11 @@ ExpedienteEstudiosPuntos.init(
     },
     createdAt: {
       type: DataTypes.DATE,
-      field: 'created_at',
+      field: 'createdAt',
     },
     updatedAt: {
       type: DataTypes.DATE,
-      field: 'updated_at',
+      field: 'updatedAt',
     }
   },
   {

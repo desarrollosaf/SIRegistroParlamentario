@@ -15,10 +15,10 @@ class Expediente extends Model {
 Expediente.init(
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      allowNull: false,
+      type: DataTypes.BIGINT.UNSIGNED,
+      autoIncrement: true,
       primaryKey: true,
+      allowNull: false
     },
     evento_comision_id: {
       type: DataTypes.INTEGER,
@@ -30,11 +30,11 @@ Expediente.init(
     },
     createdAt: {
       type: DataTypes.DATE,
-      field: 'created_at',
+      field: 'createdAt',
     },
     updatedAt: {
       type: DataTypes.DATE,
-      field: 'updated_at',
+      field: 'updatedAt',
     }
   },
   {
