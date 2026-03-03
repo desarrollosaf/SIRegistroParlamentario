@@ -53,7 +53,11 @@ IniciativaPuntoOrden.belongsTo(ExpedienteEstudiosPuntos, {
 
 PuntosOrden.hasMany(IniciativaEstudio, { foreignKey: 'punto_origen_id', as: 'estudio' });
 
-ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, { foreignKey: 'punto_origen_id', as: 'estudio' });
+ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
+  foreignKey: 'punto_origen_id',        
+  sourceKey: 'punto_origen_sesion_id',  
+  as: 'estudio'
+});
 
 IniciativaEstudio.belongsTo(PuntosOrden, { 
   foreignKey: 'punto_origen_id', 
