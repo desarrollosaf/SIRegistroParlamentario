@@ -41,7 +41,7 @@ ExpedienteEstudiosPuntos.init(
     sequelize,
     tableName: 'expedientes_estudio_puntos',
     timestamps: true,
-    paranoid: true,
+    paranoid: false,
   }
 );
 

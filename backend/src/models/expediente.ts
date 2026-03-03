@@ -41,7 +41,7 @@ Expediente.init(
     sequelize,
     tableName: 'expedientes',
     timestamps: true,
-    paranoid: true,
+    paranoid: false,
   }
 );
 

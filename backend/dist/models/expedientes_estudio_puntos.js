@@ -34,6 +34,6 @@ ExpedienteEstudiosPuntos.init({
     sequelize: registrocomisiones_1.default,
     tableName: 'expedientes_estudio_puntos',
     timestamps: true,
-    paranoid: true,
+    paranoid: false,
 });
 exports.default = ExpedienteEstudiosPuntos;

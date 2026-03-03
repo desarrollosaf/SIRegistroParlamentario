@@ -34,6 +34,6 @@ Expediente.init({
     sequelize: registrocomisiones_1.default,
     tableName: 'expedientes',
     timestamps: true,
-    paranoid: true,
+    paranoid: false,
 });
 exports.default = Expediente;
