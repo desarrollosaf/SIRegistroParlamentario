@@ -1187,10 +1187,19 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             turnosExpandidos.push(turno);
           }
         });
-        
+        const estudiado = data.puntosestudiados?.[0];
+        const puntosestudiado = estudiado?.iniciativaorigen
+          ? {
+              id: estudiado.iniciativaorigen.id,
+              punto: estudiado.iniciativaorigen.punto
+            }
+          : null;
+
+        delete data.puntosestudiados;
         return {
           ...data,
-          turnocomision: turnosExpandidos
+          turnocomision: turnosExpandidos,
+          puntosestudiado
         };
       });
 
