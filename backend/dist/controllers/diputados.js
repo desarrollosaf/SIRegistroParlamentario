@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
@@ -696,3 +696,32 @@ const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.terminarvotacion = terminarvotacion;
+const deleteEvento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const puntos = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id },
+            attributes: ['id']
+        });
+        const puntoIds = puntos.map((p) => p.id);
+        if (puntoIds.length > 0) {
+            yield inciativas_puntos_ordens_1.default.destroy({ where: { id_punto: puntoIds } });
+            yield iniciativas_estudio_1.default.destroy({ where: { punto_origen_id: puntoIds } });
+            yield iniciativas_estudio_1.default.destroy({ where: { punto_destino_id: puntoIds } });
+            yield puntos_presenta_1.default.destroy({ where: { id_punto: puntoIds } });
+            yield puntos_comisiones_1.default.destroy({ where: { id_punto: puntoIds } });
+            yield puntos_ordens_1.default.destroy({ where: { id_evento: id } });
+        }
+        yield anfitrion_agendas_1.default.destroy({ where: { agenda_id: id } });
+        const deleted = yield agendas_1.default.destroy({ where: { id } });
+        if (!deleted) {
+            return res.status(404).json({ message: "Evento no encontrado" });
+        }
+        return res.status(200).json({ message: "Evento eliminado correctamente" });
+    }
+    catch (error) {
+        console.error("Error al eliminar el evento:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+exports.deleteEvento = deleteEvento;

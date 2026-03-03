@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizartodos, actvototodos, cargoDiputados, crariniidits, creariniciativa, eliminariniciativa, getifnini, getiniciativas, selectiniciativas, terminarvotacion } from "../controllers/diputados";
+import { actualizartodos, actvototodos, cargoDiputados, crariniidits, creariniciativa, deleteEvento, eliminariniciativa, getifnini, getiniciativas, selectiniciativas, terminarvotacion } from "../controllers/diputados";
 const router = Router();
 
 
@@ -13,6 +13,7 @@ router.post("/api/diputados/crariniidits/", crariniidits);
 router.get("/api/diputados/selectiniciativas/", selectiniciativas);
 router.get("/api/diputados/getinfiniciativa/:id", getifnini);
 router.get("/api/diputados/terminarvotacion/:id", terminarvotacion);
+router.get("/api/diputados/eliminarevento/:id", deleteEvento);
 
 
 export default router

@@ -1015,7 +1015,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
         const puntos = puntosRaw.map(punto => {
-            var _a, _b;
+            var _a, _b, _c;
             const data = punto.toJSON();
             const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
                 ? data.turnocomision
@@ -1046,7 +1046,15 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     turnosExpandidos.push(turno);
                 }
             });
-            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos });
+            const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
+            const puntosestudiado = (estudiado === null || estudiado === void 0 ? void 0 : estudiado.iniciativaorigen)
+                ? {
+                    id: estudiado.iniciativaorigen.id,
+                    punto: estudiado.iniciativaorigen.punto
+                }
+                : null;
+            delete data.puntosestudiados;
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos, puntosestudiado });
         });
         const selects = yield inciativas_puntos_ordens_1.default.findAll({
             where: {
