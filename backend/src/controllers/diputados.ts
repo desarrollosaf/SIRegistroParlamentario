@@ -25,8 +25,6 @@ import Legislatura from "../models/legislaturas";
 import Partidos from "../models/partidos";
 import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
-import Expediente from "../models/expediente";
-import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -499,40 +497,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           ]
         },
         {
-          model: ExpedienteEstudiosPuntos,
-          as: 'expedienteturno',
-          attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-          include: [
-            {
-              model: IniciativaEstudio,
-              as: 'estudio',
-              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id"], // 👈 cambió de id_punto_evento
-              required: false,
-              include: [
-                {
-                  model: PuntosOrden,
-                  as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto","tribuna"],
-                  include: [
-                    {
-                      model: Agenda,
-                      as: 'evento',
-                      attributes: ["id", "fecha", "descripcion", "liga"],
-                      include: [
-                        {
-                          model: TipoEventos,
-                          as: 'tipoevento',
-                          attributes: ["nombre"]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
           model: Agenda,
           as: 'evento',
           attributes: ["id", "fecha", "descripcion", "liga"],
@@ -550,7 +514,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     let presentan = null;
     let proponentesString = ''; // 👈 declarar aquí
     let presentaString = ''; 
-
 
     if (iniciativas[0]?.id_punto != null) {
       presentan = await PuntosPresenta.findAll({
@@ -616,15 +579,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
-      const fuenteEstudios = data.expediente != null
-      ? data.expedienteturno?.estudio || []
-      : data.punto?.estudio || [];
 
-      const estudios      = fuenteEstudios.filter((e: any) => e.status === "1");
-      const dictamenes    = fuenteEstudios.filter((e: any) => e.status === "2");
-      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
-     
-      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || []; 
+      const estudios   = data.punto?.estudio?.filter((e: any) => e.status === "1") || [];
+      const dictamenes = data.punto?.estudio?.filter((e: any) => e.status === "2") || [];
+      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || [];
+      const rechazadocomi  = data.punto?.estudio?.filter((e: any) => e.status === "4") || [];
       const rechazosesion  = data.punto?.estudio?.filter((e: any) => e.status === "5") || [];
 
       // Anfitriones y turnado del nació

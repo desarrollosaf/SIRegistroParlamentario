@@ -9,7 +9,6 @@ const tipo_categoria_iniciativas_1 = __importDefault(require("./tipo_categoria_i
 const puntos_ordens_1 = __importDefault(require("./puntos_ordens"));
 const inciativas_puntos_ordens_1 = __importDefault(require("./inciativas_puntos_ordens"));
 const iniciativas_estudio_1 = __importDefault(require("./iniciativas_estudio"));
-const expedientes_estudio_puntos_1 = __importDefault(require("./expedientes_estudio_puntos"));
 // Desde Proponentes al catálogo
 proponentes_1.default.belongsToMany(tipo_categoria_iniciativas_1.default, {
     through: ProponentesTipoCategoriaDetalle_1.default,
@@ -42,17 +41,7 @@ inciativas_puntos_ordens_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'id_punto',
     as: 'punto'
 });
-inciativas_puntos_ordens_1.default.belongsTo(expedientes_estudio_puntos_1.default, {
-    foreignKey: 'id_punto',
-    targetKey: 'punto_origen_sesion_id',
-    as: 'expedienteturno'
-});
 puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'punto_origen_id', as: 'estudio' });
-expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, {
-    foreignKey: 'punto_origen_id',
-    sourceKey: 'punto_origen_sesion_id',
-    as: 'estudio'
-});
 iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'punto_origen_id',
     as: 'iniciativaorigen'
