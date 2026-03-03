@@ -858,9 +858,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
-            puntosTurnadosSeleccionados: (punto.turnocomision || []).map((tc: any) => {
-              const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
-              return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+            puntosTurnadosSeleccionados: punto.puntosestudiado
+            ? [{ id: punto.puntosestudiado.id, punto: punto.puntosestudiado.punto }]
+            : (punto.turnocomision || []).map((tc: any) => {
+            const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+            return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
             }),
             tiposDisponibles: [],
             presentaDisponibles: [],
