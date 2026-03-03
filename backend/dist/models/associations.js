@@ -48,7 +48,11 @@ inciativas_puntos_ordens_1.default.belongsTo(expedientes_estudio_puntos_1.defaul
     as: 'expedienteturno'
 });
 puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'punto_origen_id', as: 'estudio' });
-expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'punto_origen_id', as: 'estudio' });
+expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, {
+    foreignKey: 'punto_origen_id',
+    sourceKey: 'punto_origen_sesion_id',
+    as: 'estudio'
+});
 iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'punto_origen_id',
     as: 'iniciativaorigen'
