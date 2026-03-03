@@ -1,7 +1,7 @@
 import { Component, inject, signal, ViewChild, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ColumnMode, DatatableComponent, NgxDatatableModule } from '@siemens/ngx-datatable';
-import { Router, RouterLink, RouterModule, ActivatedRoute  } from '@angular/router';
+import { Router, RouterLink, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EventoService } from '../../../service/evento.service';
 import { ChangeDetectionStrategy } from '@angular/core';
@@ -72,7 +72,7 @@ export class ComisionComponent {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
-      this.tipo = params.get('tipo'); 
+      this.tipo = params.get('tipo');
       if (this.tipo === 'sesiones') {
         this.tipo = '1';
       } else {
@@ -86,7 +86,7 @@ export class ComisionComponent {
     tooltipTriggerList.forEach(tooltipEl => {
       new bootstrap.Tooltip(tooltipEl);
     });
-    
+
   }
 
   initForm() {
@@ -341,6 +341,54 @@ export class ComisionComponent {
       }
     });
   }
+
+
+  eliminarEvento(id: any) {
+
+    Swal.fire({
+      title: "¿Está seguro?",
+      text: "Se eliminará este evento",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+
+        this._eventoService.eliminarEvento(id).subscribe({
+          next: (response: any) => {
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true
+            });
+            Toast.fire({
+              icon: "success",
+              title: "Evento eliminado correctamente."
+            });
+            this.getEventos(this.tipo!); 
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error del servidor:', msg);
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: msg,
+              timer: 3000
+            });
+          }
+        });
+      }
+    });
+  }
+
+
+
 
   verificarIntegrantes(id: any) {
     this.agendasId = id;

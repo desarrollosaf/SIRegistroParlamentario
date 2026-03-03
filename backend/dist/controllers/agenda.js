@@ -24,6 +24,8 @@ const integrante_comisions_1 = __importDefault(require("../models/integrante_com
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const partidos_1 = __importDefault(require("../models/partidos"));
 const proponentes_1 = __importDefault(require("../models/proponentes"));
+const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
+const expediente_1 = __importDefault(require("../models/expediente"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const sequelize_1 = require("sequelize");
@@ -877,7 +879,27 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     });
                 }
                 else {
-                    // funcion expediente
+                    const expediente = yield expediente_1.default.create({
+                        evento_comision_id: evento.id,
+                        descripcion: "Inicitativas en conjunto"
+                    });
+                    for (const item of puntosTurnadosArray) {
+                        console.log(item);
+                        const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
+                            where: {
+                                id_punto: item,
+                            },
+                        });
+                        for (const data of iniciativas) {
+                            data.update({
+                                expediente: expediente.id
+                            });
+                        }
+                        yield expedientes_estudio_puntos_1.default.create({
+                            expediente_id: expediente.id,
+                            punto_origen_sesion_id: item
+                        });
+                    }
                 }
             }
         }
