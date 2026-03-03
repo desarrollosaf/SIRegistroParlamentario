@@ -900,6 +900,12 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                             punto_origen_sesion_id: item
                         });
                     }
+                    const estudio = yield iniciativas_estudio_1.default.create({
+                        type: "2",
+                        punto_origen_id: expediente.id,
+                        punto_destino_id: puntonuevo.id,
+                        status: 1,
+                    });
                 }
             }
         }
