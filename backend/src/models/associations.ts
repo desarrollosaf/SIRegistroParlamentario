@@ -44,20 +44,8 @@ IniciativaPuntoOrden.belongsTo(PuntosOrden, {
   as: 'punto' 
 });
 
-IniciativaPuntoOrden.belongsTo(ExpedienteEstudiosPuntos, { 
-  foreignKey: 'id_punto',     
-  targetKey: 'punto_origen_sesion_id',  
-  as: 'expedienteturno' 
-});
-
 
 PuntosOrden.hasMany(IniciativaEstudio, { foreignKey: 'punto_origen_id', as: 'estudio' });
-
-ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
-  foreignKey: 'punto_origen_id',        
-  sourceKey: 'punto_origen_sesion_id',  
-  as: 'estudio'
-});
 
 IniciativaEstudio.belongsTo(PuntosOrden, { 
   foreignKey: 'punto_origen_id', 
@@ -72,6 +60,21 @@ IniciativaEstudio.belongsTo(PuntosOrden, {
 
 PuntosOrden.hasMany(IniciativaEstudio, {
   foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+
+
+////////// relaciones para la linea 
+
+IniciativaPuntoOrden.hasMany(ExpedienteEstudiosPuntos, { 
+  foreignKey: 'punto_origen_sesion_id',  
+  sourceKey: 'id_punto',                 
+  as: 'expedienteturno' 
+});
+
+ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
+  foreignKey: 'punto_origen_id',        
+  sourceKey: 'expediente_id',  
+  as: 'estudio'
 });
 
 

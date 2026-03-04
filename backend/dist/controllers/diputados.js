@@ -425,7 +425,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const { id } = req.params;
         const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id: id },
-            attributes: ["id", "iniciativa", "createdAt", "id_punto"],
+            attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
             include: [
                 {
                     model: puntos_ordens_1.default,
@@ -510,7 +510,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             ]
         });
         let presentan = null;
-        let proponentesString = ''; // 👈 declarar aquí
+        let proponentesString = '';
         let presentaString = '';
         if (((_a = iniciativas[0]) === null || _a === void 0 ? void 0 : _a.id_punto) != null) {
             presentan = yield puntos_presenta_1.default.findAll({
@@ -570,27 +570,28 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = presentanData.map(p => p.valor).join(', ');
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
             const data = iniciativa.toJSON();
             const fuenteEstudios = data.expediente != null
-                ? ((_a = data.expedienteturno) === null || _a === void 0 ? void 0 : _a.estudio) || []
+                ? (_a = data.expedienteturno) === null || _a === void 0 ? void 0 : _a.flatMap((exp) => exp.estudio || [])
                 : ((_b = data.punto) === null || _b === void 0 ? void 0 : _b.estudio) || [];
+            console.log("entre", data);
             const estudios = fuenteEstudios.filter((e) => e.status === "1");
-            const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
-            const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
+            const dictamenes = fuenteEstudios.filter((e) => e.status === "2") || [];
             const cierres = ((_d = (_c = data.punto) === null || _c === void 0 ? void 0 : _c.estudio) === null || _d === void 0 ? void 0 : _d.filter((e) => e.status === "3")) || [];
-            const rechazosesion = ((_f = (_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) === null || _f === void 0 ? void 0 : _f.filter((e) => e.status === "5")) || [];
+            const rechazadocomi = ((_f = (_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) === null || _f === void 0 ? void 0 : _f.filter((e) => e.status === "4")) || [];
+            const rechazosesion = ((_h = (_g = data.punto) === null || _g === void 0 ? void 0 : _g.estudio) === null || _h === void 0 ? void 0 : _h.filter((e) => e.status === "5")) || [];
             // Anfitriones y turnado del nació
-            const anfitrionesNacio = yield getAnfitriones((_g = data.evento) === null || _g === void 0 ? void 0 : _g.id, (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre);
+            const anfitrionesNacio = yield getAnfitriones((_j = data.evento) === null || _j === void 0 ? void 0 : _j.id, (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.tipoevento) === null || _l === void 0 ? void 0 : _l.nombre);
             const tribunainicio = yield diputado_1.default.findOne({
-                where: { id: (_k = data.punto) === null || _k === void 0 ? void 0 : _k.tribuna },
+                where: { id: (_m = data.punto) === null || _m === void 0 ? void 0 : _m.tribuna },
             });
             const tribuna = tribunainicio
                 ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
                     .filter(Boolean)
                     .join(" ")
                 : null;
-            const turnadoInfo = yield getComisionesTurnado((_l = data.punto) === null || _l === void 0 ? void 0 : _l.id);
+            const turnadoInfo = yield getComisionesTurnado((_o = data.punto) === null || _o === void 0 ? void 0 : _o.id);
             // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
@@ -654,13 +655,15 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.id, tipo_evento: (_p = (_o = data.evento) === null || _o === void 0 ? void 0 : _o.tipoevento) === null || _p === void 0 ? void 0 : _p.nombre, fecha: formatearFecha((_q = data.evento) === null || _q === void 0 ? void 0 : _q.fecha), descripcion_evento: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.descripcion, numpunto: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.nopunto, punto: (_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto, liga: (_u = data.evento) === null || _u === void 0 ? void 0 : _u.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ evento: (_p = data.evento) === null || _p === void 0 ? void 0 : _p.id, tipo_evento: (_r = (_q = data.evento) === null || _q === void 0 ? void 0 : _q.tipoevento) === null || _r === void 0 ? void 0 : _r.nombre, fecha: formatearFecha((_s = data.evento) === null || _s === void 0 ? void 0 : _s.fecha), descripcion_evento: (_t = data.evento) === null || _t === void 0 ? void 0 : _t.descripcion, numpunto: (_u = data.punto) === null || _u === void 0 ? void 0 : _u.nopunto, punto: (_v = data.punto) === null || _v === void 0 ? void 0 : _v.punto, liga: (_w = data.evento) === null || _w === void 0 ? void 0 : _w.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
                 rechazadose: ReSesion,
             };
         })));
+        // console.log(trazaIniciativas);
+        // return 500;
         return res.status(200).json({
             proponentesString,
             presentaString,

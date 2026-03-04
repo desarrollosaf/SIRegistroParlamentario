@@ -25,7 +25,6 @@ import Legislatura from "../models/legislaturas";
 import Partidos from "../models/partidos";
 import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
-import Expediente from "../models/expediente";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
@@ -462,7 +461,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     const iniciativas = await IniciativaPuntoOrden.findAll({
       where: { id: id },
-      attributes: ["id", "iniciativa", "createdAt", "id_punto"],
+      attributes: ["id", "iniciativa", "createdAt", "id_punto","expediente"],
       include: [
         {
           model: PuntosOrden,
@@ -548,9 +547,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     });
 
     let presentan = null;
-    let proponentesString = ''; // 👈 declarar aquí
+    let proponentesString = ''; 
     let presentaString = ''; 
-
 
     if (iniciativas[0]?.id_punto != null) {
       presentan = await PuntosPresenta.findAll({
@@ -613,21 +611,21 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
       presentaString = presentanData.map(p => p.valor).join(', ');
     }
-
+    
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
       const fuenteEstudios = data.expediente != null
-      ? data.expedienteturno?.estudio || []
+      ? data.expedienteturno?.flatMap((exp: any) => exp.estudio || []) 
       : data.punto?.estudio || [];
-
+      console.log("entre", data )
       const estudios      = fuenteEstudios.filter((e: any) => e.status === "1");
-      const dictamenes    = fuenteEstudios.filter((e: any) => e.status === "2");
-      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
-     
-      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || []; 
+      const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2") || [];
+      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || [];
+      const rechazadocomi  = data.punto?.estudio?.filter((e: any) => e.status === "4") || [];
       const rechazosesion  = data.punto?.estudio?.filter((e: any) => e.status === "5") || [];
 
       // Anfitriones y turnado del nació
+     
       const anfitrionesNacio = await getAnfitriones(
         data.evento?.id,
         data.evento?.tipoevento?.nombre
@@ -641,7 +639,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             .join(" ")
         : null;
       const turnadoInfo = await getComisionesTurnado(data.punto?.id);
-
+         
       // Estudios con info de evento y anfitriones
       const estudiosConInfo = await Promise.all(estudios.map(async (e: any) => {
         const eventoEstudio = e.iniciativa?.evento; // 👈 cambió de e.puntoEvento?.evento
@@ -654,8 +652,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           fecha_evento: formatearFecha(eventoEstudio?.fecha),
           liga: eventoEstudio?.liga,
           descripcion_evento: eventoEstudio?.descripcion,
-          numpunto: e.iniciativa?.nopunto,   // 👈 cambió de e.puntoEvento?.nopunto
-          punto: e.iniciativa?.punto,        // 👈 cambió de e.puntoEvento?.punto
+          numpunto: e.iniciativa?.nopunto,  
+          punto: e.iniciativa?.punto,       
           ...anfitriones
         };
       }));
@@ -727,6 +725,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         };
       }));
 
+
+
       return {
         nacio: {
           evento: data.evento?.id,
@@ -746,7 +746,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         rechazadose: ReSesion,
       };
     }));
-
+    // console.log(trazaIniciativas);
+    // return 500;
     return res.status(200).json({
       proponentesString,
       presentaString,

@@ -42,17 +42,7 @@ inciativas_puntos_ordens_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'id_punto',
     as: 'punto'
 });
-inciativas_puntos_ordens_1.default.belongsTo(expedientes_estudio_puntos_1.default, {
-    foreignKey: 'id_punto',
-    targetKey: 'punto_origen_sesion_id',
-    as: 'expedienteturno'
-});
 puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, { foreignKey: 'punto_origen_id', as: 'estudio' });
-expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, {
-    foreignKey: 'punto_origen_id',
-    sourceKey: 'punto_origen_sesion_id',
-    as: 'estudio'
-});
 iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'punto_origen_id',
     as: 'iniciativaorigen'
@@ -63,6 +53,17 @@ iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
 });
 puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, {
     foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+////////// relaciones para la linea 
+inciativas_puntos_ordens_1.default.hasMany(expedientes_estudio_puntos_1.default, {
+    foreignKey: 'punto_origen_sesion_id',
+    sourceKey: 'id_punto',
+    as: 'expedienteturno'
+});
+expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, {
+    foreignKey: 'punto_origen_id',
+    sourceKey: 'expediente_id',
+    as: 'estudio'
 });
 exports.default = {
     PuntosOrden: puntos_ordens_1.default,
