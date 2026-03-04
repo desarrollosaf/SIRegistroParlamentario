@@ -863,18 +863,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
-            puntosTurnadosSeleccionados: punto.puntosestudiado
-              ? [{ id: punto.puntosestudiado.id, punto: punto.puntosestudiado.punto }]
-              : (punto.turnocomision || []).map((tc: any) => {
-                const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
-                return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
-              }),
-            dictamenesSeleccionados: punto.dictamenes
-              ? punto.dictamenes.map((d: any) => {
-                const encontrado = this.slcDictamenes?.find((sd: any) => sd.id === d.id);
-                return encontrado ? { ...encontrado } : { id: d.id, punto: `Dictamen #${d.id}` };
-              })
-              : [],
+            puntosTurnadosSeleccionados: Array.isArray(punto.puntosestudiado) && punto.puntosestudiado.length > 0
+            ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
+            : (punto.turnocomision || []).map((tc: any) => {
+            const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+            return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+            }),
+            // dictamenesSeleccionados: punto.dictamenes
+            //   ? punto.dictamenes.map((d: any) => {
+            //     const encontrado = this.slcDictamenes?.find((sd: any) => sd.id === d.id);
+            //     return encontrado ? { ...encontrado } : { id: d.id, punto: `Dictamen #${d.id}` };
+            //   })
+            //   : [],
+            dictamenesSeleccionados: Array.isArray(punto.dictamenes) && punto.dictamenes.length > 0
+            ? punto.dictamenes.map((d: any) => ({ id: d.id, punto: d.punto }))
+            : punto.id_dictamen
+            ? [{ id: punto.id_dictamen, punto: punto.punto_dictamen || `Dictamen #${punto.id_dictamen}` }]
+            : [],
+            
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
