@@ -51,8 +51,18 @@ iniciativas_estudio_1.default.belongsTo(puntos_ordens_1.default, {
     foreignKey: 'punto_destino_id',
     as: 'iniciativa'
 });
+////////////////////////// Relaciones para obtener los puntos estudiados en las comisiones 
 puntos_ordens_1.default.hasMany(iniciativas_estudio_1.default, {
     foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+iniciativas_estudio_1.default.hasMany(expedientes_estudio_puntos_1.default, {
+    foreignKey: 'expediente_id',
+    sourceKey: 'punto_origen_id',
+    as: 'expediente'
+});
+expedientes_estudio_puntos_1.default.belongsTo(puntos_ordens_1.default, {
+    foreignKey: 'punto_origen_sesion_id',
+    as: 'puntoOrigen'
 });
 ////////// relaciones para la linea 
 inciativas_puntos_ordens_1.default.hasMany(expedientes_estudio_puntos_1.default, {
