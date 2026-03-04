@@ -1082,19 +1082,18 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     turnosExpandidos.push(turno);
                 }
             });
-            // 👇 Manejo de normal vs expediente
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
             let puntosestudiado = null;
             if (estudiado) {
                 if (estudiado.type === "1") {
-                    // CASO NORMAL
-                    puntosestudiado = {
-                        id: (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id,
-                        punto: (_e = estudiado.iniciativaorigen) === null || _e === void 0 ? void 0 : _e.punto
-                    };
+                    puntosestudiado = [
+                        {
+                            id: (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id,
+                            punto: (_e = estudiado.iniciativaorigen) === null || _e === void 0 ? void 0 : _e.punto
+                        }
+                    ];
                 }
                 else if (estudiado.type === "2") {
-                    // CASO EXPEDIENTE
                     const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
                         where: { expediente_id: estudiado.punto_origen_id },
                         include: [

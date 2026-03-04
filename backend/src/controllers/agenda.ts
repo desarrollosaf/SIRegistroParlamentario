@@ -1225,19 +1225,18 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           }
         });
 
-        // 👇 Manejo de normal vs expediente
         const estudiado = data.puntosestudiados?.[0];
         let puntosestudiado = null;
 
         if (estudiado) {
           if (estudiado.type === "1") {
-            // CASO NORMAL
-            puntosestudiado = {
-              id: estudiado.iniciativaorigen?.id,
-              punto: estudiado.iniciativaorigen?.punto
-            };
+            puntosestudiado = [
+              {
+                id: estudiado.iniciativaorigen?.id,
+                punto: estudiado.iniciativaorigen?.punto
+              }
+            ];
           } else if (estudiado.type === "2") {
-            // CASO EXPEDIENTE
             const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
               where: { expediente_id: estudiado.punto_origen_id }, 
               include: [
