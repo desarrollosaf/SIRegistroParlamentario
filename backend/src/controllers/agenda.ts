@@ -1503,7 +1503,17 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
       return res.status(404).json({ message: "Punto no encontrado" });
     }
     
+    await IniciativaEstudio.destroy({
+      where: {
+        [Op.or]: [
+          { punto_origen_id: punto.id },
+          { punto_destino_id: punto.id }
+        ]
+      }
+    });
+    await IniciativaPuntoOrden.destroy({ where: { id_punto: punto.id }});
     await punto.destroy();
+    
     return res.status(200).json({
       message: "Punto eliminado correctamente",
     });
