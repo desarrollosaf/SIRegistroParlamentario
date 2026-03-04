@@ -94,7 +94,7 @@ export class IniciativasComponent implements OnInit {
 
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        // console.log('Respuesta del historial:', response);
+        console.log('Respuesta del historial:', response);
 
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0], response);
@@ -158,6 +158,7 @@ export class IniciativasComponent implements OnInit {
 
     // 3. DICTAMEN (dictaminada)
     if (data.dictamen && Array.isArray(data.dictamen)) {
+      console.log('hola dictamen', data.dictamen);
       data.dictamen.forEach((item: any) => {
         this.timelineData.push({
           fecha: item.fecha_evento,
@@ -193,7 +194,7 @@ export class IniciativasComponent implements OnInit {
     this.timelineData.forEach((_, index) => {
       this.isCollapsed[index] = true;
     });
-    // console.log('Timeline procesado:', this.timelineData);
+    console.log('Timeline procesado:', this.timelineData);
   }
   toggleCollapse(index: number): void {
     this.isCollapsed[index] = !this.isCollapsed[index];

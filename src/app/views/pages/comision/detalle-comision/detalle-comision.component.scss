@@ -1171,3 +1171,20 @@
   z-index: 100000;
 }
 
+
+.tabla-iniciativas {
+  table-layout: fixed;
+  width: 100%;
+
+  td {
+    word-break: break-word;
+    white-space: normal;
+    vertical-align: top;
+    padding-top: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  th {
+    font-size: 0.85rem;
+  }
+}
