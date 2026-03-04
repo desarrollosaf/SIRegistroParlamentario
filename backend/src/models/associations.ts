@@ -58,8 +58,22 @@ IniciativaEstudio.belongsTo(PuntosOrden, {
   as: 'iniciativa' 
 });
 
+
+
+////////////////////////// Relaciones para obtener los puntos estudiados en las comisiones 
 PuntosOrden.hasMany(IniciativaEstudio, {
   foreignKey: 'punto_destino_id', as: 'puntosestudiados'
+});
+
+IniciativaEstudio.hasMany(ExpedienteEstudiosPuntos, {
+  foreignKey: 'expediente_id',        
+  sourceKey: 'punto_origen_id',  
+  as: 'expediente'
+});
+
+ExpedienteEstudiosPuntos.belongsTo(PuntosOrden, {
+  foreignKey: 'punto_origen_sesion_id',
+  as: 'puntoOrigen'
 });
 
 

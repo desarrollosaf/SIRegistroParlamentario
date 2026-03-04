@@ -141,6 +141,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   // slcIniciativasDisponibles: any[] = [];
 
   puntosTurnadosSeleccionados: any[] = [];
+  dictamenesSeleccionados: any[] = [];
 
   consoleiniciativas: any[] = [];
   constructor(
@@ -196,8 +197,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this.formIniciativa = this.fb.group({
       descripcion: ['', Validators.required],
-      id_proponente: [null],
-      id_presenta: [null]
+      id_proponente: [[]],
+      id_presenta: [[]]
     });
 
   }
@@ -827,6 +828,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             proponentesIds = [...new Set(idsRaw)].map(id => Number(id)).filter(id => !isNaN(id));
           }
 
+
+
           // Extraer los id_presenta como STRINGS
           const presentanIds = punto.presentan && Array.isArray(punto.presentan)
             ? punto.presentan
@@ -860,12 +863,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             // ← AGREGAR ESTA LÍNEA: Asignar las reservas del response
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
-            puntosTurnadosSeleccionados: punto.puntosestudiado
-              ? [{ id: punto.puntosestudiado.id, punto: punto.puntosestudiado.punto }]
-              : (punto.turnocomision || []).map((tc: any) => {
-                const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
-                return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
-              }),
+            puntosTurnadosSeleccionados: Array.isArray(punto.puntosestudiado) && punto.puntosestudiado.length > 0
+            ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
+            : (punto.turnocomision || []).map((tc: any) => {
+            const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+            return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+            }),
+            // dictamenesSeleccionados: punto.dictamenes
+            //   ? punto.dictamenes.map((d: any) => {
+            //     const encontrado = this.slcDictamenes?.find((sd: any) => sd.id === d.id);
+            //     return encontrado ? { ...encontrado } : { id: d.id, punto: `Dictamen #${d.id}` };
+            //   })
+            //   : [],
+            dictamenesSeleccionados: Array.isArray(punto.dictamenes) && punto.dictamenes.length > 0
+            ? punto.dictamenes.map((d: any) => ({ id: d.id, punto: d.punto }))
+            : punto.id_dictamen
+            ? [{ id: punto.id_dictamen, punto: punto.punto_dictamen || `Dictamen #${punto.id_dictamen}` }]
+            : [],
+            
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -935,8 +950,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
     if (!this.mostrarSelectIniciativaPrecargada) {
       this.iniciativaPrecargadaSeleccionada = null;
-      this.formIniciativa.get('id_proponente')?.setValue(null);
-      this.formIniciativa.get('id_presenta')?.setValue(null);
+      this.formIniciativa.get('id_proponente')?.setValue([]);
+      this.formIniciativa.get('id_presenta')?.setValue([]);
       this.slcPresenta = null;
     }
   }
@@ -1089,14 +1104,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     // CASO 1: CREAR NUEVO PUNTO (TEMPORAL)
     if (!this.puntoSeleccionadoIniciativa) {
+      const idsProponente = this.formIniciativa.value.id_proponente || [];
+      const idsPresenta = this.formIniciativa.value.id_presenta || [];
       const nuevaIniciativa = {
         id: Date.now(),
         descripcion: this.formIniciativa.value.descripcion,
         id_proponente: this.formIniciativa.value.id_proponente,
         id_presenta: this.formIniciativa.value.id_presenta,
         // Para mostrar en la tabla:
-        proponente: this.slctProponentes?.find((p: any) => p.id === this.formIniciativa.value.id_proponente)?.valor || '',
-        presenta: this.slcPresenta?.find((p: any) => p.id === this.formIniciativa.value.id_presenta)?.valor || ''
+        // proponente: this.slctProponentes?.find((p: any) => p.id === this.formIniciativa.value.id_proponente)?.valor || '',
+        // presenta: this.slcPresenta?.find((p: any) => p.id === this.formIniciativa.value.id_presenta)?.valor || ''
+        proponente: this.slctProponentes
+          ?.filter((p: any) => idsProponente.includes(p.id))
+          .map((p: any) => p.valor)
+          .join(', ') || '',
+        presenta: this.slcPresenta
+          ?.filter((p: any) => idsPresenta.includes(p.id))
+          .map((p: any) => p.valor)
+          .join(', ') || ''
       };
 
       this.listaIniciativas.push(nuevaIniciativa);
@@ -1409,6 +1434,48 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   // }
 
 
+
+  agregarDictamen(): void {
+    const valor = this.formPunto.get('id_dictamen')?.value;
+    if (!valor) return;
+
+    const yaAgregado = this.dictamenesSeleccionados.find(d => d.id === valor);
+    if (yaAgregado) return;
+
+    const opcion = this.slcDictamenes?.find((d: any) => d.id === valor);
+    if (opcion) {
+      this.dictamenesSeleccionados.push({ ...opcion });
+      this.formPunto.get('id_dictamen')?.setValue(null);
+    }
+  }
+
+  quitarDictamen(index: number): void {
+    this.dictamenesSeleccionados.splice(index, 1);
+  }
+
+
+  agregarDictamenPunto(punto: any): void {
+    const valor = punto.form.get('id_punto_turnado')?.value;
+    if (!valor) return;
+
+    if (!punto.dictamenesSeleccionados) punto.dictamenesSeleccionados = [];
+
+    const yaAgregado = punto.dictamenesSeleccionados.find((d: any) => d.id === valor);
+    if (yaAgregado) return;
+
+    const opcion = this.slcDictamenes?.find((d: any) => d.id === valor);
+    if (opcion) {
+      punto.dictamenesSeleccionados.push({ ...opcion });
+      punto.form.get('id_punto_turnado')?.setValue(null);
+    }
+  }
+
+  quitarDictamenPunto(punto: any, index: number): void {
+    punto.dictamenesSeleccionados.splice(index, 1);
+  }
+
+
+
   getTipoPParaPunto(event: any, punto: any): void {
     if (event && Array.isArray(event) && event.length > 0) {
       // punto.form.get('tipo')?.setValue(null);
@@ -1491,6 +1558,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     const idsPuntosTurnados = (punto.puntosTurnadosSeleccionados || []).map((p: any) => p.id);
     formData.append('puntos_turnados', JSON.stringify(idsPuntosTurnados));
+
+    const idsDictamenes = (punto.dictamenesSeleccionados || []).map((d: any) => d.id);
+    formData.append('dictamenes', JSON.stringify(idsDictamenes));
     // formData.forEach((valor, clave) => {
     //   console.log(clave, valor);
     // });
@@ -2019,6 +2089,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
     this.puntosTurnadosSeleccionados = [];
+    this.dictamenesSeleccionados = [];
     this.documentos['docPunto'] = null;
     this.formPunto.reset({
       se_turna_comision: false
@@ -2062,6 +2133,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const idsPuntosTurnados = this.puntosTurnadosSeleccionados.map(p => p.id);
     formData.append('puntos_turnados', JSON.stringify(idsPuntosTurnados));
 
+
+    const idsDictamenes = this.dictamenesSeleccionados.map(d => d.id);
+    formData.append('dictamenes', JSON.stringify(idsDictamenes));
+
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
         descripcion: t.tema_votacion
@@ -2082,6 +2157,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     formData.forEach((valor, clave) => {
       console.log(clave, valor);
     });
+
     this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
