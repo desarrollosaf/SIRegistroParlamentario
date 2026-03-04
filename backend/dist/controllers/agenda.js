@@ -845,18 +845,6 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (!evento) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
-        // let punto: string;
-        // if (idPuntoTurnado != 'null') {
-        //   const data = await PuntosOrden.findOne({
-        //     where: { id: idPuntoTurnado },
-        //   });
-        //   if(!data) {
-        //     return res.status(404).json({ message: "Evento no encontrado" });
-        //   }  
-        //   punto = data.punto;
-        // } else {
-        //   punto = body.punto;
-        // }
         const puntonuevo = yield puntos_ordens_1.default.create({
             id_evento: evento.id,
             nopunto: body.numpunto,
@@ -873,7 +861,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 if (puntosTurnadosArray.length === 1) {
                     const estudio = yield iniciativas_estudio_1.default.create({
                         type: "1",
-                        punto_origen_id: puntosTurnadosArray[0], // el único ID del array
+                        punto_origen_id: puntosTurnadosArray[0],
                         punto_destino_id: puntonuevo.id,
                         status: 1,
                     });
@@ -910,14 +898,47 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
         }
         else {
-            const data = yield iniciativas_estudio_1.default.findOne({
-                where: { punto_destino_id: body.id_punto_turnado },
-            });
-            if (data) {
-                yield puntos_ordens_1.default.update({ id_dictamen: puntonuevo.id }, { where: { id: data.punto_destino_id } });
-                const termino = yield iniciativas_estudio_1.default.create({
-                    punto_origen_id: data.punto_origen_id,
-                    type: 1,
+            const dictamenesArray = JSON.parse(body.dictamenes || '[]');
+            if (dictamenesArray.length === 1) {
+                const data = yield iniciativas_estudio_1.default.findOne({
+                    where: { punto_destino_id: dictamenesArray[0] },
+                });
+                if (data) {
+                    yield puntos_ordens_1.default.update({ id_dictamen: puntonuevo.id }, { where: { id: data.punto_destino_id } });
+                    yield iniciativas_estudio_1.default.create({
+                        punto_origen_id: data.punto_origen_id,
+                        type: data.type,
+                        punto_destino_id: puntonuevo.id,
+                        status: 6,
+                    });
+                }
+            }
+            else if (dictamenesArray.length > 1) {
+                const expediente = yield expediente_1.default.create({
+                    evento_comision_id: evento.id,
+                    descripcion: "Iniciativas en conjunto"
+                });
+                for (const item of dictamenesArray) {
+                    const data = yield iniciativas_estudio_1.default.findOne({
+                        where: { punto_destino_id: item },
+                    });
+                    if (data) {
+                        yield puntos_ordens_1.default.update({ id_dictamen: puntonuevo.id }, { where: { id: data.punto_destino_id } });
+                    }
+                    const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
+                        where: { id_punto: item },
+                    });
+                    for (const ini of iniciativas) {
+                        yield ini.update({ expediente: expediente.id });
+                    }
+                    yield expedientes_estudio_puntos_1.default.create({
+                        expediente_id: expediente.id,
+                        punto_origen_sesion_id: item
+                    });
+                }
+                yield iniciativas_estudio_1.default.create({
+                    type: "2",
+                    punto_origen_id: expediente.id,
                     punto_destino_id: puntonuevo.id,
                     status: 6,
                 });
@@ -963,14 +984,6 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 id_comision: comisionesString,
             });
         }
-        // if(body.tipo_evento == 0){
-        //   for (const item of turnocomision) {
-        //     await PuntosComisiones.create({
-        //       id_punto: puntonuevo.id,
-        //       id_comision: item,
-        //     });
-        //   }
-        // }
         return res.status(201).json({
             message: "Punto creado correctamente",
             data: puntonuevo,
@@ -986,8 +999,22 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.guardarpunto = guardarpunto;
 const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        // 2. Determinar tipo de evento
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
         const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
             order: [['nopunto', 'ASC']],
@@ -1084,14 +1111,22 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
             let puntosestudiado = null;
+            let dictamenes = null;
             if (estudiado) {
                 if (estudiado.type === "1") {
-                    puntosestudiado = [
+                    const info = [
                         {
                             id: (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id,
                             punto: (_e = estudiado.iniciativaorigen) === null || _e === void 0 ? void 0 : _e.punto
                         }
                     ];
+                    // 👇 según tipo de evento asigna a uno u otro
+                    if (esSesion) {
+                        dictamenes = info;
+                    }
+                    else {
+                        puntosestudiado = info;
+                    }
                 }
                 else if (estudiado.type === "2") {
                     const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
@@ -1104,17 +1139,25 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             }
                         ]
                     });
-                    puntosestudiado = puntosExpediente.map((p) => {
+                    const info = puntosExpediente.map((p) => {
                         var _a, _b;
                         return ({
                             id: (_a = p.toJSON().puntoOrigen) === null || _a === void 0 ? void 0 : _a.id,
                             punto: (_b = p.toJSON().puntoOrigen) === null || _b === void 0 ? void 0 : _b.punto
                         });
                     });
+                    if (esSesion) {
+                        dictamenes = info;
+                    }
+                    else {
+                        puntosestudiado = info;
+                    }
                 }
             }
             delete data.puntosestudiados;
-            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos, puntosestudiado });
+            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos, puntosestudiado, // null si es sesión
+                dictamenes // null si es comisión
+             });
         })));
         const selects = yield inciativas_puntos_ordens_1.default.findAll({
             where: {
@@ -2474,7 +2517,6 @@ const Eliminarlista = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.Eliminarlista = Eliminarlista;
-/////////////////////////////////
 const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
@@ -3152,7 +3194,6 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.enviarWhatsVotacionPDF = enviarWhatsVotacionPDF;
-//////////////////////////////////
 const generarPDFAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
