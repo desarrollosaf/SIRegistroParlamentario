@@ -629,17 +629,79 @@
                                                         </small>
                                                     </div>
 
-                                                    <div class="col-12" *ngIf="!esComision">
-                                                        <label class="form-label fw-semibold">Dictámenes</label>
-                                                        <!-- <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
+                                                    <!-- <div class="col-12" *ngIf="!esComision">
+                                                        <label class="form-label fw-semibold">Dictámenes</label> -->
+                                                    <!-- <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
                                                             bindValue="id" formControlName="id_punto_turnado">
                                                         </ng-select> -->
 
 
-                                                        <ng-select [items]="slcDictamenes" bindLabel="punto"
+                                                    <!-- <ng-select [items]="slcDictamenes" bindLabel="punto"
                                                             bindValue="id" formControlName="id_punto_turnado"
                                                             placeholder="Selecciona">
                                                         </ng-select>
+                                                    </div> -->
+
+                                                    <div class="col-12" *ngIf="!esComision">
+                                                        <label class="form-label fw-semibold">Dictámenes</label>
+                                                        <div class="d-flex gap-2 align-items-start">
+                                                            <div style="min-width: 0; flex: 1;">
+                                                                <ng-select [items]="slcDictamenes" bindLabel="punto"
+                                                                    bindValue="id" formControlName="id_dictamen"
+                                                                    placeholder="Selecciona">
+                                                                </ng-select>
+                                                            </div>
+                                                            <button type="button"
+                                                                class="btn btn-primary btn-sm flex-shrink-0"
+                                                                style="height: 38px; margin-top: 1px;"
+                                                                (click)="agregarDictamen()" title="Agregar dictamen">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <div *ngIf="dictamenesSeleccionados.length > 0"
+                                                            class="mt-2 rounded border overflow-hidden">
+                                                            <div style="max-height: 200px; overflow-y: auto;">
+                                                                <table class="table table-sm mb-0">
+                                                                    <thead
+                                                                        style="background-color: #f0e6ed; position: sticky; top: 0; z-index: 1;">
+                                                                        <tr>
+                                                                            <th class="ps-2" style="width:36px;">#</th>
+                                                                            <th>Dictamen</th>
+                                                                            <th class="text-center" style="width:50px;">
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr
+                                                                            *ngFor="let d of dictamenesSeleccionados; let i = index">
+                                                                            <td
+                                                                                class="ps-2 fw-semibold text-muted align-middle">
+                                                                                {{ i + 1 }}</td>
+                                                                            <td class="align-middle"
+                                                                                style="word-break: break-word; white-space: normal; font-size: 0.82rem;">
+                                                                                {{ d.punto }}</td>
+                                                                            <td class="text-center align-middle">
+                                                                                <button type="button"
+                                                                                    class="btn btn-sm btn-outline-danger"
+                                                                                    style="padding: 2px 6px; line-height: 1;"
+                                                                                    (click)="quitarDictamen(i)"
+                                                                                    title="Quitar">
+                                                                                    <i class="bi bi-trash3"
+                                                                                        style="font-size: 0.8rem;"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+
+                                                        <small class="text-muted d-block mt-1"
+                                                            *ngIf="dictamenesSeleccionados.length === 0">
+                                                            <i class="bi bi-info-circle me-1"></i>Selecciona y presiona
+                                                            <i class="bi bi-plus-lg"></i> para agregar.
+                                                        </small>
                                                     </div>
 
                                                     <div class="col-12">
@@ -882,23 +944,90 @@
                                                                     </small>
                                                                 </div>
 
-                                                                <div class="col-12" *ngIf="!esComision">
-                                                                    <!-- <label
+                                                                <!-- <div class="col-12" *ngIf="!esComision"> -->
+                                                                <!-- <label
                                                                         class="form-label fw-semibold">Dictámenes</label>
                                                                     <ng-select [items]="slcPuntosTurnados"
                                                                         bindLabel="punto" bindValue="id"
                                                                         formControlName="id_punto_turnado"
                                                                         placeholder="Selecciona">
                                                                     </ng-select> -->
-                                                                    <label
+                                                                <!-- <label
                                                                         class="form-label fw-semibold">Dictámenes</label>
                                                                     <ng-select [items]="slcDictamenes" bindLabel="punto"
                                                                         bindValue="id"
                                                                         formControlName="id_punto_turnado"
                                                                         placeholder="Selecciona">
                                                                     </ng-select>
-                                                                </div>
+                                                                </div> -->
+                                                                <div class="col-12" *ngIf="!esComision">
+                                                                    <label
+                                                                        class="form-label fw-semibold">Dictámenes</label>
+                                                                    <div class="d-flex gap-2 align-items-start">
+                                                                        <div style="min-width: 0; flex: 1;">
+                                                                            <ng-select [items]="slcDictamenes"
+                                                                                bindLabel="punto" bindValue="id"
+                                                                                formControlName="id_punto_turnado"
+                                                                                placeholder="Selecciona">
+                                                                            </ng-select>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                            class="btn btn-primary btn-sm flex-shrink-0"
+                                                                            style="height: 38px; margin-top: 1px;"
+                                                                            (click)="agregarDictamenPunto(punto)"
+                                                                            title="Agregar dictamen">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    </div>
 
+                                                                    <div *ngIf="punto.dictamenesSeleccionados?.length > 0"
+                                                                        class="mt-2 rounded border overflow-hidden">
+                                                                        <div
+                                                                            style="max-height: 200px; overflow-y: auto;">
+                                                                            <table class="table table-sm mb-0">
+                                                                                <thead
+                                                                                    style="background-color: #f0e6ed; position: sticky; top: 0; z-index: 1;">
+                                                                                    <tr>
+                                                                                        <th class="ps-2"
+                                                                                            style="width:36px;">#</th>
+                                                                                        <th>Dictamen</th>
+                                                                                        <th class="text-center"
+                                                                                            style="width:50px;"></th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    <tr
+                                                                                        *ngFor="let d of punto.dictamenesSeleccionados; let j = index">
+                                                                                        <td
+                                                                                            class="ps-2 fw-semibold text-muted align-middle">
+                                                                                            {{ j + 1 }}</td>
+                                                                                        <td class="align-middle"
+                                                                                            style="word-break: break-word; white-space: normal; font-size: 0.82rem;">
+                                                                                            {{ d.punto }}</td>
+                                                                                        <td
+                                                                                            class="text-center align-middle">
+                                                                                            <button type="button"
+                                                                                                class="btn btn-sm btn-outline-danger"
+                                                                                                style="padding: 2px 6px; line-height: 1;"
+                                                                                                (click)="quitarDictamenPunto(punto, j)"
+                                                                                                title="Quitar">
+                                                                                                <i class="bi bi-trash3"
+                                                                                                    style="font-size: 0.8rem;"></i>
+                                                                                            </button>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <small class="text-muted d-block mt-1"
+                                                                        *ngIf="!punto.dictamenesSeleccionados?.length">
+                                                                        <i class="bi bi-info-circle me-1"></i>Selecciona
+                                                                        y presiona
+                                                                        <i class="bi bi-plus-lg"></i> para agregar.
+                                                                    </small>
+                                                                </div>
 
                                                                 <div class="col-12">
                                                                     <label class="form-label">Punto</label>
@@ -1948,9 +2077,10 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-people-fill me-1"></i> Proponente
                             </label>
-                            <ng-select [items]="slctProponentes" bindLabel="valor" bindValue="id"
-                                formControlName="id_proponente" placeholder="Selecciona proponente"
-                                (change)="getTipoP($event ? [$event] : [])">
+                            <ng-select [items]="slctProponentes" bindLabel="valor" bindValue="id" [multiple]="true"
+                                [closeOnSelect]="false" formControlName="id_proponente"
+                                placeholder="Selecciona proponente(s)"
+                                (change)="getTipoP($event?.length ? $event : [])">
                             </ng-select>
                         </div>
 
@@ -1958,8 +2088,9 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-person-fill me-1"></i> Presenta
                             </label>
-                            <ng-select [items]="slcPresenta" bindLabel="valor" bindValue="id"
-                                formControlName="id_presenta" placeholder="Selecciona quien presenta">
+                            <ng-select [items]="slcPresenta" bindLabel="valor" bindValue="id" [multiple]="true"
+                                [closeOnSelect]="false" formControlName="id_presenta"
+                                placeholder="Selecciona quien(es) presenta(n)">
                             </ng-select>
                         </div>
 
@@ -1991,9 +2122,10 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-people-fill me-1"></i> Proponente
                             </label>
-                            <ng-select [items]="slctProponentes" bindLabel="valor" bindValue="id"
-                                formControlName="id_proponente" placeholder="Selecciona proponente"
-                                (change)="getTipoP($event ? [$event] : [])">
+                            <ng-select [items]="slctProponentes" bindLabel="valor" bindValue="id" [multiple]="true"
+                                [closeOnSelect]="false" formControlName="id_proponente"
+                                placeholder="Selecciona proponente(s)"
+                                (change)="getTipoP($event?.length ? $event : [])">
                             </ng-select>
                         </div>
 
@@ -2001,8 +2133,9 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-person-fill me-1"></i> Presenta
                             </label>
-                            <ng-select [items]="slcPresenta" bindLabel="valor" bindValue="id"
-                                formControlName="id_presenta" placeholder="Selecciona quien presenta">
+                            <ng-select [items]="slcPresenta" bindLabel="valor" bindValue="id" [multiple]="true"
+                                [closeOnSelect]="false" formControlName="id_presenta"
+                                placeholder="Selecciona quien(es) presenta(n)">
                             </ng-select>
                         </div>
 
@@ -2032,47 +2165,47 @@
         </div>
 
         <!-- Lista de iniciativas -->
-        <div class="card">
-            <div class="card-header bg-light">
-                <h6 class="mb-0 fw-semibold">
-                    <i class="bi bi-list-ul me-2"></i>
-                    Lista de Iniciativas
-                </h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive tabla-intervenciones-wrapper">
-                    <table class="table table-hover mb-0 tabla-intervenciones">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 50px;">#</th>
-                                <th>Descripción</th>
-                                <th style="width: 130px;">Proponente</th>
-                                <th style="width: 130px;">Presenta</th>
-                                <th class="text-center" style="width: 100px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let iniciativa of listaIniciativas; let i = index">
-                                <td class="text-center fw-semibold">{{ i + 1 }}</td>
-                                <td>{{ iniciativa.iniciativa || iniciativa.descripcion }}</td>
-                                <td>{{ iniciativa.proponente || '—' }}</td>
-                                <td>{{ iniciativa.presenta || '—' }}</td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                        (click)="eliminarIniciativa(iniciativa, i)" title="Eliminar">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr *ngIf="listaIniciativas.length === 0">
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                    <p class="mb-0 mt-2">No hay iniciativas</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="card-body p-0">
+            <div class="table-responsive tabla-intervenciones-wrapper">
+                <table class="table table-hover mb-0 tabla-iniciativas" style="table-layout: fixed; width: 100%;">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 35px;">#</th>
+                            <th style="width: auto;">Descripción</th>
+                            <th style="width: 160px;">Proponente</th>
+                            <th style="width: 160px;">Presenta</th>
+                            <th style="width: 70px;" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let iniciativa of listaIniciativas; let i = index">
+                            <td class="fw-semibold text-muted align-top pt-3">{{ i + 1 }}</td>
+                            <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
+                                {{ iniciativa.iniciativa || iniciativa.descripcion }}
+                            </td>
+                            <td class="align-top pt-3"
+                                style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
+                                {{ iniciativa.proponente || '—' }}
+                            </td>
+                            <td class="align-top pt-3"
+                                style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
+                                {{ iniciativa.presenta || '—' }}
+                            </td>
+                            <td class="text-center align-top pt-3">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    (click)="eliminarIniciativa(iniciativa, i)" title="Eliminar">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="listaIniciativas.length === 0">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mb-0 mt-2">No hay iniciativas</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
