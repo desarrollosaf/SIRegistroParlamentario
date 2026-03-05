@@ -1082,7 +1082,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
         const puntos = yield Promise.all(puntosRaw.map((punto) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
+            var _a, _b, _c, _d, _e, _f, _g;
             const data = punto.toJSON();
             const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
                 ? data.turnocomision
@@ -1112,8 +1112,6 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
             let puntosestudiado = null;
             let dictamenes = null;
-            console.log("DATAA PUNNTOS DICTAMENES: ");
-            console.log(data);
             if (estudiado) {
                 if (estudiado.type === "1") {
                     const info = [
@@ -1132,7 +1130,24 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 else if (estudiado.type === "2") {
                     if (esSesion) {
-                        dictamenes = [];
+                        //sesion 
+                        const iniciativaDictamen = yield iniciativas_estudio_1.default.findOne({
+                            where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 },
+                            include: [
+                                {
+                                    model: puntos_ordens_1.default,
+                                    as: 'iniciativa',
+                                    attributes: ["id", "punto"]
+                                }
+                            ]
+                        });
+                        const info = [
+                            {
+                                id: (_f = iniciativaDictamen === null || iniciativaDictamen === void 0 ? void 0 : iniciativaDictamen.iniciativa) === null || _f === void 0 ? void 0 : _f.id,
+                                punto: (_g = iniciativaDictamen === null || iniciativaDictamen === void 0 ? void 0 : iniciativaDictamen.iniciativa) === null || _g === void 0 ? void 0 : _g.punto
+                            }
+                        ];
+                        dictamenes = info;
                     }
                     else {
                         const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({

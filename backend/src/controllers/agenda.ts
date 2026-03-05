@@ -1262,8 +1262,7 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
         const estudiado = data.puntosestudiados?.[0];
         let puntosestudiado = null;
         let dictamenes = null;
-        console.log("DATAA PUNNTOS DICTAMENES: ")
-        console.log(data)
+    
 
         if (estudiado) {
           if (estudiado.type === "1") {
@@ -1282,8 +1281,26 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
 
           } else if (estudiado.type === "2") {
             if(esSesion){
+               //sesion 
+              const iniciativaDictamen = await IniciativaEstudio.findOne({
+                where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 }, 
+                include: [
+                  {
+                    model: PuntosOrden,
+                    as: 'iniciativa',
+                    attributes: ["id", "punto"]
+                  }
+                ]
+              });
 
-              dictamenes = [];
+              const info = [
+                {
+                  id: iniciativaDictamen?.iniciativa?.id,
+                  punto: iniciativaDictamen?.iniciativa?.punto
+                }
+              ];
+              dictamenes = info;
+
             }else{
 
               const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
