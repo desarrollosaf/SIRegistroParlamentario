@@ -1258,10 +1258,12 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
             turnosExpandidos.push(turno);
           }
         });
-
+        
         const estudiado = data.puntosestudiados?.[0];
         let puntosestudiado = null;
         let dictamenes = null;
+        console.log("DATAA PUNNTOS DICTAMENES: ")
+        console.log(data)
 
         if (estudiado) {
           if (estudiado.type === "1") {
@@ -1279,26 +1281,30 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
             }
 
           } else if (estudiado.type === "2") {
-            const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
+            if(esSesion){
+
+              dictamenes = [];
+            }else{
+
+              const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
               where: { expediente_id: estudiado.punto_origen_id }, 
               include: [
-                {
-                  model: PuntosOrden,
-                  as: 'puntoOrigen',
-                  attributes: ["id", "punto"]
-                }
-              ]
-            });
-            const info = puntosExpediente.map((p: any) => ({
-              id: p.toJSON().puntoOrigen?.id,
-              punto: p.toJSON().puntoOrigen?.punto
-            }));
-
-            if (esSesion) {
-              dictamenes = info;
-            } else {
+                  {
+                    model: PuntosOrden,
+                    as: 'puntoOrigen',
+                    attributes: ["id", "punto"]
+                  }
+                ]
+              });
+              
+              const info = puntosExpediente.map((p: any) => ({
+                id: p.toJSON().puntoOrigen?.id,
+                punto: p.toJSON().puntoOrigen?.punto
+              }));
               puntosestudiado = info;
+
             }
+          
           }
         }
 
@@ -1424,6 +1430,7 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
 };
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
+  console.log("ACTUALIZAR PUNTOOOOOO")
   try {
     const { id } = req.params;
     const { body } = req;
@@ -1464,6 +1471,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     let puntoDesc: string = body.punto;
 
     if (body.tipo_evento != 0) {
+      console.log("EVENTO 1")
       if (puntosTurnadosArray.length > 0) {
 
         const estudioExistente = await IniciativaEstudio.findOne({
@@ -1504,10 +1512,13 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
           }
 
         } else {
+
+          
           // CASO: ahora son VARIOS puntos (expediente)
           let expedienteId: any = null;
 
           if (estudioExistente?.type === "2") {
+            
             // Ya era expediente → reutilizar
             expedienteId = estudioExistente.punto_origen_id;
 
@@ -1590,7 +1601,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         }
 
       } else {
-        // 👇 puntosTurnadosArray vacío
+       
         const puntoTurnado = await PuntosComisiones.findOne({
           where: { id_punto_turno: punto.id },
         });
@@ -1602,22 +1613,126 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     } else {
       // tipo_evento === 0
-      const data = await IniciativaEstudio.findOne({
-        where: { punto_destino_id: body.id_punto_turnado },
+      // tipo_evento === 0  (ACTUALIZAR)
+      console.log("EVENTO 0 ACTUALIZAR");
+      console.log(puntosTurnadosArray);
+
+      const dictamenesArray: any[] = JSON.parse(body.dictamenes || "[]");
+
+     
+      await IniciativaEstudio.destroy({
+        where: { punto_destino_id: punto.id },
       });
 
-      if (data) {
-        await PuntosOrden.update(
-          { id_dictamen: punto.id },
-          { where: { id: data.punto_destino_id } }
-        );
+      
+      if (dictamenesArray.length === 1) {
+        const data = await IniciativaEstudio.findOne({
+          where: { punto_destino_id: dictamenesArray[0] },
+        });
+
+        if (data) {
+          
+          await PuntosOrden.update(
+            { id_dictamen: punto.id },
+            { where: { id: data.punto_destino_id } }
+          );
+
+         
+          await IniciativaEstudio.create({
+            punto_origen_id: data.punto_origen_id,
+            type: data.type,
+            punto_destino_id: punto.id,
+            status: 6,
+          });
+        }
+      } else if (dictamenesArray.length > 1) {
+        
+        const prevConjunto = await IniciativaEstudio.findOne({
+          where: { punto_destino_id: punto.id, type: "2" },
+        });
+
+        let expediente: any = null;
+
+        if (prevConjunto) {
+         
+          expediente = await Expediente.findByPk(prevConjunto.punto_origen_id ?? '');
+
+        
+          if (expediente) {
+            await ExpedienteEstudiosPuntos.destroy({
+              where: { expediente_id: expediente.id },
+            });
+          }
+        }
+
+        
+        if (!expediente) {
+          expediente = await Expediente.create({
+            evento_comision_id: evento!.id,
+            descripcion: "Iniciativas en conjunto",
+          });
+        } else {
+          
+          await expediente.update({ descripcion: "Iniciativas en conjunto" });
+        }
+
+      
+        for (const item of dictamenesArray) {
+          const data = await IniciativaEstudio.findOne({
+            where: { punto_destino_id: item },
+          });
+
+          if (data) {
+            await PuntosOrden.update(
+              { id_dictamen: punto.id },
+              { where: { id: data.punto_destino_id } }
+            );
+          }
+
+          const iniciativas = await IniciativaPuntoOrden.findAll({
+            where: { id_punto: item },
+          });
+
+          for (const ini of iniciativas) {
+            await ini.update({ expediente: expediente.id });
+          }
+
+          await ExpedienteEstudiosPuntos.create({
+            expediente_id: expediente.id,
+            punto_origen_sesion_id: item,
+          });
+        }
+
+     
         await IniciativaEstudio.create({
-          punto_origen_id: data.punto_origen_id,
-          type: 1,
+          type: "2",
+          punto_origen_id: expediente.id,
           punto_destino_id: punto.id,
           status: 6,
         });
       }
+
+
+
+
+      
+
+      // const data = await IniciativaEstudio.findOne({
+      //   where: { punto_destino_id: body.id_punto_turnado },
+      // });
+
+      // if (data) {
+      //   await PuntosOrden.update(
+      //     { id_dictamen: punto.id },
+      //     { where: { id: data.punto_destino_id } }
+      //   );
+      //   await IniciativaEstudio.create({
+      //     punto_origen_id: data.punto_origen_id,
+      //     type: 1,
+      //     punto_destino_id: punto.id,
+      //     status: 6,
+      //   });
+      // }
     }
 
 
