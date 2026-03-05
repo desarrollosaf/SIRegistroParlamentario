@@ -1082,7 +1082,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
         const puntos = yield Promise.all(puntosRaw.map((punto) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
+            var _a, _b, _c, _d, _e, _f, _g;
             const data = punto.toJSON();
             const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
                 ? data.turnocomision
@@ -1129,27 +1129,44 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
                 else if (estudiado.type === "2") {
-                    const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
-                        where: { expediente_id: estudiado.punto_origen_id },
-                        include: [
-                            {
-                                model: puntos_ordens_1.default,
-                                as: 'puntoOrigen',
-                                attributes: ["id", "punto"]
-                            }
-                        ]
-                    });
-                    const info = puntosExpediente.map((p) => {
-                        var _a, _b;
-                        return ({
-                            id: (_a = p.toJSON().puntoOrigen) === null || _a === void 0 ? void 0 : _a.id,
-                            punto: (_b = p.toJSON().puntoOrigen) === null || _b === void 0 ? void 0 : _b.punto
-                        });
-                    });
                     if (esSesion) {
+                        //sesion 
+                        const iniciativaDictamen = yield iniciativas_estudio_1.default.findOne({
+                            where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 },
+                            include: [
+                                {
+                                    model: puntos_ordens_1.default,
+                                    as: 'iniciativa',
+                                    attributes: ["id", "punto"]
+                                }
+                            ]
+                        });
+                        const info = [
+                            {
+                                id: (_f = iniciativaDictamen === null || iniciativaDictamen === void 0 ? void 0 : iniciativaDictamen.iniciativa) === null || _f === void 0 ? void 0 : _f.id,
+                                punto: (_g = iniciativaDictamen === null || iniciativaDictamen === void 0 ? void 0 : iniciativaDictamen.iniciativa) === null || _g === void 0 ? void 0 : _g.punto
+                            }
+                        ];
                         dictamenes = info;
                     }
                     else {
+                        const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
+                            where: { expediente_id: estudiado.punto_origen_id },
+                            include: [
+                                {
+                                    model: puntos_ordens_1.default,
+                                    as: 'puntoOrigen',
+                                    attributes: ["id", "punto"]
+                                }
+                            ]
+                        });
+                        const info = puntosExpediente.map((p) => {
+                            var _a, _b;
+                            return ({
+                                id: (_a = p.toJSON().puntoOrigen) === null || _a === void 0 ? void 0 : _a.id,
+                                punto: (_b = p.toJSON().puntoOrigen) === null || _b === void 0 ? void 0 : _b.punto
+                            });
+                        });
                         puntosestudiado = info;
                     }
                 }
@@ -1266,7 +1283,8 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getreservas = getreservas;
 const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
+    console.log("ACTUALIZAR PUNTOOOOOO");
     try {
         const { id } = req.params;
         const { body } = req;
@@ -1302,6 +1320,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
         let puntoDesc = body.punto;
         if (body.tipo_evento != 0) {
+            console.log("EVENTO 1");
             if (puntosTurnadosArray.length > 0) {
                 const estudioExistente = yield iniciativas_estudio_1.default.findOne({
                     where: { punto_destino_id: punto.id }
@@ -1403,7 +1422,6 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 }
             }
             else {
-                // 👇 puntosTurnadosArray vacío
                 const puntoTurnado = yield puntos_comisiones_1.default.findOne({
                     where: { id_punto_turno: punto.id },
                 });
@@ -1414,27 +1432,95 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             }
         }
         else {
-            // tipo_evento === 0
-            const data = yield iniciativas_estudio_1.default.findOne({
-                where: { punto_destino_id: body.id_punto_turnado },
+            const dictamenesArray = JSON.parse(body.dictamenes || "[]");
+            yield iniciativas_estudio_1.default.destroy({
+                where: { punto_destino_id: punto.id },
             });
-            if (data) {
-                yield puntos_ordens_1.default.update({ id_dictamen: punto.id }, { where: { id: data.punto_destino_id } });
+            yield puntos_ordens_1.default.update({ id_dictamen: 0 }, { where: { id_dictamen: punto.id } });
+            if (dictamenesArray.length === 1) {
+                const data = yield iniciativas_estudio_1.default.findOne({
+                    where: { punto_destino_id: dictamenesArray[0] },
+                });
+                if (data) {
+                    yield puntos_ordens_1.default.update({ id_dictamen: punto.id }, { where: { id: data.punto_destino_id } });
+                    yield iniciativas_estudio_1.default.create({
+                        punto_origen_id: data.punto_origen_id,
+                        type: data.type,
+                        punto_destino_id: punto.id,
+                        status: 6,
+                    });
+                }
+            }
+            else if (dictamenesArray.length > 1) {
+                const prevConjunto = yield iniciativas_estudio_1.default.findOne({
+                    where: { punto_destino_id: punto.id, type: "2" },
+                });
+                let expediente = null;
+                if (prevConjunto) {
+                    expediente = yield expediente_1.default.findByPk((_a = prevConjunto.punto_origen_id) !== null && _a !== void 0 ? _a : '');
+                    if (expediente) {
+                        yield expedientes_estudio_puntos_1.default.destroy({
+                            where: { expediente_id: expediente.id },
+                        });
+                    }
+                }
+                if (!expediente) {
+                    expediente = yield expediente_1.default.create({
+                        evento_comision_id: evento.id,
+                        descripcion: "Iniciativas en conjunto",
+                    });
+                }
+                else {
+                    yield expediente.update({ descripcion: "Iniciativas en conjunto" });
+                }
+                for (const item of dictamenesArray) {
+                    const data = yield iniciativas_estudio_1.default.findOne({
+                        where: { punto_destino_id: item },
+                    });
+                    if (data) {
+                        yield puntos_ordens_1.default.update({ id_dictamen: punto.id }, { where: { id: data.punto_destino_id } });
+                    }
+                    const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
+                        where: { id_punto: item },
+                    });
+                    for (const ini of iniciativas) {
+                        yield ini.update({ expediente: expediente.id });
+                    }
+                    yield expedientes_estudio_puntos_1.default.create({
+                        expediente_id: expediente.id,
+                        punto_origen_sesion_id: item,
+                    });
+                }
                 yield iniciativas_estudio_1.default.create({
-                    punto_origen_id: data.punto_origen_id,
-                    type: 1,
+                    type: "2",
+                    punto_origen_id: expediente.id,
                     punto_destino_id: punto.id,
                     status: 6,
                 });
             }
+            // const data = await IniciativaEstudio.findOne({
+            //   where: { punto_destino_id: body.id_punto_turnado },
+            // });
+            // if (data) {
+            //   await PuntosOrden.update(
+            //     { id_dictamen: punto.id },
+            //     { where: { id: data.punto_destino_id } }
+            //   );
+            //   await IniciativaEstudio.create({
+            //     punto_origen_id: data.punto_origen_id,
+            //     type: 1,
+            //     punto_destino_id: punto.id,
+            //     status: 6,
+            //   });
+            // }
         }
         yield punto.update({
-            nopunto: (_a = body.numpunto) !== null && _a !== void 0 ? _a : punto.nopunto,
-            id_tipo: (_b = body.tipo) !== null && _b !== void 0 ? _b : punto.id_tipo,
-            tribuna: (_c = body.tribuna) !== null && _c !== void 0 ? _c : punto.tribuna,
+            nopunto: (_b = body.numpunto) !== null && _b !== void 0 ? _b : punto.nopunto,
+            id_tipo: (_c = body.tipo) !== null && _c !== void 0 ? _c : punto.id_tipo,
+            tribuna: (_d = body.tribuna) !== null && _d !== void 0 ? _d : punto.tribuna,
             path_doc: nuevoPath,
             punto: puntoDesc,
-            observaciones: (_d = body.observaciones) !== null && _d !== void 0 ? _d : punto.observaciones,
+            observaciones: (_e = body.observaciones) !== null && _e !== void 0 ? _e : punto.observaciones,
             editado: 1,
             se_turna_comision: body.se_turna_comision ? 1 : 0,
         });

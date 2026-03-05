@@ -240,23 +240,23 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   cargarIniciativasDisponibles() {
     if (!this.puntoSeleccionadoIniciativa) {
-      console.log('❌ No hay punto seleccionado');
+      console.log(' No hay punto seleccionado');
       return;
     }
 
-    console.log('🔄 Filtrando iniciativas disponibles para punto:', this.puntoSeleccionadoIniciativa.id);
-    console.log('📋 Iniciativas del punto:', this.listaIniciativas);
+    console.log('Filtrando iniciativas disponibles para punto:', this.puntoSeleccionadoIniciativa.id);
+    console.log('📋Iniciativas del punto:', this.listaIniciativas);
 
     // Obtener IDs de las iniciativas ya agregadas a este punto
     const idsAgregados = this.listaIniciativas.map(ini => ini.id);
-    console.log('🚫 IDs ya agregados:', idsAgregados);
+    console.log(' IDs ya agregados:', idsAgregados);
 
     // Filtrar las iniciativas precargadas
     const iniciativasDisponibles = this.slcIniciativasPrecargadas.filter(
       (ini: any) => !idsAgregados.includes(ini.id)
     );
 
-    console.log('✅ Iniciativas disponibles (filtradas):', iniciativasDisponibles);
+    console.log(' Iniciativas disponibles (filtradas):', iniciativasDisponibles);
 
     // IMPORTANTE: Crear un nuevo array para que ng-select detecte el cambio
     this.slcIniciativasPrecargadas = [...iniciativasDisponibles];
@@ -806,6 +806,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   cargarPuntosRegistrados(): void {
+    console.log('entrepto');
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log('Response completo:', response);
@@ -864,11 +865,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             reservas: punto.reservas || [],
             iniciativas: punto.iniciativas || [],
             puntosTurnadosSeleccionados: Array.isArray(punto.puntosestudiado) && punto.puntosestudiado.length > 0
-            ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
-            : (punto.turnocomision || []).map((tc: any) => {
-            const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
-            return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
-            }),
+              ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
+              : (punto.turnocomision || []).map((tc: any) => {
+                const encontrado = this.slcPuntosTurnados?.find((p: any) => p.id === tc.id_punto);
+                return encontrado ? { ...encontrado } : { id: tc.id_punto, punto: `Punto #${tc.id_punto}` };
+              }),
             // dictamenesSeleccionados: punto.dictamenes
             //   ? punto.dictamenes.map((d: any) => {
             //     const encontrado = this.slcDictamenes?.find((sd: any) => sd.id === d.id);
@@ -876,11 +877,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             //   })
             //   : [],
             dictamenesSeleccionados: Array.isArray(punto.dictamenes) && punto.dictamenes.length > 0
-            ? punto.dictamenes.map((d: any) => ({ id: d.id, punto: d.punto }))
-            : punto.id_dictamen
-            ? [{ id: punto.id_dictamen, punto: punto.punto_dictamen || `Dictamen #${punto.id_dictamen}` }]
-            : [],
-            
+              ? punto.dictamenes.map((d: any) => ({ id: d.id, punto: d.punto }))
+              : punto.id_dictamen
+                ? [{ id: punto.id_dictamen, punto: punto.punto_dictamen || `Dictamen #${punto.id_dictamen}` }]
+                : [],
+
             tiposDisponibles: [],
             presentaDisponibles: [],
             form: this.fb.group({
@@ -1565,11 +1566,30 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     //   console.log(clave, valor);
     // });
 
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+
+
     this._eventoService.updatePunto(formData, punto.id).subscribe({
       next: (response: any) => {
-        this.cargarPuntosRegistrados();
+        Toast.fire({
+          icon: 'success',
+          title: response.message ?? 'Actualizado correctamente',
+        });
+        // this.cargarPuntosRegistrados();
+        this.cargarOrdenDia();
       },
       error: (e: HttpErrorResponse) => {
+        Toast.fire({
+          icon: 'error',
+          title: e.error?.message ?? 'Ocurrió un error al actualizar',
+        });
         console.error('Error al actualizar:', e);
       }
     });
