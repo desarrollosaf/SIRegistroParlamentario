@@ -240,23 +240,23 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   cargarIniciativasDisponibles() {
     if (!this.puntoSeleccionadoIniciativa) {
-      console.log('❌ No hay punto seleccionado');
+      console.log(' No hay punto seleccionado');
       return;
     }
 
-    console.log('🔄 Filtrando iniciativas disponibles para punto:', this.puntoSeleccionadoIniciativa.id);
-    console.log('📋 Iniciativas del punto:', this.listaIniciativas);
+    console.log('Filtrando iniciativas disponibles para punto:', this.puntoSeleccionadoIniciativa.id);
+    console.log('📋Iniciativas del punto:', this.listaIniciativas);
 
     // Obtener IDs de las iniciativas ya agregadas a este punto
     const idsAgregados = this.listaIniciativas.map(ini => ini.id);
-    console.log('🚫 IDs ya agregados:', idsAgregados);
+    console.log(' IDs ya agregados:', idsAgregados);
 
     // Filtrar las iniciativas precargadas
     const iniciativasDisponibles = this.slcIniciativasPrecargadas.filter(
       (ini: any) => !idsAgregados.includes(ini.id)
     );
 
-    console.log('✅ Iniciativas disponibles (filtradas):', iniciativasDisponibles);
+    console.log(' Iniciativas disponibles (filtradas):', iniciativasDisponibles);
 
     // IMPORTANTE: Crear un nuevo array para que ng-select detecte el cambio
     this.slcIniciativasPrecargadas = [...iniciativasDisponibles];
@@ -806,6 +806,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   cargarPuntosRegistrados(): void {
+    console.log('entrepto');
     this._eventoService.getPuntos(this.idComisionRuta).subscribe({
       next: (response: any) => {
         console.log('Response completo:', response);
@@ -1581,7 +1582,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           icon: 'success',
           title: response.message ?? 'Actualizado correctamente',
         });
-        this.cargarPuntosRegistrados();
+        // this.cargarPuntosRegistrados();
+        this.cargarOrdenDia();
       },
       error: (e: HttpErrorResponse) => {
         Toast.fire({
