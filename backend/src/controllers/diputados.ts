@@ -620,7 +620,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       console.log("entre", data )
       const estudios      = fuenteEstudios.filter((e: any) => e.status === "1");
       const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2") || [];
-      const cierres    = data.punto?.estudio?.filter((e: any) => e.status === "3") || [];
+      const cierres    = fuenteEstudios.filter((e: any) => e.status === "3") || [];
       const rechazadocomi  = data.punto?.estudio?.filter((e: any) => e.status === "4") || [];
       const rechazosesion  = data.punto?.estudio?.filter((e: any) => e.status === "5") || [];
 
