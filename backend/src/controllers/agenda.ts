@@ -1262,7 +1262,9 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
         const estudiado = data.puntosestudiados?.[0];
         let puntosestudiado = null;
         let dictamenes = null;
-    
+
+        console.log("ESTUDIADOOO:  ")
+        console.log(estudiado)
 
         if (estudiado) {
           if (estudiado.type === "1") {
@@ -1282,23 +1284,31 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
           } else if (estudiado.type === "2") {
             if(esSesion){
                //sesion 
-              const iniciativaDictamen = await IniciativaEstudio.findOne({
-                where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 }, 
-                include: [
-                  {
-                    model: PuntosOrden,
-                    as: 'iniciativa',
-                    attributes: ["id", "punto"]
-                  }
-                ]
-              });
+             
+              // const iniciativaDictamen = await IniciativaEstudio.findOne({
+              //   where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 }, 
+              //   include: [
+              //     {
+              //       model: PuntosOrden,
+              //       as: 'iniciativa',
+              //       attributes: ["id", "punto"]
+              //     }
+              //   ]
+              // });
+              const info: any[] = [];
+              const puntos = await PuntosOrden.findAll({
+                 where: { id_dictamen:  estudiado.punto_destino_id },
+              })
 
-              const info = [
-                {
-                  id: iniciativaDictamen?.iniciativa?.id,
-                  punto: iniciativaDictamen?.iniciativa?.punto
-                }
-              ];
+              for(const data of puntos){
+                info.push(
+                  {
+                    id: data?.id,
+                    punto: data?.punto
+                  }
+                );
+              }
+             
               dictamenes = info;
 
             }else{
@@ -1447,7 +1457,7 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
 };
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
-  console.log("ACTUALIZAR PUNTOOOOOO")
+  
   try {
     const { id } = req.params;
     const { body } = req;
