@@ -1629,10 +1629,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       }
 
     } else {
-      // tipo_evento === 0
-      // tipo_evento === 0  (ACTUALIZAR)
-      console.log("EVENTO 0 ACTUALIZAR");
-      console.log(puntosTurnadosArray);
+
 
       const dictamenesArray: any[] = JSON.parse(body.dictamenes || "[]");
 
@@ -1640,6 +1637,11 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       await IniciativaEstudio.destroy({
         where: { punto_destino_id: punto.id },
       });
+      
+      await PuntosOrden.update(
+        { id_dictamen: 0 },
+        { where: { id_dictamen: punto.id } }
+      );
 
       
       if (dictamenesArray.length === 1) {

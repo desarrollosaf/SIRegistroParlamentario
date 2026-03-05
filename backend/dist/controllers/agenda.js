@@ -1432,14 +1432,11 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             }
         }
         else {
-            // tipo_evento === 0
-            // tipo_evento === 0  (ACTUALIZAR)
-            console.log("EVENTO 0 ACTUALIZAR");
-            console.log(puntosTurnadosArray);
             const dictamenesArray = JSON.parse(body.dictamenes || "[]");
             yield iniciativas_estudio_1.default.destroy({
                 where: { punto_destino_id: punto.id },
             });
+            yield puntos_ordens_1.default.update({ id_dictamen: 0 }, { where: { id_dictamen: punto.id } });
             if (dictamenesArray.length === 1) {
                 const data = yield iniciativas_estudio_1.default.findOne({
                     where: { punto_destino_id: dictamenesArray[0] },
