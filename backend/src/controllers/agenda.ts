@@ -180,13 +180,30 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         });
         
         if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
-          puntos = await PuntosOrden.findAll({
+          const puntosRaw = await PuntosOrden.findAll({
             where: { 
               id: puntosturnados.map(p => p.id_punto) 
             },
             attributes: ["id", "punto"],
-            raw: true
+            include: [
+              {
+                model: Agenda,
+                as: 'evento',
+                attributes: ["fecha","id"]
+              }
+            ]
           });
+          puntos = puntosRaw.map((p: any) => {
+            const data = p.toJSON();
+            const fecha = data.evento?.fecha 
+              ? new Date(data.evento.fecha).toISOString().split('T')[0]  
+              : '';
+            return {
+              id: data.id,
+              punto: `${fecha} - ${data.evento?.id} - ${data.punto}`
+            };
+          });
+
         }
         
         const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
@@ -628,7 +645,7 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         });
         
         
-         const dictamenes = await PuntosOrden.findAll({
+        const dictamenes = await PuntosOrden.findAll({
           where: { id_dictamen: 0 },
           include: [
             {
@@ -1283,18 +1300,6 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
 
           } else if (estudiado.type === "2") {
             if(esSesion){
-               //sesion 
-             
-              // const iniciativaDictamen = await IniciativaEstudio.findOne({
-              //   where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 }, 
-              //   include: [
-              //     {
-              //       model: PuntosOrden,
-              //       as: 'iniciativa',
-              //       attributes: ["id", "punto"]
-              //     }
-              //   ]
-              // });
               const info: any[] = [];
               const puntos = await PuntosOrden.findAll({
                  where: { id_dictamen:  estudiado.punto_destino_id },
@@ -1358,6 +1363,7 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
         },
         attributes: ["id", "iniciativa"]
       });
+
       return res.status(201).json({
         message: "Se encontraron registros",
         data: puntos,

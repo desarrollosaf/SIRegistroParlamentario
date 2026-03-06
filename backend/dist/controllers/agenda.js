@@ -157,12 +157,29 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
                 });
                 if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
-                    puntos = yield puntos_ordens_1.default.findAll({
+                    const puntosRaw = yield puntos_ordens_1.default.findAll({
                         where: {
                             id: puntosturnados.map(p => p.id_punto)
                         },
                         attributes: ["id", "punto"],
-                        raw: true
+                        include: [
+                            {
+                                model: agendas_1.default,
+                                as: 'evento',
+                                attributes: ["fecha", "id"]
+                            }
+                        ]
+                    });
+                    puntos = puntosRaw.map((p) => {
+                        var _a, _b;
+                        const data = p.toJSON();
+                        const fecha = ((_a = data.evento) === null || _a === void 0 ? void 0 : _a.fecha)
+                            ? new Date(data.evento.fecha).toISOString().split('T')[0]
+                            : '';
+                        return {
+                            id: data.id,
+                            punto: `${fecha} - ${(_b = data.evento) === null || _b === void 0 ? void 0 : _b.id} - ${data.punto}`
+                        };
                     });
                 }
                 const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
@@ -1131,17 +1148,6 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 else if (estudiado.type === "2") {
                     if (esSesion) {
-                        //sesion 
-                        // const iniciativaDictamen = await IniciativaEstudio.findOne({
-                        //   where: { type: estudiado.type, punto_origen_id: estudiado.punto_origen_id, status: 2 }, 
-                        //   include: [
-                        //     {
-                        //       model: PuntosOrden,
-                        //       as: 'iniciativa',
-                        //       attributes: ["id", "punto"]
-                        //     }
-                        //   ]
-                        // });
                         const info = [];
                         const puntos = yield puntos_ordens_1.default.findAll({
                             where: { id_dictamen: estudiado.punto_destino_id },
