@@ -645,18 +645,35 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         });
         
         
-        const dictamenes = await PuntosOrden.findAll({
+        const dictamenesRaw = await PuntosOrden.findAll({
           where: { id_dictamen: 0 },
           include: [
             {
               model: IniciativaEstudio,
               as: 'puntosestudiados', 
               where: { status: 2 },
+            },
+            {
+              model: Agenda,        
+              as: 'evento',
+              attributes: ["fecha","id"]
             }
           ]
         });
         
         console.log(dictamenes)
+
+        const dictamenes = dictamenesRaw.map((p: any) => {
+          const d = p.toJSON();
+          const fecha = d.evento?.fecha 
+            ? new Date(d.evento.fecha).toISOString().split('T')[0] 
+            : '';
+          return {
+            id: d.id,
+            punto: `${fecha} - ${d.evento?.id} - ${d.punto}`
+          };
+        });
+
 
         
         const legislatura = await Legislatura.findOne({
