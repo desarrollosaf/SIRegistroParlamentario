@@ -12,8 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.exporpuntos = exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
+const sedes_1 = __importDefault(require("../models/sedes"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
@@ -435,7 +436,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         {
                             model: iniciativas_estudio_1.default,
                             as: 'estudio',
-                            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id"], // 👈 cambió de id_punto_evento
+                            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"], // 👈 cambió de id_punto_evento
                             required: false,
                             include: [
                                 {
@@ -469,7 +470,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         {
                             model: iniciativas_estudio_1.default,
                             as: 'estudio',
-                            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id"], // 👈 cambió de id_punto_evento
+                            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"], // 👈 cambió de id_punto_evento
                             required: false,
                             include: [
                                 {
@@ -570,28 +571,30 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = presentanData.map(p => p.valor).join(', ');
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
             const data = iniciativa.toJSON();
-            const fuenteEstudios = data.expediente != null
-                ? (_a = data.expedienteturno) === null || _a === void 0 ? void 0 : _a.flatMap((exp) => exp.estudio || [])
-                : ((_b = data.punto) === null || _b === void 0 ? void 0 : _b.estudio) || [];
-            console.log("entre", data);
+            const todosEstudios = [
+                ...(((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) || []),
+                ...(((_b = data.expedienteturno) === null || _b === void 0 ? void 0 : _b.flatMap((exp) => exp.estudio || [])) || [])
+            ];
+            // Filtrar duplicados por id
+            const fuenteEstudios = todosEstudios.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
             const estudios = fuenteEstudios.filter((e) => e.status === "1");
-            const dictamenes = fuenteEstudios.filter((e) => e.status === "2") || [];
-            const cierres = fuenteEstudios.filter((e) => e.status === "3") || [];
-            const rechazadocomi = ((_d = (_c = data.punto) === null || _c === void 0 ? void 0 : _c.estudio) === null || _d === void 0 ? void 0 : _d.filter((e) => e.status === "4")) || [];
-            const rechazosesion = ((_f = (_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) === null || _f === void 0 ? void 0 : _f.filter((e) => e.status === "5")) || [];
+            const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
+            const cierres = fuenteEstudios.filter((e) => e.status === "3");
+            const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
+            const rechazosesion = fuenteEstudios.filter((e) => e.status === "5");
             // Anfitriones y turnado del nació
-            const anfitrionesNacio = yield getAnfitriones((_g = data.evento) === null || _g === void 0 ? void 0 : _g.id, (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre);
+            const anfitrionesNacio = yield getAnfitriones((_c = data.evento) === null || _c === void 0 ? void 0 : _c.id, (_e = (_d = data.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre);
             const tribunainicio = yield diputado_1.default.findOne({
-                where: { id: (_k = data.punto) === null || _k === void 0 ? void 0 : _k.tribuna },
+                where: { id: (_f = data.punto) === null || _f === void 0 ? void 0 : _f.tribuna },
             });
             const tribuna = tribunainicio
                 ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
                     .filter(Boolean)
                     .join(" ")
                 : null;
-            const turnadoInfo = yield getComisionesTurnado((_l = data.punto) === null || _l === void 0 ? void 0 : _l.id);
+            const turnadoInfo = yield getComisionesTurnado((_g = data.punto) === null || _g === void 0 ? void 0 : _g.id);
             // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
@@ -655,7 +658,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.id, tipo_evento: (_p = (_o = data.evento) === null || _o === void 0 ? void 0 : _o.tipoevento) === null || _p === void 0 ? void 0 : _p.nombre, fecha: formatearFecha((_q = data.evento) === null || _q === void 0 ? void 0 : _q.fecha), descripcion_evento: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.descripcion, numpunto: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.nopunto, punto: (_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto, liga: (_u = data.evento) === null || _u === void 0 ? void 0 : _u.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ evento: (_h = data.evento) === null || _h === void 0 ? void 0 : _h.id, tipo_evento: (_k = (_j = data.evento) === null || _j === void 0 ? void 0 : _j.tipoevento) === null || _k === void 0 ? void 0 : _k.nombre, fecha: formatearFecha((_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha), descripcion_evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.descripcion, numpunto: (_o = data.punto) === null || _o === void 0 ? void 0 : _o.nopunto, punto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.punto, liga: (_q = data.evento) === null || _q === void 0 ? void 0 : _q.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
@@ -766,3 +769,86 @@ const deleteEvento = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.deleteEvento = deleteEvento;
+const exporpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const eventos = yield agendas_1.default.findAll({
+            where: { tipo_evento_id: "0e772516-bbc2-402f-afa0-022489752d33" },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!eventos || eventos.length === 0) {
+            return res.status(404).json({ msg: "Eventos no encontrados" });
+        }
+        const filas = [];
+        for (const evento of eventos) {
+            // Obtener comisiones del evento
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+            }
+            const comisionesTexto = comisiones.map((c) => c.nombre).join(", ");
+            // Obtener puntos del evento
+            const puntosRaw = yield puntos_ordens_1.default.findAll({
+                where: { id_evento: evento.id }, // 👈 ahora sí está en scope
+                order: [['nopunto', 'ASC']],
+            });
+            // Una fila por cada punto
+            for (const punto of puntosRaw) {
+                filas.push({
+                    id_evento: evento.id,
+                    fecha_evento: evento.fecha,
+                    id_punto: punto.id,
+                    no_punto: punto.nopunto,
+                    texto: punto.punto,
+                    comisiones: comisionesTexto
+                });
+            }
+        }
+        // Generar Excel con ExcelJS
+        const ExcelJS = require('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Puntos');
+        // Encabezados
+        sheet.columns = [
+            { header: 'ID Evento', key: 'id_evento', width: 40 },
+            { header: 'Fecha Evento', key: 'fecha_evento', width: 20 },
+            { header: 'ID Punto', key: 'id_punto', width: 40 },
+            { header: 'No. Punto', key: 'no_punto', width: 12 },
+            { header: 'Texto', key: 'texto', width: 60 },
+            { header: 'Comisiones', key: 'comisiones', width: 50 },
+        ];
+        // Estilo encabezados
+        sheet.getRow(1).eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+        // Agregar filas
+        filas.forEach(fila => sheet.addRow(fila));
+        // Responder con el archivo
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=puntos.xlsx');
+        yield workbook.xlsx.write(res);
+        res.end();
+    }
+    catch (error) {
+        console.error("Error al exportar puntos:", error);
+        return res.status(500).json({
+            msg: "Error al generar el archivo Excel",
+            error: error instanceof Error ? error.message : "Error desconocido"
+        });
+    }
+});
+exports.exporpuntos = exporpuntos;

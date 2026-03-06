@@ -638,6 +638,8 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             }
           ]
         });
+        
+        console.log(dictamenes)
 
         
         const legislatura = await Legislatura.findOne({
