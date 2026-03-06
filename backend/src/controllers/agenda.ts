@@ -1263,8 +1263,6 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
         let puntosestudiado = null;
         let dictamenes = null;
 
-        console.log("ESTUDIADOOO:  ")
-        console.log(estudiado)
 
         if (estudiado) {
           if (estudiado.type === "1") {
@@ -1457,7 +1455,7 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
 };
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
-  
+  console.log("LLEGUE ACTUALIZAR PUNTO: ")
   try {
     const { id } = req.params;
     const { body } = req;
@@ -1628,7 +1626,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         }
 
       } else {
-       
+        console.log("SOLO ES UN PUNTO: ")
         const puntoTurnado = await PuntosComisiones.findOne({
           where: { id_punto_turno: punto.id },
         });
@@ -1640,24 +1638,35 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     } else {
 
-
+      console.log("EVENTO 0")
       const dictamenesArray: any[] = JSON.parse(body.dictamenes || "[]");
 
-     
-      await IniciativaEstudio.destroy({
+     console.log("DICTAMENES ARRAY: ") 
+      const punto_estudio = await IniciativaEstudio.findOne({
         where: { punto_destino_id: punto.id },
       });
-      
+
+      const type = punto_estudio?.type || ''
+      punto_estudio?.destroy();
+
       await PuntosOrden.update(
         { id_dictamen: 0 },
         { where: { id_dictamen: punto.id } }
       );
 
-      
+
+     
+      console.log(dictamenesArray)
       if (dictamenesArray.length === 1) {
-        const data = await IniciativaEstudio.findOne({
-          where: { punto_destino_id: dictamenesArray[0] },
+         console.log("DICTAMENES UPDATE ARRAY: ") 
+         let data: any = null;
+
+        const whereCondition =  type == "1" ? { punto_origen_id: dictamenesArray[0] } : { punto_destino_id: dictamenesArray[0] };
+
+        data = await IniciativaEstudio.findOne({
+          where: whereCondition,
         });
+              
 
         if (data) {
           

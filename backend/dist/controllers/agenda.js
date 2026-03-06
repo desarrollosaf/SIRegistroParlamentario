@@ -1112,8 +1112,6 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
             let puntosestudiado = null;
             let dictamenes = null;
-            console.log("ESTUDIADOOO:  ");
-            console.log(estudiado);
             if (estudiado) {
                 if (estudiado.type === "1") {
                     const info = [
@@ -1290,6 +1288,7 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.getreservas = getreservas;
 const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
+    console.log("LLEGUE ACTUALIZAR PUNTO: ");
     try {
         const { id } = req.params;
         const { body } = req;
@@ -1427,6 +1426,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 }
             }
             else {
+                console.log("SOLO ES UN PUNTO: ");
                 const puntoTurnado = yield puntos_comisiones_1.default.findOne({
                     where: { id_punto_turno: punto.id },
                 });
@@ -1437,14 +1437,22 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             }
         }
         else {
+            console.log("EVENTO 0");
             const dictamenesArray = JSON.parse(body.dictamenes || "[]");
-            yield iniciativas_estudio_1.default.destroy({
+            console.log("DICTAMENES ARRAY: ");
+            const punto_estudio = yield iniciativas_estudio_1.default.findOne({
                 where: { punto_destino_id: punto.id },
             });
+            const type = (punto_estudio === null || punto_estudio === void 0 ? void 0 : punto_estudio.type) || '';
+            punto_estudio === null || punto_estudio === void 0 ? void 0 : punto_estudio.destroy();
             yield puntos_ordens_1.default.update({ id_dictamen: 0 }, { where: { id_dictamen: punto.id } });
+            console.log(dictamenesArray);
             if (dictamenesArray.length === 1) {
-                const data = yield iniciativas_estudio_1.default.findOne({
-                    where: { punto_destino_id: dictamenesArray[0] },
+                console.log("DICTAMENES UPDATE ARRAY: ");
+                let data = null;
+                const whereCondition = type == "1" ? { punto_origen_id: dictamenesArray[0] } : { punto_destino_id: dictamenesArray[0] };
+                data = yield iniciativas_estudio_1.default.findOne({
+                    where: whereCondition,
                 });
                 if (data) {
                     yield puntos_ordens_1.default.update({ id_dictamen: punto.id }, { where: { id: data.punto_destino_id } });
