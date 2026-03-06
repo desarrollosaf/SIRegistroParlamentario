@@ -560,15 +560,31 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             attributes: ['id', 'nombre'],
             raw: true,
         });
-        const dictamenes = yield puntos_ordens_1.default.findAll({
+        const dictamenesRaw = yield puntos_ordens_1.default.findAll({
             where: { id_dictamen: 0 },
             include: [
                 {
                     model: iniciativas_estudio_1.default,
                     as: 'puntosestudiados',
                     where: { status: 2 },
+                },
+                {
+                    model: agendas_1.default,
+                    as: 'evento',
+                    attributes: ["fecha", "id"]
                 }
             ]
+        });
+        const dictamenes = dictamenesRaw.map((p) => {
+            var _a, _b;
+            const d = p.toJSON();
+            const fecha = ((_a = d.evento) === null || _a === void 0 ? void 0 : _a.fecha)
+                ? new Date(d.evento.fecha).toISOString().split('T')[0]
+                : '';
+            return {
+                id: d.id,
+                punto: `${fecha} - ${(_b = d.evento) === null || _b === void 0 ? void 0 : _b.id} - ${d.punto}`
+            };
         });
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
