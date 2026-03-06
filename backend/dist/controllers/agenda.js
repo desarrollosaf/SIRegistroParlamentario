@@ -553,6 +553,7 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             ]
         });
+        console.log(dictamenes);
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
