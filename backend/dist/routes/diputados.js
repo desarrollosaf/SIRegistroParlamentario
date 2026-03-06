@@ -14,4 +14,5 @@ router.get("/api/diputados/selectiniciativas/", diputados_1.selectiniciativas);
 router.get("/api/diputados/getinfiniciativa/:id", diputados_1.getifnini);
 router.get("/api/diputados/terminarvotacion/:id", diputados_1.terminarvotacion);
 router.get("/api/diputados/eliminarevento/:id", diputados_1.deleteEvento);
+router.get("/api/diputados/exporcomisionespunto", diputados_1.exporpuntos);
 exports.default = router;
