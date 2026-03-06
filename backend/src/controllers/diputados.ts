@@ -471,7 +471,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             {
               model: IniciativaEstudio,
               as: 'estudio',
-              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id"], // 👈 cambió de id_punto_evento
+              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id","type"], // 👈 cambió de id_punto_evento
               required: false,
               include: [
                 {
@@ -505,7 +505,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             {
               model: IniciativaEstudio,
               as: 'estudio',
-              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id"], // 👈 cambió de id_punto_evento
+              attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id","type"], // 👈 cambió de id_punto_evento
               required: false,
               include: [
                 {
@@ -614,15 +614,23 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     
     const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
       const data = iniciativa.toJSON();
-      const fuenteEstudios = data.expediente != null
-      ? data.expedienteturno?.flatMap((exp: any) => exp.estudio || []) 
-      : data.punto?.estudio || [];
-      console.log("entre", data )
+      const todosEstudios = [
+        ...(data.punto?.estudio || []),
+        ...(data.expedienteturno?.flatMap((exp: any) => exp.estudio || []) || [])
+      ];
+
+      // Filtrar duplicados por id
+      const fuenteEstudios = todosEstudios.filter(
+        (e: any, index: number, self: any[]) => 
+          index === self.findIndex((x: any) => x.id === e.id)
+      );
+
+    
       const estudios      = fuenteEstudios.filter((e: any) => e.status === "1");
-      const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2") || [];
-      const cierres    = fuenteEstudios.filter((e: any) => e.status === "3") || [];
-      const rechazadocomi  = data.punto?.estudio?.filter((e: any) => e.status === "4") || [];
-      const rechazosesion  = data.punto?.estudio?.filter((e: any) => e.status === "5") || [];
+      const dictamenes    = fuenteEstudios.filter((e: any) => e.status === "2");
+      const cierres       = fuenteEstudios.filter((e: any) => e.status === "3");
+      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
+      const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
 
       // Anfitriones y turnado del nació
      
@@ -858,5 +866,103 @@ export const deleteEvento = async (req: Request, res: Response): Promise<any> =>
   } catch (error: any) {
     console.error("Error al eliminar el evento:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+
+export const exporpuntos = async (req: Request, res: Response) => {
+  try {
+    const eventos = await Agenda.findAll({  // 👈 findAll
+      where: { tipo_evento_id: "0e772516-bbc2-402f-afa0-022489752d33" },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+
+    if (!eventos || eventos.length === 0) {
+      return res.status(404).json({ msg: "Eventos no encontrados" });
+    }
+
+    const filas: any[] = [];
+
+    for (const evento of eventos) {
+      // Obtener comisiones del evento
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
+      let comisiones: any[] = [];
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+      }
+
+      const comisionesTexto = comisiones.map((c: any) => c.nombre).join(", ");
+
+      // Obtener puntos del evento
+      const puntosRaw = await PuntosOrden.findAll({
+        where: { id_evento: evento.id },  // 👈 ahora sí está en scope
+        order: [['nopunto', 'ASC']],
+      });
+
+      // Una fila por cada punto
+      for (const punto of puntosRaw) {
+        filas.push({
+          id_evento: evento.id,
+          fecha_evento: evento.fecha,
+          id_punto: punto.id,
+          no_punto: punto.nopunto,
+          texto: punto.punto,
+          comisiones: comisionesTexto
+        });
+      }
+    }
+
+    // Generar Excel con ExcelJS
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Puntos');
+
+    // Encabezados
+    sheet.columns = [
+      { header: 'ID Evento',    key: 'id_evento',    width: 40 },
+      { header: 'Fecha Evento', key: 'fecha_evento', width: 20 },
+      { header: 'ID Punto',     key: 'id_punto',     width: 40 },
+      { header: 'No. Punto',    key: 'no_punto',     width: 12 },
+      { header: 'Texto',        key: 'texto',        width: 60 },
+      { header: 'Comisiones',   key: 'comisiones',   width: 50 },
+    ];
+
+    // Estilo encabezados
+    sheet.getRow(1).eachCell((cell: any) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Agregar filas
+    filas.forEach(fila => sheet.addRow(fila));
+
+    // Responder con el archivo
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=puntos.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error("Error al exportar puntos:", error);
+    return res.status(500).json({
+      msg: "Error al generar el archivo Excel",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    });
   }
 };
