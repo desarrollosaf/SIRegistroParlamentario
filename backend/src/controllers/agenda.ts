@@ -661,7 +661,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           ]
         });
         
-        console.log(dictamenes)
 
         const dictamenes = dictamenesRaw.map((p: any) => {
           const d = p.toJSON();
