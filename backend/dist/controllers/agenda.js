@@ -575,7 +575,6 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             ]
         });
-      
         const dictamenes = dictamenesRaw.map((p) => {
             var _a, _b;
             const d = p.toJSON();
@@ -586,8 +585,7 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 id: d.id,
                 punto: `${fecha} - ${(_b = d.evento) === null || _b === void 0 ? void 0 : _b.id} - ${d.punto}`
             };
-        }
-        console.log(dictamenes)
+        });
         const legislatura = yield legislaturas_1.default.findOne({
             order: [["fecha_inicio", "DESC"]],
         });
