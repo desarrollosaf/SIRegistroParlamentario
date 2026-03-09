@@ -573,18 +573,105 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
             const data = iniciativa.toJSON();
+            console.log("DATA INICIATIVA:");
+            console.log(data);
             const todosEstudios = [
-                ...(((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) || []),
-                ...(((_b = data.expedienteturno) === null || _b === void 0 ? void 0 : _b.flatMap((exp) => exp.estudio || [])) || [])
+                ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
+                ...(Array.isArray(data.expedienteturno)
+                    ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
+                    : [])
             ];
-            // Filtrar duplicados por id
+            console.log("TODOS ESTUDIOS:");
+            console.log(todosEstudios);
             const fuenteEstudios = todosEstudios.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
             const estudios = fuenteEstudios.filter((e) => e.status === "1");
             const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
-            const cierres = fuenteEstudios.filter((e) => e.status === "3");
             const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
             const rechazosesion = fuenteEstudios.filter((e) => e.status === "5");
-            // Anfitriones y turnado del nació
+            // -----------------------------
+            // NUEVO: buscar cierres por varios puntos
+            // -----------------------------
+            const posiblesPuntosIds = [
+                (_b = data.punto) === null || _b === void 0 ? void 0 : _b.id,
+                ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
+            ];
+            const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+            console.log("POSIBLES PUNTOS PARA CIERRE:");
+            console.log(posiblesPuntosUnicos);
+            // 1. Buscar si alguno de esos puntos está en expedientes_estudio_puntos
+            const expedientesRelacionados = yield expedientes_estudio_puntos_1.default.findAll({
+                where: {
+                    punto_origen_sesion_id: {
+                        [sequelize_1.Op.in]: posiblesPuntosUnicos
+                    }
+                },
+                attributes: ["id", "expediente_id", "punto_origen_sesion_id"]
+            });
+            console.log("EXPEDIENTES RELACIONADOS:");
+            console.log(expedientesRelacionados.map((e) => e.toJSON()));
+            // 2. Sacar los expediente_id encontrados
+            const expedienteIds = [
+                ...new Set(expedientesRelacionados
+                    .map((e) => e.expediente_id)
+                    .filter(Boolean))
+            ];
+            console.log("EXPEDIENTE IDS:");
+            console.log(expedienteIds);
+            // 3. Buscar cierres:
+            //    a) directos por punto_origen_id = 201, etc.
+            //    b) o por expediente_id encontrado = 49, etc.
+            const cierresDB = yield iniciativas_estudio_1.default.findAll({
+                where: {
+                    status: "3",
+                    [sequelize_1.Op.or]: [
+                        {
+                            punto_origen_id: {
+                                [sequelize_1.Op.in]: posiblesPuntosUnicos
+                            }
+                        },
+                        {
+                            punto_origen_id: {
+                                [sequelize_1.Op.in]: expedienteIds
+                            }
+                        }
+                    ]
+                },
+                include: [
+                    {
+                        model: puntos_ordens_1.default,
+                        as: "iniciativa",
+                        attributes: ["id", "punto", "nopunto", "tribuna"],
+                        include: [
+                            {
+                                model: agendas_1.default,
+                                as: "evento",
+                                attributes: ["id", "fecha", "descripcion", "liga"],
+                                include: [
+                                    {
+                                        model: tipo_eventos_1.default,
+                                        as: "tipoevento",
+                                        attributes: ["nombre"]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+            console.log("CIERRES DB:");
+            console.log(cierresDB.map((c) => c.toJSON()));
+            // 4. Unir con los que ya venían en fuenteEstudios
+            const cierresMerge = [
+                ...fuenteEstudios.filter((e) => e.status === "3"),
+                ...cierresDB.map((c) => c.toJSON())
+            ];
+            // 5. Quitar duplicados por id
+            const cierres = cierresMerge.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
+            console.log("CIERRES FINALES:");
+            console.log(cierres);
+            // -----------------------------
+            // resto de tu lógica
+            // -----------------------------
             const anfitrionesNacio = yield getAnfitriones((_c = data.evento) === null || _c === void 0 ? void 0 : _c.id, (_e = (_d = data.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre);
             const tribunainicio = yield diputado_1.default.findOne({
                 where: { id: (_f = data.punto) === null || _f === void 0 ? void 0 : _f.tribuna },
@@ -595,33 +682,35 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     .join(" ")
                 : null;
             const turnadoInfo = yield getComisionesTurnado((_g = data.punto) === null || _g === void 0 ? void 0 : _g.id);
-            // Estudios con info de evento y anfitriones
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
-                const eventoEstudio = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento; // 👈 cambió de e.puntoEvento?.evento
+                const eventoEstudio = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
                 const anfitriones = yield getAnfitriones(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, (_b = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
                 return Object.assign({ id: e.id, evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.id, fecha: formatearFecha(e.createdAt), tipo_evento: (_c = eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.fecha), liga: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.liga, descripcion_evento: eventoEstudio === null || eventoEstudio === void 0 ? void 0 : eventoEstudio.descripcion, numpunto: (_d = e.iniciativa) === null || _d === void 0 ? void 0 : _d.nopunto, punto: (_e = e.iniciativa) === null || _e === void 0 ? void 0 : _e.punto }, anfitriones);
             })));
-            // Dictámenes con info de evento y anfitriones
             const dictamenesConInfo = yield Promise.all(dictamenes.map((d) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f;
                 const eventoDict = (_a = d.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
                 const anfitriones = yield getAnfitriones(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, (_b = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre);
                 return Object.assign({ id: d.id, evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.id, fecha: formatearFecha(d.createdAt), tipo_evento: (_c = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre, fecha_evento: formatearFecha(eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.fecha), liga: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.liga, votacionid: (_d = d.iniciativa) === null || _d === void 0 ? void 0 : _d.id, descripcion_evento: eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.descripcion, numpunto: (_e = d.iniciativa) === null || _e === void 0 ? void 0 : _e.nopunto, punto: (_f = d.iniciativa) === null || _f === void 0 ? void 0 : _f.punto }, anfitriones);
             })));
-            // Cierres con info de evento
             const cierresConInfo = yield Promise.all(cierres.map((c) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f;
                 const eventoCierre = (_a = c.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
-                const tribuna1 = yield diputado_1.default.findOne({
-                    where: { id: (_b = c.iniciativa) === null || _b === void 0 ? void 0 : _b.tribuna },
-                });
+                const tribuna1 = ((_b = c.iniciativa) === null || _b === void 0 ? void 0 : _b.tribuna)
+                    ? yield diputado_1.default.findOne({
+                        where: { id: c.iniciativa.tribuna },
+                    })
+                    : null;
                 const tribuna = tribuna1
                     ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
                         .filter(Boolean)
                         .join(" ")
                     : null;
                 return {
+                    id: c.id,
+                    punto_origen_id: c.punto_origen_id,
+                    punto_destino_id: c.punto_destino_id,
                     evento: eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.id,
                     tipo_evento: (_c = eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre,
                     fecha: formatearFecha(eventoCierre === null || eventoCierre === void 0 ? void 0 : eventoCierre.fecha),
@@ -633,7 +722,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     tribuna,
                 };
             })));
-            // Rechazado de evento 
+            console.log("CIERRE INFO:");
+            console.log(cierresConInfo);
             const ReSesion = yield Promise.all(rechazosesion.map((s) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f;
                 const eventoCierre = (_a = s.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
