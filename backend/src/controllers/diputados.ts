@@ -27,6 +27,8 @@ import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IniciativasPresenta from "../models/iniciativaspresenta";
+import { Sequelize } from "sequelize";
+
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -338,7 +340,27 @@ export const getiniciativas = async (req: Request, res: Response): Promise<any> 
     const { id } = req.params;
     const iniciativa = await IniciativaPuntoOrden.findAll({ 
       where: { id_punto: id },
-      attributes: ["id", "iniciativa"]
+      attributes: ["id", "iniciativa"],
+      include: [
+                {
+                  model: IniciativasPresenta,
+                  as: "presentan",
+                  attributes: [
+                    [
+                      Sequelize.fn(
+                        'CONCAT',
+                        Sequelize.col('presentan.id_tipo_presenta'),
+                        '/',
+                        Sequelize.col('presentan.id_presenta')
+                      ),
+                      'id'
+                    ],
+                    "id_tipo_presenta",
+                    "id_presenta",
+                    ["id_tipo_presenta", "id_proponente"]
+                  ]
+                },
+        ]
     });
     if (!iniciativa) {
       return res.status(404).json({ message: "No tiene iniciativas" });

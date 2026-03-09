@@ -38,6 +38,7 @@ const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
+const sequelize_2 = require("sequelize");
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -310,7 +311,22 @@ const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const { id } = req.params;
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id_punto: id },
-            attributes: ["id", "iniciativa"]
+            attributes: ["id", "iniciativa"],
+            include: [
+                {
+                    model: iniciativaspresenta_1.default,
+                    as: "presentan",
+                    attributes: [
+                        [
+                            sequelize_2.Sequelize.fn('CONCAT', sequelize_2.Sequelize.col('presentan.id_tipo_presenta'), '/', sequelize_2.Sequelize.col('presentan.id_presenta')),
+                            'id'
+                        ],
+                        "id_tipo_presenta",
+                        "id_presenta",
+                        ["id_tipo_presenta", "id_proponente"]
+                    ]
+                },
+            ]
         });
         if (!iniciativa) {
             return res.status(404).json({ message: "No tiene iniciativas" });

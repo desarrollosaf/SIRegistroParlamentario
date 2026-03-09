@@ -43,6 +43,7 @@ import TipoCargoComision from "../models/tipo_cargo_comisions";
 import ExcelJS from 'exceljs';
 import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
 import IniciativaEstudio from "../models/iniciativas_estudio";
+import IniciativasPresenta from "../models/iniciativaspresenta";
 
 
 
@@ -1229,7 +1230,27 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
           {
             model: IniciativaPuntoOrden,
             as: "iniciativas",
-            attributes: ["id", "iniciativa"]
+            attributes: ["id", "iniciativa"],
+            include: [
+                              {
+                                model: IniciativasPresenta,
+                                as: "presentan",
+                                attributes: [
+                                  [
+                                    Sequelize.fn(
+                                      'CONCAT',
+                                      Sequelize.col('presentan.id_tipo_presenta'),
+                                      '/',
+                                      Sequelize.col('presentan.id_presenta')
+                                    ),
+                                    'id'
+                                  ],
+                                  "id_tipo_presenta",
+                                  "id_presenta",
+                                  ["id_tipo_presenta", "id_proponente"]
+                                ]
+                              },
+                      ]
           },
           {
             model: IniciativaEstudio,
