@@ -271,18 +271,18 @@
                             <i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}
                           </span>
                         </div>
-                        <p class="timeline-desc mb-2">{{ item.descripcion }}</p>
-                        <div class="mt-2" *ngIf="item.punto">
+                        <p class="timeline-desc mb-2">{{ item.punto }}</p>
+                        <div class="mt-2" *ngIf="item.descripcion">
                           <button class="btn btn-sm btn-link p-0 mt-1 text-decoration-none" type="button"
                             (click)="toggleCollapse(i)">
                             <small>
                               <i class="bi me-1" [ngClass]="isCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
-                              {{ isCollapsed[i] ? 'Ver punto completo' : 'Ocultar punto' }}
+                              {{ isCollapsed[i] ? 'Ver descripcion completo' : 'Ocultar descripcion' }}
                             </small>
                           </button>
                           <div class="collapse-content" [class.show]="!isCollapsed[i]">
                             <div class="card card-body bg-light mt-2">
-                              <small>{{ item.punto }}</small>
+                              <small>{{ item.descripcion }}</small>
                             </div>
                           </div>
                         </div>
