@@ -161,7 +161,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         where: {
                             id: puntosturnados.map(p => p.id_punto)
                         },
-                        attributes: ["id", "punto"],
+                        attributes: ["id", "punto", "nopunto"],
                         include: [
                             {
                                 model: agendas_1.default,
@@ -178,7 +178,7 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             : '';
                         return {
                             id: data.id,
-                            punto: `${fecha} - ${(_b = data.evento) === null || _b === void 0 ? void 0 : _b.id} - ${data.punto}`
+                            punto: `${fecha} - ${(_b = data.evento) === null || _b === void 0 ? void 0 : _b.id} - ${data.nopunto} - ${data.punto}`
                         };
                     });
                 }
@@ -853,8 +853,8 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        // console.log(body);
-        // return 500;
+        console.log(body);
+        return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -886,7 +886,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
-            se_turna_comision: body.se_turna_comision ? 1 : 0
+            se_turna_comision: String(body.se_turna_comision) === 'true' ? 1 : 0
         });
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
         if (body.tipo_evento != 0) {
