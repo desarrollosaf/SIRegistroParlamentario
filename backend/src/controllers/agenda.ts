@@ -962,8 +962,8 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    console.log(body);
-    return 500;
+    // console.log(body);
+    // return 500;
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
