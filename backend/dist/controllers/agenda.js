@@ -52,6 +52,7 @@ const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_com
 const exceljs_1 = __importDefault(require("exceljs"));
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
+const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -853,8 +854,8 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        console.log(body);
-        return 500;
+        // console.log(body);
+        // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -1083,7 +1084,22 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
-                    attributes: ["id", "iniciativa"]
+                    attributes: ["id", "iniciativa"],
+                    include: [
+                        {
+                            model: iniciativaspresenta_1.default,
+                            as: "presentan",
+                            attributes: [
+                                [
+                                    sequelize_2.Sequelize.fn('CONCAT', sequelize_2.Sequelize.col('presentan.id_tipo_presenta'), '/', sequelize_2.Sequelize.col('presentan.id_presenta')),
+                                    'id'
+                                ],
+                                "id_tipo_presenta",
+                                "id_presenta",
+                                ["id_tipo_presenta", "id_proponente"]
+                            ]
+                        },
+                    ]
                 },
                 {
                     model: iniciativas_estudio_1.default,
