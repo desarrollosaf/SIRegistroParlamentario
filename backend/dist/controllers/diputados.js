@@ -37,6 +37,7 @@ const partidos_1 = __importDefault(require("../models/partidos"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
+const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -231,21 +232,40 @@ exports.actvototodos = actvototodos;
 const creariniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
-        // console.log(body)
-        // return 500
         const punto = yield puntos_ordens_1.default.findOne({
             where: { id: body.punto },
         });
+        const presentaArray = (Array.isArray(body.id_presenta)
+            ? body.id_presenta
+            : (body.id_presenta || "").split(","))
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+            .map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return {
+                proponenteId: parseInt(proponenteId),
+                autorId: autorId
+            };
+        });
+        // console.log(presentaArray)
+        // return 500
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
-        const nuevoTema = yield inciativas_puntos_ordens_1.default.create({
+        const iniciativa = yield inciativas_puntos_ordens_1.default.create({
             id_punto: punto.id,
             id_evento: punto.id_evento,
             iniciativa: body.descripcion,
             fecha_votacion: null,
             status: 1,
         });
+        for (const item of presentaArray) {
+            yield iniciativaspresenta_1.default.create({
+                id_iniciativa: iniciativa.id,
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId
+            });
+        }
         return res.status(200).json({
             message: "Iniciativa creada exitosamente",
         });

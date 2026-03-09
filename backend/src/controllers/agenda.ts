@@ -184,7 +184,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
             where: { 
               id: puntosturnados.map(p => p.id_punto) 
             },
-            attributes: ["id", "punto"],
+            attributes: ["id", "punto", "nopunto"],
             include: [
               {
                 model: Agenda,
@@ -200,7 +200,7 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
               : '';
             return {
               id: data.id,
-              punto: `${fecha} - ${data.evento?.id} - ${data.punto}`
+              punto: `${fecha} - ${data.evento?.id} - ${data.nopunto} - ${data.punto}`
             };
           });
 
@@ -961,8 +961,8 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    // console.log(body);
-    // return 500;
+    console.log(body);
+    return 500;
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -999,7 +999,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
-      se_turna_comision: body.se_turna_comision ? 1 : 0
+      se_turna_comision: String(body.se_turna_comision) === 'true' ? 1 : 0
     });
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
     if(body.tipo_evento != 0){
@@ -1494,7 +1494,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
           proponenteId: parseInt(proponenteId),
           autorId: autorId 
         };
-      });
+    });
     const proponentesIds = (body.proponente || "")
       .split(",")
       .map((id: string) => parseInt(id.trim()))
