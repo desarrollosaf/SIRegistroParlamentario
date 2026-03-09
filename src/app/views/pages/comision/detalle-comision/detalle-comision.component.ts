@@ -116,9 +116,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   idEvento: '';
   fechaC: '';
   esComision: boolean = false; //C
+  isPermanen: boolean = false; //C
   listaComisiones: any[] = []; //C
   documentos: { [key: string]: File | null } = {
     docPunto: null,
+    versionEstenografica: null,
+    ordenDia: null,
   };
 
   mostrarformReserva = false;
@@ -584,7 +587,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
             // ES COMISIÓN
+
+            if (response.evento.tipoevento.id == 'a413e44b-550b-47ab-b004-a6f28c73a750') {
+              this.isPermanen = true;
+            }
             this.esComision = true;
+
             this.listaComisiones = response.integrantes.map((comision: any) => ({
               id: comision.comision_id,
               nombre: comision.comision_nombre,
@@ -770,6 +778,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset({
       se_turna_comision: false // <-- Establecer valor por defecto
     });
+    console.log(this.formPunto);
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response);
@@ -1547,6 +1556,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (punto.nuevoDocumento) {
       formData.append('documento', punto.nuevoDocumento);
     }
+    if (punto.nuevoDocumentoEstenografica) {
+      formData.append('version_estenografica', punto.nuevoDocumentoEstenografica);
+    }
+    if (punto.nuevoDocumentoOrdenDia) {
+      formData.append('orden_dia', punto.nuevoDocumentoOrdenDia);
+    }
 
     if (this.esComision) {
       this.tipo_evento = 1;
@@ -1655,6 +1670,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+  triggerFileInputGenerico(id: string): void {
+    const fileInput = document.getElementById(id) as HTMLInputElement;
+    if (fileInput) fileInput.click();
+  }
+
+  verDocumentoGenerico(path: string): void {
+    if (path) {
+      const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
+      window.open(url, '_blank');
+    }
+  }
+
+  onFileSelectPuntoGenerico(event: Event, punto: any, campo: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      punto[campo] = input.files[0];
+    }
+  }
   // ==================== MODAL DE INTERVENCIONES ====================
 
   abrirModalIntervencionGeneral() {
@@ -2111,6 +2144,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.puntosTurnadosSeleccionados = [];
     this.dictamenesSeleccionados = [];
     this.documentos['docPunto'] = null;
+    this.documentos['versionEstenografica'] = null;
+    this.documentos['ordenDia'] = null;
     this.formPunto.reset({
       se_turna_comision: false
     });
@@ -2140,6 +2175,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     // Agregar documento si existe
     if (this.documentos['docPunto']) {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
+    }
+
+    if (this.documentos['versionEstenografica']) {
+      formData.append('version_estenografica', this.documentos['versionEstenografica'], this.documentos['versionEstenografica'].name);
+    }
+    if (this.documentos['ordenDia']) {
+      formData.append('orden_dia', this.documentos['ordenDia'], this.documentos['ordenDia'].name);
     }
 
     // Agregar tipo de evento
@@ -2178,48 +2220,48 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       console.log(clave, valor);
     });
 
-    this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
-      next: (response: any) => {
-        const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-          didOpen: (toast) => {
-            toast.onmouseenter = Swal.stopTimer;
-            toast.onmouseleave = Swal.resumeTimer;
-          }
-        });
-        Toast.fire({
-          icon: "success",
-          title: "Punto guardado correctamente."
-        });
+    // this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
+    //   next: (response: any) => {
+    //     const Toast = Swal.mixin({
+    //       toast: true,
+    //       position: "top-end",
+    //       showConfirmButton: false,
+    //       timer: 3000,
+    //       timerProgressBar: true,
+    //       didOpen: (toast) => {
+    //         toast.onmouseenter = Swal.stopTimer;
+    //         toast.onmouseleave = Swal.resumeTimer;
+    //       }
+    //     });
+    //     Toast.fire({
+    //       icon: "success",
+    //       title: "Punto guardado correctamente."
+    //     });
 
-        // Limpiar todo
-        this.documentos['docPunto'] = null;
-        this.formPunto.reset({
-          se_turna_comision: false
-        });
-        this.reservasTemporales = [];
-        this.listaReservas = [];
-        this.iniciativasTemporales = [];
-        this.listaIniciativas = [];
-        this.mostrarFormularioPunto = false;
-        this.cargarPuntosRegistrados();
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
+    //     // Limpiar todo
+    //     this.documentos['docPunto'] = null;
+    //     this.formPunto.reset({
+    //       se_turna_comision: false
+    //     });
+    //     this.reservasTemporales = [];
+    //     this.listaReservas = [];
+    //     this.iniciativasTemporales = [];
+    //     this.listaIniciativas = [];
+    //     this.mostrarFormularioPunto = false;
+    //     this.cargarPuntosRegistrados();
+    //   },
+    //   error: (e: HttpErrorResponse) => {
+    //     const msg = e.error?.msg || 'Error desconocido';
+    //     console.error('Error del servidor:', msg);
 
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: msg,
-          timer: 3000
-        });
-      }
-    });
+    //     Swal.fire({
+    //       icon: "error",
+    //       title: "Error",
+    //       text: msg,
+    //       timer: 3000
+    //     });
+    //   }
+    // });
   }
 
   //********************************************************************************************************* */
