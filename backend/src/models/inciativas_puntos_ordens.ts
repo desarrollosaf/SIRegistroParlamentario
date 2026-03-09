@@ -10,6 +10,7 @@ import sequelize from "../database/registrocomisiones";
 import PuntosOrden from "./puntos_ordens";
 import Agenda from "./agendas";
 import IniciativaEstudio from "./iniciativas_estudio";
+import IniciativasPresenta from "./iniciativaspresenta";
 
 class IniciativaPuntoOrden extends Model {
   declare id: string;
@@ -89,6 +90,9 @@ IniciativaPuntoOrden.init(
 
 // IniciativaPuntoOrden.belongsTo(PuntosOrden, { foreignKey: 'id_punto', as: 'punto' });
 IniciativaPuntoOrden.belongsTo(Agenda, { foreignKey: 'id_evento', as: 'evento' });
+IniciativaPuntoOrden.hasMany(IniciativasPresenta, {
+  foreignKey: 'id_iniciativa', as: 'presentan'
+});
 
 
 

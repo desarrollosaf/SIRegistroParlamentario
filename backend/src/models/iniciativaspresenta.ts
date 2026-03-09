@@ -1,5 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../database/registrocomisiones';
+import PuntosPresenta from './puntos_presenta';
+import Proponentes from './proponentes';
 
 interface IniciativasPresentaAttributes {
   id: number;
@@ -67,5 +69,5 @@ IniciativasPresenta.init(
     timestamps: true,
   }
 );
-
+IniciativasPresenta.belongsTo(Proponentes, { foreignKey: 'id_tipo_presenta', as: 'tipo_presenta' });
 export default IniciativasPresenta;

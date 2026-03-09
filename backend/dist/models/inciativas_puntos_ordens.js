@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
 const agendas_1 = __importDefault(require("./agendas"));
+const iniciativaspresenta_1 = __importDefault(require("./iniciativaspresenta"));
 class IniciativaPuntoOrden extends sequelize_1.Model {
 }
 IniciativaPuntoOrden.init({
@@ -60,4 +61,7 @@ IniciativaPuntoOrden.init({
 });
 // IniciativaPuntoOrden.belongsTo(PuntosOrden, { foreignKey: 'id_punto', as: 'punto' });
 IniciativaPuntoOrden.belongsTo(agendas_1.default, { foreignKey: 'id_evento', as: 'evento' });
+IniciativaPuntoOrden.hasMany(iniciativaspresenta_1.default, {
+    foreignKey: 'id_iniciativa', as: 'presentan'
+});
 exports.default = IniciativaPuntoOrden;

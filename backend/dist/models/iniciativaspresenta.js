@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const registrocomisiones_1 = __importDefault(require("../database/registrocomisiones"));
+const proponentes_1 = __importDefault(require("./proponentes"));
 class IniciativasPresenta extends sequelize_1.Model {
 }
 IniciativasPresenta.init({
@@ -44,4 +45,5 @@ IniciativasPresenta.init({
     paranoid: true, // 👈 para soft delete con deletedAt
     timestamps: true,
 });
+IniciativasPresenta.belongsTo(proponentes_1.default, { foreignKey: 'id_tipo_presenta', as: 'tipo_presenta' });
 exports.default = IniciativasPresenta;
