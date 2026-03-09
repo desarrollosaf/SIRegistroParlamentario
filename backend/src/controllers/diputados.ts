@@ -612,148 +612,284 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       presentaString = presentanData.map(p => p.valor).join(', ');
     }
     
-    const trazaIniciativas = await Promise.all(iniciativas.map(async iniciativa => {
-      const data = iniciativa.toJSON();
-      const todosEstudios = [
-        ...(data.punto?.estudio || []),
-        ...(data.expedienteturno?.flatMap((exp: any) => exp.estudio || []) || [])
-      ];
+    const trazaIniciativas = await Promise.all(
+      iniciativas.map(async (iniciativa) => {
+        const data = iniciativa.toJSON();
 
-      // Filtrar duplicados por id
-      const fuenteEstudios = todosEstudios.filter(
-        (e: any, index: number, self: any[]) => 
-          index === self.findIndex((x: any) => x.id === e.id)
-      );
+        console.log("DATA INICIATIVA:");
+        console.log(data);
 
-    
-      const estudios      = fuenteEstudios.filter((e: any) => e.status === "1");
-      const dictamenes    = fuenteEstudios.filter((e: any) => e.status === "2");
-      const cierres       = fuenteEstudios.filter((e: any) => e.status === "3");
-      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
-      const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
+        const todosEstudios = [
+          ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
+          ...(Array.isArray(data.expedienteturno)
+            ? data.expedienteturno.flatMap((exp: any) =>
+                Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
+              )
+            : [])
+        ];
 
-      // Anfitriones y turnado del nació
-     
-      const anfitrionesNacio = await getAnfitriones(
-        data.evento?.id,
-        data.evento?.tipoevento?.nombre
-      );
-      const tribunainicio = await Diputado.findOne({
-           where: { id: data.punto?.tribuna },
-        })
+        console.log("TODOS ESTUDIOS:");
+        console.log(todosEstudios);
+
+        const fuenteEstudios = todosEstudios.filter(
+          (e: any, index: number, self: any[]) =>
+            index === self.findIndex((x: any) => x.id === e.id)
+        );
+
+        const estudios       = fuenteEstudios.filter((e: any) => e.status === "1");
+        const dictamenes     = fuenteEstudios.filter((e: any) => e.status === "2");
+        const rechazadocomi  = fuenteEstudios.filter((e: any) => e.status === "4");
+        const rechazosesion  = fuenteEstudios.filter((e: any) => e.status === "5");
+
+        // -----------------------------
+        // NUEVO: buscar cierres por varios puntos
+        // -----------------------------
+        const posiblesPuntosIds = [
+          data.punto?.id,
+          ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
+        ];
+
+        const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+
+        console.log("POSIBLES PUNTOS PARA CIERRE:");
+        console.log(posiblesPuntosUnicos);
+
+        // 1. Buscar si alguno de esos puntos está en expedientes_estudio_puntos
+        const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
+          where: {
+            punto_origen_sesion_id: {
+              [Op.in]: posiblesPuntosUnicos
+            }
+          },
+          attributes: ["id", "expediente_id", "punto_origen_sesion_id"]
+        });
+
+        console.log("EXPEDIENTES RELACIONADOS:");
+        console.log(expedientesRelacionados.map((e: any) => e.toJSON()));
+
+        // 2. Sacar los expediente_id encontrados
+        const expedienteIds = [
+          ...new Set(
+            expedientesRelacionados
+              .map((e: any) => e.expediente_id)
+              .filter(Boolean)
+          )
+        ];
+
+        console.log("EXPEDIENTE IDS:");
+        console.log(expedienteIds);
+
+        // 3. Buscar cierres:
+        //    a) directos por punto_origen_id = 201, etc.
+        //    b) o por expediente_id encontrado = 49, etc.
+        const cierresDB = await IniciativaEstudio.findAll({
+          where: {
+            status: "3",
+            [Op.or]: [
+              {
+                punto_origen_id: {
+                  [Op.in]: posiblesPuntosUnicos
+                }
+              },
+              {
+                punto_origen_id: {
+                  [Op.in]: expedienteIds
+                }
+              }
+            ]
+          },
+          include: [
+            {
+              model: PuntosOrden,
+              as: "iniciativa",
+              attributes: ["id", "punto", "nopunto", "tribuna"],
+              include: [
+                {
+                  model: Agenda,
+                  as: "evento",
+                  attributes: ["id", "fecha", "descripcion", "liga"],
+                  include: [
+                    {
+                      model: TipoEventos,
+                      as: "tipoevento",
+                      attributes: ["nombre"]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+
+        console.log("CIERRES DB:");
+        console.log(cierresDB.map((c: any) => c.toJSON()));
+
+        // 4. Unir con los que ya venían en fuenteEstudios
+        const cierresMerge = [
+          ...fuenteEstudios.filter((e: any) => e.status === "3"),
+          ...cierresDB.map((c: any) => c.toJSON())
+        ];
+
+        // 5. Quitar duplicados por id
+        const cierres = cierresMerge.filter(
+          (e: any, index: number, self: any[]) =>
+            index === self.findIndex((x: any) => x.id === e.id)
+        );
+
+        console.log("CIERRES FINALES:");
+        console.log(cierres);
+
+        // -----------------------------
+        // resto de tu lógica
+        // -----------------------------
+        const anfitrionesNacio = await getAnfitriones(
+          data.evento?.id,
+          data.evento?.tipoevento?.nombre
+        );
+
+        const tribunainicio = await Diputado.findOne({
+          where: { id: data.punto?.tribuna },
+        });
+
         const tribuna = tribunainicio
-        ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
-            .filter(Boolean)
-            .join(" ")
-        : null;
-      const turnadoInfo = await getComisionesTurnado(data.punto?.id);
-         
-      // Estudios con info de evento y anfitriones
-      const estudiosConInfo = await Promise.all(estudios.map(async (e: any) => {
-        const eventoEstudio = e.iniciativa?.evento; // 👈 cambió de e.puntoEvento?.evento
-        const anfitriones = await getAnfitriones(eventoEstudio?.id, eventoEstudio?.tipoevento?.nombre);
+          ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
+              .filter(Boolean)
+              .join(" ")
+          : null;
+
+        const turnadoInfo = await getComisionesTurnado(data.punto?.id);
+
+        const estudiosConInfo = await Promise.all(
+          estudios.map(async (e: any) => {
+            const eventoEstudio = e.iniciativa?.evento;
+            const anfitriones = await getAnfitriones(
+              eventoEstudio?.id,
+              eventoEstudio?.tipoevento?.nombre
+            );
+
+            return {
+              id: e.id,
+              evento: eventoEstudio?.id,
+              fecha: formatearFecha(e.createdAt),
+              tipo_evento: eventoEstudio?.tipoevento?.nombre,
+              fecha_evento: formatearFecha(eventoEstudio?.fecha),
+              liga: eventoEstudio?.liga,
+              descripcion_evento: eventoEstudio?.descripcion,
+              numpunto: e.iniciativa?.nopunto,
+              punto: e.iniciativa?.punto,
+              ...anfitriones
+            };
+          })
+        );
+
+        const dictamenesConInfo = await Promise.all(
+          dictamenes.map(async (d: any) => {
+            const eventoDict = d.iniciativa?.evento;
+            const anfitriones = await getAnfitriones(
+              eventoDict?.id,
+              eventoDict?.tipoevento?.nombre
+            );
+
+            return {
+              id: d.id,
+              evento: eventoDict?.id,
+              fecha: formatearFecha(d.createdAt),
+              tipo_evento: eventoDict?.tipoevento?.nombre,
+              fecha_evento: formatearFecha(eventoDict?.fecha),
+              liga: eventoDict?.liga,
+              votacionid: d.iniciativa?.id,
+              descripcion_evento: eventoDict?.descripcion,
+              numpunto: d.iniciativa?.nopunto,
+              punto: d.iniciativa?.punto,
+              ...anfitriones
+            };
+          })
+        );
+
+        const cierresConInfo = await Promise.all(
+          cierres.map(async (c: any) => {
+            const eventoCierre = c.iniciativa?.evento;
+
+            const tribuna1 = c.iniciativa?.tribuna
+              ? await Diputado.findOne({
+                  where: { id: c.iniciativa.tribuna },
+                })
+              : null;
+
+            const tribuna = tribuna1
+              ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+                  .filter(Boolean)
+                  .join(" ")
+              : null;
+
+            return {
+              id: c.id,
+              punto_origen_id: c.punto_origen_id,
+              punto_destino_id: c.punto_destino_id,
+              evento: eventoCierre?.id,
+              tipo_evento: eventoCierre?.tipoevento?.nombre,
+              fecha: formatearFecha(eventoCierre?.fecha),
+              descripcion_evento: eventoCierre?.descripcion,
+              liga: eventoCierre?.liga,
+              votacionid: c.iniciativa?.id,
+              numpunto: c.iniciativa?.nopunto,
+              punto: c.iniciativa?.punto,
+              tribuna,
+            };
+          })
+        );
+
+        console.log("CIERRE INFO:");
+        console.log(cierresConInfo);
+
+        const ReSesion = await Promise.all(
+          rechazosesion.map(async (s: any) => {
+            const eventoCierre = s.iniciativa?.evento;
+
+            const tribuna1 = await Diputado.findOne({
+              where: { id: s.iniciativa?.tribuna },
+            });
+
+            const tribuna = tribuna1
+              ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
+                  .filter(Boolean)
+                  .join(" ")
+              : null;
+
+            return {
+              evento: eventoCierre?.id,
+              tipo_evento: eventoCierre?.tipoevento?.nombre,
+              fecha: formatearFecha(eventoCierre?.fecha),
+              descripcion_evento: eventoCierre?.descripcion,
+              liga: eventoCierre?.liga,
+              votacionid: s.iniciativa?.id,
+              numpunto: s.iniciativa?.nopunto,
+              punto: s.iniciativa?.punto,
+              tribuna,
+            };
+          })
+        );
+
         return {
-          id: e.id,
-          evento: eventoEstudio?.id,
-          fecha: formatearFecha(e.createdAt),
-          tipo_evento: eventoEstudio?.tipoevento?.nombre,
-          fecha_evento: formatearFecha(eventoEstudio?.fecha),
-          liga: eventoEstudio?.liga,
-          descripcion_evento: eventoEstudio?.descripcion,
-          numpunto: e.iniciativa?.nopunto,  
-          punto: e.iniciativa?.punto,       
-          ...anfitriones
+          nacio: {
+            evento: data.evento?.id,
+            tipo_evento: data.evento?.tipoevento?.nombre,
+            fecha: formatearFecha(data.evento?.fecha),
+            descripcion_evento: data.evento?.descripcion,
+            numpunto: data.punto?.nopunto,
+            punto: data.punto?.punto,
+            liga: data.evento?.liga,
+            tribuna,
+            ...turnadoInfo,
+            ...anfitrionesNacio
+          },
+          estudio: estudiosConInfo,
+          dictamen: dictamenesConInfo,
+          cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
+          rechazadose: ReSesion,
         };
-      }));
-
-      // Dictámenes con info de evento y anfitriones
-      const dictamenesConInfo = await Promise.all(dictamenes.map(async (d: any) => {
-        const eventoDict = d.iniciativa?.evento; 
-        const anfitriones = await getAnfitriones(eventoDict?.id, eventoDict?.tipoevento?.nombre);
-        return {
-          id: d.id,
-          evento: eventoDict?.id,
-          fecha: formatearFecha(d.createdAt),
-          tipo_evento: eventoDict?.tipoevento?.nombre,
-          fecha_evento: formatearFecha(eventoDict?.fecha),
-          liga: eventoDict?.liga,
-          votacionid: d.iniciativa?.id,      
-          descripcion_evento: eventoDict?.descripcion,
-          numpunto: d.iniciativa?.nopunto,   
-          punto: d.iniciativa?.punto,       
-          ...anfitriones
-        };
-      }));
-
-      // Cierres con info de evento
-      const cierresConInfo = await Promise.all(cierres.map(async (c: any) => {
-        const eventoCierre = c.iniciativa?.evento; 
-        const tribuna1 = await Diputado.findOne({
-           where: { id: c.iniciativa?.tribuna },
-        })
-        const tribuna = tribuna1
-        ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
-            .filter(Boolean)
-            .join(" ")
-        : null;
-        return {
-          evento: eventoCierre?.id,
-          tipo_evento: eventoCierre?.tipoevento?.nombre,
-          fecha: formatearFecha(eventoCierre?.fecha),
-          descripcion_evento: eventoCierre?.descripcion,
-          liga: eventoCierre?.liga,
-          votacionid: c.iniciativa?.id,      
-          numpunto: c.iniciativa?.nopunto,   
-          punto: c.iniciativa?.punto,   
-          tribuna,    
-        };
-      }));
-
-      // Rechazado de evento 
-      const ReSesion = await Promise.all(rechazosesion.map(async (s: any) => {
-        const eventoCierre = s.iniciativa?.evento; 
-        const tribuna1 = await Diputado.findOne({
-           where: { id: s.iniciativa?.tribuna },
-        })
-        const tribuna = tribuna1
-        ? [tribuna1.nombres, tribuna1.apaterno, tribuna1.amaterno]
-            .filter(Boolean)
-            .join(" ")
-        : null;
-        return {
-          evento: eventoCierre?.id,
-          tipo_evento: eventoCierre?.tipoevento?.nombre,
-          fecha: formatearFecha(eventoCierre?.fecha),
-          descripcion_evento: eventoCierre?.descripcion,
-          liga: eventoCierre?.liga,
-          votacionid: s.iniciativa?.id,      
-          numpunto: s.iniciativa?.nopunto,   
-          punto: s.iniciativa?.punto,   
-          tribuna,    
-        };
-      }));
-
-
-
-      return {
-        nacio: {
-          evento: data.evento?.id,
-          tipo_evento: data.evento?.tipoevento?.nombre,
-          fecha: formatearFecha(data.evento?.fecha),
-          descripcion_evento: data.evento?.descripcion,
-          numpunto: data.punto?.nopunto,
-          punto: data.punto?.punto,
-          liga: data.evento?.liga,
-          tribuna,
-          ...turnadoInfo,
-          ...anfitrionesNacio
-        },
-        estudio: estudiosConInfo,
-        dictamen: dictamenesConInfo,
-        cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
-        rechazadose: ReSesion,
-      };
-    }));
+      })
+    );
     // console.log(trazaIniciativas);
     // return 500;
     return res.status(200).json({

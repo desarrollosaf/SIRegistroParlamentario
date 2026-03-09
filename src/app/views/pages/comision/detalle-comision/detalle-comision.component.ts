@@ -116,9 +116,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   idEvento: '';
   fechaC: '';
   esComision: boolean = false; //C
+  isPermanen: boolean = false; //C
   listaComisiones: any[] = []; //C
   documentos: { [key: string]: File | null } = {
     docPunto: null,
+    versionEstenografica: null,
+    ordenDia: null,
   };
 
   mostrarformReserva = false;
@@ -584,7 +587,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
           if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
             // ES COMISIÓN
+
+            if (response.evento.tipoevento.id == 'a413e44b-550b-47ab-b004-a6f28c73a750') {
+              this.isPermanen = true;
+            }
             this.esComision = true;
+
             this.listaComisiones = response.integrantes.map((comision: any) => ({
               id: comision.comision_id,
               nombre: comision.comision_nombre,
@@ -770,6 +778,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formPunto.reset({
       se_turna_comision: false // <-- Establecer valor por defecto
     });
+    console.log(this.formPunto);
     this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
         console.log(response);
@@ -1152,61 +1161,63 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id_presenta: this.formIniciativa.value.id_presenta
     };
 
-    this._eventoService.saveIniciativa(datos).subscribe({
-      next: (response: any) => {
-        const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: "success",
-          title: "Iniciativa guardada correctamente."
-        });
+    console.log('INICIATIVAS A ENVIAR: ', datos);
 
-        this.toggleformIniciativa();
+    // this._eventoService.saveIniciativa(datos).subscribe({
+    //   next: (response: any) => {
+    //     const Toast = Swal.mixin({
+    //       toast: true,
+    //       position: "top-end",
+    //       showConfirmButton: false,
+    //       timer: 2000,
+    //       timerProgressBar: true
+    //     });
+    //     Toast.fire({
+    //       icon: "success",
+    //       title: "Iniciativa guardada correctamente."
+    //     });
 
-        if (response.data) {
-          this.listaIniciativas.push(response.data);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
-          }
-        } else {
-          const nuevaIniciativa = {
-            id: response.id || Date.now(),
-            descripcion: datos.descripcion
-          };
+    //     this.toggleformIniciativa();
 
-          this.listaIniciativas.push(nuevaIniciativa);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
-          }
-        }
+    //     if (response.data) {
+    //       this.listaIniciativas.push(response.data);
+    //       if (this.puntoSeleccionadoIniciativa.iniciativas) {
+    //         this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+    //       } else {
+    //         this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+    //       }
+    //     } else {
+    //       const nuevaIniciativa = {
+    //         id: response.id || Date.now(),
+    //         descripcion: datos.descripcion
+    //       };
 
-        const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
-        if (puntoIndex !== -1) {
-          this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
-        }
+    //       this.listaIniciativas.push(nuevaIniciativa);
+    //       if (this.puntoSeleccionadoIniciativa.iniciativas) {
+    //         this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+    //       } else {
+    //         this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+    //       }
+    //     }
 
-        this.cdr.detectChanges();
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: msg,
-          timer: 3000
-        });
-      }
-    });
+    //     const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+    //     if (puntoIndex !== -1) {
+    //       this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+    //     }
+
+    //     this.cdr.detectChanges();
+    //   },
+    //   error: (e: HttpErrorResponse) => {
+    //     const msg = e.error?.msg || 'Error desconocido';
+    //     console.error('Error del servidor:', msg);
+    //     Swal.fire({
+    //       icon: "error",
+    //       title: "Error",
+    //       text: msg,
+    //       timer: 3000
+    //     });
+    //   }
+    // });
   }
 
   eliminarIniciativa(iniciativa: any, index: number) {
@@ -1547,6 +1558,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (punto.nuevoDocumento) {
       formData.append('documento', punto.nuevoDocumento);
     }
+    if (punto.nuevoDocumentoEstenografica) {
+      formData.append('version_estenografica', punto.nuevoDocumentoEstenografica);
+    }
+    if (punto.nuevoDocumentoOrdenDia) {
+      formData.append('orden_dia', punto.nuevoDocumentoOrdenDia);
+    }
 
     if (this.esComision) {
       this.tipo_evento = 1;
@@ -1655,6 +1672,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+  triggerFileInputGenerico(id: string): void {
+    const fileInput = document.getElementById(id) as HTMLInputElement;
+    if (fileInput) fileInput.click();
+  }
+
+  verDocumentoGenerico(path: string): void {
+    if (path) {
+      const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
+      window.open(url, '_blank');
+    }
+  }
+
+  onFileSelectPuntoGenerico(event: Event, punto: any, campo: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      punto[campo] = input.files[0];
+    }
+  }
   // ==================== MODAL DE INTERVENCIONES ====================
 
   abrirModalIntervencionGeneral() {
@@ -2111,6 +2146,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.puntosTurnadosSeleccionados = [];
     this.dictamenesSeleccionados = [];
     this.documentos['docPunto'] = null;
+    this.documentos['versionEstenografica'] = null;
+    this.documentos['ordenDia'] = null;
     this.formPunto.reset({
       se_turna_comision: false
     });
@@ -2142,6 +2179,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       formData.append('documento', this.documentos['docPunto'], this.documentos['docPunto'].name);
     }
 
+    if (this.documentos['versionEstenografica']) {
+      formData.append('version_estenografica', this.documentos['versionEstenografica'], this.documentos['versionEstenografica'].name);
+    }
+    if (this.documentos['ordenDia']) {
+      formData.append('orden_dia', this.documentos['ordenDia'], this.documentos['ordenDia'].name);
+    }
+
     // Agregar tipo de evento
     if (this.esComision) {
       this.tipo_evento = 1;
@@ -2166,7 +2210,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
     if (this.iniciativasTemporales.length > 0) {
       const iniciativasParaEnviar = this.iniciativasTemporales.map(i => ({
-        descripcion: i.descripcion
+        descripcion: i.descripcion,
+        id_proponente: i.id_proponente,
+        id_presenta: i.id_presenta,
+ 
       }));
       formData.append('iniciativas', JSON.stringify(iniciativasParaEnviar));
     }
