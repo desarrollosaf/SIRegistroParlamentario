@@ -2220,48 +2220,48 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       console.log(clave, valor);
     });
 
-    // this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
-    //   next: (response: any) => {
-    //     const Toast = Swal.mixin({
-    //       toast: true,
-    //       position: "top-end",
-    //       showConfirmButton: false,
-    //       timer: 3000,
-    //       timerProgressBar: true,
-    //       didOpen: (toast) => {
-    //         toast.onmouseenter = Swal.stopTimer;
-    //         toast.onmouseleave = Swal.resumeTimer;
-    //       }
-    //     });
-    //     Toast.fire({
-    //       icon: "success",
-    //       title: "Punto guardado correctamente."
-    //     });
+    this._eventoService.saveRegistro(formData, this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Punto guardado correctamente."
+        });
 
-    //     // Limpiar todo
-    //     this.documentos['docPunto'] = null;
-    //     this.formPunto.reset({
-    //       se_turna_comision: false
-    //     });
-    //     this.reservasTemporales = [];
-    //     this.listaReservas = [];
-    //     this.iniciativasTemporales = [];
-    //     this.listaIniciativas = [];
-    //     this.mostrarFormularioPunto = false;
-    //     this.cargarPuntosRegistrados();
-    //   },
-    //   error: (e: HttpErrorResponse) => {
-    //     const msg = e.error?.msg || 'Error desconocido';
-    //     console.error('Error del servidor:', msg);
+        // Limpiar todo
+        this.documentos['docPunto'] = null;
+        this.formPunto.reset({
+          se_turna_comision: false
+        });
+        this.reservasTemporales = [];
+        this.listaReservas = [];
+        this.iniciativasTemporales = [];
+        this.listaIniciativas = [];
+        this.mostrarFormularioPunto = false;
+        this.cargarPuntosRegistrados();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
 
-    //     Swal.fire({
-    //       icon: "error",
-    //       title: "Error",
-    //       text: msg,
-    //       timer: 3000
-    //     });
-    //   }
-    // });
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: msg,
+          timer: 3000
+        });
+      }
+    });
   }
 
   //********************************************************************************************************* */
