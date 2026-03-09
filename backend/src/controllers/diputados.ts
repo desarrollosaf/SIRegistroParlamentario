@@ -26,6 +26,7 @@ import Partidos from "../models/partidos";
 import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
+import IniciativasPresenta from "../models/iniciativaspresenta";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -253,23 +254,46 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
 export const creariniciativa = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    // console.log(body)
-    // return 500
+    
     const punto = await PuntosOrden.findOne({
       where: { id: body.punto },
     });
+     
+    const presentaArray = (Array.isArray(body.id_presenta) 
+      ? body.id_presenta 
+      : (body.id_presenta || "").split(",")
+    )
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0)
+      .map((item: string) => {
+        const [proponenteId, autorId] = item.split('/');
+        return {
+          proponenteId: parseInt(proponenteId),
+          autorId: autorId
+        };
+      });
+    // console.log(presentaArray)
+    // return 500
     
     if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
     
-    const nuevoTema = await IniciativaPuntoOrden.create({
+    const iniciativa = await IniciativaPuntoOrden.create({
       id_punto: punto.id,
       id_evento: punto.id_evento,
       iniciativa: body.descripcion,
       fecha_votacion: null,
       status: 1,
     });
+
+    for (const item of presentaArray) {
+          await IniciativasPresenta.create({
+            id_iniciativa: iniciativa.id,
+            id_tipo_presenta: item.proponenteId, 
+            id_presenta: item.autorId
+          });
+    }
     
     return res.status(200).json({ 
       message: "Iniciativa creada exitosamente",
