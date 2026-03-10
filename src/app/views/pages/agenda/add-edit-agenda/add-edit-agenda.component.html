@@ -112,7 +112,6 @@
                                             [value]="true" />
                                         Sí
                                     </label>
-
                                     <label class="form-check form-check-inline">
                                         <input type="radio" class="form-check-input" formControlName="transmite"
                                             [value]="false" />
@@ -137,7 +136,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="mb-3">
@@ -163,6 +161,63 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ===== DOCUMENTOS ===== -->
+                    <div class="row mt-3">
+                        <div class="col-sm-12">
+                            <h5>Documentos</h5>
+                        </div>
+
+                        <!-- Orden del día -->
+                        <div class="col-sm-6">
+                            <div class="mb-3">
+                                <label class="form-label negri">Orden del día:</label>
+                                <input type="file" class="form-control" accept="application/pdf"
+                                    (change)="onFileSelectOrdenDia($event)" #inputOrdenDia />
+                                <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
+                                    <span *ngIf="archivoOrdenDia" class="text-muted small">
+                                        <i class="feather icon-file"></i> {{ archivoOrdenDia.name }}
+                                    </span>
+                                    <button *ngIf="archivoOrdenDia" type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        (click)="eliminarArchivoOrdenDia(inputOrdenDia)">
+                                        <i class="feather icon-trash-2"></i> Quitar
+                                    </button>
+                                    <button *ngIf="pathOrdenDia && !archivoOrdenDia" type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        (click)="verDocumento(pathOrdenDia)">
+                                        <i class="feather icon-eye"></i> Ver documento actual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Versión estenográfica -->
+                        <div class="col-sm-6">
+                            <div class="mb-3">
+                                <label class="form-label negri">Versión estenográfica:</label>
+                                <input type="file" class="form-control" accept="application/pdf"
+                                    (change)="onFileSelectVersionEstenografica($event)" #inputVersionEsten />
+                                <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
+                                    <span *ngIf="archivoVersionEstenografica" class="text-muted small">
+                                        <i class="feather icon-file"></i> {{ archivoVersionEstenografica.name }}
+                                    </span>
+                                    <button *ngIf="archivoVersionEstenografica" type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        (click)="eliminarArchivoVersionEstenografica(inputVersionEsten)">
+                                        <i class="feather icon-trash-2"></i> Quitar
+                                    </button>
+                                    <button *ngIf="pathVersionEstenografica && !archivoVersionEstenografica" type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        (click)="verDocumento(pathVersionEstenografica)">
+                                        <i class="feather icon-eye"></i> Ver documento actual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ===== FIN DOCUMENTOS ===== -->
+
                     <div class="text-center mt-4">
                         <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
                             <button type="submit" class="btn btn-primary px-4"
