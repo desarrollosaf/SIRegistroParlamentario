@@ -1003,7 +1003,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
     });
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
-    if(body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ){
+    if(body.tipo_evento != 0 && evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ){
       if (puntosTurnadosArray.length > 0) {
           if (puntosTurnadosArray.length === 1) {
             const estudio = await IniciativaEstudio.create({
@@ -1378,6 +1378,7 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
               dictamenes = info;
 
             }else{
+
 
               const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
               where: { expediente_id: estudiado.punto_origen_id }, 
