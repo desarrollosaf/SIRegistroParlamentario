@@ -335,39 +335,96 @@ export const eliminariniciativa = async (req: Request, res: Response): Promise<a
   }
 };
 
+const procesarPresentan = async (presentan: any[]) => {
+  const proponentesUnicos = new Map<string, string>();
+  const presentanData: any[] = [];
+
+  for (const p of presentan) {
+    const tipoValor = p.tipo_presenta?.valor ?? '';
+    let valor = '';
+
+    if (tipoValor === 'Diputadas y Diputados') {
+      const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
+      valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
+    } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
+      const comi = await Comision.findOne({ where: { id: p.id_presenta } });
+      valor = comi?.nombre ?? '';
+    } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
+      const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
+      valor = muni?.nombre ?? '';
+    } else if (tipoValor === 'Grupo Parlamentario') {
+      const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
+      valor = partido?.nombre ?? '';
+    } else if (tipoValor === 'Legislatura') {
+      const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
+      valor = leg?.numero ?? '';
+    } else if (tipoValor === 'Secretarías del GEM') {
+      const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
+      valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
+    } else {
+      const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
+      valor = cat?.nombre_titular ?? '';
+    }
+
+    if (!proponentesUnicos.has(tipoValor)) {
+      proponentesUnicos.set(tipoValor, tipoValor);
+    }
+    presentanData.push({ proponente: tipoValor, valor, id_presenta: p.id_presenta });
+  }
+
+  return {
+    proponentesString: Array.from(proponentesUnicos.keys()).join(", "),
+    presentaString: presentanData.map(p => p.valor).join(', ')
+  };
+};
+
 export const getiniciativas = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const iniciativa = await IniciativaPuntoOrden.findAll({ 
+    const iniciativasRaw = await IniciativaPuntoOrden.findAll({ 
       where: { id_punto: id },
       attributes: ["id", "iniciativa"],
       include: [
-                {
-                  model: IniciativasPresenta,
-                  as: "presentan",
-                  attributes: [
-                    [
-                      Sequelize.fn(
-                        'CONCAT',
-                        Sequelize.col('presentan.id_tipo_presenta'),
-                        '/',
-                        Sequelize.col('presentan.id_presenta')
-                      ),
-                      'id'
-                    ],
-                    "id_tipo_presenta",
-                    "id_presenta",
-                    ["id_tipo_presenta", "id_proponente"]
-                  ]
-                },
-        ]
+        {
+          model: IniciativasPresenta,
+          as: "presentan",
+          attributes: ["id_tipo_presenta", "id_presenta"],
+          include: [
+            {
+              model: Proponentes,
+              as: "tipo_presenta",
+              attributes: ["id", "valor"]
+            }
+          ]
+        }
+      ]
     });
-    if (!iniciativa) {
+
+    if (!iniciativasRaw) {
       return res.status(404).json({ message: "No tiene iniciativas" });
     }
+
+    // 👇 Procesar cada iniciativa con sus presentan
+    const iniciativas = await Promise.all(
+      iniciativasRaw.map(async (ini: any) => {
+        const data = ini.toJSON();
+        const { proponentesString, presentaString } = data.presentan?.length
+          ? await procesarPresentan(data.presentan)
+          : { proponentesString: '', presentaString: '' };
+
+        return {
+          id: data.id,
+          iniciativa: data.iniciativa,
+          proponente: proponentesString,
+          presenta: presentaString
+        };
+      })
+    );
+
     return res.status(200).json({
-      data: iniciativa,
+      data: iniciativas,
     });  
+
   } catch (error: any) {
     console.error("Error al obtener las iniciativas:", error);
     return res.status(500).json({ 
@@ -519,6 +576,9 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               as: 'estudio',
               attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id","type"], // 👈 cambió de id_punto_evento
               required: false,
+              where: {
+                type: 1
+              },
               include: [
                 {
                   model: PuntosOrden,

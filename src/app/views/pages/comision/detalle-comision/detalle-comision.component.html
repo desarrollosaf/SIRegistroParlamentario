@@ -523,47 +523,9 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Versión estenográfica -->
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Versión estenográfica</label>
-                                                        <div class="position-relative d-flex flex-column flex-grow-1"
-                                                            style="padding-bottom: 1rem;">
-                                                            <input class="form-control" type="file"
-                                                                id="versionEstenografica" accept="application/pdf"
-                                                                (change)="onFileSelect($event, 'versionEstenografica')"
-                                                                #versionEstenografica_t />
-                                                            <br>
-                                                            <div *ngIf="documentos?.versionEstenografica"
-                                                                style="position: absolute; bottom: 0; right: 0;">
-                                                                <button type="button" class="btn-eliminar-doc"
-                                                                    (click)="eliminarArchivo('versionEstenografica', versionEstenografica_t)">
-                                                                    <i class="bi bi-trash3-fill"></i>
-                                                                    <span>Eliminar</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                   
 
-                                                    <!-- Orden del día -->
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Orden del día</label>
-                                                        <div class="position-relative d-flex flex-column flex-grow-1"
-                                                            style="padding-bottom: 1rem;">
-                                                            <input class="form-control" type="file" id="ordenDia"
-                                                                accept="application/pdf"
-                                                                (change)="onFileSelect($event, 'ordenDia')"
-                                                                #ordenDia_t />
-                                                            <br>
-                                                            <div *ngIf="documentos?.ordenDia"
-                                                                style="position: absolute; bottom: 0; right: 0;">
-                                                                <button type="button" class="btn-eliminar-doc"
-                                                                    (click)="eliminarArchivo('ordenDia', ordenDia_t)">
-                                                                    <i class="bi bi-trash3-fill"></i>
-                                                                    <span>Eliminar</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                            
 
                                                     <!-- ¿Se turna a comisión? — Sesión y Permanente -->
                                                     <div class="col-12" *ngIf="!esComision || isPermanen">
@@ -1097,72 +1059,8 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <!-- Versión estenográfica en accordion -->
-                                                                <div class="col-12">
-                                                                    <label class="form-label">Versión
-                                                                        estenográfica</label>
-                                                                    <div
-                                                                        class="d-flex gap-2 align-items-center flex-wrap">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-primary btn-sm"
-                                                                            *ngIf="punto.path_version_estenografica"
-                                                                            (click)="verDocumentoGenerico(punto.path_version_estenografica)">
-                                                                            <i class="bi bi-file-pdf"></i> Ver versión
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-success btn-sm"
-                                                                            (click)="triggerFileInputGenerico('fileInputEsten' + i)">
-                                                                            <i class="bi bi-upload"></i>
-                                                                            {{ punto.path_version_estenografica ?
-                                                                            'Reemplazar' : 'Subir' }} versión
-                                                                            estenográfica
-                                                                        </button>
-                                                                        <input type="file" [id]="'fileInputEsten' + i"
-                                                                            hidden accept="application/pdf"
-                                                                            (change)="onFileSelectPuntoGenerico($event, punto, 'nuevoDocumentoEstenografica')">
-                                                                        <small class="text-muted ms-2"
-                                                                            *ngIf="punto.nuevoDocumentoEstenografica">
-                                                                            {{ punto.nuevoDocumentoEstenografica.name }}
-                                                                        </small>
-                                                                        <small class="text-muted ms-2"
-                                                                            *ngIf="!punto.nuevoDocumentoEstenografica && punto.path_version_estenografica">
-                                                                            Documento actual
-                                                                        </small>
-                                                                    </div>
-                                                                </div>
 
-                                                                <!-- Orden del día en accordion -->
-                                                                <div class="col-12">
-                                                                    <label class="form-label">Orden del día</label>
-                                                                    <div
-                                                                        class="d-flex gap-2 align-items-center flex-wrap">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-primary btn-sm"
-                                                                            *ngIf="punto.path_orden_dia"
-                                                                            (click)="verDocumentoGenerico(punto.path_orden_dia)">
-                                                                            <i class="bi bi-file-pdf"></i> Ver orden del
-                                                                            día
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-success btn-sm"
-                                                                            (click)="triggerFileInputGenerico('fileInputOrden' + i)">
-                                                                            <i class="bi bi-upload"></i>
-                                                                            {{ punto.path_orden_dia ? 'Reemplazar' :
-                                                                            'Subir' }} orden del día
-                                                                        </button>
-                                                                        <input type="file" [id]="'fileInputOrden' + i"
-                                                                            hidden accept="application/pdf"
-                                                                            (change)="onFileSelectPuntoGenerico($event, punto, 'nuevoDocumentoOrdenDia')">
-                                                                        <small class="text-muted ms-2"
-                                                                            *ngIf="punto.nuevoDocumentoOrdenDia">
-                                                                            {{ punto.nuevoDocumentoOrdenDia.name }}
-                                                                        </small>
-                                                                        <small class="text-muted ms-2"
-                                                                            *ngIf="!punto.nuevoDocumentoOrdenDia && punto.path_orden_dia">
-                                                                            Documento actual
-                                                                        </small>
-                                                                    </div>
-                                                                </div>
+                                                          
                                                             </div>
                                                         </form>
 

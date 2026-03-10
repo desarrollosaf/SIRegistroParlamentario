@@ -48,7 +48,7 @@ export class IniciativasComponent implements OnInit {
   timelineData: TimelineItem[] = [];
   isCollapsed: { [key: number]: boolean } = {};
   descargando: { [key: string]: boolean } = {};
-
+  descargandoReporte: boolean = false;
 
 
 
@@ -307,9 +307,42 @@ export class IniciativasComponent implements OnInit {
 
 
 
-
-
-
+descargarInfoInciativas(): void {
+  this.descargandoReporte = true;
+  this._eventoService.generarReporteIniciativas().subscribe({
+    next: (blob: Blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `iniciativas_.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      this.descargandoReporte = false;
+    },
+    error: (e: HttpErrorResponse) => {
+      this.descargandoReporte = false;
+      
+        if (e.status === 404) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin registros',
+            text: 'No se encontraron registros.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        } else {
+          console.error('Error al descargar votación:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#800048',
+          });
+        }
+    }
+  });
+}
 
 
 

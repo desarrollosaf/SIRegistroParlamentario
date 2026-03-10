@@ -45,6 +45,14 @@ export class AddEditAgendaComponent {
   tiposMultiples: string[] = [];
   autoresPorTipo: { [key: string]: any[] } = {};
 
+  // Archivos nuevos seleccionados por el usuario
+  archivoOrdenDia: File | null = null;
+  archivoVersionEstenografica: File | null = null;
+
+  // Rutas de documentos ya guardados (solo aplica en edición)
+  pathOrdenDia: string = '';
+  pathVersionEstenografica: string = '';
+
   get autoresFiltrados() {
     return this.autoresPorTipo[this.tipoAutorSeleccionado] || [];
   }
@@ -68,8 +76,6 @@ export class AddEditAgendaComponent {
   }
 
   ngOnInit(): void {
-
-
     this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
       const ligaControl = this.formAgenda.get('liga');
       const horaInicioControl = this.formAgenda.get('hora_inicio');
@@ -83,12 +89,7 @@ export class AddEditAgendaComponent {
         ligaControl?.clearValidators();
         horaInicioControl?.clearValidators();
         horaFinControl?.clearValidators();
-
-        this.formAgenda.patchValue({
-          liga: '',
-          hora_inicio: '',
-          hora_fin: ''
-        }, { emitEvent: false });
+        this.formAgenda.patchValue({ liga: '', hora_inicio: '', hora_fin: '' }, { emitEvent: false });
       }
 
       ligaControl?.updateValueAndValidity();
@@ -104,12 +105,9 @@ export class AddEditAgendaComponent {
     }
   }
 
-
-  //++++++++++++++++++++Holi este es para hacer la editacion+++++++++++++++++++++++
   getAgendaRegistrada() {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
-        // console.log(response);
         const transmiteBoolean = response.transmision === true || response.transmision === 1;
 
         this.formAgenda.patchValue({
@@ -123,7 +121,9 @@ export class AddEditAgendaComponent {
           hora_fin: transmiteBoolean ? this.formatFecha(response.fecha_hora_fin) : ''
         });
 
-        this.getSelect();
+        // Cargar rutas de documentos existentes para mostrar botón "Ver"
+        this.pathOrdenDia = response.orden_dia || '';
+        this.pathVersionEstenografica = response.version_estenografica || '';
 
         this.getSelect(() => {
           if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
@@ -138,7 +138,6 @@ export class AddEditAgendaComponent {
     });
   }
 
-
   formatFecha(fecha: string): string {
     if (!fecha) return '';
     const date = new Date(fecha);
@@ -147,25 +146,16 @@ export class AddEditAgendaComponent {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
-
-
   setAnfitriones(anfitrionesData: any[]) {
     this.itemsTabla = [];
-
     anfitrionesData.forEach((anfitrion: any) => {
-
       const tipoAutorObj = this.tipoAutor.find(t => t.id === anfitrion.tipo_autor_id);
-
-      if (!tipoAutorObj) {
-        return;
-      }
+      if (!tipoAutorObj) return;
 
       const autoresFiltrados = this.autoresPorTipo[anfitrion.tipo_autor_id] || [];
-
       const autor = autoresFiltrados.find((a: any) => a.id === anfitrion.autor_id);
 
       if (autor) {
@@ -174,16 +164,12 @@ export class AddEditAgendaComponent {
           item.autores.length === 1 &&
           item.autores[0].id === autor.id
         );
-
         if (!existe) {
           this.itemsTabla.push({
             tipoAutorId: anfitrion.tipo_autor_id,
             tipoAutorNombre: tipoAutorObj.name,
-            autores: [autor] 
+            autores: [autor]
           });
-          
-        } else {
-          console.log('Anfitrión duplicado, no se agregó');
         }
       } else {
         console.warn(`No se encontró el autor con ID: ${anfitrion.autor_id}`);
@@ -192,7 +178,6 @@ export class AddEditAgendaComponent {
   }
 
   volver(): void {
-    // this.router.navigate(['/agenda-comision']);
     if (this.formAgenda.dirty || this.itemsTabla.length > 0) {
       Swal.fire({
         title: '¿Estás seguro?',
@@ -213,100 +198,112 @@ export class AddEditAgendaComponent {
     }
   }
 
-  //++++++++++++++++++++Holi este es el fin de la editacion+++++++++++++++++++++++
-
   abrirModal() {
     this.modalRef = this.modalService.open(this.xlModal, { size: 'lg' });
-    this.modalRef.result.then((result) => {
-    }).catch((res) => {
-    });
+    this.modalRef.result.then(() => {}).catch(() => {});
   }
 
   esMultiple(tipoId: string): boolean {
     return this.tiposMultiples.includes(tipoId);
   }
+
   setTipoAutor(tipo: string) {
     this.tipoAutorSeleccionado = tipo;
     this.autoresSeleccionados = this.esMultiple(tipo) ? [] : null;
   }
 
+  // ── Manejo de archivos ──────────────────────────────────────────
+
+  onFileSelectOrdenDia(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.archivoOrdenDia = input.files[0];
+    }
+  }
+
+  onFileSelectVersionEstenografica(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.archivoVersionEstenografica = input.files[0];
+    }
+  }
+
+  eliminarArchivoOrdenDia(inputRef: HTMLInputElement): void {
+    this.archivoOrdenDia = null;
+    inputRef.value = '';
+  }
+
+  eliminarArchivoVersionEstenografica(inputRef: HTMLInputElement): void {
+    this.archivoVersionEstenografica = null;
+    inputRef.value = '';
+  }
+
+  verDocumento(path: string): void {
+    if (path) {
+      const url = path.startsWith('http') ? path : `${path}`;
+      window.open(url, '_blank');
+    }
+  }
+
+  // ── Envío ───────────────────────────────────────────────────────
 
   enviarDatos(): void {
     Object.keys(this.formAgenda.controls).forEach(key => {
       this.formAgenda.get(key)?.markAsTouched();
     });
+
     if (this.formAgenda.invalid) {
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: "#fff3cd",
-        color: "#856404",
-        iconColor: "#d39e00",
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+        toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        background: "#fff3cd", color: "#856404", iconColor: "#d39e00",
+        didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
       });
-
-      Toast.fire({
-        icon: "warning",
-        title: "Por favor completa todos los campos requeridos"
-      });
+      Toast.fire({ icon: "warning", title: "Por favor completa todos los campos requeridos" });
       return;
     }
+
     if (this.itemsTabla.length === 0) {
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: "#fff3cd",
-        color: "#856404",
-        iconColor: "#d39e00",
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+        toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        background: "#fff3cd", color: "#856404", iconColor: "#d39e00",
+        didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
       });
-
-      Toast.fire({
-        icon: "warning",
-        title: "Debes agregar al menos un anfitrión"
-      });
+      Toast.fire({ icon: "warning", title: "Debes agregar al menos un anfitrión" });
       return;
     }
 
     const autoresTransformados = this.itemsTabla.map(item => ({
       tipo: item.tipoAutorNombre,
-      autor_id: item.autores.map(autor => ({
-        autor_id: autor.id
-      }))
+      autor_id: item.autores.map(autor => ({ autor_id: autor.id }))
     }));
 
-    const data = {
-      ...this.formAgenda.value,
-      autores: autoresTransformados
-    };
+    // FormData para poder enviar archivos junto con los demás campos
+    const formData = new FormData();
+    Object.entries(this.formAgenda.value).forEach(([key, value]) => {
+      formData.append(key, value as string);
+    });
+    formData.append('autores', JSON.stringify(autoresTransformados));
 
-    // console.log(data);
-    if (this.operacion == 'Editar') {
-      this._agendaService.updateAgenda(data, this.idAgenda).subscribe({
+    if (this.archivoOrdenDia) {
+      formData.append('orden_dia', this.archivoOrdenDia, this.archivoOrdenDia.name);
+    }
+    if (this.archivoVersionEstenografica) {
+      formData.append('version_estenografica', this.archivoVersionEstenografica, this.archivoVersionEstenografica.name);
+    }
+
+formData.forEach((valor, clave) => {
+      console.log(clave, valor);
+    });
+
+
+    if (this.operacion === 'Editar') {
+      this._agendaService.updateAgenda(formData, this.idAgenda).subscribe({
         next: (response: any) => {
-          // console.log(response);
           Swal.fire({
-            position: "center",
-            icon: "success",
-            title: "¡Correcto!",
-            text: `Se guardo correctamente.`,
-            showConfirmButton: false,
-            timer: 2000
+            position: "center", icon: "success", title: "¡Correcto!",
+            text: `Se guardó correctamente.`, showConfirmButton: false, timer: 2000
           });
           this.router.navigate(['/agenda-comision/sesiones']);
-
         },
         error: (e: HttpErrorResponse) => {
           const msg = e.error?.msg || 'Error desconocido';
@@ -314,18 +311,12 @@ export class AddEditAgendaComponent {
         }
       });
     } else {
-      this._agendaService.saveAgenda(data).subscribe({
+      this._agendaService.saveAgenda(formData).subscribe({
         next: (response: any) => {
-          // console.log(response);
           Swal.fire({
-            title: "Se guardo correctamente",
-            text: "¿Desea agregar otro registro?",
-            icon: "success",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Confirmar",
-            cancelButtonText: "Salir"
+            title: "Se guardó correctamente", text: "¿Desea agregar otro registro?", icon: "success",
+            showCancelButton: true, confirmButtonColor: "#3085d6", cancelButtonColor: "#d33",
+            confirmButtonText: "Confirmar", cancelButtonText: "Salir"
           }).then((result) => {
             if (result.isConfirmed) {
               this.limpiarFormulario();
@@ -340,34 +331,28 @@ export class AddEditAgendaComponent {
         }
       });
     }
-
   }
 
   limpiarFormulario(): void {
     this.formAgenda.reset({
-      fecha: '',
-      sede_id: '',
-      tipo_evento_id: '',
-      descripcion: '',
-      transmite: false,
-      liga: '',
-      hora_inicio: '',
-      hora_fin: ''
+      fecha: '', sede_id: '', tipo_evento_id: '', descripcion: '',
+      transmite: false, liga: '', hora_inicio: '', hora_fin: ''
     });
     this.itemsTabla = [];
     this.tipoAutorSeleccionado = '';
     this.autoresSeleccionados = null;
+    this.archivoOrdenDia = null;
+    this.archivoVersionEstenografica = null;
+    this.pathOrdenDia = '';
+    this.pathVersionEstenografica = '';
   }
-
 
   getSelect(callback?: () => void) {
     this._agendaService.getCatalogos().subscribe({
       next: (response: any) => {
-
         this.sedesSelect = response.sedes || [];
         this.tipoEventoSelect = response.tipoevento || [];
         this.tipoAutor = response.tipoAutores || [];
-
         this.legislatura = response.legislatura || [];
         this.comision = response.comisiones || [];
         this.grupoP = response.partidos || [];
@@ -405,9 +390,7 @@ export class AddEditAgendaComponent {
         if (tipoOtroId) this.tiposMultiples.push(tipoOtroId);
         if (tipoComiteId) this.tiposMultiples.push(tipoComiteId);
 
-        if (callback) {
-          callback();
-        }
+        if (callback) callback();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -416,53 +399,24 @@ export class AddEditAgendaComponent {
     });
   }
 
-
-
-
   agregarFila() {
     if (!this.tipoAutorSeleccionado) {
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: "#fff3cd",
-        color: "#856404",
-        iconColor: "#d39e00",
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+        toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        background: "#fff3cd", color: "#856404", iconColor: "#d39e00",
+        didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
       });
-
-      Toast.fire({
-        icon: "warning",
-        title: "Selecciona un tipo de autor"
-      });
+      Toast.fire({ icon: "warning", title: "Selecciona un tipo de autor" });
       return;
     }
 
     if (!this.autoresSeleccionados || (Array.isArray(this.autoresSeleccionados) && this.autoresSeleccionados.length === 0)) {
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: "#fff3cd",
-        color: "#856404",
-        iconColor: "#d39e00",
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+        toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        background: "#fff3cd", color: "#856404", iconColor: "#d39e00",
+        didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
       });
-
-      Toast.fire({
-        icon: "warning",
-        title: "Selecciona al menos un autor"
-      });
+      Toast.fire({ icon: "warning", title: "Selecciona al menos un autor" });
       return;
     }
 
@@ -470,7 +424,6 @@ export class AddEditAgendaComponent {
     if (!tipoAutorObj) return;
 
     let autoresArray: Array<{ id: string, name: string }> = [];
-
     if (Array.isArray(this.autoresSeleccionados)) {
       autoresArray = this.autoresSeleccionados.map((id: string) => {
         return this.autoresFiltrados.find(a => a.id === id);
@@ -486,24 +439,11 @@ export class AddEditAgendaComponent {
     );
     if (existe) {
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: "#fff3cd",
-        color: "#856404",
-        iconColor: "#d39e00",
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+        toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        background: "#fff3cd", color: "#856404", iconColor: "#d39e00",
+        didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
       });
-
-      Toast.fire({
-        icon: "warning",
-        title: "Esa combinación ya fue agregada"
-      });
+      Toast.fire({ icon: "warning", title: "Esa combinación ya fue agregada" });
       return;
     }
 

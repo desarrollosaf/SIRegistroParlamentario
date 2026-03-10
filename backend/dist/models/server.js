@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const eventos_1 = __importDefault(require("../routes/eventos"));
+const reporte_1 = __importDefault(require("../routes/reporte"));
 const user_1 = __importDefault(require("../routes/user"));
 const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
@@ -59,6 +60,7 @@ class Server {
         this.app.use(user_1.default);
         this.app.use(diputados_1.default);
         this.app.use(catalogos_1.default);
+        this.app.use(reporte_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -86,7 +88,8 @@ class Server {
                 '/api/diputados/getinfiniciativa/',
                 '/api/eventos/asintenciapdf/',
                 '/api/diputados/getinfiniciativa/',
-                '/api/eventos/votacionpunto/'
+                '/api/eventos/votacionpunto/',
+                '/api/reporte/getinfiniciativas/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

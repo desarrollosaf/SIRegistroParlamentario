@@ -1144,7 +1144,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         const ini = await IniciativaPuntoOrden.create({
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
-          tema_votacion: iniciativa.descripcion,
+          iniciativa: iniciativa.descripcion,
           fecha_votacion: null,
         });
 
@@ -1185,259 +1185,287 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     });
   }
 };
+//////////////////////////////////////////
+// Función reutilizable fuera del handler
+const procesarPresentan = async (presentan: any[]) => {
+  const proponentesUnicos = new Map<string, string>();
+  const presentanData: any[] = [];
 
-export const 
+  for (const p of presentan) {
+    const tipoValor = p.tipo_presenta?.valor ?? '';
+    let valor = '';
 
+    if (tipoValor === 'Diputadas y Diputados') {
+      const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
+      valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
+    } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
+      const comi = await Comision.findOne({ where: { id: p.id_presenta } });
+      valor = comi?.nombre ?? '';
+    } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
+      const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
+      valor = muni?.nombre ?? '';
+    } else if (tipoValor === 'Grupo Parlamentario') {
+      const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
+      valor = partido?.nombre ?? '';
+    } else if (tipoValor === 'Legislatura') {
+      const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
+      valor = leg?.numero ?? '';
+    } else if (tipoValor === 'Secretarías del GEM') {
+      const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
+      valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
+    } else {
+      const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
+      valor = cat?.nombre_titular ?? '';
+    }
 
+    if (!proponentesUnicos.has(tipoValor)) {
+      proponentesUnicos.set(tipoValor, tipoValor);
+    }
+    presentanData.push({ proponente: tipoValor, valor, id_presenta: p.id_presenta });
+  }
 
+  return {
+    proponentesString: Array.from(proponentesUnicos.keys()).join(", "),
+    presentaString: presentanData.map(p => p.valor).join(', ')
+  };
+};
 
+export const getpuntos = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
 
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
 
-getpuntos = async (req: Request, res: Response): Promise<any> => {
-    try {
-      const { id } = req.params;
-      const evento = await Agenda.findOne({
-        where: { id },
-        include: [
-          { model: Sedes, as: "sede", attributes: ["id", "sede"] },
-          { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
-        ],
-      });
-      
-      if (!evento) {
-        return res.status(404).json({ msg: "Evento no encontrado" });
-      }
-      
-      // 2. Determinar tipo de evento
-      const esSesion = evento.tipoevento?.nombre === "Sesión" || evento.tipo_evento_id === "a413e44b-550b-47ab-b004-a6f28c73a750";
-      const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
+    const esSesion = evento.tipoevento?.nombre === "Sesión" || evento.tipo_evento_id === "a413e44b-550b-47ab-b004-a6f28c73a750";
 
-      const puntosRaw = await PuntosOrden.findAll({
-        where: { id_evento: id },
-        order: [['nopunto', 'ASC']],
-        include: [
-          {
-            model: PuntosPresenta,
-            as: "presentan",
-            attributes: [
-              [
-                Sequelize.fn(
-                  'CONCAT',
-                  Sequelize.col('presentan.id_tipo_presenta'),
-                  '/',
-                  Sequelize.col('presentan.id_presenta')
-                ),
-                'id'
-              ],
-              "id_tipo_presenta",
-              "id_presenta",
-              ["id_tipo_presenta", "id_proponente"]
-            ]
-          },
-          {
-            model: PuntosComisiones,
-            as: "turnocomision",
-            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
-          },
-          {
-            model: PuntosComisiones,
-            as: "puntoTurnoComision",
-            attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
-          },
-          {
-            model: TemasPuntosVotos,
-            as: "reservas",
-            attributes: ["id", "tema_votacion"]
-          },
-          {
-            model: IniciativaPuntoOrden,
-            as: "iniciativas",
-            attributes: ["id", "iniciativa"],
-            include: [
-                              {
-                                model: IniciativasPresenta,
-                                as: "presentan",
-                                attributes: [
-                                  [
-                                    Sequelize.fn(
-                                      'CONCAT',
-                                      Sequelize.col('presentan.id_tipo_presenta'),
-                                      '/',
-                                      Sequelize.col('presentan.id_presenta')
-                                    ),
-                                    'id'
-                                  ],
-                                  "id_tipo_presenta",
-                                  "id_presenta",
-                                  ["id_tipo_presenta", "id_proponente"]
-                                ]
-                              },
-                      ]
-          },
-          {
-            model: IniciativaEstudio,
-            as: "puntosestudiados",
-            attributes: ["id", "punto_origen_id","punto_destino_id", "type"],
-            include: [
-              {
-                model: PuntosOrden,
-                as: "iniciativaorigen",
-                attributes: ["id", "punto"]
-              },
-              {
-                model: ExpedienteEstudiosPuntos,
-                as: "expediente",
-                attributes: ["id", "expediente_id","punto_origen_sesion_id"],
-                include: [
-                  {
-                    model: PuntosOrden,       
-                    as: "puntoOrigen",
-                    attributes: ["id", "punto"]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      });
-
-      if (!puntosRaw) {
-        return res.status(404).json({ message: "Evento no encontrado" });
-      }
-      const puntos = await Promise.all(puntosRaw.map(async punto => {
-        const data = punto.toJSON();
-        
-        const turnosNormalizados =
-          data.turnocomision?.length
-            ? data.turnocomision
-            : data.puntoTurnoComision ?? [];
-        
-        delete data.puntoTurnoComision;
-        
-        const turnosExpandidos: any[] = [];
-        
-        turnosNormalizados.forEach((turno: any) => {
-          if (turno.id_comision && typeof turno.id_comision === 'string') {
-            const comisionesArray = turno.id_comision
-              .replace(/[\[\]]/g, '')
-              .split(',')
-              .map((id: string) => id.trim())
-              .filter((id: string) => id);
-            
-            comisionesArray.forEach(comisionId => {
-              turnosExpandidos.push({
-                id: turno.id,
-                id_punto: turno.id_punto,
-                id_comision: comisionId,
-                id_punto_turno: turno.id_punto_turno
-              });
-            });
-          } else {
-            turnosExpandidos.push(turno);
-          }
-        });
-        
-        const estudiado = data.puntosestudiados?.[0];
-        let puntosestudiado = null;
-        let dictamenes = null;
-
-
-        if (estudiado) {
-          if (estudiado.type === "1" ) {
-            const info = [
-              {
-                id: estudiado.iniciativaorigen?.id,
-                punto: estudiado.iniciativaorigen?.punto
-              }
-            ];
-            // 👇 según tipo de evento asigna a uno u otro
-            if (esSesion ) {
-              dictamenes = info;
-            } else {
-              puntosestudiado = info;
-            }
-
-          } else if (estudiado.type === "2") {
-            console.log(esSesion)
-            console.log("holaaaaaaaaaa", evento.tipo_evento_id)
-            if(esSesion){
-              const info: any[] = [];
-              const puntos = await PuntosOrden.findAll({
-                 where: { id_dictamen:  estudiado.punto_destino_id },
-              })
-
-              for(const data of puntos){
-                info.push(
-                  {
-                    id: data?.id,
-                    punto: data?.punto
-                  }
-                );
-              }
-             
-              dictamenes = info;
-
-            }else{
-
-
-              const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
-              where: { expediente_id: estudiado.punto_origen_id }, 
+    const puntosRaw = await PuntosOrden.findAll({
+      where: { id_evento: id },
+      order: [['nopunto', 'ASC']],
+      include: [
+        {
+          model: PuntosPresenta,
+          as: "presentan",
+          attributes: [
+            [
+              Sequelize.fn(
+                'CONCAT',
+                Sequelize.col('presentan.id_tipo_presenta'),
+                '/',
+                Sequelize.col('presentan.id_presenta')
+              ),
+              'id'
+            ],
+            "id_tipo_presenta",
+            "id_presenta",
+            ["id_tipo_presenta", "id_proponente"]
+          ]
+        },
+        {
+          model: PuntosComisiones,
+          as: "turnocomision",
+          attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+        },
+        {
+          model: PuntosComisiones,
+          as: "puntoTurnoComision",
+          attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
+        },
+        {
+          model: TemasPuntosVotos,
+          as: "reservas",
+          attributes: ["id", "tema_votacion"]
+        },
+        {
+          model: IniciativaPuntoOrden,
+          as: "iniciativas",
+          attributes: ["id", "iniciativa"],
+          include: [
+            {
+              model: IniciativasPresenta,
+              as: "presentan",
+              attributes: ["id_tipo_presenta", "id_presenta"],
               include: [
-                  {
-                    model: PuntosOrden,
-                    as: 'puntoOrigen',
-                    attributes: ["id", "punto"]
-                  }
-                ]
-              });
-              
-              const info = puntosExpediente.map((p: any) => ({
-                id: p.toJSON().puntoOrigen?.id,
-                punto: p.toJSON().puntoOrigen?.punto
-              }));
-              puntosestudiado = info;
-
+                {
+                  model: Proponentes,
+                  as: "tipo_presenta",
+                  attributes: ["id", "valor"]
+                }
+              ]
             }
-          
+          ]
+        },
+        {
+          model: IniciativaEstudio,
+          as: "puntosestudiados",
+          attributes: ["id", "punto_origen_id", "punto_destino_id", "type"],
+          include: [
+            {
+              model: PuntosOrden,
+              as: "iniciativaorigen",
+              attributes: ["id", "punto"]
+            },
+            {
+              model: ExpedienteEstudiosPuntos,
+              as: "expediente",
+              attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+              include: [
+                {
+                  model: PuntosOrden,
+                  as: "puntoOrigen",
+                  attributes: ["id", "punto"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!puntosRaw) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    const puntos = await Promise.all(puntosRaw.map(async punto => {
+      const data = punto.toJSON();
+
+      const turnosNormalizados =
+        data.turnocomision?.length
+          ? data.turnocomision
+          : data.puntoTurnoComision ?? [];
+
+      delete data.puntoTurnoComision;
+
+      const turnosExpandidos: any[] = [];
+
+      turnosNormalizados.forEach((turno: any) => {
+        if (turno.id_comision && typeof turno.id_comision === 'string') {
+          const comisionesArray = turno.id_comision
+            .replace(/[\[\]]/g, '')
+            .split(',')
+            .map((id: string) => id.trim())
+            .filter((id: string) => id);
+
+          comisionesArray.forEach(comisionId => {
+            turnosExpandidos.push({
+              id: turno.id,
+              id_punto: turno.id_punto,
+              id_comision: comisionId,
+              id_punto_turno: turno.id_punto_turno
+            });
+          });
+        } else {
+          turnosExpandidos.push(turno);
+        }
+      });
+
+      // 👇 Procesar iniciativas con sus presentan
+      const iniciativasConInfo = await Promise.all(
+        (data.iniciativas || []).map(async (ini: any) => {
+          const { proponentesString, presentaString } = ini.presentan?.length
+            ? await procesarPresentan(ini.presentan)
+            : { proponentesString: '', presentaString: '' };
+
+          return {
+            id: ini.id,
+            iniciativa: ini.iniciativa,
+            proponente: proponentesString,
+            presenta: presentaString
+          };
+        })
+      );
+
+      const estudiado = data.puntosestudiados?.[0];
+      let puntosestudiado = null;
+      let dictamenes = null;
+
+      if (estudiado) {
+        if (estudiado.type === "1") {
+          const info = [
+            {
+              id: estudiado.iniciativaorigen?.id,
+              punto: estudiado.iniciativaorigen?.punto
+            }
+          ];
+          if (esSesion) {
+            dictamenes = info;
+          } else {
+            puntosestudiado = info;
+          }
+
+        } else if (estudiado.type === "2") {
+          if (esSesion) {
+            const info: any[] = [];
+            const puntoss = await PuntosOrden.findAll({
+              where: { id_dictamen: estudiado.punto_destino_id },
+            });
+            for (const d of puntoss) {
+              info.push({ id: d?.id, punto: d?.punto });
+            }
+            dictamenes = info;
+
+          } else {
+            const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
+              where: { expediente_id: estudiado.punto_origen_id },
+              include: [
+                {
+                  model: PuntosOrden,
+                  as: 'puntoOrigen',
+                  attributes: ["id", "punto"]
+                }
+              ]
+            });
+            puntosestudiado = puntosExpediente.map((p: any) => ({
+              id: p.toJSON().puntoOrigen?.id,
+              punto: p.toJSON().puntoOrigen?.punto
+            }));
           }
         }
+      }
 
-        delete data.puntosestudiados;
+      delete data.puntosestudiados;
 
-        return {
-          ...data,
-          turnocomision: turnosExpandidos,
-          puntosestudiado,   // null si es sesión
-          dictamenes    // null si es comisión
-        };
-      }));
+      return {
+        ...data,
+        turnocomision: turnosExpandidos,
+        iniciativas: iniciativasConInfo,  // 👈 reemplaza el array original
+        puntosestudiado,
+        dictamenes
+      };
+    }));
 
-      const selects = await IniciativaPuntoOrden.findAll({
-        where: { 
-          id_evento: id,
-          id_punto: {
-            [Op.or]: [
-              null,
-              '',
-              '0'
-            ]
-          }
-        },
-        attributes: ["id", "iniciativa"]
-      });
+    const selects = await IniciativaPuntoOrden.findAll({
+      where: {
+        id_evento: id,
+        id_punto: {
+          [Op.or]: [null, '', '0']
+        }
+      },
+      attributes: ["id", "iniciativa"]
+    });
 
-      return res.status(201).json({
-        message: "Se encontraron registros",
-        data: puntos,
-        selectini: selects
-      });
+    return res.status(201).json({
+      message: "Se encontraron registros",
+      data: puntos,
+      selectini: selects
+    });
 
-
-    } catch (error: any) {
-      console.error("Error al traer los puntos:", error);
-      return res.status(500).json({ message: "Error interno del servidor" });
-    }
+  } catch (error: any) {
+    console.error("Error al traer los puntos:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
 };
+
+
+
 
 export const crearreserva = async (req: Request, res: Response): Promise<any> => {
   try {
