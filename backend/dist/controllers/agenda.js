@@ -887,7 +887,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
-            se_turna_comision: String(body.se_turna_comision) === 'true' ? 1 : 0
+            se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
         });
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
         if (body.tipo_evento != 0) {
@@ -995,13 +995,32 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             const IniciativasArray = typeof body.iniciativas === 'string'
                 ? JSON.parse(body.iniciativas)
                 : body.iniciativas;
-            for (const item of IniciativasArray) {
-                yield inciativas_puntos_ordens_1.default.create({
+            for (const iniciativa of IniciativasArray) {
+                const presentaArray = (Array.isArray(iniciativa.id_presenta)
+                    ? iniciativa.id_presenta
+                    : (iniciativa.id_presenta || "").split(","))
+                    .map((p) => p.trim())
+                    .filter((p) => p.length > 0)
+                    .map((p) => {
+                    const [proponenteId, autorId] = p.split('/');
+                    return {
+                        proponenteId: parseInt(proponenteId),
+                        autorId: autorId
+                    };
+                });
+                const ini = yield inciativas_puntos_ordens_1.default.create({
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
-                    tema_votacion: item.descripcion,
+                    tema_votacion: iniciativa.descripcion,
                     fecha_votacion: null,
                 });
+                for (const item of presentaArray) {
+                    yield iniciativaspresenta_1.default.create({
+                        id_iniciativa: ini.id,
+                        id_tipo_presenta: item.proponenteId,
+                        id_presenta: item.autorId
+                    });
+                }
             }
         }
         for (const item of presentaArray) {
@@ -1011,13 +1030,13 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 id_presenta: item.autorId
             });
         }
-        if (body.tipo_evento == 0) {
-            const comisionesString = `[${turnocomision.join(',')}]`;
-            yield puntos_comisiones_1.default.create({
-                id_punto: puntonuevo.id,
-                id_comision: comisionesString,
-            });
-        }
+        // if(body.tipo_evento == 0){
+        const comisionesString = `[${turnocomision.join(',')}]`;
+        yield puntos_comisiones_1.default.create({
+            id_punto: puntonuevo.id,
+            id_comision: comisionesString,
+        });
+        // }
         return res.status(201).json({
             message: "Punto creado correctamente",
             data: puntonuevo,
@@ -1585,16 +1604,16 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 id_presenta: item.autorId
             });
         }
-        if (body.tipo_evento == 0) {
-            yield puntos_comisiones_1.default.destroy({
-                where: { id_punto: punto.id }
-            });
-            const comisionesString = `[${turnocomision.join(',')}]`;
-            yield puntos_comisiones_1.default.create({
-                id_punto: punto.id,
-                id_comision: comisionesString,
-            });
-        }
+        // if(body.tipo_evento == 0){
+        yield puntos_comisiones_1.default.destroy({
+            where: { id_punto: punto.id }
+        });
+        const comisionesString = `[${turnocomision.join(',')}]`;
+        yield puntos_comisiones_1.default.create({
+            id_punto: punto.id,
+            id_comision: comisionesString,
+        });
+        // }
         return res.status(200).json({
             message: "Punto actualizado correctamente",
             data: punto,

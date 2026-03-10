@@ -1000,7 +1000,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
-      se_turna_comision: String(body.se_turna_comision) === 'true' ? 1 : 0
+      se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
     });
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
     if(body.tipo_evento != 0){
@@ -1126,13 +1126,35 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
         ? JSON.parse(body.iniciativas) 
         : body.iniciativas;
       
-      for (const item of IniciativasArray) {
-        await IniciativaPuntoOrden.create({
+      for (const iniciativa of IniciativasArray) {  
+        const presentaArray = (Array.isArray(iniciativa.id_presenta)  
+          ? iniciativa.id_presenta                                     
+          : (iniciativa.id_presenta || "").split(",")                 
+        )
+          .map((p: string) => p.trim())            
+          .filter((p: string) => p.length > 0)
+          .map((p: string) => {
+            const [proponenteId, autorId] = p.split('/');
+            return {
+              proponenteId: parseInt(proponenteId),
+              autorId: autorId
+            };
+          });
+
+        const ini = await IniciativaPuntoOrden.create({
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
-          tema_votacion: item.descripcion,
+          tema_votacion: iniciativa.descripcion,
           fecha_votacion: null,
         });
+
+        for (const item of presentaArray) {
+          await IniciativasPresenta.create({
+            id_iniciativa: ini.id,
+            id_tipo_presenta: item.proponenteId, 
+            id_presenta: item.autorId
+          });
+        }
       }
     }
 
@@ -1144,13 +1166,13 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    if(body.tipo_evento == 0){
+    // if(body.tipo_evento == 0){
       const comisionesString = `[${turnocomision.join(',')}]`;
       await PuntosComisiones.create({
         id_punto: puntonuevo.id,
         id_comision: comisionesString,
       });
-    }
+    // }
     return res.status(201).json({
       message: "Punto creado correctamente",
       data: puntonuevo,
@@ -1843,7 +1865,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       });
     }
 
-    if(body.tipo_evento == 0){
+    // if(body.tipo_evento == 0){
       await PuntosComisiones.destroy({
         where: { id_punto: punto.id }
       });
@@ -1854,7 +1876,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         id_comision: comisionesString,
       });
 
-    }
+    // }
     
     return res.status(200).json({
       message: "Punto actualizado correctamente",
