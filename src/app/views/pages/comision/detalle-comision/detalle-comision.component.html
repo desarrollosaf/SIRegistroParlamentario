@@ -565,6 +565,7 @@
                                                         </div>
                                                     </div>
 
+                                                    <!-- ¿Se turna a comisión? — Sesión y Permanente -->
                                                     <div class="col-12" *ngIf="!esComision || isPermanen">
                                                         <label class="form-label fw-semibold">¿Se turna a
                                                             comisión?</label>
@@ -588,7 +589,7 @@
                                                         </div>
                                                     </div>
 
-
+                                                    <!-- Comisión — Sesión y Permanente -->
                                                     <div class="col-12"
                                                         *ngIf="formPunto.get('se_turna_comision')?.value === true && (!esComision || isPermanen)">
                                                         <label class="form-label">Comisión <span
@@ -600,15 +601,9 @@
                                                             [closeOnSelect]="false">
                                                         </ng-select>
                                                     </div>
-                                                    <!-- 
-                                                    <div class="col-12" *ngIf="esComision">
-                                                        <label class="form-label fw-semibold">Puntos turnados a comisión</label>
-                                                        <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
-                                                            bindValue="id" formControlName="id_punto_turnado"
-                                                            placeholder="Selecciona">
-                                                        </ng-select>
-                                                    </div> -->
-                                                    <div class="col-12" *ngIf="esComision">
+
+                                                    <!-- Puntos turnados a comisión — SOLO Comisión pura (NO permanente) -->
+                                                    <div class="col-12" *ngIf="esComision && !isPermanen">
                                                         <label class="form-label fw-semibold">Puntos turnados a
                                                             comisión</label>
                                                         <div class="d-flex gap-2 align-items-start">
@@ -671,20 +666,8 @@
                                                         </small>
                                                     </div>
 
-                                                    <!-- <div class="col-12" *ngIf="!esComision">
-                                                        <label class="form-label fw-semibold">Dictámenes</label> -->
-                                                    <!-- <ng-select [items]="slcPuntosTurnados" bindLabel="punto"
-                                                            bindValue="id" formControlName="id_punto_turnado">
-                                                        </ng-select> -->
-
-
-                                                    <!-- <ng-select [items]="slcDictamenes" bindLabel="punto"
-                                                            bindValue="id" formControlName="id_punto_turnado"
-                                                            placeholder="Selecciona">
-                                                        </ng-select>
-                                                    </div> -->
-
-                                                    <div class="col-12" *ngIf="!esComision">
+                                                    <!-- Dictámenes — Sesión y Permanente -->
+                                                    <div class="col-12" *ngIf="!esComision || isPermanen">
                                                         <label class="form-label fw-semibold">Dictámenes</label>
                                                         <div class="d-flex gap-2 align-items-start">
                                                             <div style="min-width: 0; flex: 1;">
@@ -772,7 +755,8 @@
                                                             {{ reservasTemporales.length }} reserva(s) agregada(s)
                                                         </small>
 
-                                                        <button type="button" *ngIf="!esComision"
+                                                        <!-- Iniciativas — Sesión y Permanente -->
+                                                        <button type="button" *ngIf="!esComision || isPermanen"
                                                             class="btn btn-primary position-relative ms-2"
                                                             (click)="abrirModalIniciativa()">
                                                             <i class="bi bi-lightbulb me-1"></i> Iniciativas
@@ -783,7 +767,7 @@
                                                             </span>
                                                         </button>
                                                         <small class="text-muted ms-2"
-                                                            *ngIf="iniciativasTemporales.length > 0">
+                                                            *ngIf="iniciativasTemporales.length > 0 && (!esComision || isPermanen)">
                                                             {{ iniciativasTemporales.length }} iniciativa(s) agregada(s)
                                                         </small>
                                                     </div>
@@ -801,8 +785,6 @@
                                     <div *ngFor="let iniciativas of consoleiniciativas; let i = index">
                                         <br>
                                         <span class="fw-semibold">{{ iniciativas.iniciativa }}</span>
-
-
                                         <br>
                                     </div>
 
@@ -866,7 +848,7 @@
                                                                     </ng-select>
                                                                 </div>
 
-
+                                                                <!-- ¿Se turna a comisión? — Sesión y Permanente -->
                                                                 <div class="col-12" *ngIf="!esComision || isPermanen">
                                                                     <label class="form-label fw-semibold">¿Se turna a
                                                                         comisión?</label>
@@ -894,8 +876,9 @@
                                                                     </div>
                                                                 </div>
 
+                                                                <!-- Comisión — Sesión y Permanente -->
                                                                 <div class="col-12"
-                                                                    *ngIf="punto.form.get('se_turna_comision')?.value === true && (!esComision || isPermanen) ">
+                                                                    *ngIf="punto.form.get('se_turna_comision')?.value === true && (!esComision || isPermanen)">
                                                                     <label class="form-label">Comisión <span
                                                                             class="text-danger">*</span></label>
                                                                     <ng-select [items]="slcComisiones"
@@ -906,18 +889,8 @@
                                                                     </ng-select>
                                                                 </div>
 
-
-                                                                <!-- <div class="col-12" *ngIf="esComision">
-                                                                    <label class="form-label fw-semibold">Puntos
-                                                                        turnados a comisión</label>
-                                                                    <ng-select [items]="slcPuntosTurnados"
-                                                                        bindLabel="punto" bindValue="id"
-                                                                        formControlName="id_punto_turnado"
-                                                                        placeholder="Selecciona">
-                                                                    </ng-select>
-                                                                </div> -->
-
-                                                                <div class="col-12" *ngIf="esComision">
+                                                                <!-- Puntos turnados a comisión — SOLO Comisión pura (NO permanente) -->
+                                                                <div class="col-12" *ngIf="esComision && !isPermanen">
                                                                     <label class="form-label fw-semibold">Puntos
                                                                         turnados a comisión</label>
                                                                     <div class="d-flex gap-2 align-items-start">
@@ -986,23 +959,8 @@
                                                                     </small>
                                                                 </div>
 
-                                                                <!-- <div class="col-12" *ngIf="!esComision"> -->
-                                                                <!-- <label
-                                                                        class="form-label fw-semibold">Dictámenes</label>
-                                                                    <ng-select [items]="slcPuntosTurnados"
-                                                                        bindLabel="punto" bindValue="id"
-                                                                        formControlName="id_punto_turnado"
-                                                                        placeholder="Selecciona">
-                                                                    </ng-select> -->
-                                                                <!-- <label
-                                                                        class="form-label fw-semibold">Dictámenes</label>
-                                                                    <ng-select [items]="slcDictamenes" bindLabel="punto"
-                                                                        bindValue="id"
-                                                                        formControlName="id_punto_turnado"
-                                                                        placeholder="Selecciona">
-                                                                    </ng-select>
-                                                                </div> -->
-                                                                <div class="col-12" *ngIf="!esComision">
+                                                                <!-- Dictámenes — Sesión y Permanente -->
+                                                                <div class="col-12" *ngIf="!esComision || isPermanen">
                                                                     <label
                                                                         class="form-label fw-semibold">Dictámenes</label>
                                                                     <div class="d-flex gap-2 align-items-start">
@@ -1084,6 +1042,7 @@
                                                                         formControlName="observaciones" rows="2"
                                                                         placeholder="Observaciones adicionales"></textarea>
                                                                 </div>
+
                                                                 <button
                                                                     class="btn btn-outline-primary btn-sm position-relative"
                                                                     (click)="abrirModalReservaPunto(punto)">
@@ -1094,8 +1053,10 @@
                                                                         {{ punto.reservas.length }}
                                                                     </span>
                                                                 </button>
-                                                                <button *ngIf="!esComision"
-                                                                    class="btn btn-outline-primary  btn-sm position-relative"
+
+                                                                <!-- Iniciativas accordion — Sesión y Permanente -->
+                                                                <button *ngIf="!esComision || isPermanen"
+                                                                    class="btn btn-outline-primary btn-sm position-relative"
                                                                     (click)="abrirModalIniciativaPunto(punto)">
                                                                     <i class="bi bi-lightbulb me-1"></i> Iniciativas
                                                                     <span
@@ -1104,6 +1065,7 @@
                                                                         {{ punto.iniciativas.length }}
                                                                     </span>
                                                                 </button>
+
                                                                 <div class="col-12">
                                                                     <label class="form-label">Documento</label>
                                                                     <div
@@ -1293,39 +1255,6 @@
                                                 </ng-select>
                                             </div>
                                         </div>
-
-                                        <div *ngIf="votacionActual.idPunto">
-
-                                        </div>
-                                        <!-- Botón Iniciar Votación -->
-                                        <!-- <div class="row mt-3">
-                                            <div class="col-12">
-                                                <button class="btn btn-primary" (click)="iniciarVotacion()"
-                                                    [disabled]="!puntoSeleccionadoVotacion">
-                                                    <i class="bi bi-play-circle me-2"></i>
-                                                    Iniciar Votación
-                                                </button>
-
-                                              
-                                                <small class="text-muted ms-2" *ngIf="!puntoSeleccionadoVotacion">
-                                                    * Seleccione un punto para iniciar
-                                                </small>
-
-                                             
-                                                <div class="mt-2" *ngIf="votacionActual.idPunto">
-                                                    <span class="badge bg-info">
-                                                        <i class="bi bi-info-circle me-1"></i>
-                                                        Punto: {{ puntoSeleccionadoVotacion }}
-                                                        <span *ngIf="votacionActual.idReserva">
-                                                            | Reserva: {{ reservaPuntoSeleccionadoVotacion }}
-                                                        </span>
-                                                        <span *ngIf="!votacionActual.idReserva">
-                                                            | Sin reserva
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div> -->
                                     </div>
                                     <br>
 
@@ -1929,7 +1858,6 @@
                             </ng-select>
                         </div>
 
-
                         <div class="col-12" *ngIf="formIntervencion.get('comentario')?.enabled">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-chat-left-text-fill me-1"></i> Comentario
@@ -2003,10 +1931,10 @@
                                 <!-- Tipo + comentario -->
                                 <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
                                     <span class="badge-tipo-intervencion" [ngClass]="{
-            'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
-            'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
-            'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
-        }">
+                                        'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
+                                        'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
+                                        'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
+                                    }">
                                         {{ intervencion.tipointerven.valor }}
                                     </span>
                                     <small class="d-block text-muted mt-2" *ngIf="intervencion.mensaje"
@@ -2170,7 +2098,7 @@
                 {{ mostrarformIniciativa ? 'Ocultar' : 'Agregar' }} Iniciativa
             </button>
 
-            <!-- NUEVO BOTÓN: Agregar iniciativa precargada -->
+            <!-- Botón de iniciativa precargada -->
             <button class="btn btn-info" (click)="toggleSelectIniciativaPrecargada()">
                 <i class="bi" [ngClass]="mostrarSelectIniciativaPrecargada ? 'bi-eye-slash' : 'bi-plus-lg'"></i>
                 {{ mostrarSelectIniciativaPrecargada ? 'Ocultar' : 'Agregar' }} Iniciativa Precargada
@@ -2209,7 +2137,7 @@
                             </label>
                             <textarea class="form-control" formControlName="descripcion" rows="4"
                                 placeholder="Escribe la descripción de la iniciativa...">
-                    </textarea>
+                            </textarea>
                         </div>
                     </div>
 
@@ -2222,7 +2150,7 @@
             </div>
         </div>
 
-        <!-- NUEVO: Formulario para seleccionar iniciativa PRECARGADA -->
+        <!-- Formulario para seleccionar iniciativa PRECARGADA -->
         <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarSelectIniciativaPrecargada">
             <div class="card-body">
                 <div [formGroup]="formIniciativa">
