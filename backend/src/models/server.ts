@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors'
 import path from 'path';
 import eventos from "../routes/eventos";
+import reportes from "../routes/reporte";
 import user from "../routes/user";
 import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
@@ -59,6 +60,7 @@ class Server {
        this.app.use(user);
        this.app.use(diputados);
        this.app.use(catalogos);
+       this.app.use(reportes);
 
     }
 
@@ -90,7 +92,8 @@ class Server {
                 '/api/diputados/getinfiniciativa/',
                 '/api/eventos/asintenciapdf/',
                 '/api/diputados/getinfiniciativa/',
-                '/api/eventos/votacionpunto/'
+                '/api/eventos/votacionpunto/',
+                '/api/reporte/getinfiniciativas/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
