@@ -437,22 +437,40 @@ export const getiniciativas = async (req: Request, res: Response): Promise<any> 
 export const crariniidits = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    
+   
     const punto = await PuntosOrden.findOne({
       where: { id: body.punto },
     });
-    
     if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
-    
     const iniciativa = await IniciativaPuntoOrden.findOne({
       where: { id: body.iniciativa },
     });
 
     if(iniciativa){
             await iniciativa.update({ id_punto: punto.id });
-       }
+    }
+    const presentaArray = (Array.isArray(body.id_presenta) 
+      ? body.id_presenta 
+      : (body.id_presenta || "").split(",")
+    )
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0)
+      .map((item: string) => {
+        const [proponenteId, autorId] = item.split('/');
+        return {
+          proponenteId: parseInt(proponenteId),
+          autorId: autorId
+        };
+      });
+    for (const item of presentaArray) {
+          await IniciativasPresenta.create({
+            id_iniciativa: iniciativa.id,
+            id_tipo_presenta: item.proponenteId, 
+            id_presenta: item.autorId
+          });
+    }
     
     return res.status(200).json({ 
       message: "Iniciativa actualizada correctamente",

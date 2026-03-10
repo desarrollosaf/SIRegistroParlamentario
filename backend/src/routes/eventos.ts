@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas, exportdatos, getAgendaHoy} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
+import  uploadAgenda from  "../controllers/uploadAgenda";
 const router = Router();
 
 
@@ -23,9 +24,25 @@ router.post("/api/eventos/getvotospunto/", getvotacionpunto );
 router.post("/api/eventos/actvoto/", actualizarvoto );
 router.post("/api/eventos/reiniciavoto/", reiniciarvoto );
 router.get("/api/eventos/catalogossave/", catalogossave );
-router.post("/api/eventos/saveagenda/", saveagenda );
+router.post(
+  "/api/eventos/saveagenda/",
+  uploadAgenda.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+  ]),
+  saveagenda
+);
+// router.post("/api/eventos/saveagenda/", saveagenda );
 router.get("/api/eventos/getagenda/:id", getAgenda );
-router.post("/api/eventos/editagenda/:id", updateAgenda );
+// router.post("/api/eventos/editagenda/:id", updateAgenda );
+router.post(
+  "/api/eventos/editagenda/:id",
+  uploadAgenda.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+  ]),
+  updateAgenda
+);
 router.post("/api/eventos/notificarpunto/:id", enviarWhatsPunto );
 router.get("/api/eventos/votacionpunto/:id", generarPDFVotacion );
 router.get("/api/eventos/gestionintegrantes/:id", gestionIntegrantes );

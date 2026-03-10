@@ -2631,7 +2631,15 @@ export const catalogossave = async (req: Request, res: Response) => {
 export const saveagenda = async (req: Request, res: Response) => {
   try {
     const agendaBody = req.body;
-    const anfitriones = req.body.autores || [];
+     let anfitriones = req.body.autores || [];
+
+    if (typeof anfitriones === "string") {
+      anfitriones = JSON.parse(anfitriones);
+    }
+    const files = req.files as any;
+    const versionEstenografica = files?.version_estenografica?.[0]?.filename || null;
+    const ordenDia = files?.orden_dia?.[0]?.filename || null;
+   
 
     const agenda = await Agenda.create({
       descripcion: agendaBody.descripcion,
@@ -2642,19 +2650,20 @@ export const saveagenda = async (req: Request, res: Response) => {
       liga: agendaBody.liga || null,
       fecha_hora_inicio: agendaBody.hora_inicio || null,
       fecha_hora_fin: agendaBody.hora_fin || null,
+      version_estenografica: versionEstenografica ? `storage/agendas/${versionEstenografica}` : null,
+      orden_dia: ordenDia ? `storage/agendas/${ordenDia}`: null
 
     });
 
     for (const item of anfitriones) {
-   
+      // console.log("esto es anfitriones", anfitriones)
+      // console.log("esto es item", item)
+      // return 500;
       const tipoAutorRecord = await TipoAutor.findOne({
         where: { valor: item.tipo }
       });
-
       const tipoAutorId = tipoAutorRecord?.id;
       if (!tipoAutorId) continue;
-
-     
       if (Array.isArray(item.autor_id)) {
         for (const autor of item.autor_id) {
           await AnfitrionAgenda.create({
@@ -2664,8 +2673,6 @@ export const saveagenda = async (req: Request, res: Response) => {
           });
         }
       }
-
-  
       else if (typeof item.autor_id === "string") {
         await AnfitrionAgenda.create({
           agenda_id: agenda.id,
@@ -2797,14 +2804,27 @@ export const getAgendaHoy = async (req: Request, res: Response): Promise<Respons
 
 export const updateAgenda = async (req: Request, res: Response) => {
   try {
-    const agendaId = req.params.id; 
+    const agendaId = req.params.id;
     const body = req.body;
-    const anfitriones = req.body.autores || [];
+
+    let anfitriones = req.body.autores || [];
+
+    if (typeof anfitriones === "string") {
+      anfitriones = JSON.parse(anfitriones);
+    }
+
     const agenda = await Agenda.findByPk(agendaId);
+
     if (!agenda) {
       return res.status(404).json({ msg: "Agenda no encontrada" });
     }
 
+    const files = req.files as any;
+    const versionEstenograficaFile = files?.version_estenografica?.[0]?.filename || null;
+    const ordenDiaFile = files?.orden_dia?.[0]?.filename || null;
+    // console.log("Orden del dia", ordenDiaFile )
+    // console.log("Version", files?.version_estenografica?.[0]?.filename  )
+    // return 500;
     await agenda.update({
       descripcion: body.descripcion,
       fecha: body.fecha,
@@ -2814,6 +2834,8 @@ export const updateAgenda = async (req: Request, res: Response) => {
       liga: body.liga || null,
       fecha_hora_inicio: body.hora_inicio || null,
       fecha_hora_fin: body.hora_fin || null,
+      version_estenografica: versionEstenograficaFile ? `storage/agendas/${versionEstenograficaFile}` : agenda.version_estenografica,
+      orden_dia: ordenDiaFile ? `storage/agendas/${ordenDiaFile}` : agenda.orden_dia
     });
 
     await AnfitrionAgenda.destroy({
@@ -2847,10 +2869,14 @@ export const updateAgenda = async (req: Request, res: Response) => {
       }
     }
 
-    return res.json({ response: "success", id: agendaId });
+    return res.json({
+      response: "success",
+      id: agendaId
+    });
 
   } catch (error) {
     console.error("Error al actualizar la agenda:", error);
+
     return res.status(500).json({
       msg: "Error interno del servidor",
       error: error instanceof Error ? error.message : "Error desconocido"

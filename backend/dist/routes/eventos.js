@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const agenda_1 = require("../controllers/agenda");
 const multer_1 = __importDefault(require("../controllers/multer"));
+const uploadAgenda_1 = __importDefault(require("../controllers/uploadAgenda"));
 const router = (0, express_1.Router)();
 router.get("/api/eventos/geteventos/:id", agenda_1.geteventos);
 router.get("/api/eventos/getevento/:id", agenda_1.getevento);
@@ -26,9 +27,17 @@ router.post("/api/eventos/getvotospunto/", agenda_1.getvotacionpunto);
 router.post("/api/eventos/actvoto/", agenda_1.actualizarvoto);
 router.post("/api/eventos/reiniciavoto/", agenda_1.reiniciarvoto);
 router.get("/api/eventos/catalogossave/", agenda_1.catalogossave);
-router.post("/api/eventos/saveagenda/", agenda_1.saveagenda);
+router.post("/api/eventos/saveagenda/", uploadAgenda_1.default.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+]), agenda_1.saveagenda);
+// router.post("/api/eventos/saveagenda/", saveagenda );
 router.get("/api/eventos/getagenda/:id", agenda_1.getAgenda);
-router.post("/api/eventos/editagenda/:id", agenda_1.updateAgenda);
+// router.post("/api/eventos/editagenda/:id", updateAgenda );
+router.post("/api/eventos/editagenda/:id", uploadAgenda_1.default.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+]), agenda_1.updateAgenda);
 router.post("/api/eventos/notificarpunto/:id", agenda_1.enviarWhatsPunto);
 router.get("/api/eventos/votacionpunto/:id", agenda_1.generarPDFVotacion);
 router.get("/api/eventos/gestionintegrantes/:id", agenda_1.gestionIntegrantes);
