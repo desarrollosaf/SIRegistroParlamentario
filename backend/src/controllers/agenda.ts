@@ -1166,13 +1166,13 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    if(body.tipo_evento == 0){
+    // if(body.tipo_evento == 0){
       const comisionesString = `[${turnocomision.join(',')}]`;
       await PuntosComisiones.create({
         id_punto: puntonuevo.id,
         id_comision: comisionesString,
       });
-    }
+    // }
     return res.status(201).json({
       message: "Punto creado correctamente",
       data: puntonuevo,
@@ -1865,7 +1865,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       });
     }
 
-    if(body.tipo_evento == 0){
+    // if(body.tipo_evento == 0){
       await PuntosComisiones.destroy({
         where: { id_punto: punto.id }
       });
@@ -1876,7 +1876,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         id_comision: comisionesString,
       });
 
-    }
+    // }
     
     return res.status(200).json({
       message: "Punto actualizado correctamente",
