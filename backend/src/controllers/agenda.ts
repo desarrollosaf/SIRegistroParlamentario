@@ -1003,7 +1003,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
     });
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
-    if(body.tipo_evento != 0){
+    if(body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ){
       if (puntosTurnadosArray.length > 0) {
           if (puntosTurnadosArray.length === 1) {
             const estudio = await IniciativaEstudio.create({
@@ -1209,7 +1209,7 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
       }
       
       // 2. Determinar tipo de evento
-      const esSesion = evento.tipoevento?.nombre === "Sesión";
+      const esSesion = evento.tipoevento?.nombre === "Sesión" || evento.tipo_evento_id === "a413e44b-550b-47ab-b004-a6f28c73a750";
       const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
 
       const puntosRaw = await PuntosOrden.findAll({
@@ -1343,7 +1343,7 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
 
 
         if (estudiado) {
-          if (estudiado.type === "1") {
+          if (estudiado.type === "1" ) {
             const info = [
               {
                 id: estudiado.iniciativaorigen?.id,
@@ -1351,13 +1351,15 @@ getpuntos = async (req: Request, res: Response): Promise<any> => {
               }
             ];
             // 👇 según tipo de evento asigna a uno u otro
-            if (esSesion) {
+            if (esSesion ) {
               dictamenes = info;
             } else {
               puntosestudiado = info;
             }
 
           } else if (estudiado.type === "2") {
+            console.log(esSesion)
+            console.log("holaaaaaaaaaa", evento.tipo_evento_id)
             if(esSesion){
               const info: any[] = [];
               const puntos = await PuntosOrden.findAll({
@@ -1527,6 +1529,8 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
     const { body } = req;
     const file = req.file;
+    // console.log(body);
+    // return 500;
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -1548,7 +1552,15 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       .map((id: string) => id.trim()) 
       .filter((id: string) => id.length > 0);
 
-    const punto = await PuntosOrden.findOne({ where: { id } });
+    const punto = await PuntosOrden.findOne({
+      where: { id },
+      include: [
+        {
+          model: Agenda,
+          as: 'evento',
+        }
+      ]
+    });
     if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
@@ -1561,8 +1573,8 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
   
     let puntoDesc: string = body.punto;
-
-    if (body.tipo_evento != 0) {
+    
+    if (body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ) {
       console.log("EVENTO 1")
       if (puntosTurnadosArray.length > 0) {
 
@@ -1704,7 +1716,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       }
 
     } else {
-
+      
       console.log("EVENTO 0")
       const dictamenesArray: any[] = JSON.parse(body.dictamenes || "[]");
 
