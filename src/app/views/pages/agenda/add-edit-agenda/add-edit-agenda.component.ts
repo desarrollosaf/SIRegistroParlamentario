@@ -122,8 +122,8 @@ export class AddEditAgendaComponent {
         });
 
         // Cargar rutas de documentos existentes para mostrar botón "Ver"
-        this.pathOrdenDia = response.path_orden_dia || '';
-        this.pathVersionEstenografica = response.path_version_estenografica || '';
+        this.pathOrdenDia = response.orden_dia || '';
+        this.pathVersionEstenografica = response.version_estenografica || '';
 
         this.getSelect(() => {
           if (response.anfitrion_agendas && response.anfitrion_agendas.length > 0) {
