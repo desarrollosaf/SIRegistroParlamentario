@@ -1025,6 +1025,64 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     };
 
     console.log('INICIATIVAS A ENVIAR: ', datos);
+    this._eventoService.saveIniciativa(datos).subscribe({
+      next: (response: any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Iniciativa guardada correctamente."
+        });
+
+        this.toggleformIniciativa();
+
+        if (response.data) {
+          this.listaIniciativas.push(response.data);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+          }
+        } else {
+          const nuevaIniciativa = {
+            id: response.id || Date.now(),
+            descripcion: datos.descripcion
+          };
+
+          this.listaIniciativas.push(nuevaIniciativa);
+          if (this.puntoSeleccionadoIniciativa.iniciativas) {
+            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
+          } else {
+            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
+          }
+        }
+
+        const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+        if (puntoIndex !== -1) {
+          this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: msg,
+          timer: 3000
+        });
+      }
+    });
+
+
+    
   }
 
   eliminarIniciativa(iniciativa: any, index: number) {
