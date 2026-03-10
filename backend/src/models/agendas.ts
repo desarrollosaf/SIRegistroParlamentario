@@ -25,6 +25,8 @@ class Agenda extends Model {
   declare liga: string | null;
   declare documentacion_id: number | null;
   declare tipo_sesion: number | null;
+  declare version_estenografica: string | null;
+  declare orden_dia: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -122,6 +124,14 @@ Agenda.init(
     tipo_sesion: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    version_estenografica: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    orden_dia: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,

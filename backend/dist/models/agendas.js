@@ -84,6 +84,14 @@ Agenda.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true
     },
+    version_estenografica: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
+    orden_dia: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         field: 'created_at',
