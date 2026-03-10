@@ -890,7 +890,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
         });
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
-        if (body.tipo_evento != 0) {
+        if (body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750") {
             if (puntosTurnadosArray.length > 0) {
                 if (puntosTurnadosArray.length === 1) {
                     const estudio = yield iniciativas_estudio_1.default.create({
@@ -1066,7 +1066,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
         // 2. Determinar tipo de evento
-        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión" || evento.tipo_evento_id === "a413e44b-550b-47ab-b004-a6f28c73a750";
         const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
         const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
@@ -1197,6 +1197,8 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
                 else if (estudiado.type === "2") {
+                    console.log(esSesion);
+                    console.log("holaaaaaaaaaa", evento.tipo_evento_id);
                     if (esSesion) {
                         const info = [];
                         const puntos = yield puntos_ordens_1.default.findAll({
@@ -1350,6 +1352,8 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
+        // console.log(body);
+        // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -1369,7 +1373,15 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id.length > 0);
-        const punto = yield puntos_ordens_1.default.findOne({ where: { id } });
+        const punto = yield puntos_ordens_1.default.findOne({
+            where: { id },
+            include: [
+                {
+                    model: agendas_1.default,
+                    as: 'evento',
+                }
+            ]
+        });
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
@@ -1380,7 +1392,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
         const nuevoPath = file ? `storage/puntos/${file.filename}` : punto.path_doc;
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
         let puntoDesc = body.punto;
-        if (body.tipo_evento != 0) {
+        if (body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750") {
             console.log("EVENTO 1");
             if (puntosTurnadosArray.length > 0) {
                 const estudioExistente = yield iniciativas_estudio_1.default.findOne({
