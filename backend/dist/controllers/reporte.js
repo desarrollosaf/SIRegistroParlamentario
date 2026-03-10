@@ -47,6 +47,9 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             as: "estudio",
                             attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
                             required: false,
+                            where: {
+                                type: 1
+                            },
                             include: [
                                 {
                                     model: puntos_ordens_1.default,
@@ -120,6 +123,11 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             ],
             order: [["createdAt", "ASC"]]
         });
+        // console.log("TODAS INICIATIVAS: ")
+        // console.log(iniciativas)
+        // return res.status(200).json({
+        //   data: iniciativas
+        // });
         const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
             const data = iniciativa.toJSON();
@@ -312,6 +320,10 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.setHeader("Content-Disposition", 'attachment; filename="reporte_iniciativas.xlsx"');
         yield workbook.xlsx.write(res);
         return res.end();
+        // return res.status(200).json({
+        //   total: reporte.length,
+        //   data: reporte
+        // });
     }
     catch (error) {
         console.error("Error al generar Excel de iniciativas:", error);

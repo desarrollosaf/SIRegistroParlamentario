@@ -35,6 +35,9 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               as: "estudio",
               attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
               required: false,
+              where: {
+                type: 1
+              },
               include: [
                 {
                   model: PuntosOrden,
@@ -109,6 +112,12 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       order: [["createdAt", "ASC"]]
     });
 
+    // console.log("TODAS INICIATIVAS: ")
+    // console.log(iniciativas)
+    // return res.status(200).json({
+    //   data: iniciativas
+    // });
+
     const reporte = await Promise.all(
       iniciativas.map(async (iniciativa, index) => {
         const data: any = iniciativa.toJSON();
@@ -125,7 +134,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         ];
 
         const fuenteEstudios = deduplicarPorId(todosEstudios);
-
+      
         const estudios = fuenteEstudios.filter((e: any) => e.status === "1");
         const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
         const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
@@ -340,6 +349,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     await workbook.xlsx.write(res);
     return res.end();
+
+    // return res.status(200).json({
+    //   total: reporte.length,
+    //   data: reporte
+    // });
 
   } catch (error: any) {
     console.error("Error al generar Excel de iniciativas:", error);

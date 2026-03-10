@@ -531,6 +531,9 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             as: 'estudio',
                             attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"], // 👈 cambió de id_punto_evento
                             required: false,
+                            where: {
+                                type: 1
+                            },
                             include: [
                                 {
                                     model: puntos_ordens_1.default,
