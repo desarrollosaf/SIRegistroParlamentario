@@ -2246,9 +2246,16 @@ const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.catalogossave = catalogossave;
 const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         const agendaBody = req.body;
-        const anfitriones = req.body.autores || [];
+        let anfitriones = req.body.autores || [];
+        if (typeof anfitriones === "string") {
+            anfitriones = JSON.parse(anfitriones);
+        }
+        const files = req.files;
+        const versionEstenografica = ((_b = (_a = files === null || files === void 0 ? void 0 : files.version_estenografica) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.filename) || null;
+        const ordenDia = ((_d = (_c = files === null || files === void 0 ? void 0 : files.orden_dia) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.filename) || null;
         const agenda = yield agendas_1.default.create({
             descripcion: agendaBody.descripcion,
             fecha: agendaBody.fecha,
@@ -2258,8 +2265,13 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             liga: agendaBody.liga || null,
             fecha_hora_inicio: agendaBody.hora_inicio || null,
             fecha_hora_fin: agendaBody.hora_fin || null,
+            version_estenografica: versionEstenografica ? `storage/agendas/${versionEstenografica}` : null,
+            orden_dia: ordenDia ? `storage/agendas/${ordenDia}` : null
         });
         for (const item of anfitriones) {
+            // console.log("esto es anfitriones", anfitriones)
+            // console.log("esto es item", item)
+            // return 500;
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
                 where: { valor: item.tipo }
             });
@@ -2383,14 +2395,24 @@ const getAgendaHoy = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.getAgendaHoy = getAgendaHoy;
 const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         const agendaId = req.params.id;
         const body = req.body;
-        const anfitriones = req.body.autores || [];
+        let anfitriones = req.body.autores || [];
+        if (typeof anfitriones === "string") {
+            anfitriones = JSON.parse(anfitriones);
+        }
         const agenda = yield agendas_1.default.findByPk(agendaId);
         if (!agenda) {
             return res.status(404).json({ msg: "Agenda no encontrada" });
         }
+        const files = req.files;
+        const versionEstenograficaFile = ((_b = (_a = files === null || files === void 0 ? void 0 : files.version_estenografica) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.filename) || null;
+        const ordenDiaFile = ((_d = (_c = files === null || files === void 0 ? void 0 : files.orden_dia) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.filename) || null;
+        // console.log("Orden del dia", ordenDiaFile )
+        // console.log("Version", files?.version_estenografica?.[0]?.filename  )
+        // return 500;
         yield agenda.update({
             descripcion: body.descripcion,
             fecha: body.fecha,
@@ -2400,6 +2422,8 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             liga: body.liga || null,
             fecha_hora_inicio: body.hora_inicio || null,
             fecha_hora_fin: body.hora_fin || null,
+            version_estenografica: versionEstenograficaFile ? `storage/agendas/${versionEstenograficaFile}` : agenda.version_estenografica,
+            orden_dia: ordenDiaFile ? `storage/agendas/${ordenDiaFile}` : agenda.orden_dia
         });
         yield anfitrion_agendas_1.default.destroy({
             where: { agenda_id: agendaId }
@@ -2428,7 +2452,10 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
-        return res.json({ response: "success", id: agendaId });
+        return res.json({
+            response: "success",
+            id: agendaId
+        });
     }
     catch (error) {
         console.error("Error al actualizar la agenda:", error);

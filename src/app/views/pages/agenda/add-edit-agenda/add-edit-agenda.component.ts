@@ -8,6 +8,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AgendaService } from '../../../../service/agenda.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import Swal from 'sweetalert2';
+import { enviroment } from '../../../../../enviroments/enviroment';
 
 @Component({
   selector: 'app-add-edit-agenda',
@@ -28,7 +29,7 @@ export class AddEditAgendaComponent {
     autores: Array<{ id: string, name: string }>
   }> = [];
   private _agendaService = inject(AgendaService);
-
+  enviro = enviroment.endpoint;
   idAgenda: any;
   operacion: string = 'Registrar';
   tipoAutor: any[] = [];
@@ -240,7 +241,7 @@ export class AddEditAgendaComponent {
 
   verDocumento(path: string): void {
     if (path) {
-      const url = path.startsWith('http') ? path : `${path}`;
+      const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
       window.open(url, '_blank');
     }
   }

@@ -416,6 +416,25 @@ const crariniidits = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (iniciativa) {
             yield iniciativa.update({ id_punto: punto.id });
         }
+        const presentaArray = (Array.isArray(body.id_presenta)
+            ? body.id_presenta
+            : (body.id_presenta || "").split(","))
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+            .map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return {
+                proponenteId: parseInt(proponenteId),
+                autorId: autorId
+            };
+        });
+        for (const item of presentaArray) {
+            yield iniciativaspresenta_1.default.create({
+                id_iniciativa: iniciativa.id,
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId
+            });
+        }
         return res.status(200).json({
             message: "Iniciativa actualizada correctamente",
         });
