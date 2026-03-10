@@ -16,10 +16,21 @@
         <!-- Select de Iniciativas -->
         <div class="row mb-4">
           <div class="col-md-10 offset-md-1">
-            <label class="form-label fw-semibold">
-              <i class="bi bi-search me-2"></i>
-              Buscar Iniciativa
-            </label>
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <label class="form-label fw-semibold mb-0">
+                <i class="bi bi-search me-2"></i>
+                Buscar Iniciativa
+              </label>
+              <button class="btn btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-1"
+                style="background: linear-gradient(135deg, #1D6F42, #2e9e5e); color: white; border-radius: 20px; border: none; box-shadow: 0 2px 8px rgba(29,111,66,0.25); transition: all .2s;"
+                (click)="descargarInfoInciativas()" [disabled]="descargandoReporte"
+                title="Descargar en Excel">
+                <span *ngIf="descargandoReporte" class="spinner-border spinner-border-sm" role="status"></span>
+                <i *ngIf="!descargandoReporte" class="bi bi-file-earmark-excel-fill fs-5"></i>
+                <span style="font-size: 0.8rem;">{{ descargandoReporte ? 'Descargando...' : 'Exportar Excel' }}</span>
+              </button>
+            </div>
+            <br>
             <ng-select [items]="listaIniciativas" bindLabel="iniciativa" [(ngModel)]="iniciativaSeleccionada"
               placeholder="Escribe para buscar una iniciativa..." [searchable]="true" [clearable]="true"
               [loading]="cargando" (change)="onIniciativaChange($event)" class="ng-select-large">
