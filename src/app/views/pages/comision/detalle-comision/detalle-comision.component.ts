@@ -771,7 +771,17 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           const puntoMapeado = {
             ...punto,
             reservas: punto.reservas || [],
-            iniciativas: punto.iniciativas || [],
+            // iniciativas: punto.iniciativas || [],
+            iniciativas: (punto.iniciativas || []).map((ini: any) => ({
+              ...ini,
+              iniciativa: ini.iniciativa || ini.descripcion || '—',
+              proponente: ini.proponente
+                ? (typeof ini.proponente === 'string' ? ini.proponente : ini.proponente?.valor || '—')
+                : (ini.proponentes ? ini.proponentes.map((p: any) => p.valor || p.nombre || p).join(', ') : '—'),
+              presenta: ini.presenta
+                ? (typeof ini.presenta === 'string' ? ini.presenta : ini.presenta?.valor || '—')
+                : (ini.presentan ? ini.presentan.map((p: any) => p.valor || p.nombre || p).join(', ') : '—')
+            })),
             puntosTurnadosSeleccionados: Array.isArray(punto.puntosestudiado) && punto.puntosestudiado.length > 0
               ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
               : (punto.turnocomision || []).map((tc: any) => {
@@ -890,16 +900,42 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.iniciativaPrecargadaSeleccionada = null;
 
         if (response.data) {
-          this.listaIniciativas.push(response.data);
+          const idsProponente = this.formIniciativa.value?.id_proponente || [];
+          const idsPresenta = this.formIniciativa.value?.id_presenta || [];
+
+          const iniciativaConNombres = {
+            ...response.data,
+            iniciativa: response.data.iniciativa || iniciativaSeleccionada.iniciativa,
+            proponente: response.data.proponente || this.slctProponentes
+              ?.filter((p: any) => idsProponente.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—',
+            presenta: response.data.presenta || this.slcPresenta
+              ?.filter((p: any) => idsPresenta.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—'
+          };
+          this.listaIniciativas.push(iniciativaConNombres);
           if (this.puntoSeleccionadoIniciativa.iniciativas) {
             this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
           } else {
             this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
           }
         } else {
+          const idsProponente = this.formIniciativa.value?.id_proponente || [];
+          const idsPresenta = this.formIniciativa.value?.id_presenta || [];
+
           const nuevaIniciativa = {
             id: response.id || iniciativaSeleccionada.id,
-            iniciativa: iniciativaSeleccionada.iniciativa
+            iniciativa: iniciativaSeleccionada.iniciativa,
+            proponente: this.slctProponentes
+              ?.filter((p: any) => idsProponente.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—',
+            presenta: this.slcPresenta
+              ?.filter((p: any) => idsPresenta.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—'
           };
 
           this.listaIniciativas.push(nuevaIniciativa);
@@ -1042,16 +1078,42 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.toggleformIniciativa();
 
         if (response.data) {
-          this.listaIniciativas.push(response.data);
+          const idsProponente = this.formIniciativa.value.id_proponente || [];
+          const idsPresenta = this.formIniciativa.value.id_presenta || [];
+
+          const iniciativaConNombres = {
+            ...response.data,
+            proponente: response.data.proponente || this.slctProponentes
+              ?.filter((p: any) => idsProponente.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—',
+            presenta: response.data.presenta || this.slcPresenta
+              ?.filter((p: any) => idsPresenta.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—'
+          };
+          this.listaIniciativas.push(iniciativaConNombres);
           if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
+            this.puntoSeleccionadoIniciativa.iniciativas.push(iniciativaConNombres);
           } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
+            this.puntoSeleccionadoIniciativa.iniciativas = [iniciativaConNombres];
           }
         } else {
+          const idsProponente = this.formIniciativa.value.id_proponente || [];
+          const idsPresenta = this.formIniciativa.value.id_presenta || [];
+
           const nuevaIniciativa = {
             id: response.id || Date.now(),
-            descripcion: datos.descripcion
+            descripcion: datos.descripcion,
+            iniciativa: datos.descripcion,
+            proponente: this.slctProponentes
+              ?.filter((p: any) => idsProponente.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—',
+            presenta: this.slcPresenta
+              ?.filter((p: any) => idsPresenta.includes(p.id))
+              .map((p: any) => p.valor)
+              .join(', ') || '—'
           };
 
           this.listaIniciativas.push(nuevaIniciativa);
@@ -1082,7 +1144,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
 
-    
+
   }
 
   eliminarIniciativa(iniciativa: any, index: number) {
