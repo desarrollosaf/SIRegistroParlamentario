@@ -890,7 +890,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
         });
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
-        if (body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750") {
+        if (body.tipo_evento != 0 && evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750") {
             if (puntosTurnadosArray.length > 0) {
                 if (puntosTurnadosArray.length === 1) {
                     const estudio = yield iniciativas_estudio_1.default.create({
