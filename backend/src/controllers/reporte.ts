@@ -238,6 +238,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
         return {
           no: index + 1,
+          id: data.id,
           autor: proponentesString || "-",
           autor_detalle: presentaString || "-",
           iniciativa: data.iniciativa ?? "-",
@@ -255,6 +256,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     worksheet.columns = [
       { header: "NO.", key: "no", width: 8 },
+      { header: "ID", key: "id", width: 8 },
       { header: "AUTOR", key: "autor", width: 25 },
       { header: "PRESENTA", key: "autor_detalle", width: 35 },
       { header: "INICIATIVA", key: "iniciativa", width: 55 },

@@ -228,6 +228,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 : "-";
             return {
                 no: index + 1,
+                id: data.id,
                 autor: proponentesString || "-",
                 autor_detalle: presentaString || "-",
                 iniciativa: (_j = data.iniciativa) !== null && _j !== void 0 ? _j : "-",
@@ -242,6 +243,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const worksheet = workbook.addWorksheet("Reporte Iniciativas");
         worksheet.columns = [
             { header: "NO.", key: "no", width: 8 },
+            { header: "ID", key: "id", width: 8 },
             { header: "AUTOR", key: "autor", width: 25 },
             { header: "PRESENTA", key: "autor_detalle", width: 35 },
             { header: "INICIATIVA", key: "iniciativa", width: 55 },
