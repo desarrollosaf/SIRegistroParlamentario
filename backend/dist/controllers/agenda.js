@@ -1030,13 +1030,13 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 id_presenta: item.autorId
             });
         }
-        if (body.tipo_evento == 0) {
-            const comisionesString = `[${turnocomision.join(',')}]`;
-            yield puntos_comisiones_1.default.create({
-                id_punto: puntonuevo.id,
-                id_comision: comisionesString,
-            });
-        }
+        // if(body.tipo_evento == 0){
+        const comisionesString = `[${turnocomision.join(',')}]`;
+        yield puntos_comisiones_1.default.create({
+            id_punto: puntonuevo.id,
+            id_comision: comisionesString,
+        });
+        // }
         return res.status(201).json({
             message: "Punto creado correctamente",
             data: puntonuevo,
@@ -1604,16 +1604,16 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 id_presenta: item.autorId
             });
         }
-        if (body.tipo_evento == 0) {
-            yield puntos_comisiones_1.default.destroy({
-                where: { id_punto: punto.id }
-            });
-            const comisionesString = `[${turnocomision.join(',')}]`;
-            yield puntos_comisiones_1.default.create({
-                id_punto: punto.id,
-                id_comision: comisionesString,
-            });
-        }
+        // if(body.tipo_evento == 0){
+        yield puntos_comisiones_1.default.destroy({
+            where: { id_punto: punto.id }
+        });
+        const comisionesString = `[${turnocomision.join(',')}]`;
+        yield puntos_comisiones_1.default.create({
+            id_punto: punto.id,
+            id_comision: comisionesString,
+        });
+        // }
         return res.status(200).json({
             message: "Punto actualizado correctamente",
             data: punto,
