@@ -813,12 +813,14 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               {
                 punto_origen_id: {
                   [Op.in]: posiblesPuntosUnicos
-                }
+                },
+                type: 1
               },
               {
                 punto_origen_id: {
                   [Op.in]: expedienteIds
-                }
+                },
+                type: 2
               }
             ]
           },
