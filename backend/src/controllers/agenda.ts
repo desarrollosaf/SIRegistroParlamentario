@@ -1937,9 +1937,14 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
   try {
     const { id } = req.params;
     const punto = await PuntosOrden.findOne({ where: { id } });
+    
      if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
+    await PuntosOrden.update(
+      { id_dictamen: 0 },
+      { where: { id_dictamen: punto.id } }
+    );
     
     await IniciativaEstudio.destroy({
       where: {

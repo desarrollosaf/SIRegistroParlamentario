@@ -742,12 +742,14 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         {
                             punto_origen_id: {
                                 [sequelize_1.Op.in]: posiblesPuntosUnicos
-                            }
+                            },
+                            type: 1
                         },
                         {
                             punto_origen_id: {
                                 [sequelize_1.Op.in]: expedienteIds
-                            }
+                            },
+                            type: 2
                         }
                     ]
                 },
