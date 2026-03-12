@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -34,6 +34,17 @@ interface TimelineItem {
   votacionid?: string;
 }
 
+interface GrupoParlamentario {
+  id: string;
+  nombre: string;
+}
+
+interface Diputado {
+  id: string;
+  nombre: string;
+  grupoId?: string;
+}
+
 @Component({
   selector: 'app-iniciativas',
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink],
@@ -42,6 +53,7 @@ interface TimelineItem {
 })
 export class IniciativasComponent implements OnInit {
   private _eventoService = inject(EventoService);
+
   cargando: boolean = false;
   listaIniciativas: Iniciativa[] = [];
   iniciativaSeleccionada: Iniciativa | null = null;
@@ -50,7 +62,17 @@ export class IniciativasComponent implements OnInit {
   descargando: { [key: string]: boolean } = {};
   descargandoReporte: boolean = false;
 
+  // Dropdown exportar
+  exportMenuOpen: boolean = false;
 
+  // Modal con filtros (pendiente de nombre definitivo)
+  modalFiltrosOpen: boolean = false;
+  listaGrupos: GrupoParlamentario[] = [];
+  listaDiputados: Diputado[] = [];
+  grupoSeleccionado: GrupoParlamentario | null = null;
+  diputadoSeleccionado: Diputado | null = null;
+  cargandoModal: boolean = false;
+  generandoReporte: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -58,16 +80,18 @@ export class IniciativasComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) { }
+
   ngOnInit(): void {
     this.cargarIniciativas();
   }
+
+  // ─── Iniciativas ────────────────────────────────────────────────────────────
 
   cargarIniciativas(): void {
     this.cargando = true;
     this._eventoService.getIniciativasList().subscribe({
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
-        // console.log('Iniciativas cargadas:', this.listaIniciativas);
         this.cargando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -83,7 +107,6 @@ export class IniciativasComponent implements OnInit {
       this.iniciativaSeleccionada = null;
       return;
     }
-
     this.iniciativaSeleccionada = iniciativa;
     this.cargarTimelineIniciativa(iniciativa.id);
   }
@@ -91,17 +114,13 @@ export class IniciativasComponent implements OnInit {
   cargarTimelineIniciativa(idIniciativa: string): void {
     this.cargando = true;
     this.timelineData = [];
-
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
-        console.log('Respuesta del historial:', response);
-
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0], response);
         } else {
           this.timelineData = [];
         }
-
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -116,11 +135,11 @@ export class IniciativasComponent implements OnInit {
   procesarTimeline(data: any, data1: any): void {
     this.timelineData = [];
     this.isCollapsed = {};
-    // 1. NACIÓ (donde se presentó)
-      if (this.iniciativaSeleccionada) {
-        this.iniciativaSeleccionada.presentaString = data1.presentaString || '';
-        this.iniciativaSeleccionada.proponentesString = data1.proponentesString || '';
-      }
+
+    if (this.iniciativaSeleccionada) {
+      this.iniciativaSeleccionada.presentaString = data1.presentaString || '';
+      this.iniciativaSeleccionada.proponentesString = data1.proponentesString || '';
+    }
 
     if (data.nacio) {
       this.timelineData.push({
@@ -138,7 +157,6 @@ export class IniciativasComponent implements OnInit {
       });
     }
 
-    // 2. ESTUDIO (turnada a comisión)
     if (data.estudio && Array.isArray(data.estudio)) {
       data.estudio.forEach((item: any) => {
         this.timelineData.push({
@@ -156,9 +174,7 @@ export class IniciativasComponent implements OnInit {
       });
     }
 
-    // 3. DICTAMEN (dictaminada)
     if (data.dictamen && Array.isArray(data.dictamen)) {
-      console.log('hola dictamen', data.dictamen);
       data.dictamen.forEach((item: any) => {
         this.timelineData.push({
           fecha: item.fecha_evento,
@@ -176,11 +192,10 @@ export class IniciativasComponent implements OnInit {
       });
     }
 
-    // 4. CIERRE (aprobada/rechazada)
     if (data.cierre) {
       this.timelineData.push({
         fecha: data.cierre.fecha,
-        titulo: '⚖️ Resolución ',
+        titulo: '⚖️ Resolución',
         descripcion: data.cierre.descripcion_evento,
         tipo: 'cierre',
         numpunto: data.cierre.numpunto,
@@ -191,11 +206,12 @@ export class IniciativasComponent implements OnInit {
         votacionid: data.cierre.votacionid
       });
     }
+
     this.timelineData.forEach((_, index) => {
       this.isCollapsed[index] = true;
     });
-    console.log('Timeline procesado:', this.timelineData);
   }
+
   toggleCollapse(index: number): void {
     this.isCollapsed[index] = !this.isCollapsed[index];
   }
@@ -220,10 +236,128 @@ export class IniciativasComponent implements OnInit {
     }
   }
 
+  // ─── Dropdown Exportar ───────────────────────────────────────────────────────
+
+  toggleExportMenu(): void {
+    this.exportMenuOpen = !this.exportMenuOpen;
+  }
+
+  closeExportMenu(): void {
+    this.exportMenuOpen = false;
+  }
+
+  // ─── Reportes directos (sin modal) ──────────────────────────────────────────
+
+  descargarReporte(tipo: 'general' | 'estudio' | 'aprobadas' | 'grupo-diputado' | 'totales-periodo'): void {
+    this.closeExportMenu();
+    this.descargandoReporte = true;
+
+    // TODO: Reemplazar con el método correcto de tu servicio según el tipo
+    // Ejemplo: this._eventoService.generarReporte(tipo)
+    this._eventoService.generarReporteIniciativas().subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `iniciativas_${tipo}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargandoReporte = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.descargandoReporte = false;
+        this.mostrarErrorDescarga(e);
+      }
+    });
+  }
+
+  // ─── Modal con filtros (pendiente de nombre) ────────────────────────────────
+
+  abrirModalFiltros(): void {
+    this.closeExportMenu();
+    this.grupoSeleccionado = null;
+    this.diputadoSeleccionado = null;
+    this.cargarGruposYDiputados();
+    this.modalFiltrosOpen = true;
+  }
+
+  cerrarModalFiltros(): void {
+    this.modalFiltrosOpen = false;
+    this.grupoSeleccionado = null;
+    this.diputadoSeleccionado = null;
+  }
+
+  cargarGruposYDiputados(): void {
+    this.cargandoModal = true;
+
+    // TODO: Reemplazar con los métodos reales de tu servicio
+    // Ejemplo:
+    // this._eventoService.getGruposParlamentarios().subscribe({ next: (res) => { this.listaGrupos = res.data; } });
+    // this._eventoService.getDiputados().subscribe({ next: (res) => { this.listaDiputados = res.data; } });
+
+    // Mock temporal mientras llegan las rutas:
+    this.listaGrupos = [
+      { id: '1', nombre: 'Morena' },
+      { id: '2', nombre: 'PAN' },
+      { id: '3', nombre: 'PRI' },
+      { id: '4', nombre: 'PVEM' },
+      { id: '5', nombre: 'PT' },
+      { id: '6', nombre: 'Movimiento Ciudadano' },
+      { id: '7', nombre: 'PRD' },
+    ];
+    this.listaDiputados = [
+      { id: '1', nombre: 'Ana García López' },
+      { id: '2', nombre: 'Carlos Mendoza Ruiz' },
+      { id: '3', nombre: 'Laura Torres Vega' },
+      { id: '4', nombre: 'Roberto Sánchez Cruz' },
+      { id: '5', nombre: 'María Flores Herrera' },
+    ];
+    this.cargandoModal = false;
+  }
+
+  generarReporteFiltros(): void {
+    if (!this.grupoSeleccionado && !this.diputadoSeleccionado) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Selección requerida',
+        text: 'Debes seleccionar al menos un grupo parlamentario o un diputado.',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#800048',
+      });
+      return;
+    }
+
+    this.generandoReporte = true;
+
+    const params = {
+      grupoId: this.grupoSeleccionado?.id || null,
+      diputadoId: this.diputadoSeleccionado?.id || null,
+    };
+
+    // TODO: Reemplazar con el método real de tu servicio
+    // this._eventoService.generarReporteGrupoDiputado(params).subscribe({ ... });
+    this._eventoService.generarReporteIniciativas().subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const nombre = this.grupoSeleccionado?.nombre || this.diputadoSeleccionado?.nombre || 'reporte';
+        a.download = `iniciativas_${nombre.toLowerCase().replace(/ /g, '_')}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.generandoReporte = false;
+        this.cerrarModalFiltros();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.generandoReporte = false;
+        this.mostrarErrorDescarga(e);
+      }
+    });
+  }
+
+  // ─── Descargas de sesión ─────────────────────────────────────────────────────
 
   descargarAsistencia(item: TimelineItem, tipo: string): void {
-    // if (!item.evento) return;
-
     const key = `asistencia_${tipo}_${item.fecha}`;
     this.descargando[key] = true;
 
@@ -240,32 +374,15 @@ export class IniciativasComponent implements OnInit {
       error: (e: HttpErrorResponse) => {
         this.descargando[key] = false;
         if (e.status === 404) {
-          Swal.fire({
-            icon: 'info',
-            title: 'Sin registros',
-            text: 'No se encontraron registros de asistencia para esta sesión.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
+          Swal.fire({ icon: 'info', title: 'Sin registros', text: 'No se encontraron registros de asistencia para esta sesión.', confirmButtonText: 'Aceptar', confirmButtonColor: '#800048' });
         } else {
-          console.error('Error al descargar asistencia:', e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
+          this.mostrarErrorDescarga(e);
         }
       }
     });
-
-
   }
 
   descargarVotacion(item: TimelineItem, tipo: string): void {
-    // if (!item.votacionid) return;
-
     const key = `votacion_${tipo}_${item.fecha}`;
     this.descargando[key] = true;
 
@@ -282,69 +399,24 @@ export class IniciativasComponent implements OnInit {
       error: (e: HttpErrorResponse) => {
         this.descargando[key] = false;
         if (e.status === 404) {
-          Swal.fire({
-            icon: 'info',
-            title: 'Sin registros',
-            text: 'No se encontraron registros de votación para esta sesión.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
+          Swal.fire({ icon: 'info', title: 'Sin registros', text: 'No se encontraron registros de votación para esta sesión.', confirmButtonText: 'Aceptar', confirmButtonColor: '#800048' });
         } else {
-          console.error('Error al descargar votación:', e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
+          this.mostrarErrorDescarga(e);
         }
       }
     });
   }
 
+  // ─── Helper ──────────────────────────────────────────────────────────────────
 
-
-
-
-descargarInfoInciativas(): void {
-  this.descargandoReporte = true;
-  this._eventoService.generarReporteIniciativas().subscribe({
-    next: (blob: Blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `iniciativas_.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      this.descargandoReporte = false;
-    },
-    error: (e: HttpErrorResponse) => {
-      this.descargandoReporte = false;
-      
-        if (e.status === 404) {
-          Swal.fire({
-            icon: 'info',
-            title: 'Sin registros',
-            text: 'No se encontraron registros.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
-        } else {
-          console.error('Error al descargar votación:', e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#800048',
-          });
-        }
-    }
-  });
-}
-
-
-
-
+  private mostrarErrorDescarga(e: HttpErrorResponse): void {
+    console.error('Error al descargar:', e);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Ocurrió un error al descargar el archivo. Intenta de nuevo.',
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#800048',
+    });
+  }
 }
