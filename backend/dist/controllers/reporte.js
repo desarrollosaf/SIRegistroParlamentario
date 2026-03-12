@@ -32,7 +32,7 @@ const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
-const iniciativaspresenta_2 = __importDefault(require("../models/iniciativaspresenta"));
+const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
 };
@@ -153,7 +153,7 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
                 raw: true,
                 include: [
                     {
-                        model: iniciativaspresenta_2.default,
+                        model: integrante_legislaturas_1.default,
                         as: "integrante",
                     }
                 ]

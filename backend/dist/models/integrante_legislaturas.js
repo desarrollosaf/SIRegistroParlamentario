@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
-const diputado_1 = __importDefault(require("./diputado"));
 class IntegranteLegislatura extends sequelize_1.Model {
 }
 // Inicialización
@@ -62,10 +61,10 @@ IntegranteLegislatura.init({
     paranoid: true, // soft deletes
 });
 // Asociaciones
-IntegranteLegislatura.belongsTo(diputado_1.default, {
-    foreignKey: 'diputado_id',
-    as: 'diputado',
-});
+// IntegranteLegislatura.belongsTo(Diputado, {
+//   foreignKey: 'diputado_id',
+//   as: 'diputado',
+// });
 // IntegranteLegislatura.belongsTo(DatosUser, {
 //   foreignKey: 'dato_dipoficial_id',
 //   as: 'dato_dipoficial',

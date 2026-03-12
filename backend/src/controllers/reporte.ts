@@ -20,7 +20,7 @@ import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
-import IntegranteLegislatura from "../models/iniciativaspresenta";
+import IntegranteLegislatura from "../models/integrante_legislaturas";
 
 type ReporteBaseItem = {
   no: number;

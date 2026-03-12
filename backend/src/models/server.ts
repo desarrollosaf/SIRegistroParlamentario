@@ -97,7 +97,8 @@ class Server {
                 '/api/reporte/iniciativas/en-estudio/',
                 '/api/reporte/iniciativas/aprobadas/',
                 '/api/reporte/iniciativas/grupo-diputado/',
-                '/api/reporte/iniciativas/totales-periodo/'
+                '/api/reporte/iniciativas/totales-periodo/',
+                '/api/reporte/iniciativas/integrantes/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
