@@ -24,20 +24,16 @@
               </label>
 
               <div class="export-dropdown-wrapper" (clickOutside)="closeExportMenu()">
-                <button
-                  class="btn btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-1 export-main-btn"
-                  [disabled]="descargandoReporte || generandoReporte"
-                  (click)="toggleExportMenu()"
+                <button class="btn btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-1 export-main-btn"
+                  [disabled]="descargandoReporte || generandoReporte" (click)="toggleExportMenu()"
                   title="Opciones de exportación">
-                  <span *ngIf="descargandoReporte || generandoReporte"
-                    class="spinner-border spinner-border-sm" role="status"></span>
-                  <i *ngIf="!descargandoReporte && !generandoReporte"
-                    class="bi bi-file-earmark-excel-fill fs-5"></i>
+                  <span *ngIf="descargandoReporte || generandoReporte" class="spinner-border spinner-border-sm"
+                    role="status"></span>
+                  <i *ngIf="!descargandoReporte && !generandoReporte" class="bi bi-file-earmark-excel-fill fs-5"></i>
                   <span style="font-size:0.8rem;">
                     {{ (descargandoReporte || generandoReporte) ? 'Descargando...' : 'Exportar' }}
                   </span>
-                  <i class="bi bi-chevron-down export-chevron"
-                    [class.rotated]="exportMenuOpen"
+                  <i class="bi bi-chevron-down export-chevron" [class.rotated]="exportMenuOpen"
                     *ngIf="!descargandoReporte && !generandoReporte"></i>
                 </button>
 
@@ -69,7 +65,7 @@
                     </span>
                     <span class="export-item-text">
                       <span class="export-item-label">Aprobadas</span>
-                      
+
                     </span>
                   </button>
 
@@ -80,7 +76,7 @@
                     </span>
                     <span class="export-item-text">
                       <span class="export-item-label">Grupo / diputado</span>
-                      
+
                     </span>
                   </button>
 
@@ -91,13 +87,13 @@
                     </span>
                     <span class="export-item-text">
                       <span class="export-item-label">Totales por periodo</span>
-                      
+
                     </span>
                   </button>
 
                   <div class="export-divider"></div>
 
-                
+
                   <button class="export-menu-item" (click)="abrirModalFiltros()">
                     <span class="export-item-icon icon-purple">
                       <i class="bi bi-funnel-fill"></i>
@@ -116,11 +112,9 @@
 
             <br>
 
-            <ng-select [items]="listaIniciativas" bindLabel="iniciativa"
-              [(ngModel)]="iniciativaSeleccionada"
-              placeholder="Escribe para buscar una iniciativa..."
-              [searchable]="true" [clearable]="true" [loading]="cargando"
-              (change)="onIniciativaChange($event)" class="ng-select-large">
+            <ng-select [items]="listaIniciativas" bindLabel="iniciativa" [(ngModel)]="iniciativaSeleccionada"
+              placeholder="Escribe para buscar una iniciativa..." [searchable]="true" [clearable]="true"
+              [loading]="cargando" (change)="onIniciativaChange($event)" class="ng-select-large">
 
               <ng-template ng-label-tmp let-item="item">
                 <div class="d-flex align-items-start py-1">
@@ -219,8 +213,7 @@
             </h5>
 
             <div class="timeline-container">
-              <div class="timeline-item"
-                *ngFor="let item of timelineData; let i = index; let isLast = last"
+              <div class="timeline-item" *ngFor="let item of timelineData; let i = index; let isLast = last"
                 [ngClass]="getTipoColor(item.tipo)">
                 <div class="timeline-icon">
                   <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
@@ -341,7 +334,8 @@
                             [disabled]="descargando['asistencia_dictamen_' + item.fecha]">
                             <span *ngIf="descargando['asistencia_dictamen_' + item.fecha]"
                               class="spinner-border spinner-border-sm me-1" role="status"></span>
-                            <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_dictamen_' + item.fecha]"></i>
+                            <i class="bi bi-download me-1"
+                              *ngIf="!descargando['asistencia_dictamen_' + item.fecha]"></i>
                             Asistencia
                           </button>
                           <button class="btn btn-sm btn-download" (click)="descargarVotacion(item, 'dictamen')"
@@ -467,15 +461,9 @@
           <label class="modal-field-label">
             <i class="bi bi-diagram-3 me-1"></i>Grupo parlamentario
           </label>
-          <ng-select
-            [items]="listaGrupos"
-            bindLabel="siglas"
-            bindValue="id"
-            [(ngModel)]="grupoSeleccionado"
-            placeholder="— Todos los grupos —"
-            [searchable]="true"
-            [clearable]="true"
-            class="ng-select-modal">
+          <ng-select [items]="listaGrupos" bindLabel="siglas" [(ngModel)]="grupoSeleccionado"
+            placeholder="— Todos los grupos —" [searchable]="true" [clearable]="true"
+            [disabled]="!!diputadoSeleccionado" (change)="onGrupoChange($event)" class="ng-select-modal">
           </ng-select>
         </div>
 
@@ -489,15 +477,9 @@
           <label class="modal-field-label">
             <i class="bi bi-person-badge me-1"></i>Diputado / diputada
           </label>
-          <ng-select
-            [items]="listaDiputados"
-            bindLabel="nombre"
-            bindValue="id"
-            [(ngModel)]="diputadoSeleccionado"
-            placeholder="— Todos los diputados —"
-            [searchable]="true"
-            [clearable]="true"
-            class="ng-select-modal">
+          <ng-select [items]="listaDiputados" bindLabel="nombre" [(ngModel)]="diputadoSeleccionado"
+            placeholder="— Todos los diputados —" [searchable]="true" [clearable]="true"
+            [disabled]="!!grupoSeleccionado" (change)="onDiputadoChange($event)" class="ng-select-modal">
           </ng-select>
         </div>
 
@@ -521,8 +503,7 @@
       <button class="btn-modal-cancel" (click)="cerrarModalFiltros()">
         Cancelar
       </button>
-      <button class="btn-modal-generate"
-        (click)="generarReporteFiltros()"
+      <button class="btn-modal-generate" (click)="generarReporteFiltros()"
         [disabled]="generandoReporte || (!grupoSeleccionado && !diputadoSeleccionado)">
         <span *ngIf="generandoReporte" class="spinner-border spinner-border-sm me-2" role="status"></span>
         <i class="bi bi-file-earmark-excel-fill me-2" *ngIf="!generandoReporte"></i>
