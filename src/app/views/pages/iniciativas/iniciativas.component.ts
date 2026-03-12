@@ -36,13 +36,12 @@ interface TimelineItem {
 
 interface GrupoParlamentario {
   id: string;
-  nombre: string;
+  siglas: string;
 }
 
 interface Diputado {
   id: string;
   nombre: string;
-  grupoId?: string;
 }
 
 @Component({
@@ -296,31 +295,19 @@ export class IniciativasComponent implements OnInit {
   }
 
   cargarGruposYDiputados(): void {
-    this.cargandoModal = true;
-
-    // TODO: Reemplazar con los métodos reales de tu servicio
-    // Ejemplo:
-    // this._eventoService.getGruposParlamentarios().subscribe({ next: (res) => { this.listaGrupos = res.data; } });
-    // this._eventoService.getDiputados().subscribe({ next: (res) => { this.listaDiputados = res.data; } });
-
-    // Mock temporal mientras llegan las rutas:
-    this.listaGrupos = [
-      { id: '1', nombre: 'Morena' },
-      { id: '2', nombre: 'PAN' },
-      { id: '3', nombre: 'PRI' },
-      { id: '4', nombre: 'PVEM' },
-      { id: '5', nombre: 'PT' },
-      { id: '6', nombre: 'Movimiento Ciudadano' },
-      { id: '7', nombre: 'PRD' },
-    ];
-    this.listaDiputados = [
-      { id: '1', nombre: 'Ana García López' },
-      { id: '2', nombre: 'Carlos Mendoza Ruiz' },
-      { id: '3', nombre: 'Laura Torres Vega' },
-      { id: '4', nombre: 'Roberto Sánchez Cruz' },
-      { id: '5', nombre: 'María Flores Herrera' },
-    ];
-    this.cargandoModal = false;
+      this.cargandoModal = true;
+      this._eventoService.getCatalogos().subscribe({
+      next: (response: any) => {
+        console.log(response.partidos);
+        this.listaGrupos = response.partidos;
+        this.listaDiputados = response.diputados;
+        this.cargandoModal = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });   
   }
 
   generarReporteFiltros(): void {
@@ -349,8 +336,8 @@ export class IniciativasComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const nombre = this.grupoSeleccionado?.nombre || this.diputadoSeleccionado?.nombre || 'reporte';
-        a.download = `iniciativas_${nombre.toLowerCase().replace(/ /g, '_')}.xlsx`;
+        const nombre =  'integrantes';
+        a.download = `_${nombre.toLowerCase().replace(/ /g, '_')}.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.generandoReporte = false;

@@ -98,16 +98,16 @@
                   <div class="export-divider"></div>
 
                 
-                  <!-- <button class="export-menu-item" (click)="abrirModalFiltros()">
+                  <button class="export-menu-item" (click)="abrirModalFiltros()">
                     <span class="export-item-icon icon-purple">
                       <i class="bi bi-funnel-fill"></i>
                     </span>
                     <span class="export-item-text">
-                      <span class="export-item-label">Reporte con filtros</span>
+                      <span class="export-item-label">Integrantes</span>
                       <span class="export-item-sub">Seleccionar parámetros</span>
                     </span>
                     <i class="bi bi-sliders ms-auto export-item-ext"></i>
-                  </button> -->
+                  </button>
 
                 </div>
               </div>
@@ -437,8 +437,7 @@
         </span>
         <div>
           <!-- TODO: actualizar nombre cuando lo definan -->
-          <h6 class="mb-0 fw-semibold">Reporte con filtros</h6>
-          <small class="text-muted">Selecciona los parámetros para generar el reporte</small>
+          <h6 class="mb-0 fw-semibold">Integrantes</h6>
         </div>
       </div>
       <button class="modal-close-btn" (click)="cerrarModalFiltros()" title="Cerrar">
@@ -452,7 +451,7 @@
       <!-- Nota informativa -->
       <div class="modal-info-note">
         <i class="bi bi-info-circle-fill flex-shrink-0"></i>
-        <span>Selecciona un grupo parlamentario, un diputado específico, o ambos para filtrar el reporte.</span>
+        <span>Selecciona un grupo parlamentario o un diputado específico.</span>
       </div>
 
       <!-- Loading del modal -->
@@ -470,7 +469,7 @@
           </label>
           <ng-select
             [items]="listaGrupos"
-            bindLabel="nombre"
+            bindLabel="siglas"
             bindValue="id"
             [(ngModel)]="grupoSeleccionado"
             placeholder="— Todos los grupos —"
@@ -506,7 +505,7 @@
         <div class="modal-chips" *ngIf="grupoSeleccionado || diputadoSeleccionado">
           <span class="modal-chip chip-wine" *ngIf="grupoSeleccionado">
             <i class="bi bi-diagram-3 me-1"></i>
-            Grupo: {{ grupoSeleccionado.nombre }}
+            Grupo: {{ grupoSeleccionado.siglas }}
           </span>
           <span class="modal-chip chip-blue" *ngIf="diputadoSeleccionado">
             <i class="bi bi-person-badge me-1"></i>
