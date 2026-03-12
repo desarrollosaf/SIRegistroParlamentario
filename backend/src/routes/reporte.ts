@@ -8,6 +8,6 @@ router.get("/api/reporte/iniciativas/en-estudio", getIniciativasEnEstudio);
 router.get("/api/reporte/iniciativas/aprobadas", getIniciativasAprobadas);
 router.get("/api/reporte/iniciativas/grupo-diputado", getIniciativasPorGrupoYDiputado);
 router.get("/api/reporte/iniciativas/totales-periodo", getTotalesPorPeriodo);
-router.post("/reporte/iniciativas/integrantes", getReporteIniciativasIntegrantes);
+router.post("/api/reporte/iniciativas/integrantes", getReporteIniciativasIntegrantes);
 
 export default router

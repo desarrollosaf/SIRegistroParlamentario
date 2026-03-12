@@ -897,8 +897,8 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
 
     let reporte = await construirReporteBase();
 
-    // id_tipo = 1 => Diputado
-    if (tipo === 1) {
+    // id_tipo = 2 => Diputado
+    if (tipo === 2) {
       if (filtroId !== "0") {
         reporte = reporte.filter((item: any) =>
           Array.isArray(item.diputado_ids) &&
@@ -980,8 +980,8 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
       );
     }
 
-    // id_tipo = 2 => Grupo Parlamentario
-    if (tipo === 2) {
+    // id_tipo = 1 => Grupo Parlamentario
+    if (tipo === 1) {
       if (filtroId !== "0") {
         reporte = reporte.filter((item: any) =>
           Array.isArray(item.grupo_parlamentario_ids) &&

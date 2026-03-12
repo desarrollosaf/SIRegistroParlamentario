@@ -80,10 +80,7 @@ IntegranteLegislatura.init(
 );
 
 // Asociaciones
-// IntegranteLegislatura.belongsTo(Diputado, {
-//   foreignKey: 'diputado_id',
-//   as: 'diputado',
-// });
+
 
 // IntegranteLegislatura.belongsTo(DatosUser, {
 //   foreignKey: 'dato_dipoficial_id',

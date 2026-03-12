@@ -744,8 +744,8 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
         const tipo = Number(id_tipo);
         const filtroId = String(id);
         let reporte = yield construirReporteBase();
-        // id_tipo = 1 => Diputado
-        if (tipo === 1) {
+        // id_tipo = 2 => Diputado
+        if (tipo === 2) {
             if (filtroId !== "0") {
                 reporte = reporte.filter((item) => Array.isArray(item.diputado_ids) &&
                     item.diputado_ids.map(String).includes(filtroId));
@@ -816,8 +816,8 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
                 { header: "TOTAL", key: "total", width: 12 }
             ], resultado);
         }
-        // id_tipo = 2 => Grupo Parlamentario
-        if (tipo === 2) {
+        // id_tipo = 1 => Grupo Parlamentario
+        if (tipo === 1) {
             if (filtroId !== "0") {
                 reporte = reporte.filter((item) => Array.isArray(item.grupo_parlamentario_ids) &&
                     item.grupo_parlamentario_ids.map(String).includes(filtroId));

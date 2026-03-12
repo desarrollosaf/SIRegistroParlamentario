@@ -61,10 +61,6 @@ IntegranteLegislatura.init({
     paranoid: true, // soft deletes
 });
 // Asociaciones
-// IntegranteLegislatura.belongsTo(Diputado, {
-//   foreignKey: 'diputado_id',
-//   as: 'diputado',
-// });
 // IntegranteLegislatura.belongsTo(DatosUser, {
 //   foreignKey: 'dato_dipoficial_id',
 //   as: 'dato_dipoficial',
