@@ -89,7 +89,11 @@ class Server {
                 '/api/eventos/asintenciapdf/',
                 '/api/diputados/getinfiniciativa/',
                 '/api/eventos/votacionpunto/',
-                '/api/reporte/getinfiniciativas/'
+                '/api/reporte/iniciativas/general/',
+                '/api/reporte/iniciativas/en-estudio/',
+                '/api/reporte/iniciativas/aprobadas/',
+                '/api/reporte/iniciativas/grupo-diputado/',
+                '/api/reporte/iniciativas/totales-periodo/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
