@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -32,6 +32,7 @@ const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
+const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
 };
@@ -115,72 +116,98 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
     };
 });
 const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     let proponentesString = "";
     let presentaString = "";
     const diputados = [];
+    const diputadoIds = [];
     const gruposParlamentarios = [];
+    const grupoParlamentarioIds = [];
     if (!id) {
-        return { proponentesString, presentaString, diputados, gruposParlamentarios };
+        return {
+            proponentesString,
+            presentaString,
+            diputados,
+            diputadoIds,
+            gruposParlamentarios,
+            grupoParlamentarioIds
+        };
     }
     const presentan = yield iniciativaspresenta_1.default.findAll({
         where: { id_iniciativa: id },
-        include: [
-            {
-                model: proponentes_1.default,
-                as: "tipo_presenta",
-                attributes: ["id", "valor"]
-            }
-        ]
+        raw: true
     });
     const proponentesUnicos = new Map();
     const presentanData = [];
     for (const p of presentan) {
-        const tipoValor = (_b = (_a = p.tipo_presenta) === null || _a === void 0 ? void 0 : _a.valor) !== null && _b !== void 0 ? _b : "";
+        const tipoProponente = yield proponentes_1.default.findOne({
+            where: { id: p.id_tipo_presenta },
+            attributes: ["id", "valor"],
+            raw: true
+        });
+        const tipoValor = (_a = tipoProponente === null || tipoProponente === void 0 ? void 0 : tipoProponente.valor) !== null && _a !== void 0 ? _a : "";
         let valor = "";
         if (tipoValor === "Diputadas y Diputados") {
-            const dip = yield diputado_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const dip = yield diputado_1.default.findOne({
+                where: { id: p.id_presenta },
+                raw: true,
+                include: [
+                    {
+                        model: integrante_legislaturas_1.default,
+                        as: "integrante",
+                    }
+                ]
+            });
             if (dip) {
-                valor = `${(_c = dip.apaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = dip.amaterno) !== null && _d !== void 0 ? _d : ""} ${(_e = dip.nombres) !== null && _e !== void 0 ? _e : ""}`.trim();
+                valor = `${(_b = dip.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.amaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = dip.nombres) !== null && _d !== void 0 ? _d : ""}`.trim();
                 if (valor)
                     diputados.push(valor);
-                if (dip.partido_id) {
+                if (p.id_presenta)
+                    diputadoIds.push(String(p.id_presenta));
+                if (dip.integrante) {
                     const partido = yield partidos_1.default.findOne({
-                        where: { id: dip.partido_id },
-                        attributes: ["nombre"],
+                        where: { id: dip.integrante.partido_id },
+                        attributes: ["id", "nombre"],
                         raw: true
                     });
-                    if (partido === null || partido === void 0 ? void 0 : partido.nombre) {
+                    if (partido === null || partido === void 0 ? void 0 : partido.nombre)
                         gruposParlamentarios.push(partido.nombre);
-                    }
+                    if (partido === null || partido === void 0 ? void 0 : partido.id)
+                        grupoParlamentarioIds.push(String(partido.id));
                 }
             }
         }
         else if (["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)) {
             const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_f = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _f !== void 0 ? _f : "";
+            valor = (_e = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _e !== void 0 ? _e : "";
         }
         else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
             const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_g = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _g !== void 0 ? _g : "";
+            valor = (_f = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _f !== void 0 ? _f : "";
         }
         else if (tipoValor === "Grupo Parlamentario") {
-            const partido = yield partidos_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_h = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _h !== void 0 ? _h : "";
+            const partido = yield partidos_1.default.findOne({
+                where: { id: p.id_presenta },
+                attributes: ["id", "nombre"],
+                raw: true
+            });
+            valor = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : "";
             if (valor)
                 gruposParlamentarios.push(valor);
+            if (partido === null || partido === void 0 ? void 0 : partido.id)
+                grupoParlamentarioIds.push(String(partido.id));
         }
         else if (tipoValor === "Legislatura") {
             const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_j = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _j !== void 0 ? _j : "";
+            valor = (_h = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _h !== void 0 ? _h : "";
         }
         else if (tipoValor === "Secretarías del GEM") {
             const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = `${(_k = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _k !== void 0 ? _k : ""} / ${(_l = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _l !== void 0 ? _l : ""}`.trim();
+            valor = `${(_j = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _j !== void 0 ? _j : ""} / ${(_k = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _k !== void 0 ? _k : ""}`.trim();
         }
         else {
             const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_m = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _m !== void 0 ? _m : "";
+            valor = (_l = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _l !== void 0 ? _l : "";
         }
         if (tipoValor && !proponentesUnicos.has(tipoValor)) {
             proponentesUnicos.set(tipoValor, tipoValor);
@@ -199,7 +226,9 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
         proponentesString,
         presentaString,
         diputados: [...new Set(diputados)],
-        gruposParlamentarios: [...new Set(gruposParlamentarios)]
+        diputadoIds: [...new Set(diputadoIds)],
+        gruposParlamentarios: [...new Set(gruposParlamentarios)],
+        grupoParlamentarioIds: [...new Set(grupoParlamentarioIds)]
     };
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -296,7 +325,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         const data = iniciativa.toJSON();
-        const { proponentesString, presentaString, diputados, gruposParlamentarios } = yield getPresentantesDePunto(data.id);
+        const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
             ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
             ...(Array.isArray(data.expedienteturno)
@@ -417,6 +446,8 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             observac: observacion,
             diputado,
             grupo_parlamentario: grupoParlamentario,
+            diputado_ids: diputadoIds,
+            grupo_parlamentario_ids: grupoParlamentarioIds,
             periodo: obtenerPeriodo(fechaEventoRaw)
         };
     })));
@@ -588,11 +619,16 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
         for (const item of reporte) {
             const diputado = item.diputado || "-";
             const grupo = item.grupo_parlamentario || "-";
+            // if (diputado  == '-' && grupo == '-'){
+            //   console.log(reporte)
+            //   return 500;
+            // }
             const llave = `${diputado}__${grupo}`;
             if (!mapa.has(llave)) {
                 mapa.set(llave, {
                     diputado,
                     grupo_parlamentario: grupo,
+                    pendientes: 0,
                     en_estudio: 0,
                     aprobadas: 0,
                     total: 0
@@ -604,6 +640,9 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
             }
             if (item.observac === "Aprobada") {
                 fila.aprobadas += 1;
+            }
+            if (item.observac === "Pendiente") {
+                fila.pendientes += 1;
             }
             fila.total += 1;
         }
@@ -622,6 +661,7 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
             { header: "NO.", key: "no", width: 8 },
             { header: "DIPUTADO", key: "diputado", width: 35 },
             { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 30 },
+            { header: "PENDIENTES", key: "pendientes", width: 15 },
             { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
             { header: "APROBADAS", key: "aprobadas", width: 15 },
             { header: "TOTAL", key: "total", width: 12 }
@@ -688,3 +728,178 @@ const getTotalesPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getTotalesPorPeriodo = getTotalesPorPeriodo;
+const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id_tipo, id } = req.body;
+        if (![1, 2, "1", "2"].includes(id_tipo)) {
+            return res.status(400).json({
+                message: "id_tipo inválido. Debe ser 1 (Diputado) o 2 (Grupo Parlamentario)"
+            });
+        }
+        if (id === undefined || id === null || id === "") {
+            return res.status(400).json({
+                message: "El campo id es obligatorio. Usa 0 para traer todos."
+            });
+        }
+        const tipo = Number(id_tipo);
+        const filtroId = String(id);
+        let reporte = yield construirReporteBase();
+        // id_tipo = 2 => Diputado
+        if (tipo === 2) {
+            if (filtroId !== "0") {
+                reporte = reporte.filter((item) => Array.isArray(item.diputado_ids) &&
+                    item.diputado_ids.map(String).includes(filtroId));
+            }
+            const mapa = new Map();
+            for (const item of reporte) {
+                const diputado = item.diputado || "-";
+                let diputadoIds = Array.isArray(item.diputado_ids) ? item.diputado_ids : [];
+                if (filtroId !== "0") {
+                    diputadoIds = diputadoIds.filter((x) => String(x) === filtroId);
+                }
+                if (diputadoIds.length === 0) {
+                    if (filtroId === "0") {
+                        diputadoIds = ["0"];
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                for (const dipId of diputadoIds) {
+                    const llave = String(dipId);
+                    if (!mapa.has(llave)) {
+                        mapa.set(llave, {
+                            diputado_id: String(dipId),
+                            diputado,
+                            pendientes: 0,
+                            en_estudio: 0,
+                            dictaminadas: 0,
+                            aprobadas: 0,
+                            rechazadas_comision: 0,
+                            rechazadas_sesion: 0,
+                            total: 0
+                        });
+                    }
+                    const fila = mapa.get(llave);
+                    if (item.observac === "Pendiente")
+                        fila.pendientes += 1;
+                    if (item.observac === "En estudio")
+                        fila.en_estudio += 1;
+                    if (item.observac === "Dictaminada")
+                        fila.dictaminadas += 1;
+                    if (item.observac === "Aprobada")
+                        fila.aprobadas += 1;
+                    if (item.observac === "Rechazada en comisión")
+                        fila.rechazadas_comision += 1;
+                    if (item.observac === "Rechazada en sesión")
+                        fila.rechazadas_sesion += 1;
+                    fila.total += 1;
+                }
+            }
+            const resultado = Array.from(mapa.values()).sort((a, b) => {
+                if (a.diputado < b.diputado)
+                    return -1;
+                if (a.diputado > b.diputado)
+                    return 1;
+                return 0;
+            });
+            return yield generarExcelSimple(res, "Reporte Diputados", "reporte_iniciativas_diputados.xlsx", [
+                { header: "NO.", key: "no", width: 8 },
+                { header: "ID DIPUTADO", key: "diputado_id", width: 18 },
+                { header: "DIPUTADO", key: "diputado", width: 35 },
+                { header: "PENDIENTES", key: "pendientes", width: 15 },
+                { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
+                { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
+                { header: "APROBADAS", key: "aprobadas", width: 15 },
+                { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
+                { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
+                { header: "TOTAL", key: "total", width: 12 }
+            ], resultado);
+        }
+        // id_tipo = 1 => Grupo Parlamentario
+        if (tipo === 1) {
+            if (filtroId !== "0") {
+                reporte = reporte.filter((item) => Array.isArray(item.grupo_parlamentario_ids) &&
+                    item.grupo_parlamentario_ids.map(String).includes(filtroId));
+            }
+            const mapa = new Map();
+            for (const item of reporte) {
+                const grupo = item.grupo_parlamentario || "-";
+                let grupoIds = Array.isArray(item.grupo_parlamentario_ids)
+                    ? item.grupo_parlamentario_ids
+                    : [];
+                if (filtroId !== "0") {
+                    grupoIds = grupoIds.filter((x) => String(x) === filtroId);
+                }
+                if (grupoIds.length === 0) {
+                    if (filtroId === "0") {
+                        grupoIds = ["0"];
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                for (const grupoId of grupoIds) {
+                    const llave = String(grupoId);
+                    if (!mapa.has(llave)) {
+                        mapa.set(llave, {
+                            grupo_parlamentario_id: String(grupoId),
+                            grupo_parlamentario: grupo,
+                            pendientes: 0,
+                            en_estudio: 0,
+                            dictaminadas: 0,
+                            aprobadas: 0,
+                            rechazadas_comision: 0,
+                            rechazadas_sesion: 0,
+                            total: 0
+                        });
+                    }
+                    const fila = mapa.get(llave);
+                    if (item.observac === "Pendiente")
+                        fila.pendientes += 1;
+                    if (item.observac === "En estudio")
+                        fila.en_estudio += 1;
+                    if (item.observac === "Dictaminada")
+                        fila.dictaminadas += 1;
+                    if (item.observac === "Aprobada")
+                        fila.aprobadas += 1;
+                    if (item.observac === "Rechazada en comisión")
+                        fila.rechazadas_comision += 1;
+                    if (item.observac === "Rechazada en sesión")
+                        fila.rechazadas_sesion += 1;
+                    fila.total += 1;
+                }
+            }
+            const resultado = Array.from(mapa.values()).sort((a, b) => {
+                if (a.grupo_parlamentario < b.grupo_parlamentario)
+                    return -1;
+                if (a.grupo_parlamentario > b.grupo_parlamentario)
+                    return 1;
+                return 0;
+            });
+            return yield generarExcelSimple(res, "Reporte Grupos", "reporte_iniciativas_grupos_parlamentarios.xlsx", [
+                { header: "NO.", key: "no", width: 8 },
+                { header: "ID GRUPO", key: "grupo_parlamentario_id", width: 18 },
+                { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 35 },
+                { header: "PENDIENTES", key: "pendientes", width: 15 },
+                { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
+                { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
+                { header: "APROBADAS", key: "aprobadas", width: 15 },
+                { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
+                { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
+                { header: "TOTAL", key: "total", width: 12 }
+            ], resultado);
+        }
+        return res.status(400).json({
+            message: "No se pudo procesar la solicitud"
+        });
+    }
+    catch (error) {
+        console.error("Error al generar Excel de integrantes:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.getReporteIniciativasIntegrantes = getReporteIniciativasIntegrantes;

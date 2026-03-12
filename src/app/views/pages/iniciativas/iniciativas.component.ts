@@ -36,13 +36,12 @@ interface TimelineItem {
 
 interface GrupoParlamentario {
   id: string;
-  nombre: string;
+  siglas: string;
 }
 
 interface Diputado {
   id: string;
   nombre: string;
-  grupoId?: string;
 }
 
 @Component({
@@ -254,10 +253,10 @@ export class IniciativasComponent implements OnInit {
 
     const request$ = (() => {
       switch (tipo) {
-        case 'general':         return this._eventoService.generarReporteIniciativas();
-        case 'estudio':         return this._eventoService.generarReporteEnEstudio();
-        case 'aprobadas':       return this._eventoService.generarReporteAprobadas();
-        case 'grupo-diputado':  return this._eventoService.generarReporteGrupoDiputado();
+        case 'general': return this._eventoService.generarReporteIniciativas();
+        case 'estudio': return this._eventoService.generarReporteEnEstudio();
+        case 'aprobadas': return this._eventoService.generarReporteAprobadas();
+        case 'grupo-diputado': return this._eventoService.generarReporteGrupoDiputado();
         case 'totales-periodo': return this._eventoService.generarReporteTotalesPeriodo();
       }
     })();
@@ -297,60 +296,59 @@ export class IniciativasComponent implements OnInit {
 
   cargarGruposYDiputados(): void {
     this.cargandoModal = true;
+    this._eventoService.getCatalogos().subscribe({
+      next: (response: any) => {
+        this.listaGrupos = [
+          { id: '0', siglas: 'Todos los grupos' },
+          ...response.partidos
+        ];
+        this.listaDiputados = [
+          { id: '0', nombre: 'Todos los diputados' },
+          ...response.diputados
+        ];
+        this.cargandoModal = false;
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error del servidor:', e.error?.msg);
+      }
+    });
+  }
 
-    // TODO: Reemplazar con los métodos reales de tu servicio
-    // Ejemplo:
-    // this._eventoService.getGruposParlamentarios().subscribe({ next: (res) => { this.listaGrupos = res.data; } });
-    // this._eventoService.getDiputados().subscribe({ next: (res) => { this.listaDiputados = res.data; } });
 
-    // Mock temporal mientras llegan las rutas:
-    this.listaGrupos = [
-      { id: '1', nombre: 'Morena' },
-      { id: '2', nombre: 'PAN' },
-      { id: '3', nombre: 'PRI' },
-      { id: '4', nombre: 'PVEM' },
-      { id: '5', nombre: 'PT' },
-      { id: '6', nombre: 'Movimiento Ciudadano' },
-      { id: '7', nombre: 'PRD' },
-    ];
-    this.listaDiputados = [
-      { id: '1', nombre: 'Ana García López' },
-      { id: '2', nombre: 'Carlos Mendoza Ruiz' },
-      { id: '3', nombre: 'Laura Torres Vega' },
-      { id: '4', nombre: 'Roberto Sánchez Cruz' },
-      { id: '5', nombre: 'María Flores Herrera' },
-    ];
-    this.cargandoModal = false;
+  get tieneSeleccion(): boolean {
+    return !!this.grupoSeleccionado || !!this.diputadoSeleccionado;
+  }
+
+  onGrupoChange(grupo: any): void {
+    if (grupo) this.diputadoSeleccionado = null;
+  }
+
+  onDiputadoChange(diputado: any): void {
+    if (diputado) this.grupoSeleccionado = null;
   }
 
   generarReporteFiltros(): void {
     if (!this.grupoSeleccionado && !this.diputadoSeleccionado) {
       Swal.fire({
-        icon: 'warning',
-        title: 'Selección requerida',
-        text: 'Debes seleccionar al menos un grupo parlamentario o un diputado.',
-        confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#800048',
+        icon: 'warning', title: 'Selección requerida',
+        text: 'Debes seleccionar un grupo parlamentario o un diputado.',
+        confirmButtonText: 'Aceptar', confirmButtonColor: '#800048'
       });
       return;
     }
 
     this.generandoReporte = true;
 
-    const params = {
-      grupoId: this.grupoSeleccionado?.id || null,
-      diputadoId: this.diputadoSeleccionado?.id || null,
-    };
+    const data = this.grupoSeleccionado
+      ? { id_tipo: 1, id: this.grupoSeleccionado.id }
+      : { id_tipo: 2, id: this.diputadoSeleccionado!.id };
 
-    // TODO: Reemplazar con el método real de tu servicio
-    // this._eventoService.generarReporteGrupoDiputado(params).subscribe({ ... });
-    this._eventoService.generarReporteIniciativas().subscribe({
+    this._eventoService.generarReporteIntegrantes(data).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const nombre = this.grupoSeleccionado?.nombre || this.diputadoSeleccionado?.nombre || 'reporte';
-        a.download = `iniciativas_${nombre.toLowerCase().replace(/ /g, '_')}.xlsx`;
+        a.download = `_integrantes.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.generandoReporte = false;

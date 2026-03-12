@@ -209,7 +209,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
 
     console.log('Filtrando iniciativas disponibles para punto:', this.puntoSeleccionadoIniciativa.id);
-    console.log('📋Iniciativas del punto:', this.listaIniciativas);
+    console.log('Iniciativas del punto:', this.listaIniciativas);
 
     const idsAgregados = this.listaIniciativas.map(ini => ini.id);
     console.log(' IDs ya agregados:', idsAgregados);

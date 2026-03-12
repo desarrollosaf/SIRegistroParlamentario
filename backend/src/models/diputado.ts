@@ -1,5 +1,7 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
 import sequelize from '../database/legislativoConnection';
+import IntegranteLegislatura from './integrante_legislaturas';
+
 // import Gender from './gender';
 
 class Diputado extends Model {
@@ -116,10 +118,10 @@ Diputado.init(
   }
 );
 
-// 🔗 Asociación (si existe modelo Gender)
-// Diputado.belongsTo(Gender, {
-//   foreignKey: 'gender_id',
-//   as: 'gender',
-// });
+Diputado.hasOne(IntegranteLegislatura, {
+  foreignKey: 'diputado_id',
+  sourceKey: 'id',
+  as: 'integrante',
+});
 
 export default Diputado;
