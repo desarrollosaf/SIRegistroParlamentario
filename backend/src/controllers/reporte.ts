@@ -18,6 +18,7 @@ import Legislatura from "../models/legislaturas";
 import Partidos from "../models/partidos";
 import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
+import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 
 type ReporteBaseItem = {
@@ -141,26 +142,28 @@ const getComisionesTurnado = async (puntoId: string) => {
   };
 };
 
-const getPresentantesDePunto = async (id_punto: string | null | undefined) => {
+const getPresentantesDePunto = async (id: string | null | undefined) => {
   let proponentesString = "";
   let presentaString = "";
   const diputados: string[] = [];
   const gruposParlamentarios: string[] = [];
 
-  if (!id_punto) {
+  if (!id) {
     return { proponentesString, presentaString, diputados, gruposParlamentarios };
   }
 
-  const presentan = await PuntosPresenta.findAll({
-    where: { id_punto },
+
+  const presentan = await IniciativasPresenta.findAll({
+    where: { id_iniciativa: id },
     include: [
       {
         model: Proponentes,
         as: "tipo_presenta",
-        attributes: ["valor"]
+        attributes: ["id", "valor"]
       }
     ]
   });
+
 
   const proponentesUnicos = new Map<string, string>();
   const presentanData: any[] = [];
@@ -331,14 +334,13 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
   const reporte = await Promise.all(
     iniciativas.map(async (iniciativa, index) => {
       const data: any = iniciativa.toJSON();
-
       const {
         proponentesString,
         presentaString,
         diputados,
         gruposParlamentarios
-      } = await getPresentantesDePunto(data.id_punto);
-
+      } = await getPresentantesDePunto(data.id);
+    
       const todosEstudios = [
         ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
         ...(Array.isArray(data.expedienteturno)

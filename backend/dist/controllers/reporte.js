@@ -23,7 +23,6 @@ const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
-const puntos_presenta_1 = __importDefault(require("../models/puntos_presenta"));
 const proponentes_1 = __importDefault(require("../models/proponentes"));
 const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
 const secretarias_1 = __importDefault(require("../models/secretarias"));
@@ -31,6 +30,7 @@ const legislaturas_1 = __importDefault(require("../models/legislaturas"));
 const partidos_1 = __importDefault(require("../models/partidos"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
+const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
@@ -114,22 +114,22 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
         comisiones_turnado: comisiones.map((c) => c.nombre).join(", ")
     };
 });
-const getPresentantesDePunto = (id_punto) => __awaiter(void 0, void 0, void 0, function* () {
+const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     let proponentesString = "";
     let presentaString = "";
     const diputados = [];
     const gruposParlamentarios = [];
-    if (!id_punto) {
+    if (!id) {
         return { proponentesString, presentaString, diputados, gruposParlamentarios };
     }
-    const presentan = yield puntos_presenta_1.default.findAll({
-        where: { id_punto },
+    const presentan = yield iniciativaspresenta_1.default.findAll({
+        where: { id_iniciativa: id },
         include: [
             {
                 model: proponentes_1.default,
                 as: "tipo_presenta",
-                attributes: ["valor"]
+                attributes: ["id", "valor"]
             }
         ]
     });
@@ -296,7 +296,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         const data = iniciativa.toJSON();
-        const { proponentesString, presentaString, diputados, gruposParlamentarios } = yield getPresentantesDePunto(data.id_punto);
+        const { proponentesString, presentaString, diputados, gruposParlamentarios } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
             ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
             ...(Array.isArray(data.expedienteturno)
