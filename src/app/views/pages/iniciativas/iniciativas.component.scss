@@ -556,7 +556,7 @@
   background: #fff;
   border-radius: 16px;
   width: 100%;
-  max-width: 480px;
+  max-width: 650px; // antes 480px
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
   pointer-events: auto;
   animation: slideUp 0.22s ease;
@@ -933,7 +933,7 @@
   background: #fff;
   border-radius: 16px;
   width: 100%;
-  max-width: 480px;
+  max-width: 650px; // antes 480px
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
   pointer-events: auto;
   animation: slideUp 0.22s ease;
@@ -1153,3 +1153,4 @@
     box-shadow: 0 0 0 3px rgba(128, 0, 72, 0.1) !important;
   }
 }
+
