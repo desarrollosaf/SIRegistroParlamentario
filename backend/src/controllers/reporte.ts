@@ -18,352 +18,24 @@ import Legislatura from "../models/legislaturas";
 import Partidos from "../models/partidos";
 import MunicipiosAg from "../models/municipiosag";
 import Diputado from "../models/diputado";
+import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 
-export const getifnini = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const iniciativas = await IniciativaPuntoOrden.findAll({
-      attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
-      include: [
-        {
-          model: PuntosOrden,
-          as: "punto",
-          attributes: ["id", "punto", "nopunto", "tribuna"],
-          include: [
-            {
-              model: IniciativaEstudio,
-              as: "estudio",
-              attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
-              required: false,
-              where: {
-                type: 1
-              },
-              include: [
-                {
-                  model: PuntosOrden,
-                  as: "iniciativa",
-                  attributes: ["id", "punto", "nopunto", "tribuna"],
-                  include: [
-                    {
-                      model: Agenda,
-                      as: "evento",
-                      attributes: ["id", "fecha", "descripcion", "liga"],
-                      include: [
-                        {
-                          model: TipoEventos,
-                          as: "tipoevento",
-                          attributes: ["nombre"]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          model: ExpedienteEstudiosPuntos,
-          as: "expedienteturno",
-          attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-          include: [
-            {
-              model: IniciativaEstudio,
-              as: "estudio",
-              attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
-              required: false,
-              include: [
-                {
-                  model: PuntosOrden,
-                  as: "iniciativa",
-                  attributes: ["id", "punto", "nopunto", "tribuna"],
-                  include: [
-                    {
-                      model: Agenda,
-                      as: "evento",
-                      attributes: ["id", "fecha", "descripcion", "liga"],
-                      include: [
-                        {
-                          model: TipoEventos,
-                          as: "tipoevento",
-                          attributes: ["nombre"]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          model: Agenda,
-          as: "evento",
-          attributes: ["id", "fecha", "descripcion", "liga"],
-          include: [
-            {
-              model: TipoEventos,
-              as: "tipoevento",
-              attributes: ["nombre"]
-            }
-          ]
-        }
-      ],
-      order: [["createdAt", "ASC"]]
-    });
-
-    // console.log("TODAS INICIATIVAS: ")
-    // console.log(iniciativas)
-    // return res.status(200).json({
-    //   data: iniciativas
-    // });
-
-    const reporte = await Promise.all(
-      iniciativas.map(async (iniciativa, index) => {
-        const data: any = iniciativa.toJSON();
-
-        const { proponentesString, presentaString } = await getPresentantesDePunto(data.id_punto);
-
-        const todosEstudios = [
-          ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
-          ...(Array.isArray(data.expedienteturno)
-            ? data.expedienteturno.flatMap((exp: any) =>
-                Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
-              )
-            : [])
-        ];
-
-        const fuenteEstudios = deduplicarPorId(todosEstudios);
-      
-        const estudios = fuenteEstudios.filter((e: any) => e.status === "1");
-        const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
-        const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
-        const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
-
-        const posiblesPuntosIds = [
-          data.punto?.id,
-          ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
-        ];
-
-        const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
-
-        const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
-          where: {
-            punto_origen_sesion_id: {
-              [Op.in]: posiblesPuntosUnicos
-            }
-          },
-          attributes: ["id", "expediente_id", "punto_origen_sesion_id"]
-        });
-
-        const expedienteIds = [
-          ...new Set(
-            expedientesRelacionados
-              .map((e: any) => e.expediente_id)
-              .filter(Boolean)
-          )
-        ];
-
-        const cierresDB = await IniciativaEstudio.findAll({
-          where: {
-            status: "3",
-            [Op.or]: [
-              {
-                punto_origen_id: {
-                  [Op.in]: posiblesPuntosUnicos
-                }
-              },
-              {
-                punto_origen_id: {
-                  [Op.in]: expedienteIds
-                }
-              }
-            ]
-          },
-          include: [
-            {
-              model: PuntosOrden,
-              as: "iniciativa",
-              attributes: ["id", "punto", "nopunto", "tribuna"],
-              include: [
-                {
-                  model: Agenda,
-                  as: "evento",
-                  attributes: ["id", "fecha", "descripcion", "liga"],
-                  include: [
-                    {
-                      model: TipoEventos,
-                      as: "tipoevento",
-                      attributes: ["nombre"]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        });
-
-        const cierresMerge = [
-          ...fuenteEstudios.filter((e: any) => e.status === "3"),
-          ...cierresDB.map((c: any) => c.toJSON())
-        ];
-
-        const cierres = deduplicarPorId(cierresMerge);
-
-        const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
-
-        let observacion = "Pendiente";
-        if (cierrePrincipal) {
-          observacion = "Aprobada";
-        } else if (rechazosesion.length > 0) {
-          observacion = "Rechazada en sesión";
-        } else if (rechazadocomi.length > 0) {
-          observacion = "Rechazada en comisión";
-        } else if (dictamenes.length > 0) {
-          observacion = "Dictaminada";
-        } else if (estudios.length > 0) {
-          observacion = "En estudio";
-        }
-
-        const turnadoInfo = await getComisionesTurnado(data.punto?.id);
-        const anfitrionesNacio = await getAnfitriones(
-          data.evento?.id,
-          data.evento?.tipoevento?.nombre
-        );
-
-        const fechaExpedicion =
-          cierrePrincipal?.iniciativa?.evento?.fecha
-            ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
-            : "-";
-
-        return {
-          no: index + 1,
-          id: data.id,
-          autor: proponentesString || "-",
-          autor_detalle: presentaString || "-",
-          iniciativa: data.iniciativa ?? "-",
-          materia: data.punto?.punto ?? "-",
-          presentac: formatearFechaCorta(data.evento?.fecha),
-          comisiones: turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones || "-",
-          expedicion: fechaExpedicion,
-          observac: observacion
-        };
-      })
-    );
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Reporte Iniciativas");
-
-    worksheet.columns = [
-      { header: "NO.", key: "no", width: 8 },
-      { header: "ID", key: "id", width: 8 },
-      { header: "AUTOR", key: "autor", width: 25 },
-      { header: "PRESENTA", key: "autor_detalle", width: 35 },
-      { header: "INICIATIVA", key: "iniciativa", width: 55 },
-      { header: "MATERIA", key: "materia", width: 45 },
-      { header: "PRESENTAC.", key: "presentac", width: 15 },
-      { header: "COMISIONES", key: "comisiones", width: 40 },
-      { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
-      { header: "OBSERVAC.", key: "observac", width: 20 }
-    ];
-
-    reporte.forEach((item) => {
-      worksheet.addRow(item);
-    });
-
-    // Estilo encabezados
-    const headerRow = worksheet.getRow(1);
-    headerRow.height = 22;
-
-    headerRow.eachCell((cell: any) => {
-      cell.font = {
-        bold: true,
-        color: { argb: "FFFFFFFF" }
-      };
-      cell.alignment = {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF00B050" }
-      };
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" }
-      };
-    });
-
-    // Estilo celdas
-    worksheet.eachRow((row: any, rowNumber: number) => {
-      if (rowNumber === 1) return;
-
-      row.eachCell((cell: any) => {
-        cell.alignment = {
-          vertical: "top",
-          horizontal: "left",
-          wrapText: true
-        };
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" }
-        };
-      });
-
-      row.height = 35;
-    });
-
-    // Centrar algunas columnas
-    const columnasCentradas = ["A", "F", "H", "I"];
-    columnasCentradas.forEach((col) => {
-      worksheet.getColumn(col).alignment = {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true
-      };
-    });
-
-    // Filtro automático
-    worksheet.autoFilter = {
-      from: "A1",
-      to: "I1"
-    };
-
-    // Congelar encabezado
-    worksheet.views = [
-      { state: "frozen", ySplit: 1 }
-    ];
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="reporte_iniciativas.xlsx"'
-    );
-
-    await workbook.xlsx.write(res);
-    return res.end();
-
-    // return res.status(200).json({
-    //   total: reporte.length,
-    //   data: reporte
-    // });
-
-  } catch (error: any) {
-    console.error("Error al generar Excel de iniciativas:", error);
-    return res.status(500).json({
-      message: "Error interno del servidor",
-      error: error.message
-    });
-  }
+type ReporteBaseItem = {
+  no: number;
+  id: string;
+  autor: string;
+  autor_detalle: string;
+  iniciativa: string;
+  materia: string;
+  presentac: string;
+  fecha_evento_raw: string | null;
+  comisiones: string;
+  expedicion: string;
+  observac: string;
+  diputado: string;
+  grupo_parlamentario: string;
+  periodo: string;
 };
 
 const deduplicarPorId = (items: any[]) => {
@@ -373,83 +45,7 @@ const deduplicarPorId = (items: any[]) => {
   );
 };
 
-const getPresentantesDePunto = async (id_punto: string | null | undefined) => {
-  let proponentesString = "";
-  let presentaString = "";
-
-  if (!id_punto) {
-    return { proponentesString, presentaString };
-  }
-
-  const presentan = await PuntosPresenta.findAll({
-    where: { id_punto },
-    include: [
-      {
-        model: Proponentes,
-        as: "tipo_presenta",
-        attributes: ["valor"]
-      }
-    ]
-  });
-
-  const proponentesUnicos = new Map<string, string>();
-  const presentanData: any[] = [];
-
-  for (const p of presentan as any[]) {
-    const tipoValor = p.tipo_presenta?.valor ?? "";
-    let valor = "";
-
-    if (tipoValor === "Diputadas y Diputados") {
-      const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
-      valor = `${dip?.apaterno ?? ""} ${dip?.amaterno ?? ""} ${dip?.nombres ?? ""}`.trim();
-
-    } else if (
-      ["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)
-    ) {
-      const comi = await Comision.findOne({ where: { id: p.id_presenta } });
-      valor = comi?.nombre ?? "";
-
-    } else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
-      const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
-      valor = muni?.nombre ?? "";
-
-    } else if (tipoValor === "Grupo Parlamentario") {
-      const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
-      valor = partido?.nombre ?? "";
-
-    } else if (tipoValor === "Legislatura") {
-      const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
-      valor = leg?.numero ?? "";
-
-    } else if (tipoValor === "Secretarías del GEM") {
-      const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
-      valor = `${sec?.nombre ?? ""} / ${sec?.titular ?? ""}`.trim();
-
-    } else {
-      const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
-      valor = cat?.nombre_titular ?? "";
-    }
-
-    if (tipoValor && !proponentesUnicos.has(tipoValor)) {
-      proponentesUnicos.set(tipoValor, tipoValor);
-    }
-
-    if (valor) {
-      presentanData.push({
-        proponente: tipoValor,
-        valor,
-        id_presenta: p.id_presenta
-      });
-    }
-  }
-
-  proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-  presentaString = presentanData.map((p) => p.valor).join(", ");
-
-  return { proponentesString, presentaString };
-};
-
-const formatearFechaCorta = (fecha: string): string => {
+const formatearFechaCorta = (fecha?: string | null): string => {
   if (!fecha) return "-";
 
   const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -460,6 +56,19 @@ const formatearFechaCorta = (fecha: string): string => {
   const anio = String(date.getUTCFullYear()).slice(-2);
 
   return `${dia}-${mes}-${anio}`;
+};
+
+const obtenerPeriodo = (fecha?: string | null): string => {
+  if (!fecha) return "-";
+  const d = new Date(fecha);
+  const anio = d.getUTCFullYear();
+  const mes = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${anio}-${mes}`;
+};
+
+const normalizarTexto = (valor: any): string => {
+  if (!valor) return "-";
+  return String(valor).trim() || "-";
 };
 
 const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
@@ -505,20 +114,24 @@ const getComisionesTurnado = async (puntoId: string) => {
     return { turnado: false, comisiones_turnado: null };
   }
 
-  const idsRaw = (puntosComisiones[0] as any).id_comision || "";
+  const todosIds = puntosComisiones
+    .map((item: any) => item.id_comision || "")
+    .join(",");
 
-  const comisionIds = idsRaw
+  const comisionIds = todosIds
     .replace(/[\[\]]/g, "")
     .split(",")
     .map((id: string) => id.trim())
     .filter(Boolean);
 
-  if (comisionIds.length === 0) {
+  const comisionIdsUnicos = [...new Set(comisionIds)];
+
+  if (comisionIdsUnicos.length === 0) {
     return { turnado: false, comisiones_turnado: null };
   }
 
   const comisiones = await Comision.findAll({
-    where: { id: comisionIds },
+    where: { id: comisionIdsUnicos },
     attributes: ["nombre"],
     raw: true
   });
@@ -527,4 +140,692 @@ const getComisionesTurnado = async (puntoId: string) => {
     turnado: true,
     comisiones_turnado: comisiones.map((c: any) => c.nombre).join(", ")
   };
+};
+
+const getPresentantesDePunto = async (id: string | null | undefined) => {
+  let proponentesString = "";
+  let presentaString = "";
+  const diputados: string[] = [];
+  const gruposParlamentarios: string[] = [];
+
+  if (!id) {
+    return { proponentesString, presentaString, diputados, gruposParlamentarios };
+  }
+
+
+  const presentan = await IniciativasPresenta.findAll({
+    where: { id_iniciativa: id },
+    include: [
+      {
+        model: Proponentes,
+        as: "tipo_presenta",
+        attributes: ["id", "valor"]
+      }
+    ]
+  });
+
+
+  const proponentesUnicos = new Map<string, string>();
+  const presentanData: any[] = [];
+
+  for (const p of presentan as any[]) {
+    const tipoValor = p.tipo_presenta?.valor ?? "";
+    let valor = "";
+
+    if (tipoValor === "Diputadas y Diputados") {
+      const dip: any = await Diputado.findOne({ where: { id: p.id_presenta }, raw: true });
+
+      if (dip) {
+        valor = `${dip.apaterno ?? ""} ${dip.amaterno ?? ""} ${dip.nombres ?? ""}`.trim();
+        if (valor) diputados.push(valor);
+
+        if (dip.partido_id) {
+          const partido: any = await Partidos.findOne({
+            where: { id: dip.partido_id },
+            attributes: ["nombre"],
+            raw: true
+          });
+
+          if (partido?.nombre) {
+            gruposParlamentarios.push(partido.nombre);
+          }
+        }
+      }
+    } else if (
+      ["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)
+    ) {
+      const comi: any = await Comision.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = comi?.nombre ?? "";
+    } else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
+      const muni: any = await MunicipiosAg.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = muni?.nombre ?? "";
+    } else if (tipoValor === "Grupo Parlamentario") {
+      const partido: any = await Partidos.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = partido?.nombre ?? "";
+      if (valor) gruposParlamentarios.push(valor);
+    } else if (tipoValor === "Legislatura") {
+      const leg: any = await Legislatura.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = leg?.numero ?? "";
+    } else if (tipoValor === "Secretarías del GEM") {
+      const sec: any = await Secretarias.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = `${sec?.nombre ?? ""} / ${sec?.titular ?? ""}`.trim();
+    } else {
+      const cat: any = await CatFunDep.findOne({ where: { id: p.id_presenta }, raw: true });
+      valor = cat?.nombre_titular ?? "";
+    }
+
+    if (tipoValor && !proponentesUnicos.has(tipoValor)) {
+      proponentesUnicos.set(tipoValor, tipoValor);
+    }
+
+    if (valor) {
+      presentanData.push({
+        proponente: tipoValor,
+        valor,
+        id_presenta: p.id_presenta
+      });
+    }
+  }
+
+  proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
+  presentaString = presentanData.map((p) => p.valor).join(", ");
+
+  return {
+    proponentesString,
+    presentaString,
+    diputados: [...new Set(diputados)],
+    gruposParlamentarios: [...new Set(gruposParlamentarios)]
+  };
+};
+
+const obtenerIniciativasBase = async () => {
+  return await IniciativaPuntoOrden.findAll({
+    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
+    include: [
+      {
+        model: PuntosOrden,
+        as: "punto",
+        attributes: ["id", "punto", "nopunto", "tribuna"],
+        include: [
+          {
+            model: IniciativaEstudio,
+            as: "estudio",
+            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
+            required: false,
+            where: { type: 1 },
+            include: [
+              {
+                model: PuntosOrden,
+                as: "iniciativa",
+                attributes: ["id", "punto", "nopunto", "tribuna"],
+                include: [
+                  {
+                    model: Agenda,
+                    as: "evento",
+                    attributes: ["id", "fecha", "descripcion", "liga"],
+                    include: [
+                      {
+                        model: TipoEventos,
+                        as: "tipoevento",
+                        attributes: ["nombre"]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        model: ExpedienteEstudiosPuntos,
+        as: "expedienteturno",
+        attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+        include: [
+          {
+            model: IniciativaEstudio,
+            as: "estudio",
+            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
+            required: false,
+            include: [
+              {
+                model: PuntosOrden,
+                as: "iniciativa",
+                attributes: ["id", "punto", "nopunto", "tribuna"],
+                include: [
+                  {
+                    model: Agenda,
+                    as: "evento",
+                    attributes: ["id", "fecha", "descripcion", "liga"],
+                    include: [
+                      {
+                        model: TipoEventos,
+                        as: "tipoevento",
+                        attributes: ["nombre"]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        model: Agenda,
+        as: "evento",
+        attributes: ["id", "fecha", "descripcion", "liga"],
+        include: [
+          {
+            model: TipoEventos,
+            as: "tipoevento",
+            attributes: ["nombre"]
+          }
+        ]
+      }
+    ],
+    order: [["createdAt", "ASC"]]
+  });
+};
+
+const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+  const iniciativas = await obtenerIniciativasBase();
+
+  const reporte = await Promise.all(
+    iniciativas.map(async (iniciativa, index) => {
+      const data: any = iniciativa.toJSON();
+      const {
+        proponentesString,
+        presentaString,
+        diputados,
+        gruposParlamentarios
+      } = await getPresentantesDePunto(data.id);
+    
+      const todosEstudios = [
+        ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
+        ...(Array.isArray(data.expedienteturno)
+          ? data.expedienteturno.flatMap((exp: any) =>
+              Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
+            )
+          : [])
+      ];
+
+      const fuenteEstudios = deduplicarPorId(todosEstudios);
+
+      const estudios = fuenteEstudios.filter((e: any) => e.status === "1");
+      const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
+      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
+      const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
+
+      const posiblesPuntosIds = [
+        data.punto?.id,
+        ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
+      ];
+
+      const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+
+      const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
+        where: {
+          punto_origen_sesion_id: {
+            [Op.in]: posiblesPuntosUnicos
+          }
+        },
+        attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+        raw: true
+      });
+
+      const expedienteIds = [
+        ...new Set(
+          expedientesRelacionados
+            .map((e: any) => e.expediente_id)
+            .filter(Boolean)
+        )
+      ];
+
+      const whereCierres: any = {
+        status: "3"
+      };
+
+      if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
+        whereCierres[Op.or] = [];
+
+        if (posiblesPuntosUnicos.length > 0) {
+          whereCierres[Op.or].push({
+            punto_origen_id: {
+              [Op.in]: posiblesPuntosUnicos
+            }
+          });
+        }
+
+        if (expedienteIds.length > 0) {
+          whereCierres[Op.or].push({
+            punto_origen_id: {
+              [Op.in]: expedienteIds
+            }
+          });
+        }
+      }
+
+      const cierresDB =
+        whereCierres[Op.or]?.length > 0
+          ? await IniciativaEstudio.findAll({
+              where: whereCierres,
+              include: [
+                {
+                  model: PuntosOrden,
+                  as: "iniciativa",
+                  attributes: ["id", "punto", "nopunto", "tribuna"],
+                  include: [
+                    {
+                      model: Agenda,
+                      as: "evento",
+                      attributes: ["id", "fecha", "descripcion", "liga"],
+                      include: [
+                        {
+                          model: TipoEventos,
+                          as: "tipoevento",
+                          attributes: ["nombre"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            })
+          : [];
+
+      const cierresMerge = [
+        ...fuenteEstudios.filter((e: any) => e.status === "3"),
+        ...cierresDB.map((c: any) => c.toJSON())
+      ];
+
+      const cierres = deduplicarPorId(cierresMerge);
+      const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
+
+      let observacion = "Pendiente";
+      if (cierrePrincipal) {
+        observacion = "Aprobada";
+      } else if (rechazosesion.length > 0) {
+        observacion = "Rechazada en sesión";
+      } else if (rechazadocomi.length > 0) {
+        observacion = "Rechazada en comisión";
+      } else if (dictamenes.length > 0) {
+        observacion = "Dictaminada";
+      } else if (estudios.length > 0) {
+        observacion = "En estudio";
+      }
+
+      const turnadoInfo = await getComisionesTurnado(data.punto?.id);
+      const anfitrionesNacio = await getAnfitriones(
+        data.evento?.id,
+        data.evento?.tipoevento?.nombre
+      );
+
+      const fechaExpedicion =
+        cierrePrincipal?.iniciativa?.evento?.fecha
+          ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
+          : "-";
+
+      const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
+      const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
+      const fechaEventoRaw = data.evento?.fecha ?? null;
+
+      return {
+        no: index + 1,
+        id: normalizarTexto(data.id),
+        autor: normalizarTexto(proponentesString),
+        autor_detalle: normalizarTexto(presentaString),
+        iniciativa: normalizarTexto(data.iniciativa),
+        materia: normalizarTexto(data.punto?.punto),
+        presentac: formatearFechaCorta(fechaEventoRaw),
+        fecha_evento_raw: fechaEventoRaw,
+        comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones),
+        expedicion: fechaExpedicion,
+        observac: observacion,
+        diputado,
+        grupo_parlamentario: grupoParlamentario,
+        periodo: obtenerPeriodo(fechaEventoRaw)
+      };
+    })
+  );
+
+  return reporte;
+};
+
+const aplicarEstiloHoja = (worksheet: any) => {
+  const headerRow = worksheet.getRow(1);
+  headerRow.height = 22;
+
+  headerRow.eachCell((cell: any) => {
+    cell.font = {
+      bold: true,
+      color: { argb: "FFFFFFFF" }
+    };
+    cell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true
+    };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF00B050" }
+    };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" }
+    };
+  });
+
+  worksheet.eachRow((row: any, rowNumber: number) => {
+    if (rowNumber === 1) return;
+
+    row.eachCell((cell: any) => {
+      cell.alignment = {
+        vertical: "top",
+        horizontal: "left",
+        wrapText: true
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" }
+      };
+    });
+
+    row.height = 30;
+  });
+
+  worksheet.views = [{ state: "frozen", ySplit: 1 }];
+};
+
+const enviarWorkbook = async (res: Response, workbook: any, nombreArchivo: string) => {
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${nombreArchivo}"`
+  );
+
+  await workbook.xlsx.write(res);
+  return res.end();
+};
+
+const generarExcelSimple = async (
+  res: Response,
+  nombreHoja: string,
+  nombreArchivo: string,
+  columnas: { header: string; key: string; width: number }[],
+  data: any[]
+) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(nombreHoja);
+
+  worksheet.columns = columnas;
+
+  data.forEach((item, index) => {
+    worksheet.addRow({
+      ...item,
+      no: index + 1
+    });
+  });
+
+  aplicarEstiloHoja(worksheet);
+
+  const ultimaColumna = String.fromCharCode(64 + columnas.length);
+  worksheet.autoFilter = {
+    from: "A1",
+    to: `${ultimaColumna}1`
+  };
+
+  const columnasCentradas = ["A"];
+  columnasCentradas.forEach((col) => {
+    worksheet.getColumn(col).alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true
+    };
+  });
+
+  return await enviarWorkbook(res, workbook, nombreArchivo);
+};
+
+export const getifnini = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+
+    return await generarExcelSimple(
+      res,
+      "Reporte Iniciativas",
+      "reporte_iniciativas.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "ID", key: "id", width: 40 },
+        { header: "AUTOR", key: "autor", width: 28 },
+        { header: "PRESENTA", key: "autor_detalle", width: 35 },
+        { header: "DIPUTADO", key: "diputado", width: 30 },
+        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+        { header: "INICIATIVA", key: "iniciativa", width: 55 },
+        { header: "MATERIA", key: "materia", width: 45 },
+        { header: "PRESENTAC.", key: "presentac", width: 15 },
+        { header: "COMISIONES", key: "comisiones", width: 40 },
+        { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
+        { header: "OBSERVAC.", key: "observac", width: 20 },
+        { header: "PERIODO", key: "periodo", width: 15 }
+      ],
+      reporte
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel general de iniciativas:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
+export const getIniciativasEnEstudio = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+    const filtrado = reporte.filter((item) => item.observac === "En estudio");
+
+    return await generarExcelSimple(
+      res,
+      "En estudio",
+      "reporte_iniciativas_en_estudio.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "ID", key: "id", width: 40 },
+        { header: "AUTOR", key: "autor", width: 28 },
+        { header: "PRESENTA", key: "autor_detalle", width: 35 },
+        { header: "DIPUTADO", key: "diputado", width: 30 },
+        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+        { header: "INICIATIVA", key: "iniciativa", width: 55 },
+        { header: "MATERIA", key: "materia", width: 45 },
+        { header: "PRESENTAC.", key: "presentac", width: 15 },
+        { header: "COMISIONES", key: "comisiones", width: 40 },
+        { header: "OBSERVAC.", key: "observac", width: 20 },
+        { header: "PERIODO", key: "periodo", width: 15 }
+      ],
+      filtrado
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel de iniciativas en estudio:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
+export const getIniciativasAprobadas = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+    const filtrado = reporte.filter((item) => item.observac === "Aprobada");
+
+    return await generarExcelSimple(
+      res,
+      "Aprobadas",
+      "reporte_iniciativas_aprobadas.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "ID", key: "id", width: 40 },
+        { header: "AUTOR", key: "autor", width: 28 },
+        { header: "PRESENTA", key: "autor_detalle", width: 35 },
+        { header: "DIPUTADO", key: "diputado", width: 30 },
+        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+        { header: "INICIATIVA", key: "iniciativa", width: 55 },
+        { header: "MATERIA", key: "materia", width: 45 },
+        { header: "PRESENTAC.", key: "presentac", width: 15 },
+        { header: "COMISIONES", key: "comisiones", width: 40 },
+        { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
+        { header: "OBSERVAC.", key: "observac", width: 20 },
+        { header: "PERIODO", key: "periodo", width: 15 }
+      ],
+      filtrado
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel de iniciativas aprobadas:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
+export const getIniciativasPorGrupoYDiputado = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+
+    const mapa = new Map<string, any>();
+
+    for (const item of reporte) {
+      const diputado = item.diputado || "-";
+      const grupo = item.grupo_parlamentario || "-";
+
+      const llave = `${diputado}__${grupo}`;
+
+      if (!mapa.has(llave)) {
+        mapa.set(llave, {
+          diputado,
+          grupo_parlamentario: grupo,
+          en_estudio: 0,
+          aprobadas: 0,
+          total: 0
+        });
+      }
+
+      const fila = mapa.get(llave);
+
+      if (item.observac === "En estudio") {
+        fila.en_estudio += 1;
+      }
+
+      if (item.observac === "Aprobada") {
+        fila.aprobadas += 1;
+      }
+
+      fila.total += 1;
+    }
+
+    const resultado = Array.from(mapa.values()).sort((a, b) => {
+      if (a.grupo_parlamentario < b.grupo_parlamentario) return -1;
+      if (a.grupo_parlamentario > b.grupo_parlamentario) return 1;
+      if (a.diputado < b.diputado) return -1;
+      if (a.diputado > b.diputado) return 1;
+      return 0;
+    });
+
+    return await generarExcelSimple(
+      res,
+      "Grupo y Diputado",
+      "reporte_iniciativas_grupo_diputado.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "DIPUTADO", key: "diputado", width: 35 },
+        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 30 },
+        { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
+        { header: "APROBADAS", key: "aprobadas", width: 15 },
+        { header: "TOTAL", key: "total", width: 12 }
+      ],
+      resultado
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel por grupo y diputado:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
+export const getTotalesPorPeriodo = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+
+    const mapa = new Map<string, any>();
+
+    for (const item of reporte) {
+      const periodo = item.periodo || "-";
+
+      if (!mapa.has(periodo)) {
+        mapa.set(periodo, {
+          periodo,
+          pendientes: 0,
+          en_estudio: 0,
+          aprobadas: 0,
+          total: 0
+        });
+      }
+
+      const fila = mapa.get(periodo);
+    
+
+      if (item.observac === "En estudio") {
+        fila.en_estudio += 1;
+      }
+
+      if (item.observac === "Aprobada") {
+        fila.aprobadas += 1;
+      }
+
+      if (item.observac === "Pendiente") {
+        fila.pendientes += 1;
+      }
+
+      fila.total += 1;
+    }
+
+    const resultado = Array.from(mapa.values()).sort((a, b) => {
+      if (a.periodo < b.periodo) return -1;
+      if (a.periodo > b.periodo) return 1;
+      return 0;
+    });
+
+    return await generarExcelSimple(
+      res,
+      "Totales por periodo",
+      "reporte_iniciativas_totales_periodo.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "PERIODO", key: "periodo", width: 18 },
+        { header: "PENDIENTES", key: "pendientes", width: 15 },
+        { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
+        { header: "APROBADAS", key: "aprobadas", width: 15 },
+        { header: "TOTAL", key: "total", width: 12 }
+      ],
+      resultado
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel total por periodo:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
 };
