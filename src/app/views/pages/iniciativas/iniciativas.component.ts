@@ -253,10 +253,10 @@ export class IniciativasComponent implements OnInit {
 
     const request$ = (() => {
       switch (tipo) {
-        case 'general':         return this._eventoService.generarReporteIniciativas();
-        case 'estudio':         return this._eventoService.generarReporteEnEstudio();
-        case 'aprobadas':       return this._eventoService.generarReporteAprobadas();
-        case 'grupo-diputado':  return this._eventoService.generarReporteGrupoDiputado();
+        case 'general': return this._eventoService.generarReporteIniciativas();
+        case 'estudio': return this._eventoService.generarReporteEnEstudio();
+        case 'aprobadas': return this._eventoService.generarReporteAprobadas();
+        case 'grupo-diputado': return this._eventoService.generarReporteGrupoDiputado();
         case 'totales-periodo': return this._eventoService.generarReporteTotalesPeriodo();
       }
     })();
@@ -295,49 +295,60 @@ export class IniciativasComponent implements OnInit {
   }
 
   cargarGruposYDiputados(): void {
-      this.cargandoModal = true;
-      this._eventoService.getCatalogos().subscribe({
+    this.cargandoModal = true;
+    this._eventoService.getCatalogos().subscribe({
       next: (response: any) => {
-        console.log(response.partidos);
-        this.listaGrupos = response.partidos;
-        this.listaDiputados = response.diputados;
+        this.listaGrupos = [
+          { id: '0', siglas: 'Todos los grupos' },
+          ...response.partidos
+        ];
+        this.listaDiputados = [
+          { id: '0', nombre: 'Todos los diputados' },
+          ...response.diputados
+        ];
         this.cargandoModal = false;
       },
       error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
+        console.error('Error del servidor:', e.error?.msg);
       }
-    });   
+    });
+  }
+
+
+  get tieneSeleccion(): boolean {
+    return !!this.grupoSeleccionado || !!this.diputadoSeleccionado;
+  }
+
+  onGrupoChange(grupo: any): void {
+    if (grupo) this.diputadoSeleccionado = null;
+  }
+
+  onDiputadoChange(diputado: any): void {
+    if (diputado) this.grupoSeleccionado = null;
   }
 
   generarReporteFiltros(): void {
     if (!this.grupoSeleccionado && !this.diputadoSeleccionado) {
       Swal.fire({
-        icon: 'warning',
-        title: 'Selección requerida',
-        text: 'Debes seleccionar al menos un grupo parlamentario o un diputado.',
-        confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#800048',
+        icon: 'warning', title: 'Selección requerida',
+        text: 'Debes seleccionar un grupo parlamentario o un diputado.',
+        confirmButtonText: 'Aceptar', confirmButtonColor: '#800048'
       });
       return;
     }
 
     this.generandoReporte = true;
 
-    const params = {
-      grupoId: this.grupoSeleccionado?.id || null,
-      diputadoId: this.diputadoSeleccionado?.id || null,
-    };
+    const data = this.grupoSeleccionado
+      ? { id_tipo: 1, id: this.grupoSeleccionado.id }
+      : { id_tipo: 2, id: this.diputadoSeleccionado!.id };
 
-    // TODO: Reemplazar con el método real de tu servicio
-    // this._eventoService.generarReporteGrupoDiputado(params).subscribe({ ... });
-    this._eventoService.generarReporteIniciativas().subscribe({
+    this._eventoService.generarReporteIntegrantes(data).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const nombre =  'integrantes';
-        a.download = `_${nombre.toLowerCase().replace(/ /g, '_')}.xlsx`;
+        a.download = `_integrantes.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.generandoReporte = false;

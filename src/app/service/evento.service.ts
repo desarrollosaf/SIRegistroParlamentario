@@ -199,4 +199,11 @@ export class EventoService {
     });
   }
 
+  generarReporteIntegrantes(data: any): Observable<Blob> {
+    return this.http.post(`${this.myAppUrl}${this.myAPIUrl2}/integrantes/`, data, {
+      responseType: 'blob'
+    });
+  }
+
+  
 }
