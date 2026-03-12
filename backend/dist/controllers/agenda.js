@@ -1693,7 +1693,7 @@ const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
-        yield puntos_ordens_1.default.update({ id_dictamen: null }, { where: { id_dictamen: punto.id } });
+        yield puntos_ordens_1.default.update({ id_dictamen: 0 }, { where: { id_dictamen: punto.id } });
         yield iniciativas_estudio_1.default.destroy({
             where: {
                 [sequelize_1.Op.or]: [
