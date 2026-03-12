@@ -1942,7 +1942,7 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
       return res.status(404).json({ message: "Punto no encontrado" });
     }
     await PuntosOrden.update(
-      { id_dictamen: null },
+      { id_dictamen: 0 },
       { where: { id_dictamen: punto.id } }
     );
     
