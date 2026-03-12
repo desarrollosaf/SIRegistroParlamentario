@@ -17,7 +17,7 @@ export class EventoService {
     this.myAppUrl = enviroment.endpoint;
     this.myAPIUrl ='api/eventos';
     this.myAPIUrl1 ='api/diputados';
-    this.myAPIUrl2 ='api/reporte';
+    this.myAPIUrl2 ='api/reporte/iniciativas';
   }
 
 
@@ -169,7 +169,32 @@ export class EventoService {
   }
 
   generarReporteIniciativas(): Observable<Blob> {
-    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/getinfiniciativas/`, {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/general/`, {
+      responseType: 'blob'
+    });
+  }
+
+
+  generarReporteEnEstudio(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/en-estudio/`, {
+      responseType: 'blob'
+    });
+  }
+
+  generarReporteAprobadas(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/aprobadas/`, {
+      responseType: 'blob'
+    });
+  }
+
+  generarReporteGrupoDiputado(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/grupo-diputado/`, {
+      responseType: 'blob'
+    });
+  }
+
+  generarReporteTotalesPeriodo(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/totales-periodo/`, {
       responseType: 'blob'
     });
   }

@@ -252,9 +252,17 @@ export class IniciativasComponent implements OnInit {
     this.closeExportMenu();
     this.descargandoReporte = true;
 
-    // TODO: Reemplazar con el método correcto de tu servicio según el tipo
-    // Ejemplo: this._eventoService.generarReporte(tipo)
-    this._eventoService.generarReporteIniciativas().subscribe({
+    const request$ = (() => {
+      switch (tipo) {
+        case 'general':         return this._eventoService.generarReporteIniciativas();
+        case 'estudio':         return this._eventoService.generarReporteEnEstudio();
+        case 'aprobadas':       return this._eventoService.generarReporteAprobadas();
+        case 'grupo-diputado':  return this._eventoService.generarReporteGrupoDiputado();
+        case 'totales-periodo': return this._eventoService.generarReporteTotalesPeriodo();
+      }
+    })();
+
+    request$.subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
