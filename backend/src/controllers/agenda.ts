@@ -454,7 +454,6 @@ async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
 
   return resultados;
 }
-
 /**
  * Procesa asistencias para COMISIONES (agrupadas por comisión y ordenadas por cargo)
  */
@@ -626,7 +625,6 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
 
 export const catalogos = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -1463,9 +1461,6 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
-
-
-
 
 export const crearreserva = async (req: Request, res: Response): Promise<any> => {
   try {
