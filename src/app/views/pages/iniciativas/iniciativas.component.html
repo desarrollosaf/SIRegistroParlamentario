@@ -233,6 +233,27 @@
                     </div>
                   </div>
                 </div>
+                <div class="col-12 mt-2" *ngIf="iniciativaSeleccionada.inidoc">
+                  <div class="d-flex align-items-center gap-3 p-3 rounded-2"
+                    style="background:rgba(128,0,72,0.04); border: 1px dashed rgba(128,0,72,0.25);">
+                    <span class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                      style="width:38px;height:38px;background:rgba(128,0,72,0.1);">
+                      <i class="bi bi-file-earmark-pdf-fill" style="color:#800048;font-size:1.1rem;"></i>
+                    </span>
+                    <div class="flex-grow-1">
+                      <small class="text-muted text-uppercase fw-semibold d-block"
+                        style="font-size:0.7rem;letter-spacing:1px;">Documento</small>
+                      <span class="fw-semibold text-dark" style="font-size:0.875rem;">Iniciativa</span>
+                    </div>
+                    <button class="btn btn-sm fw-semibold d-flex align-items-center gap-2"
+                      style="background:#800048;color:white;border:none;border-radius:8px;padding:6px 16px;"
+                      (click)="verInidoc(iniciativaSeleccionada.inidoc)">
+                      <i class="bi bi-eye"></i>
+                      <span>Ver documento</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -262,6 +283,19 @@
                         <div class="mb-3" *ngIf="item.tipo_evento">
                           <span class="badge badge-tipo"><i class="bi bi-tag me-1"></i>{{ item.tipo_evento }}</span>
                         </div>
+                       <div class="mb-3" *ngIf="item.dispensa">
+  <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2"
+    style="background: linear-gradient(135deg, #198754, #20c997);
+           color: white;
+           border-radius: 20px;
+           font-size: 0.75rem;
+           font-weight: 600;
+           letter-spacing: 0.5px;
+           box-shadow: 0 2px 8px rgba(25,135,84,0.35);">
+    <i class="bi bi-check-circle-fill" style="font-size:0.8rem;"></i>
+    Dispensada
+  </span>
+</div>
                         <div class="alert alert-light mb-3" *ngIf="item.punto">
                           <strong class="d-block mb-2"><i class="bi bi-file-text me-1"></i> Punto:</strong>
                           <small class="text-dark">{{ item.punto }}</small>
