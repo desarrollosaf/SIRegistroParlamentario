@@ -448,19 +448,85 @@ const crariniidits = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.crariniidits = crariniidits;
+// export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const iniciativa = await IniciativaPuntoOrden.findAll({ 
+//       attributes: ["id", "iniciativa"],
+//       include: [
+//                   {
+//                     model: IniciativasPresenta,
+//                     as: "presentan",
+//                     attributes: ["id_tipo_presenta", "id_presenta"],
+//                     include: [
+//                       {
+//                         model: Proponentes,
+//                         as: "tipo_presenta",
+//                         attributes: ["id", "valor"]
+//                       }
+//                     ]
+//                   },
+//                   {
+//                     model: Agenda,
+//                     as: "evento",
+//                     attributes: ["id", "fecha"],
+//                   }
+//                 ]
+//     });
+//     console.log(iniciativa)
+//     return res.status(200).json({
+//       data: iniciativa,
+//     });  
+//   } catch (error: any) {
+//     console.error("Error al obtener las iniciativas:", error);
+//     return res.status(500).json({ 
+//       message: "Error interno del servidor",
+//       error: error.message 
+//     });
+//   }
+// };
 const selectiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
-            // where: { 
-            //   id: {
-            //     [Op.in]: ['1072', '792','']
-            //   }
-            // },
-            attributes: ["id", "iniciativa"]
+        const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
+            attributes: ["id", "iniciativa"],
+            include: [
+                {
+                    model: iniciativaspresenta_1.default,
+                    as: "presentan",
+                    attributes: ["id_tipo_presenta", "id_presenta"],
+                    include: [
+                        {
+                            model: proponentes_1.default,
+                            as: "tipo_presenta",
+                            attributes: ["id", "valor"]
+                        }
+                    ]
+                },
+                {
+                    model: agendas_1.default,
+                    as: "evento",
+                    attributes: ["id", "fecha"],
+                }
+            ]
         });
-        return res.status(200).json({
-            data: iniciativa,
-        });
+        // Procesamos cada iniciativa para construir el label del select
+        const data = yield Promise.all(iniciativas.map((ini) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b;
+            const { presentaString } = yield procesarPresentan((_a = ini.presentan) !== null && _a !== void 0 ? _a : []);
+            const fecha = ((_b = ini.evento) === null || _b === void 0 ? void 0 : _b.fecha)
+                ? new Date(ini.evento.fecha).toLocaleDateString('es-MX', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                })
+                : 'Sin fecha';
+            return {
+                id: ini.id,
+                // Formato: "iniciativa \n fecha - presentaString"
+                // iniciativa: `${ini.iniciativa}\n${fecha} - ${presentaString}`,
+                // Por si necesitas los campos por separado también
+                iniciativa: ini.iniciativa,
+                datos: `${fecha} - ${presentaString}`,
+            };
+        })));
+        return res.status(200).json({ data });
     }
     catch (error) {
         console.error("Error al obtener las iniciativas:", error);
