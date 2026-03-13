@@ -485,19 +485,91 @@ export const crariniidits = async (req: Request, res: Response): Promise<any> =>
   }
 };
 
+// export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const iniciativa = await IniciativaPuntoOrden.findAll({ 
+//       attributes: ["id", "iniciativa"],
+//       include: [
+//                   {
+//                     model: IniciativasPresenta,
+//                     as: "presentan",
+//                     attributes: ["id_tipo_presenta", "id_presenta"],
+//                     include: [
+//                       {
+//                         model: Proponentes,
+//                         as: "tipo_presenta",
+//                         attributes: ["id", "valor"]
+//                       }
+//                     ]
+//                   },
+//                   {
+//                     model: Agenda,
+//                     as: "evento",
+//                     attributes: ["id", "fecha"],
+//                   }
+//                 ]
+//     });
+//     console.log(iniciativa)
+//     return res.status(200).json({
+//       data: iniciativa,
+//     });  
+//   } catch (error: any) {
+//     console.error("Error al obtener las iniciativas:", error);
+//     return res.status(500).json({ 
+//       message: "Error interno del servidor",
+//       error: error.message 
+//     });
+//   }
+// };
 export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
   try {
-    const iniciativa = await IniciativaPuntoOrden.findAll({ 
-      // where: { 
-      //   id: {
-      //     [Op.in]: ['1072', '792','']
-      //   }
-      // },
-      attributes: ["id", "iniciativa"]
+    const iniciativas = await IniciativaPuntoOrden.findAll({ 
+      attributes: ["id", "iniciativa"],
+      include: [
+        {
+          model: IniciativasPresenta,
+          as: "presentan",
+          attributes: ["id_tipo_presenta", "id_presenta"],
+          include: [
+            {
+              model: Proponentes,
+              as: "tipo_presenta",
+              attributes: ["id", "valor"]
+            }
+          ]
+        },
+        {
+          model: Agenda,
+          as: "evento",
+          attributes: ["id", "fecha"],
+        }
+      ]
     });
-    return res.status(200).json({
-      data: iniciativa,
-    });  
+
+    // Procesamos cada iniciativa para construir el label del select
+    const data = await Promise.all(
+      iniciativas.map(async (ini: any) => {
+        const { presentaString } = await procesarPresentan(ini.presentan ?? []);
+        
+        const fecha = ini.evento?.fecha 
+          ? new Date(ini.evento.fecha).toLocaleDateString('es-MX', {
+              day: '2-digit', month: '2-digit', year: 'numeric'
+            }) 
+          : 'Sin fecha';
+
+        return {
+          id: ini.id,
+          // Formato: "iniciativa \n fecha - presentaString"
+          // iniciativa: `${ini.iniciativa}\n${fecha} - ${presentaString}`,
+          // Por si necesitas los campos por separado también
+          iniciativa: ini.iniciativa,
+          datos: `${fecha} - ${presentaString}`,
+        };
+      })
+    );
+
+    return res.status(200).json({ data });
+
   } catch (error: any) {
     console.error("Error al obtener las iniciativas:", error);
     return res.status(500).json({ 
@@ -506,7 +578,6 @@ export const selectiniciativas = async (req: Request, res: Response): Promise<an
     });
   }
 };
-
 
 const formatearFecha = (fecha: string): string => {
   if (!fecha) return '';
@@ -587,7 +658,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         {
           model: PuntosOrden,
           as: 'punto',
-          attributes: ["id", "punto", "nopunto","tribuna"],
+          attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
           include: [
             {
               model: IniciativaEstudio,
@@ -601,7 +672,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: PuntosOrden,
                   as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto","tribuna"],
+                  attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
                   include: [
                     {
                       model: Agenda,
@@ -635,7 +706,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: PuntosOrden,
                   as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto","tribuna"],
+                  attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
                   include: [
                     {
                       model: Agenda,
@@ -666,74 +737,31 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               attributes: ["nombre"]
             }
           ]
+        },
+        {
+          model: IniciativasPresenta,
+            as: "presentan",
+            attributes: ["id_tipo_presenta", "id_presenta"],
+              include: [
+                {
+                  model: Proponentes,
+                  as: "tipo_presenta",
+                  attributes: ["id", "valor"]
+                }
+              ]
         }
       ]
     });
 
-    let presentan = null;
-    let proponentesString = ''; 
-    let presentaString = ''; 
+    let proponentesString = '';
+    let presentaString = '';
 
-    if (iniciativas[0]?.id_punto != null) {
-      presentan = await PuntosPresenta.findAll({
-        where: { id_punto: iniciativas[0].id_punto },
-        include: [{
-          model: Proponentes,
-          as: 'tipo_presenta',
-          attributes: ["valor"]
-        }]
-      });
-    }
+    const presentanIniciativa = iniciativas[0]?.presentan ?? [];
 
-    if (presentan) {
-      const proponentesUnicos = new Map<string, string>(); // para no repetir
-      const presentanData: any[] = [];
-
-      for (const p of presentan as any[]) {
-        const tipoValor = p.tipo_presenta.valor;
-        let valor = '';
-
-        if (tipoValor === 'Diputadas y Diputados') {
-          const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
-          valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
-
-        } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
-          const comi = await Comision.findOne({ where: { id: p.id_presenta } });
-          valor = comi?.nombre ?? '';
-
-        } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
-          const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
-          valor = muni?.nombre ?? '';
-
-        } else if (tipoValor === 'Grupo Parlamentario') {
-          const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
-          valor = partido?.nombre ?? '';
-
-        } else if (tipoValor === 'Legislatura') {
-          const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
-          valor = leg?.numero ?? '';
-
-        } else if (tipoValor === 'Secretarías del GEM') {
-          const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
-          valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
-
-        } else {
-          const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
-          valor = cat?.nombre_titular ?? '';
-        }
-
-        // Proponente único (sin repetir)
-        if (!proponentesUnicos.has(tipoValor)) {
-          proponentesUnicos.set(tipoValor, tipoValor);
-        }
-        presentanData.push({
-          proponente: tipoValor,
-          valor,
-          id_presenta: p.id_presenta,
-        });
-      }
-      proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-      presentaString = presentanData.map(p => p.valor).join(', ');
+    if (presentanIniciativa.length > 0) {
+      const resultado = await procesarPresentan(presentanIniciativa);
+      proponentesString = resultado.proponentesString;
+      presentaString = resultado.presentaString;
     }
     
     const trazaIniciativas = await Promise.all(
@@ -998,6 +1026,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
         return {
           nacio: {
+            dispensa: data.punto?.dispensa,
             evento: data.evento?.id,
             tipo_evento: data.evento?.tipoevento?.nombre,
             fecha: formatearFecha(data.evento?.fecha),

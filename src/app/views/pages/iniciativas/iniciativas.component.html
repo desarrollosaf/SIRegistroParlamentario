@@ -114,27 +114,55 @@
 
             <ng-select [items]="listaIniciativas" bindLabel="iniciativa" [(ngModel)]="iniciativaSeleccionada"
               placeholder="Escribe para buscar una iniciativa..." [searchable]="true" [clearable]="true"
-              [loading]="cargando" (change)="onIniciativaChange($event)" class="ng-select-large">
+              [searchFn]="buscarIniciativa" [loading]="cargando" (change)="onIniciativaChange($event)"
+              class="ng-select-large">
 
+              <!-- Etiqueta cuando ya está seleccionada -->
               <ng-template ng-label-tmp let-item="item">
-                <div class="d-flex align-items-start py-1">
-                  <i class="bi bi-lightbulb-fill text-warning me-2 mt-1 flex-shrink-0"></i>
-                  <span class="fw-semibold text-wrap">{{ item.iniciativa }}</span>
+                <div class="d-flex align-items-start py-1 gap-2">
+                  <i class="bi bi-lightbulb-fill text-warning flex-shrink-0 mt-1"></i>
+                  <div>
+                    <div class="fw-semibold text-wrap lh-sm" style="font-size:0.875rem;">{{ item.iniciativa }}</div>
+                    <small class="text-muted" *ngIf="item.datos" style="font-size:0.75rem;">
+                      <i class="bi bi-calendar2-event me-1"></i>{{ item.datos }}
+                    </small>
+                  </div>
                 </div>
               </ng-template>
 
+              <!-- Opciones del dropdown -->
               <ng-template ng-option-tmp let-item="item">
-                <div class="py-2 iniciativa-option">
-                  <div class="d-flex align-items-start">
-                    <div class="flex-shrink-0">
-                      <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                <div class="py-2 px-1 iniciativa-option">
+                  <div class="d-flex align-items-start gap-3">
+
+                    <!-- Ícono -->
+                    <div class="flex-shrink-0 pt-1">
+                      <span class="d-flex align-items-center justify-content-center rounded-2"
+                        style="width:32px;height:32px;background:rgba(128,0,72,0.08);">
+                        <i class="bi bi-lightbulb-fill" style="color:#800048;font-size:1rem;"></i>
+                      </span>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                      <div class="fw-semibold text-wrap lh-sm">{{ item.iniciativa }}</div>
-                      <small class="text-muted text-wrap d-block mt-1" *ngIf="item.descripcion">
-                        {{ item.descripcion | slice:0:100 }}{{ item.descripcion.length > 100 ? '...' : '' }}
-                      </small>
+
+                    <!-- Contenido -->
+                    <div class="flex-grow-1" style="min-width:0;">
+                      <div class="fw-semibold text-dark text-wrap lh-sm mb-1" style="font-size:0.875rem;">
+                        {{ item.iniciativa }}
+                      </div>
+
+                      <!-- Pill de datos -->
+                      <div *ngIf="item.datos" class="d-flex align-items-center gap-1 flex-wrap mt-1">
+                        <ng-container *ngFor="let part of item.datos.split(' - '); let idx = index">
+                          <span class="badge rounded-pill"
+                            [style.background]="idx === 0 ? 'rgba(128,0,72,0.1)' : 'rgba(13,110,253,0.1)'"
+                            [style.color]="idx === 0 ? '#800048' : '#0d6efd'"
+                            style="font-size:0.7rem;font-weight:500;padding:3px 8px;">
+                            <i class="bi me-1" [ngClass]="idx === 0 ? 'bi-calendar3' : 'bi-diagram-3'"></i>{{
+                            part.trim() }}
+                          </span>
+                        </ng-container>
+                      </div>
                     </div>
+
                   </div>
                 </div>
               </ng-template>
@@ -214,7 +242,7 @@
 
             <div class="timeline-container">
               <div class="timeline-item" *ngFor="let item of timelineData; let i = index; let isLast = last"
-                [ngClass]="getTipoColor(item.tipo)">
+                [ngClass]="getTipoColor(item)">
                 <div class="timeline-icon">
                   <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
                 </div>
@@ -260,6 +288,15 @@
                               class="spinner-border spinner-border-sm me-1" role="status"></span>
                             <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_nacio_' + item.fecha]"></i>
                             Asistencia
+                          </button>
+
+                          <button *ngIf="item.dispensa && item.votacionid" class="btn btn-sm btn-download"
+                            (click)="descargarVotacion(item, 'nacio')"
+                            [disabled]="descargando['votacion_nacio_' + item.fecha]">
+                            <span *ngIf="descargando['votacion_nacio_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['votacion_nacio_' + item.fecha]"></i>
+                            Votación
                           </button>
                         </div>
                       </ng-container>

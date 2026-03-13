@@ -21,6 +21,7 @@ class IniciativaPuntoOrden extends Model {
   declare fecha_votacion: Date | null;
   declare status: string | null;
   declare expediente: number | null;
+  declare precluida: number | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -68,6 +69,11 @@ IniciativaPuntoOrden.init(
       allowNull: true,
     },
      expediente: {         
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
+    precluida: {         
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
