@@ -719,12 +719,13 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = resultado.presentaString;
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
             const data = iniciativa.toJSON();
+            let decretos = (_a = data.decretos) !== null && _a !== void 0 ? _a : [];
             console.log("DATA INICIATIVA:");
             console.log(data);
             const todosEstudios = [
-                ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
+                ...(Array.isArray((_b = data.punto) === null || _b === void 0 ? void 0 : _b.estudio) ? data.punto.estudio : []),
                 ...(Array.isArray(data.expedienteturno)
                     ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
                     : [])
@@ -740,7 +741,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             // NUEVO: buscar cierres por varios puntos
             // -----------------------------
             const posiblesPuntosIds = [
-                (_b = data.punto) === null || _b === void 0 ? void 0 : _b.id,
+                (_c = data.punto) === null || _c === void 0 ? void 0 : _c.id,
                 ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
             ];
             const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
@@ -822,16 +823,16 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             // -----------------------------
             // resto de tu lógica
             // -----------------------------
-            const anfitrionesNacio = yield getAnfitriones((_c = data.evento) === null || _c === void 0 ? void 0 : _c.id, (_e = (_d = data.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre);
+            const anfitrionesNacio = yield getAnfitriones((_d = data.evento) === null || _d === void 0 ? void 0 : _d.id, (_f = (_e = data.evento) === null || _e === void 0 ? void 0 : _e.tipoevento) === null || _f === void 0 ? void 0 : _f.nombre);
             const tribunainicio = yield diputado_1.default.findOne({
-                where: { id: (_f = data.punto) === null || _f === void 0 ? void 0 : _f.tribuna },
+                where: { id: (_g = data.punto) === null || _g === void 0 ? void 0 : _g.tribuna },
             });
             const tribuna = tribunainicio
                 ? [tribunainicio.nombres, tribunainicio.apaterno, tribunainicio.amaterno]
                     .filter(Boolean)
                     .join(" ")
                 : null;
-            const turnadoInfo = yield getComisionesTurnado((_g = data.punto) === null || _g === void 0 ? void 0 : _g.id);
+            const turnadoInfo = yield getComisionesTurnado((_h = data.punto) === null || _h === void 0 ? void 0 : _h.id);
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
                 const eventoEstudio = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
@@ -898,11 +899,15 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ dispensa: (_h = data.punto) === null || _h === void 0 ? void 0 : _h.dispensa, evento: (_j = data.evento) === null || _j === void 0 ? void 0 : _j.id, tipo_evento: (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.tipoevento) === null || _l === void 0 ? void 0 : _l.nombre, fecha: formatearFecha((_m = data.evento) === null || _m === void 0 ? void 0 : _m.fecha), descripcion_evento: (_o = data.evento) === null || _o === void 0 ? void 0 : _o.descripcion, numpunto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.nopunto, punto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.punto, votacionid: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.id, liga: (_s = data.evento) === null || _s === void 0 ? void 0 : _s.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ dispensa: (_j = data.punto) === null || _j === void 0 ? void 0 : _j.dispensa, evento: (_k = data.evento) === null || _k === void 0 ? void 0 : _k.id, tipo_evento: (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.tipoevento) === null || _m === void 0 ? void 0 : _m.nombre, fecha: formatearFecha((_o = data.evento) === null || _o === void 0 ? void 0 : _o.fecha), descripcion_evento: (_p = data.evento) === null || _p === void 0 ? void 0 : _p.descripcion, numpunto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.nopunto, punto: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.punto, votacionid: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.id, liga: (_t = data.evento) === null || _t === void 0 ? void 0 : _t.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
                 rechazadose: ReSesion,
+                decretos: decretos.map((d) => ({
+                    nombre_decreto: d.nombre_decreto,
+                    decreto: d.decreto,
+                })),
             };
         })));
         // console.log(trazaIniciativas);

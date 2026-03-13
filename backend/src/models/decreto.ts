@@ -82,14 +82,6 @@ Decreto.init(
   }
 );
 
-Decreto.belongsTo(IniciativaPuntoOrden, {
-  foreignKey: "id_iniciativa",
-  as: "iniciativa",
-});
 
-IniciativaPuntoOrden.hasMany(Decreto, {
-  foreignKey: "id_iniciativa",
-  as: "decretos",
-});
 
 export default Decreto;
