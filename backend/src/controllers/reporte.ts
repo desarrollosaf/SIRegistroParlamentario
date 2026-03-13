@@ -486,7 +486,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         
       }else{
 
-        if (cierrePrincipal || dispensa) {
+        if (cierrePrincipal) {
           observacion = "Aprobada";
         } else if (rechazosesion.length > 0) {
           observacion = "Rechazada en sesión";
