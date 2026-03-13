@@ -599,7 +599,7 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
     };
 });
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+    var _a, _b;
     try {
         const { id } = req.params;
         const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
@@ -688,68 +688,28 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             attributes: ["nombre"]
                         }
                     ]
+                },
+                {
+                    model: iniciativaspresenta_1.default,
+                    as: "presentan",
+                    attributes: ["id_tipo_presenta", "id_presenta"],
+                    include: [
+                        {
+                            model: proponentes_1.default,
+                            as: "tipo_presenta",
+                            attributes: ["id", "valor"]
+                        }
+                    ]
                 }
             ]
         });
-        let presentan = null;
         let proponentesString = '';
         let presentaString = '';
-        if (((_a = iniciativas[0]) === null || _a === void 0 ? void 0 : _a.id_punto) != null) {
-            presentan = yield puntos_presenta_1.default.findAll({
-                where: { id_punto: iniciativas[0].id_punto },
-                include: [{
-                        model: proponentes_1.default,
-                        as: 'tipo_presenta',
-                        attributes: ["valor"]
-                    }]
-            });
-        }
-        if (presentan) {
-            const proponentesUnicos = new Map(); // para no repetir
-            const presentanData = [];
-            for (const p of presentan) {
-                const tipoValor = p.tipo_presenta.valor;
-                let valor = '';
-                if (tipoValor === 'Diputadas y Diputados') {
-                    const dip = yield diputado_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = `${(_b = dip === null || dip === void 0 ? void 0 : dip.apaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = dip === null || dip === void 0 ? void 0 : dip.amaterno) !== null && _c !== void 0 ? _c : ''} ${(_d = dip === null || dip === void 0 ? void 0 : dip.nombres) !== null && _d !== void 0 ? _d : ''}`.trim();
-                }
-                else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
-                    const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = (_e = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _e !== void 0 ? _e : '';
-                }
-                else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
-                    const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = (_f = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _f !== void 0 ? _f : '';
-                }
-                else if (tipoValor === 'Grupo Parlamentario') {
-                    const partido = yield partidos_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : '';
-                }
-                else if (tipoValor === 'Legislatura') {
-                    const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = (_h = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _h !== void 0 ? _h : '';
-                }
-                else if (tipoValor === 'Secretarías del GEM') {
-                    const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = `${(_j = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _j !== void 0 ? _j : ''} / ${(_k = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _k !== void 0 ? _k : ''}`;
-                }
-                else {
-                    const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta } });
-                    valor = (_l = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _l !== void 0 ? _l : '';
-                }
-                // Proponente único (sin repetir)
-                if (!proponentesUnicos.has(tipoValor)) {
-                    proponentesUnicos.set(tipoValor, tipoValor);
-                }
-                presentanData.push({
-                    proponente: tipoValor,
-                    valor,
-                    id_presenta: p.id_presenta,
-                });
-            }
-            proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-            presentaString = presentanData.map(p => p.valor).join(', ');
+        const presentanIniciativa = (_b = (_a = iniciativas[0]) === null || _a === void 0 ? void 0 : _a.presentan) !== null && _b !== void 0 ? _b : [];
+        if (presentanIniciativa.length > 0) {
+            const resultado = yield procesarPresentan(presentanIniciativa);
+            proponentesString = resultado.proponentesString;
+            presentaString = resultado.presentaString;
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
