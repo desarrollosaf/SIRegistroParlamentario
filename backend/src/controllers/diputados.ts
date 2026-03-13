@@ -485,19 +485,91 @@ export const crariniidits = async (req: Request, res: Response): Promise<any> =>
   }
 };
 
+// export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const iniciativa = await IniciativaPuntoOrden.findAll({ 
+//       attributes: ["id", "iniciativa"],
+//       include: [
+//                   {
+//                     model: IniciativasPresenta,
+//                     as: "presentan",
+//                     attributes: ["id_tipo_presenta", "id_presenta"],
+//                     include: [
+//                       {
+//                         model: Proponentes,
+//                         as: "tipo_presenta",
+//                         attributes: ["id", "valor"]
+//                       }
+//                     ]
+//                   },
+//                   {
+//                     model: Agenda,
+//                     as: "evento",
+//                     attributes: ["id", "fecha"],
+//                   }
+//                 ]
+//     });
+//     console.log(iniciativa)
+//     return res.status(200).json({
+//       data: iniciativa,
+//     });  
+//   } catch (error: any) {
+//     console.error("Error al obtener las iniciativas:", error);
+//     return res.status(500).json({ 
+//       message: "Error interno del servidor",
+//       error: error.message 
+//     });
+//   }
+// };
 export const selectiniciativas = async (req: Request, res: Response): Promise<any> => {
   try {
-    const iniciativa = await IniciativaPuntoOrden.findAll({ 
-      // where: { 
-      //   id: {
-      //     [Op.in]: ['1072', '792','']
-      //   }
-      // },
-      attributes: ["id", "iniciativa"]
+    const iniciativas = await IniciativaPuntoOrden.findAll({ 
+      attributes: ["id", "iniciativa"],
+      include: [
+        {
+          model: IniciativasPresenta,
+          as: "presentan",
+          attributes: ["id_tipo_presenta", "id_presenta"],
+          include: [
+            {
+              model: Proponentes,
+              as: "tipo_presenta",
+              attributes: ["id", "valor"]
+            }
+          ]
+        },
+        {
+          model: Agenda,
+          as: "evento",
+          attributes: ["id", "fecha"],
+        }
+      ]
     });
-    return res.status(200).json({
-      data: iniciativa,
-    });  
+
+    // Procesamos cada iniciativa para construir el label del select
+    const data = await Promise.all(
+      iniciativas.map(async (ini: any) => {
+        const { presentaString } = await procesarPresentan(ini.presentan ?? []);
+        
+        const fecha = ini.evento?.fecha 
+          ? new Date(ini.evento.fecha).toLocaleDateString('es-MX', {
+              day: '2-digit', month: '2-digit', year: 'numeric'
+            }) 
+          : 'Sin fecha';
+
+        return {
+          id: ini.id,
+          // Formato: "iniciativa \n fecha - presentaString"
+          // iniciativa: `${ini.iniciativa}\n${fecha} - ${presentaString}`,
+          // Por si necesitas los campos por separado también
+          iniciativa: ini.iniciativa,
+          datos: `${fecha} - ${presentaString}`,
+        };
+      })
+    );
+
+    return res.status(200).json({ data });
+
   } catch (error: any) {
     console.error("Error al obtener las iniciativas:", error);
     return res.status(500).json({ 
@@ -506,7 +578,6 @@ export const selectiniciativas = async (req: Request, res: Response): Promise<an
     });
   }
 };
-
 
 const formatearFecha = (fecha: string): string => {
   if (!fecha) return '';
