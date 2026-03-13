@@ -37,6 +37,7 @@ interface TimelineItem {
   liga?: string;
   votacionid?: string;
   dispensa?: boolean;
+  decretos?: Array<{ decreto: string; nombre_decreto: string }>;
 }
  
 interface GrupoParlamentario {
@@ -164,7 +165,8 @@ export class IniciativasComponent implements OnInit {
         comisiones_turnado: data.nacio.comisiones_turnado,
         evento: data.nacio.evento,
         liga: data.nacio.liga,
-        votacionid: data.nacio.votacionid
+        votacionid: data.nacio.votacionid,
+        decretos: data.decretos || []
       });
     }
 
@@ -214,7 +216,8 @@ export class IniciativasComponent implements OnInit {
         tipo_evento: data.cierre.tipo_evento,
         evento: data.cierre.evento,
         liga: data.cierre.liga,
-        votacionid: data.cierre.votacionid
+        votacionid: data.cierre.votacionid,
+        decretos: data.decretos || []
       });
     }
 
@@ -456,5 +459,11 @@ export class IniciativasComponent implements OnInit {
   if (!url) return;
   const fullUrl = url.startsWith('http') ? url : `${this.enviro}${url}`;
   window.open(fullUrl, '_blank');
+}
+
+verDecreto(path: string): void {
+  if (!path) return;
+  const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
+  window.open(url, '_blank');
 }
 }
