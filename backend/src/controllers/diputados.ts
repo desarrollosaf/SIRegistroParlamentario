@@ -762,9 +762,11 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     let proponentesString = '';
     let presentaString = '';
+    
 
     const presentanIniciativa = iniciativas[0]?.presentan ?? [];
     let inidoc = iniciativas[0]?.path_doc;
+    
     if (presentanIniciativa.length > 0) {
       const resultado = await procesarPresentan(presentanIniciativa);
       proponentesString = resultado.proponentesString;
@@ -774,6 +776,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     const trazaIniciativas = await Promise.all(
       iniciativas.map(async (iniciativa) => {
         const data = iniciativa.toJSON();
+        let decretos = data.decretos ?? [];
 
         console.log("DATA INICIATIVA:");
         console.log(data);
@@ -1050,6 +1053,10 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           dictamen: dictamenesConInfo,
           cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
           rechazadose: ReSesion,
+          decretos: decretos.map((d: any) => ({
+                nombre_decreto: d.nombre_decreto,
+                decreto: d.decreto,
+              })),
         };
       })
     );
