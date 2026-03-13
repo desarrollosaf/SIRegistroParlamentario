@@ -887,7 +887,8 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             path_doc: file ? `storage/puntos/${file.filename}` : null,
             punto: body.punto,
             observaciones: body.observaciones,
-            se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
+            se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0,
+            dispensa: body.dispensa === 'true' ? 1 : 0
         });
         const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
         if (body.tipo_evento != 0 && evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750") {
@@ -1651,6 +1652,7 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
             observaciones: (_e = body.observaciones) !== null && _e !== void 0 ? _e : punto.observaciones,
             editado: 1,
             se_turna_comision: body.se_turna_comision ? 1 : 0,
+            dispensa: body.dispensa === 'true' ? 1 : 0
         });
         yield puntos_presenta_1.default.destroy({
             where: { id_punto: punto.id }

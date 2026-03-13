@@ -28,6 +28,7 @@ import Diputado from "../models/diputado";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import { Sequelize } from "sequelize";
+import Decreto from "../models/decreto";
 
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
@@ -653,7 +654,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
     const iniciativas = await IniciativaPuntoOrden.findAll({
       where: { id: id },
-      attributes: ["id", "iniciativa", "createdAt", "id_punto","expediente"],
+      attributes: ["id", "iniciativa", "createdAt", "id_punto","expediente","path_doc"],
       include: [
         {
           model: PuntosOrden,
@@ -749,6 +750,12 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                   attributes: ["id", "valor"]
                 }
               ]
+        },
+        {
+          model: Decreto,
+            as: "decretos",
+            attributes: ["nombre_decreto", "decreto"],
+  
         }
       ]
     });
@@ -757,7 +764,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     let presentaString = '';
 
     const presentanIniciativa = iniciativas[0]?.presentan ?? [];
-
+    let inidoc = iniciativas[0]?.path_doc;
     if (presentanIniciativa.length > 0) {
       const resultado = await procesarPresentan(presentanIniciativa);
       proponentesString = resultado.proponentesString;
@@ -1033,6 +1040,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             descripcion_evento: data.evento?.descripcion,
             numpunto: data.punto?.nopunto,
             punto: data.punto?.punto,
+            votacionid: data.punto?.id,
             liga: data.evento?.liga,
             tribuna,
             ...turnadoInfo,
@@ -1048,6 +1056,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
     // console.log(trazaIniciativas);
     // return 500;
     return res.status(200).json({
+      inidoc,
       proponentesString,
       presentaString,
       data: trazaIniciativas,
