@@ -32,6 +32,7 @@ interface TimelineItem {
   comisiones_turnado?: string;
   liga?: string;
   votacionid?: string;
+  dispensa?: boolean;
 }
 
 interface GrupoParlamentario {
@@ -115,6 +116,7 @@ export class IniciativasComponent implements OnInit {
     this.timelineData = [];
     this._eventoService.getInfinIciativa(idIniciativa).subscribe({
       next: (response: any) => {
+        console.log('cargarTimelineIniciativa', response);
         if (response.data && response.data.length > 0) {
           this.procesarTimeline(response.data[0], response);
         } else {
@@ -146,13 +148,15 @@ export class IniciativasComponent implements OnInit {
         titulo: '📝 Iniciativa Presentada',
         descripcion: data.nacio.descripcion_evento,
         tipo: 'nacio',
+        dispensa: data.nacio.dispensa,
         numpunto: data.nacio.numpunto,
         punto: data.nacio.punto,
         tipo_evento: data.nacio.tipo_evento,
         turnado: data.nacio.turnado,
         comisiones_turnado: data.nacio.comisiones_turnado,
         evento: data.nacio.evento,
-        liga: data.nacio.liga
+        liga: data.nacio.liga,
+        votacionid: data.nacio.votacionid
       });
     }
 
@@ -225,9 +229,11 @@ export class IniciativasComponent implements OnInit {
     }
   }
 
-  getTipoColor(tipo: string): string {
-    switch (tipo) {
-      case 'nacio': return 'timeline-primary';
+  getTipoColor(item: TimelineItem): string {
+    if (item.tipo === 'nacio') {
+      return item.dispensa ? 'timeline-success' : 'timeline-primary';
+    }
+    switch (item.tipo) {
       case 'estudio': return 'timeline-info';
       case 'dictamen': return 'timeline-warning';
       case 'cierre': return 'timeline-success';
