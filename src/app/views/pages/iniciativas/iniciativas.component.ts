@@ -16,6 +16,7 @@ interface Iniciativa {
   estatus?: string;
   presentaString?: string;
   proponentesString?: string;
+  datos?: string;
 }
 
 interface TimelineItem {
@@ -93,6 +94,7 @@ export class IniciativasComponent implements OnInit {
       next: (response: any) => {
         this.listaIniciativas = response.data || response.iniciativas || [];
         this.cargando = false;
+        console.log('cargarIniciativas', response);
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar iniciativas:', e);
@@ -430,5 +432,16 @@ export class IniciativasComponent implements OnInit {
       confirmButtonText: 'Aceptar',
       confirmButtonColor: '#800048',
     });
+  }
+
+
+
+  buscarIniciativa(term: string, item: Iniciativa): boolean {
+    const termino = term.toLowerCase();
+    return (
+      item.iniciativa?.toLowerCase().includes(termino) ||
+      item.datos?.toLowerCase().includes(termino) ||
+      false
+    );
   }
 }
