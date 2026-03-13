@@ -38,6 +38,7 @@ const municipiosag_1 = __importDefault(require("../models/municipiosag"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
+const decreto_1 = __importDefault(require("../models/decreto"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -599,12 +600,12 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
     };
 });
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         const { id } = req.params;
         const iniciativas = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id: id },
-            attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
+            attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "path_doc"],
             include: [
                 {
                     model: puntos_ordens_1.default,
@@ -700,19 +701,25 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             attributes: ["id", "valor"]
                         }
                     ]
+                },
+                {
+                    model: decreto_1.default,
+                    as: "decretos",
+                    attributes: ["nombre_decreto", "decreto"],
                 }
             ]
         });
         let proponentesString = '';
         let presentaString = '';
         const presentanIniciativa = (_b = (_a = iniciativas[0]) === null || _a === void 0 ? void 0 : _a.presentan) !== null && _b !== void 0 ? _b : [];
+        let inidoc = (_c = iniciativas[0]) === null || _c === void 0 ? void 0 : _c.path_doc;
         if (presentanIniciativa.length > 0) {
             const resultado = yield procesarPresentan(presentanIniciativa);
             proponentesString = resultado.proponentesString;
             presentaString = resultado.presentaString;
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
             const data = iniciativa.toJSON();
             console.log("DATA INICIATIVA:");
             console.log(data);
@@ -891,7 +898,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ dispensa: (_h = data.punto) === null || _h === void 0 ? void 0 : _h.dispensa, evento: (_j = data.evento) === null || _j === void 0 ? void 0 : _j.id, tipo_evento: (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.tipoevento) === null || _l === void 0 ? void 0 : _l.nombre, fecha: formatearFecha((_m = data.evento) === null || _m === void 0 ? void 0 : _m.fecha), descripcion_evento: (_o = data.evento) === null || _o === void 0 ? void 0 : _o.descripcion, numpunto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.nopunto, punto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.punto, liga: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ dispensa: (_h = data.punto) === null || _h === void 0 ? void 0 : _h.dispensa, evento: (_j = data.evento) === null || _j === void 0 ? void 0 : _j.id, tipo_evento: (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.tipoevento) === null || _l === void 0 ? void 0 : _l.nombre, fecha: formatearFecha((_m = data.evento) === null || _m === void 0 ? void 0 : _m.fecha), descripcion_evento: (_o = data.evento) === null || _o === void 0 ? void 0 : _o.descripcion, numpunto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.nopunto, punto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.punto, votacionid: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.id, liga: (_s = data.evento) === null || _s === void 0 ? void 0 : _s.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
@@ -901,6 +908,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // console.log(trazaIniciativas);
         // return 500;
         return res.status(200).json({
+            inidoc,
             proponentesString,
             presentaString,
             data: trazaIniciativas,
