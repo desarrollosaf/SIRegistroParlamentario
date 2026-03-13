@@ -238,7 +238,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
             {
                 model: puntos_ordens_1.default,
                 as: "punto",
-                attributes: ["id", "punto", "nopunto", "tribuna"],
+                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                 include: [
                     {
                         model: iniciativas_estudio_1.default,
@@ -250,7 +250,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
                             {
                                 model: puntos_ordens_1.default,
                                 as: "iniciativa",
-                                attributes: ["id", "punto", "nopunto", "tribuna"],
+                                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                                 include: [
                                     {
                                         model: agendas_1.default,
