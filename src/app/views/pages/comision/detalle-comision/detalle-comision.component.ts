@@ -162,6 +162,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: [''],
       observaciones: [''],
       se_turna_comision: [false],
+      dispensa: [false],   
       id_comision: [[]],
       id_punto_turnado: [''],
       id_dictamen: ['']
@@ -804,6 +805,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               tribuna: [punto.tribuna],
               punto: [punto.punto],
               observaciones: [punto.observaciones],
+              dispensa: [punto.dispensa === true || punto.dispensa === 1], 
               se_turna_comision: [seTurnaComision],
               id_comision: [comisionesIds],
               id_punto_turnado: [idPuntoTurnadoInicial]

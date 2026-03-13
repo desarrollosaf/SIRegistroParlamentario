@@ -523,9 +523,9 @@
                                                         </div>
                                                     </div>
 
-                                                   
 
-                                            
+
+
 
                                                     <!-- ¿Se turna a comisión? — Sesión y Permanente -->
                                                     <div class="col-12" *ngIf="!esComision || isPermanen">
@@ -690,7 +690,25 @@
                                                             <i class="bi bi-plus-lg"></i> para agregar.
                                                         </small>
                                                     </div>
-
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-semibold">¿Se dispensa?</label>
+                                                        <div class="d-flex gap-3">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio"
+                                                                    formControlName="dispensa" [value]="true"
+                                                                    id="dispensaSi">
+                                                                <label class="form-check-label"
+                                                                    for="dispensaSi">Sí</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio"
+                                                                    formControlName="dispensa" [value]="false"
+                                                                    id="dispensaNo">
+                                                                <label class="form-check-label"
+                                                                    for="dispensaNo">No</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div class="col-12">
                                                         <label class="form-label">Punto</label>
                                                         <textarea class="form-control" formControlName="punto" rows="3"
@@ -990,7 +1008,27 @@
                                                                         <i class="bi bi-plus-lg"></i> para agregar.
                                                                     </small>
                                                                 </div>
-
+                                                                <div class="col-12">
+                                                                    <label class="form-label fw-semibold">¿Se
+                                                                        dispensa?</label>
+                                                                    <div class="d-flex gap-3">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="radio"
+                                                                                formControlName="dispensa"
+                                                                                [value]="true" [id]="'dispensaSi_' + i">
+                                                                            <label class="form-check-label"
+                                                                                [for]="'dispensaSi_' + i">Sí</label>
+                                                                        </div>
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="radio"
+                                                                                formControlName="dispensa"
+                                                                                [value]="false"
+                                                                                [id]="'dispensaNo_' + i">
+                                                                            <label class="form-check-label"
+                                                                                [for]="'dispensaNo_' + i">No</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Punto</label>
                                                                     <textarea class="form-control"
@@ -1060,7 +1098,7 @@
                                                                 </div>
 
 
-                                                          
+
                                                             </div>
                                                         </form>
 
