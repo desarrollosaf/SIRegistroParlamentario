@@ -69,6 +69,7 @@ export class AddEditAgendaComponent {
       tipo_evento_id: ['', Validators.required],
       descripcion: ['', Validators.required],
       transmite: [false, Validators.required],
+      dispensa: [false, Validators.required],
       liga: [''],
       hora_inicio: [''],
       hora_fin: [''],
@@ -117,6 +118,7 @@ export class AddEditAgendaComponent {
           tipo_evento_id: response.tipo_evento_id,
           descripcion: response.descripcion,
           transmite: transmiteBoolean,
+          dispensa: response.dispensa === true || response.dispensa === 1,
           liga: transmiteBoolean ? (response.liga || '') : '',
           hora_inicio: transmiteBoolean ? this.formatFecha(response.fecha_hora_inicio) : '',
           hora_fin: transmiteBoolean ? this.formatFecha(response.fecha_hora_fin) : ''
@@ -337,7 +339,7 @@ formData.forEach((valor, clave) => {
   limpiarFormulario(): void {
     this.formAgenda.reset({
       fecha: '', sede_id: '', tipo_evento_id: '', descripcion: '',
-      transmite: false, liga: '', hora_inicio: '', hora_fin: ''
+      transmite: false, dispensa: false, liga: '', hora_inicio: '', hora_fin: ''
     });
     this.itemsTabla = [];
     this.tipoAutorSeleccionado = '';
