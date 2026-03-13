@@ -233,7 +233,7 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
         include: [
             {
                 model: puntos_ordens_1.default,
@@ -284,7 +284,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
                             {
                                 model: puntos_ordens_1.default,
                                 as: "iniciativa",
-                                attributes: ["id", "punto", "nopunto", "tribuna"],
+                                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                                 include: [
                                     {
                                         model: agendas_1.default,
@@ -323,7 +323,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativas = yield obtenerIniciativasBase();
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         const data = iniciativa.toJSON();
         const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
@@ -337,8 +337,10 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
         const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
         const rechazosesion = fuenteEstudios.filter((e) => e.status === "5");
+        const dispensa = String((_b = data.punto) === null || _b === void 0 ? void 0 : _b.dispensa) === "1";
+        const precluida = String(data.precluida) === "1";
         const posiblesPuntosIds = [
-            (_b = data.punto) === null || _b === void 0 ? void 0 : _b.id,
+            (_c = data.punto) === null || _c === void 0 ? void 0 : _c.id,
             ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
         ];
         const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
@@ -376,7 +378,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
-        const cierresDB = ((_c = whereCierres[sequelize_1.Op.or]) === null || _c === void 0 ? void 0 : _c.length) > 0
+        const cierresDB = ((_d = whereCierres[sequelize_1.Op.or]) === null || _d === void 0 ? void 0 : _d.length) > 0
             ? yield iniciativas_estudio_1.default.findAll({
                 where: whereCierres,
                 include: [
@@ -408,37 +410,42 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         ];
         const cierres = deduplicarPorId(cierresMerge);
         const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
-        let observacion = "Pendiente";
-        if (cierrePrincipal) {
-            observacion = "Aprobada";
+        let observacion = "En estudio";
+        if (precluida) {
+            observacion = "Precluida";
         }
-        else if (rechazosesion.length > 0) {
-            observacion = "Rechazada en sesión";
+        else {
+            if (cierrePrincipal || dispensa) {
+                observacion = "Aprobada";
+            }
+            else if (rechazosesion.length > 0) {
+                observacion = "Rechazada en sesión";
+            }
+            else if (rechazadocomi.length > 0) {
+                observacion = "Rechazada en comisión";
+            }
+            else if (dictamenes.length > 0) {
+                observacion = "En estudio";
+            }
+            else if (estudios.length > 0) {
+                observacion = "En estudio";
+            }
         }
-        else if (rechazadocomi.length > 0) {
-            observacion = "Rechazada en comisión";
-        }
-        else if (dictamenes.length > 0) {
-            observacion = "Dictaminada";
-        }
-        else if (estudios.length > 0) {
-            observacion = "En estudio";
-        }
-        const turnadoInfo = yield getComisionesTurnado((_d = data.punto) === null || _d === void 0 ? void 0 : _d.id);
-        const anfitrionesNacio = yield getAnfitriones((_e = data.evento) === null || _e === void 0 ? void 0 : _e.id, (_g = (_f = data.evento) === null || _f === void 0 ? void 0 : _f.tipoevento) === null || _g === void 0 ? void 0 : _g.nombre);
-        const fechaExpedicion = ((_j = (_h = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _h === void 0 ? void 0 : _h.evento) === null || _j === void 0 ? void 0 : _j.fecha)
+        const turnadoInfo = yield getComisionesTurnado((_e = data.punto) === null || _e === void 0 ? void 0 : _e.id);
+        const anfitrionesNacio = yield getAnfitriones((_f = data.evento) === null || _f === void 0 ? void 0 : _f.id, (_h = (_g = data.evento) === null || _g === void 0 ? void 0 : _g.tipoevento) === null || _h === void 0 ? void 0 : _h.nombre);
+        const fechaExpedicion = ((_k = (_j = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _j === void 0 ? void 0 : _j.evento) === null || _k === void 0 ? void 0 : _k.fecha)
             ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
             : "-";
         const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
         const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
-        const fechaEventoRaw = (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.fecha) !== null && _l !== void 0 ? _l : null;
+        const fechaEventoRaw = (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha) !== null && _m !== void 0 ? _m : null;
         return {
             no: index + 1,
             id: normalizarTexto(data.id),
             autor: normalizarTexto(proponentesString),
             autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
-            materia: normalizarTexto((_m = data.punto) === null || _m === void 0 ? void 0 : _m.punto),
+            materia: normalizarTexto((_o = data.punto) === null || _o === void 0 ? void 0 : _o.punto),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
             comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones),

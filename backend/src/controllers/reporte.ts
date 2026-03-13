@@ -271,7 +271,7 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente"],
+    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
     include: [
       {
         model: PuntosOrden,
@@ -322,7 +322,7 @@ const obtenerIniciativasBase = async () => {
               {
                 model: PuntosOrden,
                 as: "iniciativa",
-                attributes: ["id", "punto", "nopunto", "tribuna"],
+                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                 include: [
                   {
                     model: Agenda,
@@ -389,6 +389,8 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
       const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
       const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
+      const dispensa = String(data.punto?.dispensa) === "1";
+      const precluida = String(data.precluida) === "1";
 
       const posiblesPuntosIds = [
         data.punto?.id,
@@ -475,18 +477,27 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       const cierres = deduplicarPorId(cierresMerge);
       const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
 
-      let observacion = "Pendiente";
-      if (cierrePrincipal) {
-        observacion = "Aprobada";
-      } else if (rechazosesion.length > 0) {
-        observacion = "Rechazada en sesión";
-      } else if (rechazadocomi.length > 0) {
-        observacion = "Rechazada en comisión";
-      } else if (dictamenes.length > 0) {
-        observacion = "Dictaminada";
-      } else if (estudios.length > 0) {
-        observacion = "En estudio";
+      let observacion = "En estudio";
+      if(precluida){
+        observacion = "Precluida";
+
+      }else{
+
+        if (cierrePrincipal || dispensa) {
+          observacion = "Aprobada";
+        } else if (rechazosesion.length > 0) {
+          observacion = "Rechazada en sesión";
+        } else if (rechazadocomi.length > 0) {
+          observacion = "Rechazada en comisión";
+        } else if (dictamenes.length > 0) {
+          observacion = "En estudio";
+        } else if (estudios.length > 0) {
+          observacion = "En estudio";
+        }
+
       }
+      
+      
 
       const turnadoInfo = await getComisionesTurnado(data.punto?.id);
       const anfitrionesNacio = await getAnfitriones(
