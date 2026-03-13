@@ -214,7 +214,7 @@
 
             <div class="timeline-container">
               <div class="timeline-item" *ngFor="let item of timelineData; let i = index; let isLast = last"
-                [ngClass]="getTipoColor(item.tipo)">
+                [ngClass]="getTipoColor(item)">
                 <div class="timeline-icon">
                   <i class="bi" [ngClass]="getTipoIcon(item.tipo)"></i>
                 </div>
@@ -260,6 +260,15 @@
                               class="spinner-border spinner-border-sm me-1" role="status"></span>
                             <i class="bi bi-download me-1" *ngIf="!descargando['asistencia_nacio_' + item.fecha]"></i>
                             Asistencia
+                          </button>
+
+                          <button *ngIf="item.dispensa && item.votacionid" class="btn btn-sm btn-download"
+                            (click)="descargarVotacion(item, 'nacio')"
+                            [disabled]="descargando['votacion_nacio_' + item.fecha]">
+                            <span *ngIf="descargando['votacion_nacio_' + item.fecha]"
+                              class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <i class="bi bi-download me-1" *ngIf="!descargando['votacion_nacio_' + item.fecha]"></i>
+                            Votación
                           </button>
                         </div>
                       </ng-container>
