@@ -276,7 +276,7 @@ const obtenerIniciativasBase = async () => {
       {
         model: PuntosOrden,
         as: "punto",
-        attributes: ["id", "punto", "nopunto", "tribuna"],
+        attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
         include: [
           {
             model: IniciativaEstudio,
@@ -288,7 +288,7 @@ const obtenerIniciativasBase = async () => {
               {
                 model: PuntosOrden,
                 as: "iniciativa",
-                attributes: ["id", "punto", "nopunto", "tribuna"],
+                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                 include: [
                   {
                     model: Agenda,
