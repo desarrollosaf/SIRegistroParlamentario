@@ -737,74 +737,31 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               attributes: ["nombre"]
             }
           ]
+        },
+        {
+          model: IniciativasPresenta,
+            as: "presentan",
+            attributes: ["id_tipo_presenta", "id_presenta"],
+              include: [
+                {
+                  model: Proponentes,
+                  as: "tipo_presenta",
+                  attributes: ["id", "valor"]
+                }
+              ]
         }
       ]
     });
 
-    let presentan = null;
-    let proponentesString = ''; 
-    let presentaString = ''; 
+    let proponentesString = '';
+    let presentaString = '';
 
-    if (iniciativas[0]?.id_punto != null) {
-      presentan = await PuntosPresenta.findAll({
-        where: { id_punto: iniciativas[0].id_punto },
-        include: [{
-          model: Proponentes,
-          as: 'tipo_presenta',
-          attributes: ["valor"]
-        }]
-      });
-    }
+    const presentanIniciativa = iniciativas[0]?.presentan ?? [];
 
-    if (presentan) {
-      const proponentesUnicos = new Map<string, string>(); // para no repetir
-      const presentanData: any[] = [];
-
-      for (const p of presentan as any[]) {
-        const tipoValor = p.tipo_presenta.valor;
-        let valor = '';
-
-        if (tipoValor === 'Diputadas y Diputados') {
-          const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
-          valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
-
-        } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
-          const comi = await Comision.findOne({ where: { id: p.id_presenta } });
-          valor = comi?.nombre ?? '';
-
-        } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
-          const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
-          valor = muni?.nombre ?? '';
-
-        } else if (tipoValor === 'Grupo Parlamentario') {
-          const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
-          valor = partido?.nombre ?? '';
-
-        } else if (tipoValor === 'Legislatura') {
-          const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
-          valor = leg?.numero ?? '';
-
-        } else if (tipoValor === 'Secretarías del GEM') {
-          const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
-          valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
-
-        } else {
-          const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
-          valor = cat?.nombre_titular ?? '';
-        }
-
-        // Proponente único (sin repetir)
-        if (!proponentesUnicos.has(tipoValor)) {
-          proponentesUnicos.set(tipoValor, tipoValor);
-        }
-        presentanData.push({
-          proponente: tipoValor,
-          valor,
-          id_presenta: p.id_presenta,
-        });
-      }
-      proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-      presentaString = presentanData.map(p => p.valor).join(', ');
+    if (presentanIniciativa.length > 0) {
+      const resultado = await procesarPresentan(presentanIniciativa);
+      proponentesString = resultado.proponentesString;
+      presentaString = resultado.presentaString;
     }
     
     const trazaIniciativas = await Promise.all(
