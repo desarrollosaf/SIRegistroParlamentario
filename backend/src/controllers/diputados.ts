@@ -587,7 +587,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         {
           model: PuntosOrden,
           as: 'punto',
-          attributes: ["id", "punto", "nopunto","tribuna"],
+          attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
           include: [
             {
               model: IniciativaEstudio,
@@ -601,7 +601,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: PuntosOrden,
                   as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto","tribuna"],
+                  attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
                   include: [
                     {
                       model: Agenda,
@@ -635,7 +635,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
                 {
                   model: PuntosOrden,
                   as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                  attributes: ["id", "punto", "nopunto","tribuna"],
+                  attributes: ["id", "punto", "nopunto","tribuna","dispensa"],
                   include: [
                     {
                       model: Agenda,
@@ -998,6 +998,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
         return {
           nacio: {
+            dispensa: data.punto?.dispensa,
             evento: data.evento?.id,
             tipo_evento: data.evento?.tipoevento?.nombre,
             fecha: formatearFecha(data.evento?.fecha),

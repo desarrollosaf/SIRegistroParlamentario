@@ -543,7 +543,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: puntos_ordens_1.default,
                     as: 'punto',
-                    attributes: ["id", "punto", "nopunto", "tribuna"],
+                    attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                     include: [
                         {
                             model: iniciativas_estudio_1.default,
@@ -557,7 +557,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                                 {
                                     model: puntos_ordens_1.default,
                                     as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                                    attributes: ["id", "punto", "nopunto", "tribuna"],
+                                    attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                                     include: [
                                         {
                                             model: agendas_1.default,
@@ -591,7 +591,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                                 {
                                     model: puntos_ordens_1.default,
                                     as: 'iniciativa', // 👈 cambió de 'puntoEvento'
-                                    attributes: ["id", "punto", "nopunto", "tribuna"],
+                                    attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
                                     include: [
                                         {
                                             model: agendas_1.default,
@@ -686,7 +686,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = presentanData.map(p => p.valor).join(', ');
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
             const data = iniciativa.toJSON();
             console.log("DATA INICIATIVA:");
             console.log(data);
@@ -865,7 +865,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ evento: (_h = data.evento) === null || _h === void 0 ? void 0 : _h.id, tipo_evento: (_k = (_j = data.evento) === null || _j === void 0 ? void 0 : _j.tipoevento) === null || _k === void 0 ? void 0 : _k.nombre, fecha: formatearFecha((_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha), descripcion_evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.descripcion, numpunto: (_o = data.punto) === null || _o === void 0 ? void 0 : _o.nopunto, punto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.punto, liga: (_q = data.evento) === null || _q === void 0 ? void 0 : _q.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ dispensa: (_h = data.punto) === null || _h === void 0 ? void 0 : _h.dispensa, evento: (_j = data.evento) === null || _j === void 0 ? void 0 : _j.id, tipo_evento: (_l = (_k = data.evento) === null || _k === void 0 ? void 0 : _k.tipoevento) === null || _l === void 0 ? void 0 : _l.nombre, fecha: formatearFecha((_m = data.evento) === null || _m === void 0 ? void 0 : _m.fecha), descripcion_evento: (_o = data.evento) === null || _o === void 0 ? void 0 : _o.descripcion, numpunto: (_p = data.punto) === null || _p === void 0 ? void 0 : _p.nopunto, punto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.punto, liga: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.liga, tribuna }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
