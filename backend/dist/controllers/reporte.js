@@ -414,6 +414,9 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         if (precluida) {
             observacion = "Precluida";
         }
+        else if (dispensa) {
+            observacion = "Aprobada";
+        }
         else {
             if (cierrePrincipal || dispensa) {
                 observacion = "Aprobada";

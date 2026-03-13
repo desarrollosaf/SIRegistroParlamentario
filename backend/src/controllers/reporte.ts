@@ -481,6 +481,9 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       if(precluida){
         observacion = "Precluida";
 
+      }else if(dispensa) {
+        observacion = "Aprobada";
+        
       }else{
 
         if (cierrePrincipal || dispensa) {
@@ -495,8 +498,9 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
           observacion = "En estudio";
         }
 
-      }
-      
+
+      }  
+
       
 
       const turnadoInfo = await getComisionesTurnado(data.punto?.id);
