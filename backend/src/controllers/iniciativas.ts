@@ -34,6 +34,7 @@ type ReporteBaseItem = {
 //   diputado_ids: string[];
 //   grupo_parlamentario_ids: string[];
   periodo: string;
+  tipo: number | null;
 };
 
 
@@ -103,7 +104,7 @@ const procesarPresentan = async (presentan: any[]) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
+    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida","tipo"],
     include: [
       {
         model: PuntosOrden,
@@ -361,7 +362,8 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         // grupo_parlamentario: grupoParlamentario,
         // diputado_ids: diputadoIds,
         // grupo_parlamentario_ids: grupoParlamentarioIds,
-        periodo: obtenerPeriodo(fechaEventoRaw)
+        periodo: obtenerPeriodo(fechaEventoRaw),
+        tipo: data.tipo,
       };
     })
   );
