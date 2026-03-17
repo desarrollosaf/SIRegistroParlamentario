@@ -1,11 +1,11 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(process.cwd(), "storage/decretos");
-    // Crea la carpeta si no existe
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -13,8 +13,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const nombre = `decreto_${Date.now()}${ext}`;
-    cb(null, nombre);
+    cb(null, `tmp_${uuidv4()}${ext}`); // 👈 nombre temporal, el controlador lo renombra
   }
 });
 
@@ -27,4 +26,8 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
   }
 };
 
-export default multer({ storage }); 
+export default multer({ 
+  storage, 
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
+});

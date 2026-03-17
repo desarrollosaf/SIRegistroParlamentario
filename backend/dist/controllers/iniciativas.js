@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -29,6 +29,9 @@ const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedien
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
 const sequelize_1 = require("sequelize");
 const decreto_1 = __importDefault(require("../models/decreto"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const uuid_1 = require("uuid");
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativasRaw = yield construirReporteBase();
@@ -394,18 +397,37 @@ const deduplicarPorId = (items) => {
 };
 /////////////////////////////////////////////////////////////////// funciones para los decretos 
 const guardardecreto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { body } = req;
         const file = req.file;
-        for (const item of body.decretos) {
-            yield decreto_1.default.create({
-                nombre_decreto: item.nombre_decreto,
-                path_doc: file ? `storage/decretos/${file.filename}` : null,
-                id_iniciativa: item.id_iniciativa
-            });
+        // 👇 Consultas el tipo de la iniciativa
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
+            where: { id: body.id_iniciativa },
+            attributes: ["tipo"]
+        });
+        const tipoNombre = {
+            "1": "decreto",
+            "2": "acuerdo",
+            "3": "acuerdo"
+        };
+        const prefijo = (_b = tipoNombre[(_a = iniciativa === null || iniciativa === void 0 ? void 0 : iniciativa.tipo) !== null && _a !== void 0 ? _a : "1"]) !== null && _b !== void 0 ? _b : "decreto";
+        // 👇 Renombras el archivo ya guardado
+        let pathDoc = null;
+        if (file) {
+            const ext = path_1.default.extname(file.originalname);
+            const nuevoNombre = `${prefijo}_${(0, uuid_1.v4)()}${ext}`;
+            const dirBase = path_1.default.join(process.cwd(), "storage/decretos");
+            fs_1.default.renameSync(path_1.default.join(dirBase, file.filename), path_1.default.join(dirBase, nuevoNombre));
+            pathDoc = `storage/decretos/${nuevoNombre}`;
         }
+        yield decreto_1.default.create({
+            nombre_decreto: body.nombre_decreto,
+            decreto: pathDoc,
+            id_iniciativa: body.id_iniciativa
+        });
         return res.status(201).json({
-            message: "Decretos creados correctamente",
+            message: "Decreto creado correctamente",
         });
     }
     catch (error) {
@@ -440,3 +462,26 @@ const getdecretos = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getdecretos = getdecretos;
+const eliminardecreto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const decreto = yield decreto_1.default.findOne({
+            where: { id }
+        });
+        if (!decreto) {
+            return res.status(404).json({ message: "decreto no encontrado" });
+        }
+        yield decreto.destroy();
+        return res.status(200).json({
+            message: "Decreto eliminado correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al eliminar el decreto:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.eliminardecreto = eliminardecreto;

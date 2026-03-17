@@ -17,6 +17,9 @@ import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import PuntosComisiones from "../models/puntos_comisiones";
 import { Op } from "sequelize";
 import Decreto from "../models/decreto";
+import path from "path";
+import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 
 type ReporteBaseItem = {
   no: number;
@@ -457,19 +460,46 @@ export const guardardecreto = async (req: Request, res: Response): Promise<any> 
   try {
     const { body } = req;
     const file = req.file;
-    
-    for (const item of body.decretos) {
-        await Decreto.create({
-            nombre_decreto: item.nombre_decreto,
-            path_doc: file ? `storage/decretos/${file.filename}` : null,
-            id_iniciativa: item.id_iniciativa
-        });
+
+    // 👇 Consultas el tipo de la iniciativa
+    const iniciativa = await IniciativaPuntoOrden.findOne({
+      where: { id: body.id_iniciativa },
+      attributes: ["tipo"]
+    });
+
+    const tipoNombre: Record<string, string> = {
+      "1": "decreto",
+      "2": "acuerdo",
+      "3": "acuerdo"
+    };
+
+    const prefijo = tipoNombre[iniciativa?.tipo ?? "1"] ?? "decreto";
+
+    // 👇 Renombras el archivo ya guardado
+    let pathDoc = null;
+    if (file) {
+      const ext = path.extname(file.originalname);
+      const nuevoNombre = `${prefijo}_${uuidv4()}${ext}`;
+      const dirBase = path.join(process.cwd(), "storage/decretos");
+      
+      fs.renameSync(
+        path.join(dirBase, file.filename),    
+        path.join(dirBase, nuevoNombre)            
+      );
+
+      pathDoc = `storage/decretos/${nuevoNombre}`;
     }
 
-  
-    return res.status(201).json({
-      message: "Decretos creados correctamente",
+    await Decreto.create({
+      nombre_decreto: body.nombre_decreto,
+      decreto: pathDoc,
+      id_iniciativa: body.id_iniciativa
     });
+
+    return res.status(201).json({
+      message: "Decreto creado correctamente",
+    });
+
   } catch (error: any) {
     console.error("Error al guardar el decreto:", error);
     return res.status(500).json({ 
@@ -497,6 +527,28 @@ export const getdecretos = async (req: Request, res: Response): Promise<any> => 
 
   } catch (error: any) {
     console.error("Error al obtener los decretos:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const eliminardecreto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const decreto = await Decreto.findOne({ 
+      where: { id }
+    });
+    if (!decreto) {
+      return res.status(404).json({ message: "decreto no encontrado" });
+    }
+    await decreto.destroy();
+    return res.status(200).json({
+      message: "Decreto eliminado correctamente",
+    });  
+  } catch (error: any) {
+    console.error("Error al eliminar el decreto:", error);
     return res.status(500).json({ 
       message: "Error interno del servidor",
       error: error.message 
