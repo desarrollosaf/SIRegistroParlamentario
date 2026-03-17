@@ -94,7 +94,7 @@ const procesarPresentan = (presentan) => __awaiter(void 0, void 0, void 0, funct
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
         include: [
             {
                 model: puntos_ordens_1.default,
@@ -325,7 +325,8 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             // grupo_parlamentario: grupoParlamentario,
             // diputado_ids: diputadoIds,
             // grupo_parlamentario_ids: grupoParlamentarioIds,
-            periodo: obtenerPeriodo(fechaEventoRaw)
+            periodo: obtenerPeriodo(fechaEventoRaw),
+            tipo: data.tipo,
         };
     })));
     return reporte;
