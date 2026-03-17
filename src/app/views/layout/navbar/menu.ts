@@ -67,5 +67,20 @@ export const MENU: MenuItem[] = [
       
     ]
   },
+   {
+    label: 'Iniciativas',
+    icon: 'mail',
+    subMenus: [
+      {
+        subMenuItems: [
+          {
+            label: 'Iniciativas',
+            link: '/iniciativas-decretos'
+          }
+        ]
+      },
+      
+    ]
+  },
   
 ];
