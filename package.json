@@ -33,6 +33,8 @@
     "@rg-software/angular-archwizard": "^17.0.0",
     "@siemens/ngx-datatable": "^22.4.1",
     "@sweetalert2/ngx-sweetalert2": "^12.4.0",
+    "ag-grid-angular": "^35.1.0",
+    "ag-grid-community": "^35.1.0",
     "animate.css": "^4.1.1",
     "apexcharts": "^3.53.0",
     "bootstrap": "^5.3.3",

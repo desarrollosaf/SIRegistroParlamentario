@@ -7,6 +7,7 @@ import IniciativaEstudio from './iniciativas_estudio';
 import ExpedienteEstudiosPuntos from './expedientes_estudio_puntos';
 import IntegranteLegislatura from './integrante_legislaturas';
 import Diputado from './diputado';
+import Decreto from './decreto';
 
 
 
@@ -98,6 +99,16 @@ ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
 IntegranteLegislatura.belongsTo(Diputado, {
   foreignKey: 'diputado_id',
   as: 'diputado',
+});
+
+Decreto.belongsTo(IniciativaPuntoOrden, {
+  foreignKey: "id_iniciativa",
+  as: "iniciativa",
+});
+
+IniciativaPuntoOrden.hasMany(Decreto, {
+  foreignKey: "id_iniciativa",
+  as: "decretos",
 });
 
 

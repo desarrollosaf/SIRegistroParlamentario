@@ -998,8 +998,10 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
       path_doc: file ? `storage/puntos/${file.filename}` : null,
       punto: body.punto,
       observaciones: body.observaciones,
-      se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0
+      se_turna_comision: body.se_turna_comision === 'true' ? 1 : 0,
+      dispensa: body.dispensa === 'true' ? 1 : 0
     });
+
     const puntosTurnadosArray = JSON.parse(body.puntos_turnados);
     if(body.tipo_evento != 0 && evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ){
       if (puntosTurnadosArray.length > 0) {
@@ -1887,6 +1889,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
       observaciones: body.observaciones ?? punto.observaciones,
       editado: 1,
       se_turna_comision: body.se_turna_comision ? 1 : 0,
+      dispensa: body.dispensa === 'true' ? 1 : 0
     });
 
     await PuntosPresenta.destroy({

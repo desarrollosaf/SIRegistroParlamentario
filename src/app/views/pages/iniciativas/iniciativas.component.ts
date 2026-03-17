@@ -6,6 +6,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import Swal from 'sweetalert2';
+import { enviroment } from '../../../../enviroments/enviroment';
 
 interface Iniciativa {
   id: string;
@@ -17,6 +18,8 @@ interface Iniciativa {
   presentaString?: string;
   proponentesString?: string;
   datos?: string;
+  inidoc?:string;
+  
 }
 
 interface TimelineItem {
@@ -34,8 +37,9 @@ interface TimelineItem {
   liga?: string;
   votacionid?: string;
   dispensa?: boolean;
+  decretos?: Array<{ decreto: string; nombre_decreto: string }>;
 }
-
+ 
 interface GrupoParlamentario {
   id: string;
   siglas: string;
@@ -63,6 +67,8 @@ export class IniciativasComponent implements OnInit {
   descargando: { [key: string]: boolean } = {};
   descargandoReporte: boolean = false;
 
+
+  enviro = enviroment.endpoint;
   // Dropdown exportar
   exportMenuOpen: boolean = false;
 
@@ -142,6 +148,7 @@ export class IniciativasComponent implements OnInit {
     if (this.iniciativaSeleccionada) {
       this.iniciativaSeleccionada.presentaString = data1.presentaString || '';
       this.iniciativaSeleccionada.proponentesString = data1.proponentesString || '';
+      this.iniciativaSeleccionada.inidoc = data1.inidoc || '';
     }
 
     if (data.nacio) {
@@ -158,7 +165,8 @@ export class IniciativasComponent implements OnInit {
         comisiones_turnado: data.nacio.comisiones_turnado,
         evento: data.nacio.evento,
         liga: data.nacio.liga,
-        votacionid: data.nacio.votacionid
+        votacionid: data.nacio.votacionid,
+        decretos: data.decretos || []
       });
     }
 
@@ -208,7 +216,8 @@ export class IniciativasComponent implements OnInit {
         tipo_evento: data.cierre.tipo_evento,
         evento: data.cierre.evento,
         liga: data.cierre.liga,
-        votacionid: data.cierre.votacionid
+        votacionid: data.cierre.votacionid,
+        decretos: data.decretos || []
       });
     }
 
@@ -444,4 +453,17 @@ export class IniciativasComponent implements OnInit {
       false
     );
   }
+
+
+  verInidoc(url: string): void {
+  if (!url) return;
+  const fullUrl = url.startsWith('http') ? url : `${this.enviro}${url}`;
+  window.open(fullUrl, '_blank');
+}
+
+verDecreto(path: string): void {
+  if (!path) return;
+  const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
+  window.open(url, '_blank');
+}
 }

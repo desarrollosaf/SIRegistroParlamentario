@@ -66,6 +66,10 @@ export const routes: Routes = [
        path: 'iniciativas',
        loadChildren: () => import('./views/pages/iniciativas/iniciativas.route')
       },
+       {
+       path: 'iniciativas-decretos',
+       loadChildren: () => import('./views/pages/iniciativas-decretos/iniciativas-decretos.route')
+      },
     ]
   },
   {

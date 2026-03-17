@@ -45,6 +45,10 @@ IniciativaPuntoOrden.init({
         allowNull: true,
         defaultValue: null,
     },
+    path_doc: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: true,
+    },
     precluida: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
