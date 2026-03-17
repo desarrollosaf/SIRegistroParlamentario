@@ -1,1 +1,203 @@
-<p>iniciativas-decretos works!</p>
+<div class="iniciativas-container">
+
+  <!-- ── Encabezado ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2 class="page-title">Iniciativas y Decretos</h2>
+      <span class="record-count" *ngIf="!cargando">
+        Mostrando {{ totalMostrados | number }} de {{ totalRegistros | number }} registros
+      </span>
+    </div>
+
+    <!-- Buscador -->
+    <div class="search-box">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+      </span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar iniciativa, tipo, observación..."
+        [(ngModel)]="searchText"
+        (input)="onSearch()"
+      />
+      <button *ngIf="searchText" class="search-clear" (click)="searchText = ''; onSearch()">✕</button>
+    </div>
+  </div>
+
+  <!-- ── Chips de filtro por tipo ── -->
+  <div class="filter-chips">
+    <button
+      class="chip"
+      [class.chip--active]="activeFilter === ''"
+      (click)="limpiarFiltro()"
+    >
+      Todos
+    </button>
+    <button
+      *ngFor="let tipo of tiposDisponibles"
+      class="chip"
+      [class.chip--active]="activeFilter === tipo"
+      (click)="setFiltro(tipo)"
+    >
+      {{ tipoMap[tipo].label }}
+    </button>
+  </div>
+
+  <!-- ── Skeleton / Loading ── -->
+  <div *ngIf="cargando" class="skeleton-wrap">
+    <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6]"></div>
+  </div>
+
+  <!-- ── AG Grid ── -->
+  <div *ngIf="!cargando" class="grid-wrap">
+    <ag-grid-angular
+      [theme]="theme"
+      [rowData]="rowData"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      [animateRows]="true"
+      [pagination]="true"
+      [paginationPageSize]="25"
+      [paginationPageSizeSelector]="[25, 50, 100]"
+      [rowHeight]="52"
+      [headerHeight]="44"
+      [suppressCellFocus]="true"
+      [enableCellTextSelection]="true"
+      [tooltipShowDelay]="300"
+      [noRowsOverlayComponent]="null"
+      style="width: 100%; height: 600px;"
+      (gridReady)="onGridReady($event)"
+    />
+
+    <!-- Sin resultados -->
+    <div *ngIf="rowData.length === 0" class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1" ry="1"/>
+      </svg>
+      <p>No se encontraron registros con los filtros aplicados.</p>
+      <button class="btn-link" (click)="searchText = ''; activeFilter = ''; aplicarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- Modal de carga de archivos                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalVisible" (click)="cerrarModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- Header del modal -->
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Cargar evidencia</h3>
+        <p class="modal-sub">{{ iniciativaSeleccionada?.iniciativa | slice:0:80 }}...</p>
+      </div>
+      <button class="modal-close" (click)="cerrarModal()">✕</button>
+    </div>
+
+    <!-- Formulario -->
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Descripción <span class="required">*</span></label>
+        <textarea
+          class="form-textarea"
+          rows="3"
+          placeholder="Describe el archivo o evidencia..."
+          [(ngModel)]="descripcionInput"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Archivo <span class="required">*</span></label>
+        <label class="file-drop" for="fileUpload">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span *ngIf="!archivoSeleccionado" class="file-placeholder">
+            Haz clic para seleccionar o arrastra un archivo
+          </span>
+          <span *ngIf="archivoSeleccionado" class="file-name">
+            📄 {{ archivoSeleccionado.name }}
+          </span>
+          <input
+            type="file"
+            id="fileUpload"
+            style="display:none"
+            (change)="onArchivoSeleccionado($event)"
+          />
+        </label>
+      </div>
+
+      <!-- ── Archivos del backend (lazy) ── -->
+      <div class="archivos-section">
+        <p class="archivos-section-title">Archivos cargados</p>
+
+        <!-- Spinner mientras carga -->
+        <div *ngIf="cargandoArchivos" class="archivos-loading">
+          <span class="spinner"></span> Consultando archivos...
+        </div>
+
+        <!-- Sin archivos -->
+        <p *ngIf="!cargandoArchivos && archivosExistentes.length === 0 && archivosNuevos.length === 0"
+           class="archivos-empty">
+          No hay archivos cargados para esta iniciativa.
+        </p>
+
+        <!-- Archivos existentes del backend -->
+        <div *ngFor="let a of archivosExistentes; let i = index" class="archivo-item">
+          <div class="archivo-info">
+            <span class="archivo-nombre">📄 {{ a.nombre_decreto }}</span>
+            <span class="archivo-desc">{{ a.decreto | slice: (a.decreto.lastIndexOf('/') + 1) }}</span>
+          </div>
+          <div class="archivo-acciones">
+            <button class="btn-ver" (click)="verArchivo(enviro + a.decreto)" title="Ver archivo">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Ver
+            </button>
+            <button class="btn-eliminar" (click)="eliminarArchivoExistente(i)">Eliminar</button>
+          </div>
+        </div>
+
+        <!-- Archivos nuevos (aún no guardados en backend) -->
+        <div *ngFor="let a of archivosNuevos; let i = index" class="archivo-item archivo-item--nuevo">
+          <div class="archivo-info">
+            <span class="archivo-nombre">
+              📄 {{ a.archivo.name }}
+              <span class="badge-nuevo">Nuevo</span>
+            </span>
+            <span class="archivo-desc">{{ a.descripcion }}</span>
+          </div>
+          <div class="archivo-acciones">
+            <button class="btn-ver" (click)="verArchivo(a.urlPreview)" title="Ver archivo">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Ver
+            </button>
+            <button class="btn-eliminar" (click)="eliminarArchivoNuevo(i)">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="modal-footer">
+      <button class="btn btn--secondary" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn btn--primary" (click)="guardarArchivo()">Guardar</button>
+    </div>
+
+  </div>
+</div>
