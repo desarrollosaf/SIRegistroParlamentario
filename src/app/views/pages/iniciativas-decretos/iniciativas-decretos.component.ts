@@ -389,9 +389,38 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   }
 
   eliminarArchivoExistente(index: number): void {
-    // Aquí iría: this._eventoService.eliminarArchivo(this.archivosExistentes[index].id).subscribe(...)
-    this.archivosExistentes.splice(index, 1);
-    this.cdr.detectChanges();
+    const archivo = this.archivosExistentes[index];
+
+    Swal.fire({
+      title: '¿Eliminar archivo?',
+      text: archivo.nombre_decreto,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      this._eventoService.eliminarArchivoIniciativa(String(archivo.id))
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.archivosExistentes.splice(index, 1);
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'success',
+              title: 'Archivo eliminado',
+              timer: 1400,
+              showConfirmButton: false,
+            });
+          },
+          error: (e: HttpErrorResponse) => {
+            console.error('Error al eliminar archivo:', e);
+            Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
+          }
+        });
+    });
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
