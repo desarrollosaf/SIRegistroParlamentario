@@ -211,4 +211,14 @@ export class EventoService {
   getIniciativasDecretos(): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/iniciativas/`)
   }
+
+  subirArchivoIniciativa(data: any): Observable<any> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl3}/savedecreto/`,data)
+  }
+
+  getArchivosByIniciativa(id: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/getdecretos/${id}`)
+  }
+
+  
 }
