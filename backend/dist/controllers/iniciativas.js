@@ -14,8 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
-const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
-const proponentes_1 = __importDefault(require("../models/proponentes"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
@@ -23,46 +21,21 @@ const partidos_1 = __importDefault(require("../models/partidos"));
 const legislaturas_1 = __importDefault(require("../models/legislaturas"));
 const secretarias_1 = __importDefault(require("../models/secretarias"));
 const cat_fun_dep_1 = __importDefault(require("../models/cat_fun_dep"));
+const agendas_1 = __importDefault(require("../models/agendas"));
+const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
+const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
+const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
+const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
+const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
+const sequelize_1 = require("sequelize");
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const iniciativasRaw = yield inciativas_puntos_ordens_1.default.findAll({
-            attributes: ["id", "iniciativa", "tipo", "path_doc", "precluida"],
-            include: [
-                {
-                    model: iniciativaspresenta_1.default,
-                    as: "presentan",
-                    attributes: ["id_tipo_presenta", "id_presenta"],
-                    include: [
-                        {
-                            model: proponentes_1.default,
-                            as: "tipo_presenta",
-                            attributes: ["id", "valor"]
-                        }
-                    ]
-                }
-            ]
-        });
+        const iniciativasRaw = yield construirReporteBase();
         if (!iniciativasRaw) {
             return res.status(404).json({ message: "No tiene iniciativas" });
         }
-        // 👇 Procesar cada iniciativa con sus presentan
-        const iniciativas = yield Promise.all(iniciativasRaw.map((ini) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a;
-            const data = ini.toJSON();
-            const { proponentesString, presentaString } = ((_a = data.presentan) === null || _a === void 0 ? void 0 : _a.length)
-                ? yield procesarPresentan(data.presentan)
-                : { proponentesString: '', presentaString: '' };
-            return {
-                id: data.id,
-                iniciativa: data.iniciativa,
-                tipo: data.tipo,
-                path: data.path_doc,
-                proponente: proponentesString,
-                presenta: presentaString
-            };
-        })));
         return res.status(200).json({
-            data: iniciativas,
+            data: iniciativasRaw,
         });
     }
     catch (error) {
@@ -119,3 +92,301 @@ const procesarPresentan = (presentan) => __awaiter(void 0, void 0, void 0, funct
         presentaString: presentanData.map(p => p.valor).join(', ')
     };
 });
+const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
+    return yield inciativas_puntos_ordens_1.default.findAll({
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
+        include: [
+            {
+                model: puntos_ordens_1.default,
+                as: "punto",
+                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
+                include: [
+                    {
+                        model: iniciativas_estudio_1.default,
+                        as: "estudio",
+                        attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
+                        required: false,
+                        where: { type: 1 },
+                        include: [
+                            {
+                                model: puntos_ordens_1.default,
+                                as: "iniciativa",
+                                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
+                                include: [
+                                    {
+                                        model: agendas_1.default,
+                                        as: "evento",
+                                        attributes: ["id", "fecha", "descripcion", "liga"],
+                                        include: [
+                                            {
+                                                model: tipo_eventos_1.default,
+                                                as: "tipoevento",
+                                                attributes: ["nombre"]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: expedientes_estudio_puntos_1.default,
+                as: "expedienteturno",
+                attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+                include: [
+                    {
+                        model: iniciativas_estudio_1.default,
+                        as: "estudio",
+                        attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
+                        required: false,
+                        include: [
+                            {
+                                model: puntos_ordens_1.default,
+                                as: "iniciativa",
+                                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
+                                include: [
+                                    {
+                                        model: agendas_1.default,
+                                        as: "evento",
+                                        attributes: ["id", "fecha", "descripcion", "liga"],
+                                        include: [
+                                            {
+                                                model: tipo_eventos_1.default,
+                                                as: "tipoevento",
+                                                attributes: ["nombre"]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: agendas_1.default,
+                as: "evento",
+                attributes: ["id", "fecha", "descripcion", "liga"],
+                include: [
+                    {
+                        model: tipo_eventos_1.default,
+                        as: "tipoevento",
+                        attributes: ["nombre"]
+                    }
+                ]
+            }
+        ],
+        order: [["createdAt", "ASC"]]
+    });
+});
+const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
+    const iniciativas = yield obtenerIniciativasBase();
+    const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        const data = iniciativa.toJSON();
+        //   const {
+        //     proponentesString,
+        //     presentaString,
+        //     diputados,
+        //     diputadoIds,
+        //     gruposParlamentarios,
+        //     grupoParlamentarioIds
+        //   } = await procesarPresentan(data.id);
+        const todosEstudios = [
+            ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
+            ...(Array.isArray(data.expedienteturno)
+                ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
+                : [])
+        ];
+        const fuenteEstudios = deduplicarPorId(todosEstudios);
+        const estudios = fuenteEstudios.filter((e) => e.status === "1");
+        const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
+        const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
+        const rechazosesion = fuenteEstudios.filter((e) => e.status === "5");
+        const dispensa = String((_b = data.punto) === null || _b === void 0 ? void 0 : _b.dispensa) === "1";
+        const precluida = String(data.precluida) === "1";
+        const posiblesPuntosIds = [
+            (_c = data.punto) === null || _c === void 0 ? void 0 : _c.id,
+            ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
+        ];
+        const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+        const expedientesRelacionados = yield expedientes_estudio_puntos_1.default.findAll({
+            where: {
+                punto_origen_sesion_id: {
+                    [sequelize_1.Op.in]: posiblesPuntosUnicos
+                }
+            },
+            attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+            raw: true
+        });
+        const expedienteIds = [
+            ...new Set(expedientesRelacionados
+                .map((e) => e.expediente_id)
+                .filter(Boolean))
+        ];
+        const whereCierres = {
+            status: "3"
+        };
+        if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
+            whereCierres[sequelize_1.Op.or] = [];
+            if (posiblesPuntosUnicos.length > 0) {
+                whereCierres[sequelize_1.Op.or].push({
+                    punto_origen_id: {
+                        [sequelize_1.Op.in]: posiblesPuntosUnicos
+                    }
+                });
+            }
+            if (expedienteIds.length > 0) {
+                whereCierres[sequelize_1.Op.or].push({
+                    punto_origen_id: {
+                        [sequelize_1.Op.in]: expedienteIds
+                    }
+                });
+            }
+        }
+        const cierresDB = ((_d = whereCierres[sequelize_1.Op.or]) === null || _d === void 0 ? void 0 : _d.length) > 0
+            ? yield iniciativas_estudio_1.default.findAll({
+                where: whereCierres,
+                include: [
+                    {
+                        model: puntos_ordens_1.default,
+                        as: "iniciativa",
+                        attributes: ["id", "punto", "nopunto", "tribuna"],
+                        include: [
+                            {
+                                model: agendas_1.default,
+                                as: "evento",
+                                attributes: ["id", "fecha", "descripcion", "liga"],
+                                include: [
+                                    {
+                                        model: tipo_eventos_1.default,
+                                        as: "tipoevento",
+                                        attributes: ["nombre"]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            })
+            : [];
+        const cierresMerge = [
+            ...fuenteEstudios.filter((e) => e.status === "3"),
+            ...cierresDB.map((c) => c.toJSON())
+        ];
+        const cierres = deduplicarPorId(cierresMerge);
+        const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
+        let observacion = "En estudio";
+        if (precluida) {
+            observacion = "Precluida";
+        }
+        else if (dispensa) {
+            observacion = "Aprobada";
+        }
+        else {
+            if (cierrePrincipal) {
+                observacion = "Aprobada";
+            }
+            else if (rechazosesion.length > 0) {
+                observacion = "Rechazada en sesión";
+            }
+            else if (rechazadocomi.length > 0) {
+                observacion = "Rechazada en comisión";
+            }
+            else if (dictamenes.length > 0) {
+                observacion = "En estudio";
+            }
+            else if (estudios.length > 0) {
+                observacion = "En estudio";
+            }
+        }
+        const turnadoInfo = yield getComisionesTurnado((_e = data.punto) === null || _e === void 0 ? void 0 : _e.id);
+        const fechaExpedicion = ((_g = (_f = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _f === void 0 ? void 0 : _f.evento) === null || _g === void 0 ? void 0 : _g.fecha)
+            ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
+            : "-";
+        //   const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
+        //   const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
+        const fechaEventoRaw = (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.fecha) !== null && _j !== void 0 ? _j : null;
+        return {
+            no: index + 1,
+            id: normalizarTexto(data.id),
+            // autor: normalizarTexto(proponentesString),
+            // autor_detalle: normalizarTexto(presentaString),
+            iniciativa: normalizarTexto(data.iniciativa),
+            materia: normalizarTexto((_k = data.punto) === null || _k === void 0 ? void 0 : _k.punto),
+            presentac: formatearFechaCorta(fechaEventoRaw),
+            fecha_evento_raw: fechaEventoRaw,
+            comisiones: normalizarTexto(turnadoInfo.comisiones_turnado),
+            expedicion: fechaExpedicion,
+            observac: observacion,
+            // diputado,
+            // grupo_parlamentario: grupoParlamentario,
+            // diputado_ids: diputadoIds,
+            // grupo_parlamentario_ids: grupoParlamentarioIds,
+            periodo: obtenerPeriodo(fechaEventoRaw)
+        };
+    })));
+    return reporte;
+});
+const formatearFechaCorta = (fecha) => {
+    if (!fecha)
+        return "-";
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const date = new Date(fecha);
+    const dia = String(date.getUTCDate()).padStart(2, "0");
+    const mes = meses[date.getUTCMonth()];
+    const anio = String(date.getUTCFullYear()).slice(-2);
+    return `${dia}-${mes}-${anio}`;
+};
+const obtenerPeriodo = (fecha) => {
+    if (!fecha)
+        return "-";
+    const d = new Date(fecha);
+    const anio = d.getUTCFullYear();
+    const mes = String(d.getUTCMonth() + 1).padStart(2, "0");
+    return `${anio}-${mes}`;
+};
+const normalizarTexto = (valor) => {
+    if (!valor)
+        return "-";
+    return String(valor).trim() || "-";
+};
+const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!puntoId) {
+        return { turnado: false, comisiones_turnado: null };
+    }
+    const puntosComisiones = yield puntos_comisiones_1.default.findAll({
+        where: { id_punto: puntoId },
+        attributes: ["id_comision"],
+        raw: true
+    });
+    if (puntosComisiones.length === 0) {
+        return { turnado: false, comisiones_turnado: null };
+    }
+    const todosIds = puntosComisiones
+        .map((item) => item.id_comision || "")
+        .join(",");
+    const comisionIds = todosIds
+        .replace(/[\[\]]/g, "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+    const comisionIdsUnicos = [...new Set(comisionIds)];
+    if (comisionIdsUnicos.length === 0) {
+        return { turnado: false, comisiones_turnado: null };
+    }
+    const comisiones = yield comisions_1.default.findAll({
+        where: { id: comisionIdsUnicos },
+        attributes: ["nombre"],
+        raw: true
+    });
+    return {
+        turnado: true,
+        comisiones_turnado: comisiones.map((c) => c.nombre).join(", ")
+    };
+});
+const deduplicarPorId = (items) => {
+    return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
+};
