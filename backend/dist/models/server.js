@@ -20,6 +20,7 @@ const reporte_1 = __importDefault(require("../routes/reporte"));
 const user_1 = __importDefault(require("../routes/user"));
 const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
+const iniciativas_1 = __importDefault(require("../routes/iniciativas"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -61,6 +62,7 @@ class Server {
         this.app.use(diputados_1.default);
         this.app.use(catalogos_1.default);
         this.app.use(reporte_1.default);
+        this.app.use(iniciativas_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -94,7 +96,8 @@ class Server {
                 '/api/reporte/iniciativas/aprobadas/',
                 '/api/reporte/iniciativas/grupo-diputado/',
                 '/api/reporte/iniciativas/totales-periodo/',
-                '/api/reporte/iniciativas/integrantes/'
+                '/api/reporte/iniciativas/integrantes/',
+                '/api/iniciativas/iniciativas/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

@@ -6,6 +6,7 @@ import reportes from "../routes/reporte";
 import user from "../routes/user";
 import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
+import iniciativas from "../routes/iniciativas";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -61,7 +62,7 @@ class Server {
        this.app.use(diputados);
        this.app.use(catalogos);
        this.app.use(reportes);
-
+       this.app.use(iniciativas);
     }
 
     
@@ -98,7 +99,8 @@ class Server {
                 '/api/reporte/iniciativas/aprobadas/',
                 '/api/reporte/iniciativas/grupo-diputado/',
                 '/api/reporte/iniciativas/totales-periodo/',
-                '/api/reporte/iniciativas/integrantes/'
+                '/api/reporte/iniciativas/integrantes/',
+                '/api/iniciativas/iniciativas/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
