@@ -703,6 +703,9 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               as: 'estudio',
               attributes: ["id", "status", "createdAt", "punto_origen_id","punto_destino_id","type"], // 👈 cambió de id_punto_evento
               required: false,
+              where: {
+                type: 2
+              },
               include: [
                 {
                   model: PuntosOrden,
