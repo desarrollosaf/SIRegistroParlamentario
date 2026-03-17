@@ -220,5 +220,9 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/getdecretos/${id}`)
   }
 
+  eliminarArchivoIniciativa(id: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/eliminardecreto/${id}`)
+  }
+
   
 }
