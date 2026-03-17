@@ -19,7 +19,7 @@ export class EventoService {
     this.myAPIUrl ='api/eventos';
     this.myAPIUrl1 ='api/diputados';
     this.myAPIUrl2 ='api/reporte/iniciativas';
-    this.myAPIUrl3 ='api/iniciativas/iniciativas';
+    this.myAPIUrl3 ='api/iniciativas';
   }
 
 
@@ -209,6 +209,6 @@ export class EventoService {
 
 
   getIniciativasDecretos(): Observable<any> {
-    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/iniciativas/`)
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/iniciativas/`)
   }
 }
