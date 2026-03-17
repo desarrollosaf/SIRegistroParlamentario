@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getiniciativas = void 0;
+exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -28,6 +28,7 @@ const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const puntos_comisiones_1 = __importDefault(require("../models/puntos_comisiones"));
 const sequelize_1 = require("sequelize");
+const decreto_1 = __importDefault(require("../models/decreto"));
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativasRaw = yield construirReporteBase();
@@ -391,3 +392,51 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
 };
+/////////////////////////////////////////////////////////////////// funciones para los decretos 
+const guardardecreto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { body } = req;
+        const file = req.file;
+        for (const item of body.decretos) {
+            yield decreto_1.default.create({
+                nombre_decreto: item.nombre_decreto,
+                path_doc: file ? `storage/decretos/${file.filename}` : null,
+                id_iniciativa: item.id_iniciativa
+            });
+        }
+        return res.status(201).json({
+            message: "Decretos creados correctamente",
+        });
+    }
+    catch (error) {
+        console.error("Error al guardar el decreto:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.guardardecreto = guardardecreto;
+const getdecretos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const decretetos = yield decreto_1.default.findAll({
+            where: { id_iniciativa: id },
+            attributes: ["id", "nombre_decreto", "decreto", "id_iniciativa"],
+        });
+        if (!decretetos) {
+            return res.status(404).json({ message: "No tiene decretos" });
+        }
+        return res.status(200).json({
+            data: decretetos,
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener los decretos:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.getdecretos = getdecretos;

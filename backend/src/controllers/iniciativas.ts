@@ -16,6 +16,7 @@ import PuntosOrden from "../models/puntos_ordens";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import PuntosComisiones from "../models/puntos_comisiones";
 import { Op } from "sequelize";
+import Decreto from "../models/decreto";
 
 type ReporteBaseItem = {
   no: number;
@@ -364,6 +365,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         // grupo_parlamentario_ids: grupoParlamentarioIds,
         periodo: obtenerPeriodo(fechaEventoRaw),
         tipo: data.tipo,
+
       };
     })
   );
@@ -445,4 +447,59 @@ const deduplicarPorId = (items: any[]) => {
     (e: any, index: number, self: any[]) =>
       index === self.findIndex((x: any) => x.id === e.id)
   );
+};
+
+
+
+/////////////////////////////////////////////////////////////////// funciones para los decretos 
+
+export const guardardecreto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { body } = req;
+    const file = req.file;
+    
+    for (const item of body.decretos) {
+        await Decreto.create({
+            nombre_decreto: item.nombre_decreto,
+            path_doc: file ? `storage/decretos/${file.filename}` : null,
+            id_iniciativa: item.id_iniciativa
+        });
+    }
+
+  
+    return res.status(201).json({
+      message: "Decretos creados correctamente",
+    });
+  } catch (error: any) {
+    console.error("Error al guardar el decreto:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
+};
+
+export const getdecretos = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const decretetos = await Decreto.findAll({ 
+      where: { id_iniciativa: id },
+      attributes: ["id", "nombre_decreto","decreto","id_iniciativa"],
+    });
+
+    if (!decretetos) {
+      return res.status(404).json({ message: "No tiene decretos" });
+    }
+
+    return res.status(200).json({
+      data: decretetos,
+    });  
+
+  } catch (error: any) {
+    console.error("Error al obtener los decretos:", error);
+    return res.status(500).json({ 
+      message: "Error interno del servidor",
+      error: error.message 
+    });
+  }
 };
