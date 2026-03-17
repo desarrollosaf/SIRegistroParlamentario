@@ -28,16 +28,18 @@ export class IniciativasDecretosComponent {
   ) { }
 
     ngOnInit(): void {
+     console.log('lsdfklsdf');
     this.cargarIniciativas();
   }
 
     cargarIniciativas(): void {
-    this.cargando = true;
+    // this.cargando = true;
     this._eventoService.getIniciativasDecretos().subscribe({
       next: (response: any) => {
         // this.listaIniciativas = response.data || response.iniciativas || [];
-        this.cargando = false;
-        console.log('INICIATIVAS DECRETOS', response);
+           console.log('INICIATIVAS DECRETOS', response);
+        // this.cargando = false;
+     
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar iniciativas:', e);
