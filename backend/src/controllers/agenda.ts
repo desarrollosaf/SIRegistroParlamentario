@@ -3683,7 +3683,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
   try {
     const { body } = req;
     
-    // Validación inicial
     if (!body.idPunto) {
       return res.status(400).json({
         msg: "Falta el parámetro requerido: idPunto",
@@ -3708,28 +3707,99 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
-    // ✅ Lógica modificada para soportar ambos casos
     let whereCondition: any;
     let temaInfo: any = null;
     
     if (body.idReserva) {
-      // Caso 1: Buscar por id_tema_punto_voto
       const temavotos = await TemasPuntosVotos.findOne({ 
         where: { id: body.idReserva } 
       });
-      
       if (!temavotos) {
         return res.status(404).json({ msg: "No se encontró el tema de votación" });
       }
-      
       whereCondition = { id_tema_punto_voto: temavotos.id };
       temaInfo = temavotos;
-      
     } else {
-      // Caso 2: Buscar por id_punto
       whereCondition = { id_punto: body.idPunto };
     }
 
+    // ===== 👇 BUSCAR SESIÓN, PUNTO E INICIATIVA DE ORIGEN =====
+    const estudio = await IniciativaEstudio.findOne({
+      where: { punto_destino_id: body.idPunto, status: 3 },
+      
+    });
+    console.log("ESTUDIO ENCONTRADO:", estudio?.toJSON());
+    // return 500;
+    let sesionInfo = null;
+    let puntoOrigenInfo = null;
+    let iniciativaInfo = null;
+
+    if (estudio) {
+      let puntoOrigenId = null;
+
+      if (estudio.type === "1") {
+        // Normal: punto_origen_id apunta directo al punto
+        puntoOrigenId = estudio.punto_origen_id;
+
+      } else if (estudio.type === "2") {
+        // Expediente: punto_origen_id apunta al expediente_id
+        // buscamos en ExpedienteEstudiosPuntos para sacar el punto de origen real
+        const expPunto = await ExpedienteEstudiosPuntos.findOne({
+          where: { expediente_id: estudio.punto_origen_id },
+          attributes: ["id", "expediente_id", "punto_origen_sesion_id"]
+        });
+        puntoOrigenId = expPunto?.punto_origen_sesion_id ?? null;
+      }
+
+      if (puntoOrigenId) {
+        const puntoOrigen = await PuntosOrden.findOne({
+          where: { id: puntoOrigenId },
+          include: [
+            {
+              model: Agenda,
+              as: 'evento',
+              attributes: ["id", "fecha", "descripcion"],
+              include: [
+                {
+                  model: TipoEventos,
+                  as: 'tipoevento',
+                  attributes: ["nombre"]
+                }
+              ]
+            }
+          ]
+        });
+
+        if (puntoOrigen) {
+          sesionInfo = {
+            fecha: puntoOrigen.evento?.fecha 
+              ? new Date(puntoOrigen.evento.fecha).toLocaleDateString('es-MX') 
+              : 'N/A',
+            descripcion: puntoOrigen.evento?.descripcion ?? 'N/A'
+          };
+
+          puntoOrigenInfo = {
+            nopunto: puntoOrigen.nopunto ?? 'N/A',
+            punto: puntoOrigen.punto ?? 'N/A'
+          };
+
+          const iniciativa = await IniciativaPuntoOrden.findOne({
+            where: { id_punto: puntoOrigenId },
+            attributes: ["id", "iniciativa", "expediente"]
+          });
+
+          if (iniciativa) {
+            iniciativaInfo = {
+              id: iniciativa.id,
+              iniciativa: iniciativa.iniciativa,
+              expediente: iniciativa.expediente
+            };
+          }
+        }
+      }
+    }
+
+    // ===== VOTOS =====
     const dipasociados = await TipoCargoComision.findOne({
       where: { valor: "Diputado Asociado" }
     });
@@ -3743,7 +3813,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       return res.status(404).json({ msg: "No hay votos registrados" });
     }
 
-    // Obtener diputados
     const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
     const diputados = await Diputado.findAll({
       where: { id: diputadoIds },
@@ -3752,7 +3821,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
     const diputadosMap = new Map(diputados.map(d => [d.id, d]));
 
-    // Obtener partidos
     const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
     const partidos = await Partidos.findAll({
       where: { id: partidoIds },
@@ -3761,7 +3829,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
     const partidosMap = new Map(partidos.map(p => [p.id, p]));
 
-    // Obtener comisiones y cargos (solo si es comisión)
     let comisionesMap = new Map();
     let cargosMap = new Map();
     
@@ -3799,15 +3866,14 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const getColorSentido = (sentido: number): string => {
       switch (sentido) {
-        case 1: return '#22c55e'; // Verde - A FAVOR
-        case 3: return '#dc2626'; // Rojo - EN CONTRA
-        case 2: return '#f59e0b'; // Amarillo - ABSTENCIÓN
-        case 0: return '#6b7280'; // Gris - PENDIENTE
+        case 1: return '#22c55e';
+        case 3: return '#dc2626';
+        case 2: return '#f59e0b';
+        case 0: return '#6b7280';
         default: return '#6b7280';
       }
     };
 
-    // Mapear votos con detalles
     const votosConDetalles = votosRaw.map((voto) => {
       const diputado = diputadosMap.get(voto.id_diputado);
       const partido = partidosMap.get(voto.id_partido);
@@ -3832,7 +3898,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       };
     });
 
-    // Calcular totales
     const totales = {
       favor: votosConDetalles.filter(v => v.sentidoNumerico === 1).length,
       contra: votosConDetalles.filter(v => v.sentidoNumerico === 3).length,
@@ -3842,7 +3907,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const totalVotos = votosConDetalles.length;
 
-    // Crear PDF
+    // ===== CREAR PDF =====
     const doc = new PDFDocument({ 
       size: 'LETTER', 
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
@@ -3860,10 +3925,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const writeStream = fs.createWriteStream(outputPath);
     doc.pipe(writeStream);
 
-    // Ruta de la imagen de fondo
     const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
 
-    // Función para dibujar fondo de página
     const drawBackground = () => {
       doc.image(bgPath, 0, 0, {
         width: doc.page.width,
@@ -3872,57 +3935,80 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       doc.y = 106;
     };
 
-    // Dibujar fondo en la primera página
     drawBackground();
 
-    // ===== DISEÑO DEL PDF =====
-
-    // Encabezado
+    // ===== ENCABEZADO =====
     doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE VOTACIÓN', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
     doc.moveDown(1);
 
-    // Información del Evento
+    // ===== INFORMACIÓN DEL EVENTO =====
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
     doc.moveDown(0.3);
 
-    // Tipo
     doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
 
-    // Sede
     doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
 
-    // Fecha
     doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
-    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+    doc.fontSize(11).font('Helvetica').text(
+      evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'
+    );
     
+
+        // ===== 👇 SESIÓN DE ORIGEN =====
+    if (sesionInfo) {
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('SESIÓN DE ORIGEN');
+      doc.moveDown(0.3);
+      doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(sesionInfo.fecha);
+      doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(sesionInfo.descripcion, { width: 500, align: 'justify' });
+    }
+
+    // ===== 👇 PUNTO DE ORIGEN =====
+    if (puntoOrigenInfo) {
+      doc.moveDown(0.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('PUNTO DE ORIGEN');
+      doc.moveDown(0.3);
+      doc.fontSize(11).font('Helvetica-Bold').text('Número: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(puntoOrigenInfo.nopunto);
+      doc.fontSize(11).font('Helvetica-Bold').text('Punto: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(puntoOrigenInfo.punto, { width: 500, align: 'justify' });
+    }
+
+    // ===== 👇 INICIATIVA =====
+    if (iniciativaInfo) {
+      doc.moveDown(0.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('INICIATIVA');
+      doc.moveDown(0.3);
+      doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(iniciativaInfo.iniciativa ?? 'N/A', { width: 500, align: 'justify' });
+    }
+
     doc.moveDown(1);
 
-    // Información del Punto
+    // ===== INFORMACIÓN DEL PUNTO =====
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL PUNTO');
     doc.moveDown(0.3);
 
-    // Número
     doc.fontSize(11).font('Helvetica-Bold').text('Número: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(punto.nopunto || 'N/A');
 
-    // Descripción (justificada)
     doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(punto.punto || 'N/A', { width: 500, align: "justify" });
     
-    // ✅ Si hay tema de votación, mostrarlo
     if (temaInfo) {
       doc.moveDown(0.5);
       doc.fontSize(11).font('Helvetica-Bold').text('Reserva: ', { continued: true });
       doc.fontSize(11).font('Helvetica').text(temaInfo.tema_votacion || 'N/A', { width: 500, align: "justify" });
     }
-    
     doc.moveDown(1);
-
-    // Resumen de Votación
+    // ===== RESUMEN DE VOTACIÓN =====
     doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE VOTACIÓN');
     doc.moveDown(0.3);
 
@@ -3930,30 +4016,23 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const colWidths = [110, 90, 90, 90, 80];
     const rowHeight = 25;
 
-    // Encabezados de tabla
     doc.fontSize(11).font('Helvetica-Bold');
 
-    // A FAVOR - Verde
     doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
     doc.fillColor('#fff').text('A FAVOR', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
-    // EN CONTRA - Rojo
     doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#dc2626', '#000');
     doc.fillColor('#fff').text('EN CONTRA', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
-    // ABSTENCIÓN - Amarillo
     doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
     doc.fillColor('#fff').text('ABSTENCIÓN', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
-    // PENDIENTE - Gris
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
     doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    // TOTAL - Azul
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableTop, colWidths[4], rowHeight).fillAndStroke('#1e40af', '#000');
     doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, tableTop + 7, { width: colWidths[4] - 10, align: 'center' });
 
-    // Valores de totales
     const valuesTop = tableTop + rowHeight;
     doc.fontSize(11).font('Helvetica-Bold');
 
@@ -3969,14 +4048,12 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], valuesTop, colWidths[3], rowHeight).fillAndStroke('#fff', '#000');
     doc.fillColor('#000').text(totales.pendiente.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, valuesTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    // TOTAL
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], valuesTop, colWidths[4], rowHeight).fillAndStroke('#fff', '#000');
     doc.fillColor('#000').text(totalVotos.toString(), 50 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 5, valuesTop + 7, { width: colWidths[4] - 10, align: 'center' });
 
     doc.moveDown(2);
     doc.x = doc.page.margins.left;
 
-    // Detalle de votación según tipo
     if (esSesion) {
       generarDetalleSesion(doc, votosConDetalles, drawBackground, getColorSentido);
     } else {
@@ -3985,7 +4062,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     doc.end();
 
-    // Esperar a que el PDF se genere completamente
     await new Promise((resolve, reject) => {
       writeStream.on('finish', resolve);
       writeStream.on('error', reject);
@@ -3993,15 +4069,12 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     console.log('PDF generado exitosamente en:', outputPath);
 
-    // ===== ENVIAR POR WHATSAPP CON BASE64 =====
-
-    // Preparar mensaje de texto
+    // ===== WHATSAPP =====
     let fechaFormateada = "";
     if (evento.fecha) {
       fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
     }
 
-    // Obtener listado de comisiones únicas si NO es sesión
     let infoComisiones = "";
     if (!esSesion) {
       const comisionesUnicas = [...new Set(
@@ -4015,7 +4088,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       }
     }
 
-    // ✅ Construir mensaje con tema de votación si existe
     const mensajeTexto = (temaInfo 
       ? `*VOTACION - RESERVA* ${punto.nopunto}\n\n`
       : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
@@ -4031,23 +4103,20 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       `Total de votos: ${totalVotos}\n\n` +
       `Adjunto PDF con detalle completo`;
 
-    // Verificar que el archivo existe
     if (!fs.existsSync(outputPath)) {
       throw new Error('El archivo PDF no se generó correctamente');
     }
 
-    // Leer el archivo y convertirlo a base64
     const pdfBuffer = fs.readFileSync(outputPath);
     const base64PDF = pdfBuffer.toString('base64');
 
     console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
     console.log('Enviando PDF por WhatsApp...');
 
-    // Enviar documento usando base64
     const params = {
       token: 'ml56a7d6tn7ha7cc',
+      // to: "+525561081154,",
       to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
-      // to: "+527222035605,",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -4425,11 +4494,22 @@ function generarDetalleSesionAsistencia(doc: any, asistencias: any[], drawBackgr
   doc.moveDown(1.5);
 }
 
-function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBackground: () => void) {
+function generarDetalleComisionAsistencia(
+  doc: any, 
+  asistencias: any[], 
+  drawBackground: () => void,
+  quorumPorComision: Map<string, {
+    nombre: string;
+    total: number;
+    asistentes: number;
+    requerido: number;
+    tieneQuorum: boolean;
+    importancia: number;
+  }>
+) {
   doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('DETALLE DE ASISTENCIA POR COMISIÓN', { align: 'center' });
   doc.moveDown(0.5);
 
-  // Agrupar por comisión
   const asistenciasPorComision = asistencias.reduce((grupos, asist) => {
     const comision = asist.comision_nombre || 'Sin comisión';
     if (!grupos[comision]) {
@@ -4443,31 +4523,39 @@ function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBack
     return grupos;
   }, {} as Record<string, any>);
 
-  // Ordenar comisiones por importancia
   const comisionesOrdenadas = Object.values(asistenciasPorComision).sort((a: any, b: any) => 
     a.importancia - b.importancia
   );
 
   comisionesOrdenadas.forEach((comision: any) => {
-    // Verificar espacio para título + tabla (necesita al menos 100px)
     if (doc.y > 650) {
       doc.addPage();
-      drawBackground(); // Dibujar fondo en nueva página
-      doc.y = 106; // Posición inicial después del fondo
+      drawBackground();
+      doc.y = 106;
     }
 
-    // Título de la comisión
+    // 👇 Título de comisión + quórum en frente
+    const quorum = quorumPorComision.get(comision.nombre);
+
     doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
-    doc.text(comision.nombre.toUpperCase(), 50, doc.y, { align: 'left' });
+    doc.text(comision.nombre.toUpperCase(), 50, doc.y, { continued: !!quorum });
+
+    if (quorum) {
+      doc.fontSize(9).font('Helvetica').fillColor('#000')
+        .text(`  (${quorum.asistentes}/${quorum.total} — req: ${quorum.requerido})  `, { continued: true });
+      doc.fontSize(9).font('Helvetica-Bold')
+        .fillColor(quorum.tieneQuorum ? '#22c55e' : '#dc2626')
+        .text(quorum.tieneQuorum ? 'CON QUÓRUM' : 'SIN QUÓRUM');
+      doc.fillColor('#000');
+    }
+
     doc.moveDown(0.5);
 
-    // Ordenar asistencias por nivel de cargo
     const asistenciasOrdenadas = [...comision.asistencias].sort((a, b) => a.nivel_cargo - b.nivel_cargo);
 
     const startY = doc.y;
     const colX = { no: 50, diputado: 75, cargo: 310, partido: 410, asistencia: 465 };
 
-    // Encabezado con estilo de votaciones
     doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
     doc.rect(colX.no, startY, 495, 20).fillAndStroke('#96134b');
     doc.fillColor('#fff');
@@ -4480,19 +4568,15 @@ function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBack
     let currentY = startY + 20;
 
     asistenciasOrdenadas.forEach((asist, index) => {
-      // Verificar espacio para nueva fila
       if (currentY > 700) {
         doc.addPage();
-        drawBackground(); // Dibujar fondo en nueva página
-        
-        currentY = 106; // Empezar después del fondo
-        
+        drawBackground();
+        currentY = 106;
+
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000');
         doc.text(`${comision.nombre.toUpperCase()}`, 50, currentY);
-        
         currentY += 25;
-        
-        // Re-dibujar encabezado
+
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff');
         doc.rect(colX.no, currentY, 495, 20).fillAndStroke('#96134b');
         doc.fillColor('#fff');
@@ -4504,16 +4588,13 @@ function generarDetalleComisionAsistencia(doc: any, asistencias: any[], drawBack
         currentY += 20;
       }
 
-      // Borde de fila
       doc.rect(colX.no, currentY, 495, 18).stroke('#d1d5db');
-
       doc.fontSize(8).font('Helvetica').fillColor('#000');
       doc.text(`${index + 1}`, colX.no + 3, currentY + 5, { width: 18 });
       doc.text(asist.diputado, colX.diputado + 3, currentY + 5, { width: 225, ellipsis: true });
       doc.text(asist.cargo_nombre || 'Sin cargo', colX.cargo + 3, currentY + 5, { width: 90, ellipsis: true });
       doc.text(asist.partido, colX.partido + 3, currentY + 5, { width: 50 });
 
-      // Asistencia con color
       const colorAsistencia = getColorAsistencia(asist.asistenciaNumerico);
       doc.fillColor(colorAsistencia);
       doc.text(asist.asistenciaTexto, colX.asistencia + 3, currentY + 5, { width: 75 });
@@ -4642,6 +4723,52 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const totalDiputados = asistenciasConDetalles.length;
 
+    // ===== 👇 CÁLCULO DE QUÓRUM =====
+    const asistentesGeneral = totales.asistencia + totales.asistenciaZoom;
+    const quorumGeneralRequerido = Math.floor(totalDiputados / 2) + 1;
+    const tieneQuorumGeneral = asistentesGeneral >= quorumGeneralRequerido;
+
+    // Quórum por comisión (solo si no es sesión)
+    const quorumPorComision = new Map<string, {
+      nombre: string;
+      total: number;
+      asistentes: number;
+      requerido: number;
+      tieneQuorum: boolean;
+      importancia: number;
+    }>();
+
+    if (!esSesion) {
+      asistenciasConDetalles.forEach((a: any) => {
+        if (!a.comision_nombre) return;
+
+        if (!quorumPorComision.has(a.comision_nombre)) {
+          quorumPorComision.set(a.comision_nombre, {
+            nombre: a.comision_nombre,
+            total: 0,
+            asistentes: 0,
+            requerido: 0,
+            tieneQuorum: false,
+            importancia: a.comision_importancia
+          });
+        }
+
+        const comData = quorumPorComision.get(a.comision_nombre)!;
+        comData.total += 1;
+
+        if (a.asistenciaNumerico === 1 || a.asistenciaNumerico === 2) {
+          comData.asistentes += 1;
+        }
+      });
+
+      // Calcular requerido y si tiene quórum
+      quorumPorComision.forEach((comData) => {
+        comData.requerido = Math.floor(comData.total / 2) + 1;
+        comData.tieneQuorum = comData.asistentes >= comData.requerido;
+      });
+    }
+
+    // ===== CREAR PDF =====
     const doc = new PDFDocument({ 
       size: 'LETTER', 
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
@@ -4659,10 +4786,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     const writeStream = fs.createWriteStream(outputPath);
     doc.pipe(writeStream);
 
-    // Ruta de la imagen de fondo
     const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
 
-    // Función para dibujar fondo de página
     const drawBackground = () => {
       doc.image(bgPath, 0, 0, {
         width: doc.page.width,
@@ -4671,16 +4796,15 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       doc.y = 106;
     };
 
-    // Dibujar fondo en la primera página
     drawBackground();
 
-    // ===== DISEÑO DEL PDF =====
-
+    // ===== ENCABEZADO =====
     doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
     doc.moveDown(1);
 
+    // ===== INFORMACIÓN DEL EVENTO =====
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
     doc.moveDown(0.3);
 
@@ -4691,12 +4815,30 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
 
     doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
-    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+    doc.fontSize(11).font('Helvetica').text(
+      evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'
+    );
 
     doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
+
+    // ===== 👇 QUÓRUM GENERAL (solo comisión) =====
+    if (!esSesion) {
+      doc.moveDown(0.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('Quórum: ', { continued: true });
+      doc.fontSize(11).font('Helvetica').text(
+        `${quorumGeneralRequerido} de ${totalDiputados} — Asistentes: ${asistentesGeneral}   `,
+        { continued: true }
+      );
+      doc.fontSize(11).font('Helvetica-Bold')
+        .fillColor(tieneQuorumGeneral ? '#22c55e' : '#dc2626')
+        .text(tieneQuorumGeneral ? 'CON QUÓRUM' : 'SIN QUÓRUM');
+      doc.fillColor('#000');
+    }
+
     doc.moveDown(1);
 
+    // ===== RESUMEN DE ASISTENCIA =====
     doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
     doc.moveDown(0.3);
 
@@ -4739,13 +4881,11 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     if (esSesion) {
       generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
     } else {
-      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground);
+      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground, quorumPorComision);
     }
 
-    // FINALIZAR PDF
     doc.end();
 
-    // ESPERAR A QUE EL ARCHIVO SE ESCRIBA COMPLETAMENTE
     await new Promise((resolve, reject) => {
       writeStream.on('finish', resolve);
       writeStream.on('error', reject);
@@ -4753,8 +4893,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     console.log('PDF de asistencia generado exitosamente en:', outputPath);
 
-    // ===== ENVIAR POR WHATSAPP =====
-
+    // ===== WHATSAPP =====
     let fechaFormateada = "";
     if (evento.fecha) {
       fechaFormateada = format(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: es });
@@ -4773,11 +4912,17 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       }
     }
 
+    // 👇 Agregar quórum al mensaje de WhatsApp
+    const quorumMsg = !esSesion 
+      ? `\n*Quórum:* ${asistentesGeneral}/${totalDiputados} — requerido: ${quorumGeneralRequerido} — ${tieneQuorumGeneral ? '✅ CON QUÓRUM' : '❌ SIN QUÓRUM'}\n`
+      : '';
+
     const mensajeTexto = `*ASISTENCIA - ${evento.tipoevento?.nombre || 'Evento'}*\n\n` +
       `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
       `*Sede:* ${evento.sede?.sede || 'N/A'}\n` +
-      `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
-      `*Resumen:*\n` +
+      `*Fecha:* ${fechaFormateada}${infoComisiones}` +
+      quorumMsg +
+      `\n*Resumen:*\n` +
       `Asistencia: ${totales.asistencia}\n` +
       `Asistencia Zoom: ${totales.asistenciaZoom}\n` +
       `Pendiente: ${totales.pendiente}\n\n` +
@@ -4791,12 +4936,9 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     const pdfBuffer = fs.readFileSync(outputPath);
     const base64PDF = pdfBuffer.toString('base64');
 
-    console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
-    console.log('Enviando PDF por WhatsApp...');
-
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+527222035605, +527224986377, +527151605569, +527222285798",
+      to: "+525561081154,  +527224986377",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -4815,13 +4957,19 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       }
     );
 
-    console.log('Respuesta de WhatsApp API:', whatsappResponse.data);
-
     return res.status(200).json({
       message: "PDF de asistencia generado y enviado por WhatsApp correctamente",
       enviado: true,
       archivo: fileName,
       totales,
+      quorum: {
+        general: {
+          asistentes: asistentesGeneral,
+          requerido: quorumGeneralRequerido,
+          total: totalDiputados,
+          tieneQuorum: tieneQuorumGeneral
+        }
+      },
       whatsappResponse: whatsappResponse.data
     });
 
