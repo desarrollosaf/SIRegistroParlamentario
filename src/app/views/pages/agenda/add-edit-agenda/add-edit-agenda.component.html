@@ -37,7 +37,7 @@
                             </div>
                         </div>
                         <div class="col-sm-4">
-                            <div class="mb-3">
+                            <div class="mb-3" > 
                                 <label class="form-label negri">Tipo Evento:*</label>
                                 <ng-select [items]="tipoEventoSelect" [searchable]="false" bindLabel="name" bindValue="id"
                                     formControlName="tipo_evento_id"
@@ -102,8 +102,9 @@
                         </div>
                     </div>
                     <br>
+  
                     <div class="row">
-                        <div class="col-sm-12">
+                        <div class="col-sm-3">
                             <div class="mb-3">
                                 <label class="form-label negri">¿Se transmite en pagina principal?:*</label>
                                 <div>
@@ -120,8 +121,28 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-sm-3" *ngIf="esComision">
+                            <div class="mb-3">
+                                <label class="form-label negri">¿Tipo de reunion?:*</label>
+                                <div>
+                                <label class="form-check form-check-inline">
+                                    <input type="radio" class="form-check-input" 
+                                    formControlName="reunion"
+                                    name="reunion"          
+                                    [value]="0" />
+                                    trabajo
+                                </label>
+                                <label class="form-check form-check-inline">
+                                    <input type="radio" class="form-check-input" 
+                                    formControlName="reunion"
+                                    name="reunion"          
+                                    [value]="1" />
+                                    dictamen
+                                </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
                     <div *ngIf="formAgenda.get('transmite')?.value">
                         <div class="row">
                             <div class="col-sm-12">
