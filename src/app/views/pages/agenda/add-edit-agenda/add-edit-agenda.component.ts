@@ -62,6 +62,12 @@ export class AddEditAgendaComponent {
     return autores.map(a => a.name).join(', ');
   }
 
+  get esComision(): boolean {
+    const tipoEventoId = this.formAgenda.get('tipo_evento_id')?.value;
+    const tipoEvento = this.tipoEventoSelect.find(t => t.id === tipoEventoId);
+    return tipoEvento?.name === 'Comisión' || tipoEvento?.name === 'Comision';
+  }
+
   constructor(private fb: FormBuilder, private aRouter: ActivatedRoute, private router: Router, private modalService: NgbModal) {
     this.formAgenda = this.fb.group({
       fecha: ['', Validators.required],
@@ -69,6 +75,7 @@ export class AddEditAgendaComponent {
       tipo_evento_id: ['', Validators.required],
       descripcion: ['', Validators.required],
       transmite: [false, Validators.required],
+      reunion: [''],
       liga: [''],
       hora_inicio: [''],
       hora_fin: [''],
@@ -77,6 +84,12 @@ export class AddEditAgendaComponent {
   }
 
   ngOnInit(): void {
+    this.formAgenda.get('tipo_evento_id')?.valueChanges.subscribe(() => {
+      if (!this.esComision) {
+        this.formAgenda.patchValue({ reunion: null }, { emitEvent: false });
+      }
+    });
+
     this.formAgenda.get('transmite')?.valueChanges.subscribe(value => {
       const ligaControl = this.formAgenda.get('liga');
       const horaInicioControl = this.formAgenda.get('hora_inicio');
@@ -110,13 +123,13 @@ export class AddEditAgendaComponent {
     this._agendaService.getAgendaRegistrada(this.idAgenda).subscribe({
       next: (response: any) => {
         const transmiteBoolean = response.transmision === true || response.transmision === 1;
-
         this.formAgenda.patchValue({
           fecha: this.formatFecha(response.fecha),
           sede_id: response.sede_id,
           tipo_evento_id: response.tipo_evento_id,
           descripcion: response.descripcion,
           transmite: transmiteBoolean,
+          reunion: response.tipo_reunion ?? null,
           liga: transmiteBoolean ? (response.liga || '') : '',
           hora_inicio: transmiteBoolean ? this.formatFecha(response.fecha_hora_inicio) : '',
           hora_fin: transmiteBoolean ? this.formatFecha(response.fecha_hora_fin) : ''
@@ -337,7 +350,7 @@ formData.forEach((valor, clave) => {
   limpiarFormulario(): void {
     this.formAgenda.reset({
       fecha: '', sede_id: '', tipo_evento_id: '', descripcion: '',
-      transmite: false,  liga: '', hora_inicio: '', hora_fin: ''
+      transmite: false,reunion: null,  liga: '', hora_inicio: '', hora_fin: ''
     });
     this.itemsTabla = [];
     this.tipoAutorSeleccionado = '';

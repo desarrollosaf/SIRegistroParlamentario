@@ -92,6 +92,10 @@ Agenda.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
+    tipo_reunion: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         field: 'created_at',
