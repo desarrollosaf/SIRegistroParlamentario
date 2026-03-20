@@ -2654,7 +2654,10 @@ export const saveagenda = async (req: Request, res: Response) => {
       fecha_hora_inicio: agendaBody.hora_inicio || null,
       fecha_hora_fin: agendaBody.hora_fin || null,
       version_estenografica: versionEstenografica ? `storage/agendas/${versionEstenografica}` : null,
-      orden_dia: ordenDia ? `storage/agendas/${ordenDia}`: null
+      orden_dia: ordenDia ? `storage/agendas/${ordenDia}`: null,
+      tipo_reunion: agendaBody.reunion != null && agendaBody.reunion !== '' && agendaBody.reunion !== 'null'
+      ? parseInt(agendaBody.reunion) 
+      : null
 
     });
 
@@ -2809,7 +2812,8 @@ export const updateAgenda = async (req: Request, res: Response) => {
   try {
     const agendaId = req.params.id;
     const body = req.body;
-
+    // console.log(body);
+    // return 500;
     let anfitriones = req.body.autores || [];
 
     if (typeof anfitriones === "string") {
@@ -2838,7 +2842,10 @@ export const updateAgenda = async (req: Request, res: Response) => {
       fecha_hora_inicio: body.hora_inicio || null,
       fecha_hora_fin: body.hora_fin || null,
       version_estenografica: versionEstenograficaFile ? `storage/agendas/${versionEstenograficaFile}` : agenda.version_estenografica,
-      orden_dia: ordenDiaFile ? `storage/agendas/${ordenDiaFile}` : agenda.orden_dia
+      orden_dia: ordenDiaFile ? `storage/agendas/${ordenDiaFile}` : agenda.orden_dia,
+      tipo_reunion: body.reunion != null && body.reunion !== '' && body.reunion !== 'null'
+      ? parseInt(body.reunion) 
+      : null
     });
 
     await AnfitrionAgenda.destroy({
@@ -4191,7 +4198,6 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
       return res.status(404).json({ msg: "No hay asistencias registradas para este evento" });
     }
 
-    // Obtener diputados
     const diputadoIds = asistenciasRaw.map(a => a.id_diputado).filter(Boolean);
     const diputados = await Diputado.findAll({
       where: { id: diputadoIds },
@@ -4200,7 +4206,6 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     });
     const diputadosMap = new Map(diputados.map(d => [d.id, d]));
 
-    // Obtener partidos
     const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
     const partidos = await Partidos.findAll({
       where: { id: partidoIds },
@@ -4243,7 +4248,6 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
       }
     };
 
-    // Mapear asistencias con detalles
     const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
       const diputado = diputadosMap.get(asistencia.id_diputado);
       const partido = partidosMap.get(asistencia.partido_dip);
@@ -4267,7 +4271,6 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
       };
     });
 
-    // Calcular totales
     const totales = {
       asistencia: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
       asistenciaZoom: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
@@ -4276,7 +4279,54 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
 
     const totalDiputados = asistenciasConDetalles.length;
 
-    // Crear PDF
+    // ===== 👇 CÁLCULO DE QUÓRUM =====
+    const tienetipoReunion = evento.tipo_reunion === 1;
+    const asistentesGeneral = totales.asistencia + totales.asistenciaZoom;
+    const quorumGeneralRequerido = Math.floor(totalDiputados / 2) + 1;
+
+    const quorumPorComision = new Map<string, {
+      nombre: string;
+      total: number;
+      asistentes: number;
+      requerido: number;
+      tieneQuorum: boolean;
+      importancia: number;
+    }>();
+
+    if (!esSesion && tienetipoReunion) {
+      asistenciasConDetalles.forEach((a: any) => {
+        if (!a.comision_nombre) return;
+
+        if (!quorumPorComision.has(a.comision_nombre)) {
+          quorumPorComision.set(a.comision_nombre, {
+            nombre: a.comision_nombre,
+            total: 0,
+            asistentes: 0,
+            requerido: 0,
+            tieneQuorum: false,
+            importancia: a.comision_importancia
+          });
+        }
+
+        const comData = quorumPorComision.get(a.comision_nombre)!;
+        comData.total += 1;
+
+        if (a.asistenciaNumerico === 1 || a.asistenciaNumerico === 2) {
+          comData.asistentes += 1;
+        }
+      });
+
+      quorumPorComision.forEach((comData) => {
+        comData.requerido = Math.floor(comData.total / 2) + 1;
+        comData.tieneQuorum = comData.asistentes >= comData.requerido;
+      });
+    }
+
+    // 👇 Quórum general = true solo si TODAS las comisiones tienen quórum
+    const todasConQuorum = quorumPorComision.size > 0 &&
+      Array.from(quorumPorComision.values()).every(c => c.tieneQuorum);
+
+    // ===== CREAR PDF =====
     const doc = new PDFDocument({ 
       size: 'LETTER', 
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
@@ -4298,53 +4348,57 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     doc.pipe(res);
 
-
-    // Ruta de la imagen de fondo
     const bgPath = path.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
 
-
-    // Función para dibujar fondo de página
     const drawBackground = () => {
       doc.image(bgPath, 0, 0, {
         width: doc.page.width,
         height: doc.page.height,
       });
-      doc.y = 106; // Fijar posición inicial después del fondo
+      doc.y = 106;
     };
 
-    // Dibujar fondo en la primera página
     drawBackground();
 
-    // ===== DISEÑO DEL PDF =====
-
-    // Encabezado
+    // ===== ENCABEZADO =====
     doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
     doc.moveDown(1);
 
-    // Información del Evento
+    // ===== INFORMACIÓN DEL EVENTO =====
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
     doc.moveDown(0.3);
 
-    // Tipo
     doc.fontSize(11).font('Helvetica-Bold').text('Tipo: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.tipoevento?.nombre || 'N/A');
 
-    // Sede
     doc.fontSize(11).font('Helvetica-Bold').text('Sede: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.sede?.sede || 'N/A');
 
-    // Fecha
     doc.fontSize(11).font('Helvetica-Bold').text('Fecha: ', { continued: true });
-    doc.fontSize(11).font('Helvetica').text(evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A');
+    doc.fontSize(11).font('Helvetica').text(
+      evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A'
+    );
 
-    // Descripción (justificada)
     doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
+
+    // ===== 👇 QUÓRUM GENERAL =====
+    if (!esSesion && tienetipoReunion) {
+      doc.moveDown(0.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('Quórum general: ', { continued: true });
+      doc.fontSize(11).font('Helvetica')
+        .text(`${asistentesGeneral}/${totalDiputados} — requerido: ${quorumGeneralRequerido}   `, { continued: true });
+      doc.fontSize(11).font('Helvetica-Bold')
+        .fillColor(todasConQuorum ? '#22c55e' : '#dc2626')
+        .text(todasConQuorum ? 'CON QUÓRUM' : 'SIN QUÓRUM');
+      doc.fillColor('#000');
+    }
+
     doc.moveDown(1);
 
-    // Resumen de Asistencia
+    // ===== RESUMEN DE ASISTENCIA =====
     doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text('RESUMEN DE ASISTENCIA');
     doc.moveDown(0.3);
 
@@ -4352,26 +4406,20 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     const colWidths = [120, 120, 120, 100];
     const rowHeight = 25;
 
-    // Encabezados de tabla
     doc.fontSize(11).font('Helvetica-Bold');
 
-    // ASISTENCIA - Verde
     doc.rect(50, tableTop, colWidths[0], rowHeight).fillAndStroke('#22c55e', '#000');
     doc.fillColor('#fff').text('ASISTENCIA', 55, tableTop + 7, { width: colWidths[0] - 10, align: 'center' });
 
-    // ASISTENCIA ZOOM - Azul
     doc.rect(50 + colWidths[0], tableTop, colWidths[1], rowHeight).fillAndStroke('#3b82f6', '#000');
     doc.fillColor('#fff').text('ASISTENCIA ZOOM', 50 + colWidths[0] + 5, tableTop + 7, { width: colWidths[1] - 10, align: 'center' });
 
-    // PENDIENTE - Amarillo
     doc.rect(50 + colWidths[0] + colWidths[1], tableTop, colWidths[2], rowHeight).fillAndStroke('#f59e0b', '#000');
     doc.fillColor('#fff').text('PENDIENTE', 50 + colWidths[0] + colWidths[1] + 5, tableTop + 7, { width: colWidths[2] - 10, align: 'center' });
 
-    // TOTAL - Gris
     doc.rect(50 + colWidths[0] + colWidths[1] + colWidths[2], tableTop, colWidths[3], rowHeight).fillAndStroke('#6b7280', '#000');
     doc.fillColor('#fff').text('TOTAL', 50 + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableTop + 7, { width: colWidths[3] - 10, align: 'center' });
 
-    // Valores
     const valuesTop = tableTop + rowHeight;
     doc.fontSize(11).font('Helvetica-Bold');
 
@@ -4390,25 +4438,26 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     doc.moveDown(2);
     doc.x = doc.page.margins.left;
 
-    // ===== DETALLE DE ASISTENCIA SEGÚN TIPO DE EVENTO =====
-    
+    // ===== DETALLE =====
     if (esSesion) {
       generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
     } else {
-      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground);
+      generarDetalleComisionAsistencia(
+        doc,
+        asistenciasConDetalles,
+        drawBackground,
+        tienetipoReunion ? quorumPorComision : new Map() // 👈 mapa vacío si no aplica
+      );
     }
 
     doc.end();
 
-    // Esperar a que se generen todas las páginas
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // DESPUÉS agregar pie de página a TODAS las páginas ya generadas
     const range = doc.bufferedPageRange();
     
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
-      
       doc.fontSize(8).font('Helvetica').fillColor('#666');
       doc.text(
         `Página ${i + 1} de ${range.count} | Generado: ${new Date().toLocaleString('es-MX')}`,
@@ -4723,12 +4772,11 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const totalDiputados = asistenciasConDetalles.length;
 
-    // ===== 👇 CÁLCULO DE QUÓRUM =====
+    // ===== CÁLCULO DE QUÓRUM =====
+    const tienetipoReunion = evento.tipo_reunion === 1; // 👈 solo si es exactamente 1
     const asistentesGeneral = totales.asistencia + totales.asistenciaZoom;
     const quorumGeneralRequerido = Math.floor(totalDiputados / 2) + 1;
-    const tieneQuorumGeneral = asistentesGeneral >= quorumGeneralRequerido;
 
-    // Quórum por comisión (solo si no es sesión)
     const quorumPorComision = new Map<string, {
       nombre: string;
       total: number;
@@ -4738,7 +4786,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       importancia: number;
     }>();
 
-    if (!esSesion) {
+    if (!esSesion && tienetipoReunion) {
       asistenciasConDetalles.forEach((a: any) => {
         if (!a.comision_nombre) return;
 
@@ -4761,12 +4809,15 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
         }
       });
 
-      // Calcular requerido y si tiene quórum
       quorumPorComision.forEach((comData) => {
         comData.requerido = Math.floor(comData.total / 2) + 1;
         comData.tieneQuorum = comData.asistentes >= comData.requerido;
       });
     }
+
+    // Quórum general = true solo si TODAS las comisiones tienen quórum
+    const todasConQuorum = quorumPorComision.size > 0 &&
+      Array.from(quorumPorComision.values()).every(c => c.tieneQuorum);
 
     // ===== CREAR PDF =====
     const doc = new PDFDocument({ 
@@ -4822,17 +4873,17 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     doc.fontSize(11).font('Helvetica-Bold').text('Descripción: ', { continued: true });
     doc.fontSize(11).font('Helvetica').text(evento.descripcion || 'N/A', { width: 500, align: "justify" });
 
-    // ===== 👇 QUÓRUM GENERAL (solo comisión) =====
-    if (!esSesion) {
+    // ===== QUÓRUM GENERAL (solo si tipo_reunion === 1) =====
+    if (!esSesion && tienetipoReunion) {
       doc.moveDown(0.5);
       doc.fontSize(11).font('Helvetica-Bold').text('Quórum: ', { continued: true });
-      doc.fontSize(11).font('Helvetica').text(
-        `${quorumGeneralRequerido} de ${totalDiputados} — Asistentes: ${asistentesGeneral}   `,
-        { continued: true }
-      );
+      // doc.fontSize(11).font('Helvetica').text(
+      //   `${quorumGeneralRequerido} de ${totalDiputados} — Asistentes: ${asistentesGeneral}   `,
+      //   { continued: true }
+      // );
       doc.fontSize(11).font('Helvetica-Bold')
-        .fillColor(tieneQuorumGeneral ? '#22c55e' : '#dc2626')
-        .text(tieneQuorumGeneral ? 'CON QUÓRUM' : 'SIN QUÓRUM');
+        .fillColor(todasConQuorum ? '#22c55e' : '#dc2626')
+        .text(todasConQuorum ? 'CON QUÓRUM' : 'SIN QUÓRUM');
       doc.fillColor('#000');
     }
 
@@ -4878,10 +4929,16 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     doc.moveDown(2);
     doc.x = doc.page.margins.left;
 
+    // ===== DETALLE =====
     if (esSesion) {
       generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
     } else {
-      generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground, quorumPorComision);
+      generarDetalleComisionAsistencia(
+        doc,
+        asistenciasConDetalles,
+        drawBackground,
+        tienetipoReunion ? quorumPorComision : new Map() // 👈 mapa vacío si no aplica
+      );
     }
 
     doc.end();
@@ -4912,9 +4969,9 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       }
     }
 
-    // 👇 Agregar quórum al mensaje de WhatsApp
-    const quorumMsg = !esSesion 
-      ? `\n*Quórum:* ${asistentesGeneral}/${totalDiputados} — requerido: ${quorumGeneralRequerido} — ${tieneQuorumGeneral ? '✅ CON QUÓRUM' : '❌ SIN QUÓRUM'}\n`
+    // Quórum en mensaje WhatsApp (solo si tipo_reunion === 1)
+    const quorumMsg = (!esSesion && tienetipoReunion)
+      ? `\n*Quórum:* ${asistentesGeneral}/${totalDiputados} — ${todasConQuorum ? '✅ CON QUÓRUM' : '❌ SIN QUÓRUM'}\n`
       : '';
 
     const mensajeTexto = `*ASISTENCIA - ${evento.tipoevento?.nombre || 'Evento'}*\n\n` +
@@ -4938,7 +4995,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      to: "+525561081154,  +527224986377",
+      to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+      // to: "+525561081154, ",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
@@ -4962,14 +5020,14 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       enviado: true,
       archivo: fileName,
       totales,
-      quorum: {
+      quorum: tienetipoReunion ? {
         general: {
           asistentes: asistentesGeneral,
           requerido: quorumGeneralRequerido,
           total: totalDiputados,
-          tieneQuorum: tieneQuorumGeneral
+          todasConQuorum
         }
-      },
+      } : null,
       whatsappResponse: whatsappResponse.data
     });
 
