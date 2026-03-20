@@ -4995,12 +4995,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-<<<<<<< HEAD
-      to: "+527222035605, +527224986377, +527151605569",
-=======
       to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
       // to: "+525561081154, ",
->>>>>>> b6dff1186e180535e7e160c532a3fe1fa88ea68c
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
