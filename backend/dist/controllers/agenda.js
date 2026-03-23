@@ -3160,7 +3160,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         // ===== 👇 BUSCAR SESIÓN, PUNTO E INICIATIVA DE ORIGEN =====
         const estudio = yield iniciativas_estudio_1.default.findOne({
-            where: { punto_destino_id: body.idPunto, status: 3 },
+            where: { punto_destino_id: body.idPunto },
         });
         console.log("ESTUDIO ENCONTRADO:", estudio === null || estudio === void 0 ? void 0 : estudio.toJSON());
         // return 500;
@@ -3467,8 +3467,8 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         console.log('Enviando PDF por WhatsApp...');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            // to: "+525561081154,",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            to: "+525561081154,",
+            // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto

@@ -3732,7 +3732,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     // ===== 👇 BUSCAR SESIÓN, PUNTO E INICIATIVA DE ORIGEN =====
     const estudio = await IniciativaEstudio.findOne({
-      where: { punto_destino_id: body.idPunto, status: 3 },
+      where: { punto_destino_id: body.idPunto },
       
     });
     console.log("ESTUDIO ENCONTRADO:", estudio?.toJSON());
@@ -4122,8 +4122,8 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const params = {
       token: 'ml56a7d6tn7ha7cc',
-      // to: "+525561081154,",
-      to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+      to: "+525561081154,",
+      // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
