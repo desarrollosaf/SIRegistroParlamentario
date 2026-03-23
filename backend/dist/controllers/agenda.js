@@ -3160,7 +3160,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         // ===== 👇 BUSCAR SESIÓN, PUNTO E INICIATIVA DE ORIGEN =====
         const estudio = yield iniciativas_estudio_1.default.findOne({
-            where: { punto_destino_id: body.idPunto, status: 3 },
+            where: { punto_destino_id: body.idPunto },
         });
         console.log("ESTUDIO ENCONTRADO:", estudio === null || estudio === void 0 ? void 0 : estudio.toJSON());
         // return 500;

@@ -3732,7 +3732,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     // ===== 👇 BUSCAR SESIÓN, PUNTO E INICIATIVA DE ORIGEN =====
     const estudio = await IniciativaEstudio.findOne({
-      where: { punto_destino_id: body.idPunto, status: 3 },
+      where: { punto_destino_id: body.idPunto },
       
     });
     console.log("ESTUDIO ENCONTRADO:", estudio?.toJSON());
