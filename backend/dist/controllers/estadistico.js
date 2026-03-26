@@ -33,143 +33,94 @@ const diputado_1 = __importDefault(require("../models/diputado"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
-const deduplicarPorId = (items) => {
-    return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS PUROS (sin I/O)
+// ─────────────────────────────────────────────────────────────────────────────
+const deduplicarPorId = (items) => items.filter((e, idx, self) => idx === self.findIndex((x) => x.id === e.id));
 const formatearFechaCorta = (fecha) => {
     if (!fecha)
         return "-";
     const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    const date = new Date(fecha);
-    const dia = String(date.getUTCDate()).padStart(2, "0");
-    const mes = meses[date.getUTCMonth()];
-    const anio = String(date.getUTCFullYear()).slice(-2);
-    return `${dia}-${mes}-${anio}`;
+    const d = new Date(fecha);
+    return `${String(d.getUTCDate()).padStart(2, "0")}-${meses[d.getUTCMonth()]}-${String(d.getUTCFullYear()).slice(-2)}`;
 };
 const obtenerPeriodo = (fecha) => {
     if (!fecha)
         return "-";
     const d = new Date(fecha);
-    const anio = d.getUTCFullYear();
-    const mes = String(d.getUTCMonth() + 1).padStart(2, "0");
-    return `${anio}-${mes}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 };
-const normalizarTexto = (valor) => {
-    if (!valor)
-        return "-";
-    return String(valor).trim() || "-";
-};
-const getAnfitriones = (eventoId, tipoEventoNombre) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!eventoId || tipoEventoNombre === "Sesión") {
-        return { comisiones: null };
-    }
-    const anfitriones = yield anfitrion_agendas_1.default.findAll({
-        where: { agenda_id: eventoId },
-        attributes: ["autor_id"],
-        raw: true
-    });
-    const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
-    if (comisionIds.length === 0) {
-        return { comisiones: null };
-    }
-    const comisiones = yield comisions_1.default.findAll({
-        where: { id: comisionIds },
-        attributes: ["nombre"],
-        raw: true
-    });
+const normalizarTexto = (valor) => valor ? String(valor).trim() || "-" : "-";
+// ─────────────────────────────────────────────────────────────────────────────
+// CARGA MASIVA DE CATÁLOGOS  (una sola vez, todo en paralelo)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Devuelve Maps indexados por ID para lookup O(1).
+ * Esto reemplaza las decenas de findOne() individuales dentro del loop.
+ */
+const cargarCatalogos = () => __awaiter(void 0, void 0, void 0, function* () {
+    const [diputados, integrantes, partidos, comisiones, municipios, secretarias, legislaturas, catFunDep, proponentes,] = yield Promise.all([
+        diputado_1.default.findAll({ raw: true }),
+        integrante_legislaturas_1.default.findAll({ raw: true }),
+        partidos_1.default.findAll({ attributes: ["id", "nombre"], raw: true }),
+        comisions_1.default.findAll({ attributes: ["id", "nombre"], raw: true }),
+        municipiosag_1.default.findAll({ raw: true }),
+        secretarias_1.default.findAll({ raw: true }),
+        legislaturas_1.default.findAll({ raw: true }),
+        cat_fun_dep_1.default.findAll({ raw: true }),
+        proponentes_1.default.findAll({ attributes: ["id", "valor"], raw: true }),
+    ]);
+    // Maps clave → objeto
+    const mapDiputados = new Map(diputados.map((d) => [String(d.id), d]));
+    const mapIntegrantes = new Map(integrantes.map((i) => { var _a; return [String((_a = i.diputado_id) !== null && _a !== void 0 ? _a : i.id), i]; }));
+    const mapPartidos = new Map(partidos.map((p) => [String(p.id), p]));
+    const mapComisiones = new Map(comisiones.map((c) => [String(c.id), c]));
+    const mapMunicipios = new Map(municipios.map((m) => [String(m.id), m]));
+    const mapSecretarias = new Map(secretarias.map((s) => [String(s.id), s]));
+    const mapLegislaturas = new Map(legislaturas.map((l) => [String(l.id), l]));
+    const mapCatFunDep = new Map(catFunDep.map((c) => [String(c.id), c]));
+    const mapProponentes = new Map(proponentes.map((p) => [String(p.id), p]));
     return {
-        comisiones: comisiones.map((c) => c.nombre).join(", ")
+        mapDiputados,
+        mapIntegrantes,
+        mapPartidos,
+        mapComisiones,
+        mapMunicipios,
+        mapSecretarias,
+        mapLegislaturas,
+        mapCatFunDep,
+        mapProponentes,
     };
 });
-const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!puntoId) {
-        return { turnado: false, comisiones_turnado: null };
-    }
-    const puntosComisiones = yield puntos_comisiones_1.default.findAll({
-        where: { id_punto: puntoId },
-        attributes: ["id_comision"],
-        raw: true
-    });
-    if (puntosComisiones.length === 0) {
-        return { turnado: false, comisiones_turnado: null };
-    }
-    const todosIds = puntosComisiones
-        .map((item) => item.id_comision || "")
-        .join(",");
-    const comisionIds = todosIds
-        .replace(/[\[\]]/g, "")
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-    const comisionIdsUnicos = [...new Set(comisionIds)];
-    if (comisionIdsUnicos.length === 0) {
-        return { turnado: false, comisiones_turnado: null };
-    }
-    const comisiones = yield comisions_1.default.findAll({
-        where: { id: comisionIdsUnicos },
-        attributes: ["nombre"],
-        raw: true
-    });
-    return {
-        turnado: true,
-        comisiones_turnado: comisiones.map((c) => c.nombre).join(", ")
-    };
-});
-const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
-    let proponentesString = "";
-    let presentaString = "";
+// ─────────────────────────────────────────────────────────────────────────────
+// PRESENTANTES  (ya sin queries — usa Maps)
+// ─────────────────────────────────────────────────────────────────────────────
+const getPresentantesDePunto = (presentanRows, // filas de IniciativasPresenta para este id_iniciativa
+catalogos) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+    const { mapDiputados, mapIntegrantes, mapPartidos, mapComisiones, mapMunicipios, mapSecretarias, mapLegislaturas, mapCatFunDep, mapProponentes, } = catalogos;
+    const proponentesUnicos = new Map();
+    const presentaData = [];
     const diputados = [];
     const diputadoIds = [];
     const gruposParlamentarios = [];
     const grupoParlamentarioIds = [];
-    if (!id) {
-        return {
-            proponentesString,
-            presentaString,
-            diputados,
-            diputadoIds,
-            gruposParlamentarios,
-            grupoParlamentarioIds
-        };
-    }
-    const presentan = yield iniciativaspresenta_1.default.findAll({
-        where: { id_iniciativa: id },
-        raw: true
-    });
-    const proponentesUnicos = new Map();
-    const presentanData = [];
-    for (const p of presentan) {
-        const tipoProponente = yield proponentes_1.default.findOne({
-            where: { id: p.id_tipo_presenta },
-            attributes: ["id", "valor"],
-            raw: true
-        });
-        const tipoValor = (_a = tipoProponente === null || tipoProponente === void 0 ? void 0 : tipoProponente.valor) !== null && _a !== void 0 ? _a : "";
+    for (const p of presentanRows) {
+        const tipo = mapProponentes.get(String(p.id_tipo_presenta));
+        const tipoValor = (_a = tipo === null || tipo === void 0 ? void 0 : tipo.valor) !== null && _a !== void 0 ? _a : "";
         let valor = "";
         if (tipoValor === "Diputadas y Diputados") {
-            const dip = yield diputado_1.default.findOne({
-                where: { id: p.id_presenta },
-                raw: true,
-                include: [
-                    {
-                        model: integrante_legislaturas_1.default,
-                        as: "integrante",
-                    }
-                ]
-            });
+            const dip = mapDiputados.get(String(p.id_presenta));
             if (dip) {
                 valor = `${(_b = dip.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.amaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = dip.nombres) !== null && _d !== void 0 ? _d : ""}`.trim();
                 if (valor)
                     diputados.push(valor);
                 if (p.id_presenta)
                     diputadoIds.push(String(p.id_presenta));
-                if (dip.integrante) {
-                    const partido = yield partidos_1.default.findOne({
-                        where: { id: dip.integrante.partido_id },
-                        attributes: ["id", "nombre"],
-                        raw: true
-                    });
+                // El integrante puede estar indexado por diputado_id o directamente por id
+                const integrante = mapIntegrantes.get(String(dip.id));
+                if (integrante) {
+                    const partido = mapPartidos.get(String(integrante.partido_id));
                     if (partido === null || partido === void 0 ? void 0 : partido.nombre)
                         gruposParlamentarios.push(partido.nombre);
                     if (partido === null || partido === void 0 ? void 0 : partido.id)
@@ -178,156 +129,215 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
             }
         }
         else if (["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)) {
-            const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_e = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _e !== void 0 ? _e : "";
+            valor = (_f = (_e = mapComisiones.get(String(p.id_presenta))) === null || _e === void 0 ? void 0 : _e.nombre) !== null && _f !== void 0 ? _f : "";
         }
         else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
-            const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_f = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _f !== void 0 ? _f : "";
+            valor = (_h = (_g = mapMunicipios.get(String(p.id_presenta))) === null || _g === void 0 ? void 0 : _g.nombre) !== null && _h !== void 0 ? _h : "";
         }
         else if (tipoValor === "Grupo Parlamentario") {
-            const partido = yield partidos_1.default.findOne({
-                where: { id: p.id_presenta },
-                attributes: ["id", "nombre"],
-                raw: true
-            });
-            valor = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : "";
+            const partido = mapPartidos.get(String(p.id_presenta));
+            valor = (_j = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _j !== void 0 ? _j : "";
             if (valor)
                 gruposParlamentarios.push(valor);
             if (partido === null || partido === void 0 ? void 0 : partido.id)
                 grupoParlamentarioIds.push(String(partido.id));
         }
         else if (tipoValor === "Legislatura") {
-            const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_h = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _h !== void 0 ? _h : "";
+            valor = String((_l = (_k = mapLegislaturas.get(String(p.id_presenta))) === null || _k === void 0 ? void 0 : _k.numero) !== null && _l !== void 0 ? _l : "");
         }
         else if (tipoValor === "Secretarías del GEM") {
-            const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = `${(_j = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _j !== void 0 ? _j : ""} / ${(_k = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _k !== void 0 ? _k : ""}`.trim();
+            const sec = mapSecretarias.get(String(p.id_presenta));
+            valor = sec ? `${(_m = sec.nombre) !== null && _m !== void 0 ? _m : ""} / ${(_o = sec.titular) !== null && _o !== void 0 ? _o : ""}`.trim() : "";
         }
         else {
-            const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
-            valor = (_l = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _l !== void 0 ? _l : "";
+            valor = (_q = (_p = mapCatFunDep.get(String(p.id_presenta))) === null || _p === void 0 ? void 0 : _p.nombre_titular) !== null && _q !== void 0 ? _q : "";
         }
-        if (tipoValor && !proponentesUnicos.has(tipoValor)) {
+        if (tipoValor && !proponentesUnicos.has(tipoValor))
             proponentesUnicos.set(tipoValor, tipoValor);
-        }
-        if (valor) {
-            presentanData.push({
-                proponente: tipoValor,
-                valor,
-                id_presenta: p.id_presenta
-            });
-        }
+        if (valor)
+            presentaData.push(valor);
     }
-    proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-    presentaString = presentanData.map((p) => p.valor).join(", ");
     return {
-        proponentesString,
-        presentaString,
+        proponentesString: [...proponentesUnicos.keys()].join(", "),
+        presentaString: presentaData.join(", "),
         diputados: [...new Set(diputados)],
         diputadoIds: [...new Set(diputadoIds)],
         gruposParlamentarios: [...new Set(gruposParlamentarios)],
-        grupoParlamentarioIds: [...new Set(grupoParlamentarioIds)]
+        grupoParlamentarioIds: [...new Set(grupoParlamentarioIds)],
     };
-});
+};
+// ─────────────────────────────────────────────────────────────────────────────
+// QUERY BASE DE INICIATIVAS  (igual que antes — el ORM ya hace sus joins)
+// ─────────────────────────────────────────────────────────────────────────────
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield inciativas_puntos_ordens_1.default.findAll({
+    return inciativas_puntos_ordens_1.default.findAll({
         attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
         include: [
             {
-                model: puntos_ordens_1.default,
-                as: "punto",
+                model: puntos_ordens_1.default, as: "punto",
                 attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-                include: [
-                    {
-                        model: iniciativas_estudio_1.default,
-                        as: "estudio",
+                include: [{
+                        model: iniciativas_estudio_1.default, as: "estudio",
                         attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
-                        required: false,
-                        where: { type: 1 },
-                        include: [
-                            {
-                                model: puntos_ordens_1.default,
-                                as: "iniciativa",
+                        required: false, where: { type: 1 },
+                        include: [{
+                                model: puntos_ordens_1.default, as: "iniciativa",
                                 attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-                                include: [
-                                    {
-                                        model: agendas_1.default,
-                                        as: "evento",
+                                include: [{
+                                        model: agendas_1.default, as: "evento",
                                         attributes: ["id", "fecha", "descripcion", "liga"],
-                                        include: [
-                                            {
-                                                model: tipo_eventos_1.default,
-                                                as: "tipoevento",
-                                                attributes: ["nombre"]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                        include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
+                                    }]
+                            }]
+                    }]
             },
             {
-                model: expedientes_estudio_puntos_1.default,
-                as: "expedienteturno",
+                model: expedientes_estudio_puntos_1.default, as: "expedienteturno",
                 attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-                include: [
-                    {
-                        model: iniciativas_estudio_1.default,
-                        as: "estudio",
+                include: [{
+                        model: iniciativas_estudio_1.default, as: "estudio",
                         attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
                         required: false,
-                        include: [
-                            {
-                                model: puntos_ordens_1.default,
-                                as: "iniciativa",
+                        include: [{
+                                model: puntos_ordens_1.default, as: "iniciativa",
                                 attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-                                include: [
-                                    {
-                                        model: agendas_1.default,
-                                        as: "evento",
+                                include: [{
+                                        model: agendas_1.default, as: "evento",
                                         attributes: ["id", "fecha", "descripcion", "liga"],
-                                        include: [
-                                            {
-                                                model: tipo_eventos_1.default,
-                                                as: "tipoevento",
-                                                attributes: ["nombre"]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                        include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
+                                    }]
+                            }]
+                    }]
             },
             {
-                model: agendas_1.default,
-                as: "evento",
+                model: agendas_1.default, as: "evento",
                 attributes: ["id", "fecha", "descripcion", "liga"],
-                include: [
-                    {
-                        model: tipo_eventos_1.default,
-                        as: "tipoevento",
-                        attributes: ["nombre"]
-                    }
-                ]
+                include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
             }
         ],
         order: [["createdAt", "ASC"]]
     });
 });
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTRUCCIÓN DEL REPORTE  (N+1 eliminado)
+// ─────────────────────────────────────────────────────────────────────────────
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
-    const iniciativas = yield obtenerIniciativasBase();
-    const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
-        const data = iniciativa.toJSON();
-        const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
+    var _a, _b, _c, _d, _e;
+    // 1) Todas las queries en paralelo — catálogos + iniciativas + relaciones auxiliares
+    const [iniciativasRaw, catalogos, todasPresentan, todosAnfitriones, todosPuntosComisiones] = yield Promise.all([
+        obtenerIniciativasBase(),
+        cargarCatalogos(),
+        iniciativaspresenta_1.default.findAll({ raw: true }),
+        anfitrion_agendas_1.default.findAll({ attributes: ["agenda_id", "autor_id"], raw: true }),
+        puntos_comisiones_1.default.findAll({ attributes: ["id_punto", "id_comision"], raw: true }),
+    ]);
+    // 2) Agrupar presentantes por id_iniciativa  → Map<iniciativaId, rows[]>
+    const presentanPorIniciativa = new Map();
+    for (const row of todasPresentan) {
+        const key = String(row.id_iniciativa);
+        if (!presentanPorIniciativa.has(key))
+            presentanPorIniciativa.set(key, []);
+        presentanPorIniciativa.get(key).push(row);
+    }
+    // 3) Anfitriones por agenda_id → Map<agendaId, nombre[]>
+    const anfitrionesMap = new Map();
+    const { mapComisiones } = catalogos;
+    for (const a of todosAnfitriones) {
+        const key = String(a.agenda_id);
+        if (!anfitrionesMap.has(key))
+            anfitrionesMap.set(key, []);
+        const nombre = (_a = mapComisiones.get(String(a.autor_id))) === null || _a === void 0 ? void 0 : _a.nombre;
+        if (nombre)
+            anfitrionesMap.get(key).push(nombre);
+    }
+    // 4) Comisiones turnadas por punto_id → Map<puntoId, nombre[]>
+    const comisionesTurnadoMap = new Map();
+    for (const row of todosPuntosComisiones) {
+        const key = String(row.id_punto);
+        const ids = String((_b = row.id_comision) !== null && _b !== void 0 ? _b : "")
+            .replace(/[\[\]]/g, "").split(",")
+            .map((x) => x.trim()).filter(Boolean);
+        if (!comisionesTurnadoMap.has(key))
+            comisionesTurnadoMap.set(key, []);
+        for (const cid of ids) {
+            const nombre = (_c = mapComisiones.get(cid)) === null || _c === void 0 ? void 0 : _c.nombre;
+            if (nombre)
+                comisionesTurnadoMap.get(key).push(nombre);
+        }
+    }
+    // 5) Reunir todos los punto_ids y expediente_ids para resolver cierres en batch
+    const iniciativas = iniciativasRaw.map((i) => i.toJSON());
+    const todosLosPuntoIds = new Set();
+    const todosLosExpedienteIds = new Set();
+    for (const data of iniciativas) {
+        if ((_d = data.punto) === null || _d === void 0 ? void 0 : _d.id)
+            todosLosPuntoIds.add(String(data.punto.id));
+        const estudios = [
+            ...(Array.isArray((_e = data.punto) === null || _e === void 0 ? void 0 : _e.estudio) ? data.punto.estudio : []),
+            ...(Array.isArray(data.expedienteturno)
+                ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
+                : [])
+        ];
+        for (const e of deduplicarPorId(estudios)) {
+            if (e.punto_destino_id)
+                todosLosPuntoIds.add(String(e.punto_destino_id));
+        }
+    }
+    // Batch: expedientes relacionados a todos los puntos de una sola vez
+    const expRelacionados = todosLosPuntoIds.size > 0
+        ? yield expedientes_estudio_puntos_1.default.findAll({
+            where: { punto_origen_sesion_id: { [sequelize_1.Op.in]: [...todosLosPuntoIds] } },
+            attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+            raw: true
+        })
+        : [];
+    // Map: punto_id → expediente_ids[]
+    const expedientesPorPunto = new Map();
+    for (const e of expRelacionados) {
+        const key = String(e.punto_origen_sesion_id);
+        if (!expedientesPorPunto.has(key))
+            expedientesPorPunto.set(key, []);
+        if (e.expediente_id)
+            expedientesPorPunto.get(key).push(String(e.expediente_id));
+    }
+    for (const eid of expRelacionados) {
+        if (eid.expediente_id)
+            todosLosExpedienteIds.add(String(eid.expediente_id));
+    }
+    // Batch: todos los cierres (status=3) de una sola vez
+    const cierresOrWhere = [];
+    if (todosLosPuntoIds.size > 0)
+        cierresOrWhere.push({ punto_origen_id: { [sequelize_1.Op.in]: [...todosLosPuntoIds] } });
+    if (todosLosExpedienteIds.size > 0)
+        cierresOrWhere.push({ punto_origen_id: { [sequelize_1.Op.in]: [...todosLosExpedienteIds] } });
+    const cierresDB = cierresOrWhere.length > 0
+        ? yield iniciativas_estudio_1.default.findAll({
+            where: { status: "3", [sequelize_1.Op.or]: cierresOrWhere },
+            include: [{
+                    model: puntos_ordens_1.default, as: "iniciativa",
+                    attributes: ["id", "punto", "nopunto", "tribuna"],
+                    include: [{
+                            model: agendas_1.default, as: "evento",
+                            attributes: ["id", "fecha", "descripcion", "liga"],
+                            include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
+                        }]
+                }]
+        })
+        : [];
+    // Map: punto_origen_id → cierre
+    const cierresPorPunto = new Map();
+    for (const c of cierresDB) {
+        const cd = typeof c.toJSON === "function" ? c.toJSON() : c;
+        if (!cierresPorPunto.has(String(cd.punto_origen_id)))
+            cierresPorPunto.set(String(cd.punto_origen_id), cd);
+    }
+    // 6) Construir el reporte — solo JS, cero queries adicionales
+    return iniciativas.map((data, index) => {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+        const presentanRows = (_a = presentanPorIniciativa.get(String(data.id))) !== null && _a !== void 0 ? _a : [];
+        const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds, } = getPresentantesDePunto(presentanRows, catalogos);
         const todosEstudios = [
-            ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
+            ...(Array.isArray((_b = data.punto) === null || _b === void 0 ? void 0 : _b.estudio) ? data.punto.estudio : []),
             ...(Array.isArray(data.expedienteturno)
                 ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
                 : [])
@@ -337,79 +347,34 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
         const rechazadocomi = fuenteEstudios.filter((e) => e.status === "4");
         const rechazosesion = fuenteEstudios.filter((e) => e.status === "5");
-        const dispensa = String((_b = data.punto) === null || _b === void 0 ? void 0 : _b.dispensa) === "1";
+        const dispensa = String((_c = data.punto) === null || _c === void 0 ? void 0 : _c.dispensa) === "1";
         const precluida = String(data.precluida) === "1";
+        // Resolver cierre usando el Map precargado
         const posiblesPuntosIds = [
-            (_c = data.punto) === null || _c === void 0 ? void 0 : _c.id,
+            (_d = data.punto) === null || _d === void 0 ? void 0 : _d.id,
             ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
-        ];
-        const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
-        const expedientesRelacionados = yield expedientes_estudio_puntos_1.default.findAll({
-            where: {
-                punto_origen_sesion_id: {
-                    [sequelize_1.Op.in]: posiblesPuntosUnicos
-                }
-            },
-            attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-            raw: true
-        });
-        const expedienteIds = [
-            ...new Set(expedientesRelacionados
-                .map((e) => e.expediente_id)
-                .filter(Boolean))
-        ];
-        const whereCierres = {
-            status: "3"
-        };
-        if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
-            whereCierres[sequelize_1.Op.or] = [];
-            if (posiblesPuntosUnicos.length > 0) {
-                whereCierres[sequelize_1.Op.or].push({
-                    punto_origen_id: {
-                        [sequelize_1.Op.in]: posiblesPuntosUnicos
-                    }
-                });
-            }
-            if (expedienteIds.length > 0) {
-                whereCierres[sequelize_1.Op.or].push({
-                    punto_origen_id: {
-                        [sequelize_1.Op.in]: expedienteIds
-                    }
-                });
+        ].filter(Boolean).map(String);
+        let cierrePrincipal = null;
+        for (const pid of posiblesPuntosIds) {
+            if (cierresPorPunto.has(pid)) {
+                cierrePrincipal = cierresPorPunto.get(pid);
+                break;
             }
         }
-        const cierresDB = ((_d = whereCierres[sequelize_1.Op.or]) === null || _d === void 0 ? void 0 : _d.length) > 0
-            ? yield iniciativas_estudio_1.default.findAll({
-                where: whereCierres,
-                include: [
-                    {
-                        model: puntos_ordens_1.default,
-                        as: "iniciativa",
-                        attributes: ["id", "punto", "nopunto", "tribuna"],
-                        include: [
-                            {
-                                model: agendas_1.default,
-                                as: "evento",
-                                attributes: ["id", "fecha", "descripcion", "liga"],
-                                include: [
-                                    {
-                                        model: tipo_eventos_1.default,
-                                        as: "tipoevento",
-                                        attributes: ["nombre"]
-                                    }
-                                ]
-                            }
-                        ]
+        // También buscar por expediente_id si aplica
+        if (!cierrePrincipal) {
+            for (const pid of posiblesPuntosIds) {
+                const expIds = (_e = expedientesPorPunto.get(pid)) !== null && _e !== void 0 ? _e : [];
+                for (const eid of expIds) {
+                    if (cierresPorPunto.has(eid)) {
+                        cierrePrincipal = cierresPorPunto.get(eid);
+                        break;
                     }
-                ]
-            })
-            : [];
-        const cierresMerge = [
-            ...fuenteEstudios.filter((e) => e.status === "3"),
-            ...cierresDB.map((c) => c.toJSON())
-        ];
-        const cierres = deduplicarPorId(cierresMerge);
-        const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
+                }
+                if (cierrePrincipal)
+                    break;
+            }
+        }
         let observacion = "En estudio";
         if (precluida) {
             observacion = "Precluida";
@@ -417,93 +382,71 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         else if (dispensa) {
             observacion = "Aprobada";
         }
-        else {
-            if (cierrePrincipal) {
-                observacion = "Aprobada";
-            }
-            else if (rechazosesion.length > 0) {
-                observacion = "Rechazada en sesión";
-            }
-            else if (rechazadocomi.length > 0) {
-                observacion = "Rechazada en comisión";
-            }
-            else if (dictamenes.length > 0) {
-                observacion = "En estudio";
-            }
-            else if (estudios.length > 0) {
-                observacion = "En estudio";
-            }
+        else if (cierrePrincipal) {
+            observacion = "Aprobada";
         }
-        const turnadoInfo = yield getComisionesTurnado((_e = data.punto) === null || _e === void 0 ? void 0 : _e.id);
-        const anfitrionesNacio = yield getAnfitriones((_f = data.evento) === null || _f === void 0 ? void 0 : _f.id, (_h = (_g = data.evento) === null || _g === void 0 ? void 0 : _g.tipoevento) === null || _h === void 0 ? void 0 : _h.nombre);
-        const fechaExpedicion = ((_k = (_j = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _j === void 0 ? void 0 : _j.evento) === null || _k === void 0 ? void 0 : _k.fecha)
+        else if (rechazosesion.length > 0) {
+            observacion = "Rechazada en sesión";
+        }
+        else if (rechazadocomi.length > 0) {
+            observacion = "Rechazada en comisión";
+        }
+        else if (dictamenes.length > 0 || estudios.length > 0) {
+            observacion = "En estudio";
+        }
+        // Comisiones turnadas (lookup O(1))
+        const puntoId = ((_f = data.punto) === null || _f === void 0 ? void 0 : _f.id) ? String(data.punto.id) : null;
+        const comisionesTurnado = puntoId
+            ? [...new Set((_g = comisionesTurnadoMap.get(puntoId)) !== null && _g !== void 0 ? _g : [])].join(", ")
+            : null;
+        // Anfitriones (solo si no es Sesión)
+        const tipoNombre = (_k = (_j = (_h = data.evento) === null || _h === void 0 ? void 0 : _h.tipoevento) === null || _j === void 0 ? void 0 : _j.nombre) !== null && _k !== void 0 ? _k : "";
+        const comisionesAnfitrion = tipoNombre !== "Sesión" && ((_l = data.evento) === null || _l === void 0 ? void 0 : _l.id)
+            ? [...new Set((_m = anfitrionesMap.get(String(data.evento.id))) !== null && _m !== void 0 ? _m : [])].join(", ")
+            : null;
+        const fechaEventoRaw = (_p = (_o = data.evento) === null || _o === void 0 ? void 0 : _o.fecha) !== null && _p !== void 0 ? _p : null;
+        const fechaExpedicion = ((_r = (_q = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _q === void 0 ? void 0 : _q.evento) === null || _r === void 0 ? void 0 : _r.fecha)
             ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
             : "-";
-        const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
-        const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
-        const fechaEventoRaw = (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha) !== null && _m !== void 0 ? _m : null;
         return {
             no: index + 1,
             id: normalizarTexto(data.id),
-            tipo: Number((_o = data.tipo) !== null && _o !== void 0 ? _o : 0),
+            tipo: Number((_s = data.tipo) !== null && _s !== void 0 ? _s : 0),
             autor: normalizarTexto(proponentesString),
             autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
-            materia: normalizarTexto((_p = data.punto) === null || _p === void 0 ? void 0 : _p.punto),
+            materia: normalizarTexto((_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
-            comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones),
+            comisiones: normalizarTexto(comisionesTurnado || comisionesAnfitrion),
             expedicion: fechaExpedicion,
             observac: observacion,
-            diputado,
-            grupo_parlamentario: grupoParlamentario,
+            diputado: diputados.length > 0 ? diputados.join(", ") : "-",
+            grupo_parlamentario: gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-",
             diputado_ids: diputadoIds,
             grupo_parlamentario_ids: grupoParlamentarioIds,
-            periodo: obtenerPeriodo(fechaEventoRaw)
+            periodo: obtenerPeriodo(fechaEventoRaw),
         };
-    })));
-    return reporte;
+    });
 });
+// ─────────────────────────────────────────────────────────────────────────────
+// EXCEL HELPER (sin cambios)
+// ─────────────────────────────────────────────────────────────────────────────
 const aplicarEstiloHoja = (worksheet) => {
     const headerRow = worksheet.getRow(1);
     headerRow.height = 22;
     headerRow.eachCell((cell) => {
-        cell.font = {
-            bold: true,
-            color: { argb: "FFFFFFFF" }
-        };
-        cell.alignment = {
-            vertical: "middle",
-            horizontal: "center",
-            wrapText: true
-        };
-        cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FF00B050" }
-        };
-        cell.border = {
-            top: { style: "thin" },
-            left: { style: "thin" },
-            bottom: { style: "thin" },
-            right: { style: "thin" }
-        };
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF00B050" } };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
     });
     worksheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1)
             return;
         row.eachCell((cell) => {
-            cell.alignment = {
-                vertical: "top",
-                horizontal: "left",
-                wrapText: true
-            };
-            cell.border = {
-                top: { style: "thin" },
-                left: { style: "thin" },
-                bottom: { style: "thin" },
-                right: { style: "thin" }
-            };
+            cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         });
         row.height = 30;
     });
@@ -519,65 +462,48 @@ const generarExcelSimple = (res, nombreHoja, nombreArchivo, columnas, data) => _
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(nombreHoja);
     worksheet.columns = columnas;
-    data.forEach((item, index) => {
-        worksheet.addRow(Object.assign(Object.assign({}, item), { no: index + 1 }));
-    });
+    data.forEach((item, index) => worksheet.addRow(Object.assign(Object.assign({}, item), { no: index + 1 })));
     aplicarEstiloHoja(worksheet);
     const ultimaColumna = String.fromCharCode(64 + columnas.length);
-    worksheet.autoFilter = {
-        from: "A1",
-        to: `${ultimaColumna}1`
-    };
-    const columnasCentradas = ["A"];
-    columnasCentradas.forEach((col) => {
-        worksheet.getColumn(col).alignment = {
-            vertical: "middle",
-            horizontal: "center",
-            wrapText: true
-        };
-    });
+    worksheet.autoFilter = { from: "A1", to: `${ultimaColumna}1` };
+    worksheet.getColumn("A").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     return yield enviarWorkbook(res, workbook, nombreArchivo);
 });
-const contarPorObservacion = (items, observacion) => {
-    return items.filter((item) => item.observac === observacion).length;
-};
+const contarPorObservacion = (items, obs) => items.filter((i) => i.observac === obs).length;
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS  (idénticos externamente, internos usan el reporte optimizado)
+// ─────────────────────────────────────────────────────────────────────────────
 const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();
-        const iniciativas = reporte.filter((item) => Number(item.tipo) === 1);
-        const puntosAcuerdo = reporte.filter((item) => Number(item.tipo) === 2);
-        const minutas = reporte.filter((item) => Number(item.tipo) === 3);
+        const iniciativas = reporte.filter((i) => Number(i.tipo) === 1);
+        const puntosAcuerdo = reporte.filter((i) => Number(i.tipo) === 2);
+        const minutas = reporte.filter((i) => Number(i.tipo) === 3);
         return res.status(200).json({
             ok: true,
             data: {
                 iniciativas: {
                     en_estudio: contarPorObservacion(iniciativas, "En estudio"),
                     aprobadas: contarPorObservacion(iniciativas, "Aprobada"),
-                    total: iniciativas.length
+                    total: iniciativas.length,
                 },
                 minutas: {
                     aprobadas: contarPorObservacion(minutas, "Aprobada"),
-                    total: minutas.length
+                    total: minutas.length,
                 },
-                puntos_acuerdo: {
-                    total: puntosAcuerdo.length
-                },
+                puntos_acuerdo: { total: puntosAcuerdo.length },
                 totales_generales: {
                     iniciativas: iniciativas.length,
                     minutas: minutas.length,
                     puntos_acuerdo: puntosAcuerdo.length,
-                    total_registros: reporte.length
-                }
-            }
+                    total_registros: reporte.length,
+                },
+            },
         });
     }
     catch (error) {
-        console.error("Error al generar resumen de iniciativas/minutas/puntos:", error);
-        return res.status(500).json({
-            ok: false,
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        console.error("Error al generar resumen:", error);
+        return res.status(500).json({ ok: false, message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getResumenTotalesEndpoint = getResumenTotalesEndpoint;
@@ -585,66 +511,40 @@ const getIniciativasPresentadasPorDiputado = (req, res) => __awaiter(void 0, voi
     var _a, _b, _c, _d, _e, _f, _g;
     try {
         const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
-        if (!id) {
-            return res.status(400).json({
-                ok: false,
-                message: "El id del diputado es obligatorio"
-            });
-        }
+        if (!id)
+            return res.status(400).json({ ok: false, message: "El id del diputado es obligatorio" });
         const diputadoId = String(id);
-        const diputado = yield diputado_1.default.findOne({
-            where: { id: diputadoId },
-            include: [
-                {
-                    model: integrante_legislaturas_1.default,
-                    as: "integrante",
-                }
-            ]
-        });
-        if (!diputado) {
-            return res.status(404).json({
-                ok: false,
-                message: "Diputado no encontrado"
-            });
-        }
+        const [diputadoRaw, reporte] = yield Promise.all([
+            diputado_1.default.findOne({ where: { id: diputadoId }, include: [{ model: integrante_legislaturas_1.default, as: "integrante" }] }),
+            construirReporteBase(),
+        ]);
+        if (!diputadoRaw)
+            return res.status(404).json({ ok: false, message: "Diputado no encontrado" });
+        const diputado = diputadoRaw;
         const nombreDiputado = `${(_c = diputado.apaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = diputado.amaterno) !== null && _d !== void 0 ? _d : ""} ${(_e = diputado.nombres) !== null && _e !== void 0 ? _e : ""}`.trim();
-        const grupoId = ((_f = diputado.integrante) === null || _f === void 0 ? void 0 : _f.partido_id)
-            ? String(diputado.integrante.partido_id)
-            : null;
+        const grupoId = ((_f = diputado.integrante) === null || _f === void 0 ? void 0 : _f.partido_id) ? String(diputado.integrante.partido_id) : null;
         let grupoNombre = "-";
         if (grupoId) {
-            const partido = yield partidos_1.default.findOne({
-                where: { id: grupoId },
-                attributes: ["id", "nombre"],
-                raw: true
-            });
+            const partido = yield partidos_1.default.findOne({ where: { id: grupoId }, attributes: ["id", "nombre"], raw: true });
             grupoNombre = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : "-";
         }
-        const reporte = yield construirReporteBase();
-        const autorElla = reporte.filter((item) => Array.isArray(item.diputado_ids) &&
-            item.diputado_ids.map(String).includes(diputadoId));
+        const autorElla = reporte.filter((i) => i.diputado_ids.map(String).includes(diputadoId));
         const autorGrupo = grupoId
-            ? reporte.filter((item) => Array.isArray(item.grupo_parlamentario_ids) &&
-                item.grupo_parlamentario_ids.map(String).includes(String(grupoId)))
+            ? reporte.filter((i) => i.grupo_parlamentario_ids.map(String).includes(String(grupoId)))
             : [];
-        // total general sin duplicar iniciativas
         const mapaGeneral = new Map();
-        [...autorElla, ...autorGrupo].forEach((item) => {
-            mapaGeneral.set(String(item.id), item);
+        [...autorElla, ...autorGrupo].forEach((i) => mapaGeneral.set(String(i.id), i));
+        const totalGeneral = [...mapaGeneral.values()];
+        const contarResumen = (items) => ({
+            pendientes: items.filter((x) => x.observac === "Pendiente").length,
+            en_estudio: items.filter((x) => x.observac === "En estudio").length,
+            dictaminadas: items.filter((x) => x.observac === "Dictaminada").length,
+            aprobadas: items.filter((x) => x.observac === "Aprobada").length,
+            rechazadas_comision: items.filter((x) => x.observac === "Rechazada en comisión").length,
+            rechazadas_sesion: items.filter((x) => x.observac === "Rechazada en sesión").length,
+            precluidas: items.filter((x) => x.observac === "Precluida").length,
+            total: items.length,
         });
-        const totalGeneral = Array.from(mapaGeneral.values());
-        const contarResumen = (items) => {
-            return {
-                pendientes: items.filter((x) => x.observac === "Pendiente").length,
-                en_estudio: items.filter((x) => x.observac === "En estudio").length,
-                dictaminadas: items.filter((x) => x.observac === "Dictaminada").length,
-                aprobadas: items.filter((x) => x.observac === "Aprobada").length,
-                rechazadas_comision: items.filter((x) => x.observac === "Rechazada en comisión").length,
-                rechazadas_sesion: items.filter((x) => x.observac === "Rechazada en sesión").length,
-                precluidas: items.filter((x) => x.observac === "Precluida").length,
-                total: items.length
-            };
-        };
         return res.status(200).json({
             ok: true,
             data: {
@@ -653,24 +553,14 @@ const getIniciativasPresentadasPorDiputado = (req, res) => __awaiter(void 0, voi
                 grupo_parlamentario_id: grupoId,
                 grupo_parlamentario: grupoNombre,
                 resumen_general: contarResumen(totalGeneral),
-                autor_ella: {
-                    resumen: contarResumen(autorElla),
-                    data: autorElla
-                },
-                autor_grupo: {
-                    resumen: contarResumen(autorGrupo),
-                    data: autorGrupo
-                }
-            }
+                autor_ella: { resumen: contarResumen(autorElla), data: autorElla },
+                autor_grupo: { resumen: contarResumen(autorGrupo), data: autorGrupo },
+            },
         });
     }
     catch (error) {
-        console.error("Error al obtener iniciativas presentadas por diputado:", error);
-        return res.status(500).json({
-            ok: false,
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        console.error("Error al obtener iniciativas por diputado:", error);
+        return res.status(500).json({ ok: false, message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getIniciativasPresentadasPorDiputado = getIniciativasPresentadasPorDiputado;
@@ -678,110 +568,64 @@ const getIniciativasTurnadasPorComision = (req, res) => __awaiter(void 0, void 0
     var _a, _b;
     try {
         const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
-        if (!id) {
-            return res.status(400).json({
-                ok: false,
-                message: "El id de la comisión es obligatorio"
-            });
-        }
+        if (!id)
+            return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
         const comisionId = String(id).trim();
-        const comision = yield comisions_1.default.findOne({
-            where: { id: comisionId },
-            attributes: ["id", "nombre"],
-            raw: true
-        });
-        if (!comision) {
-            return res.status(404).json({
-                ok: false,
-                message: "Comisión no encontrada"
-            });
-        }
-        const puntosComisiones = yield puntos_comisiones_1.default.findAll({
-            attributes: ["id_punto", "id_comision"],
-            raw: true
-        });
-        const puntosIds = [
-            ...new Set(puntosComisiones
+        const [comisionRaw, puntosComisiones, reporte] = yield Promise.all([
+            comisions_1.default.findOne({ where: { id: comisionId }, attributes: ["id", "nombre"], raw: true }),
+            puntos_comisiones_1.default.findAll({ attributes: ["id_punto", "id_comision"], raw: true }),
+            construirReporteBase(),
+        ]);
+        if (!comisionRaw)
+            return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
+        const comision = comisionRaw;
+        const puntosIds = [...new Set(puntosComisiones
                 .filter((row) => {
                 var _a;
-                const ids = String((_a = row.id_comision) !== null && _a !== void 0 ? _a : "")
-                    .replace(/[\[\]]/g, "")
-                    .split(",")
-                    .map((x) => x.trim())
-                    .filter(Boolean);
-                return ids.includes(comisionId);
+                return String((_a = row.id_comision) !== null && _a !== void 0 ? _a : "").replace(/[\[\]]/g, "").split(",")
+                    .map((x) => x.trim()).includes(comisionId);
             })
                 .map((row) => String(row.id_punto))
-                .filter(Boolean))
-        ];
+                .filter(Boolean))];
         if (!puntosIds.length) {
             return res.status(404).json({
                 ok: false,
                 message: "No se encontraron iniciativas turnadas a esta comisión",
-                data: {
-                    comision_id: comisionId,
-                    comision: comision.nombre,
-                    total: 0,
-                    iniciativas: []
-                }
+                data: { comision_id: comisionId, comision: comision.nombre, total: 0, iniciativas: [] },
             });
         }
         const iniciativasDB = yield inciativas_puntos_ordens_1.default.findAll({
-            where: {
-                id_punto: {
-                    [sequelize_1.Op.in]: puntosIds
-                }
-            },
+            where: { id_punto: { [sequelize_1.Op.in]: puntosIds } },
             attributes: ["id", "id_punto"],
-            raw: true
+            raw: true,
         });
-        const iniciativasIds = [
-            ...new Set(iniciativasDB
-                .map((row) => String(row.id))
-                .filter(Boolean))
-        ];
-        if (!iniciativasIds.length) {
+        const iniciativasIds = new Set(iniciativasDB.map((r) => String(r.id)).filter(Boolean));
+        if (!iniciativasIds.size) {
             return res.status(404).json({
                 ok: false,
                 message: "Se encontraron puntos turnados, pero no iniciativas relacionadas",
-                data: {
-                    comision_id: comisionId,
-                    comision: comision.nombre,
-                    total: 0,
-                    iniciativas: []
-                }
+                data: { comision_id: comisionId, comision: comision.nombre, total: 0, iniciativas: [] },
             });
         }
-        let reporte = yield construirReporteBase();
-        reporte = reporte.filter((item) => iniciativasIds.includes(String(item.id)));
+        const filtrado = reporte.filter((i) => iniciativasIds.has(String(i.id)));
         const resumen = {
-            pendientes: reporte.filter((x) => x.observac === "Pendiente").length,
-            en_estudio: reporte.filter((x) => x.observac === "En estudio").length,
-            dictaminadas: reporte.filter((x) => x.observac === "Dictaminada").length,
-            aprobadas: reporte.filter((x) => x.observac === "Aprobada").length,
-            rechazadas_comision: reporte.filter((x) => x.observac === "Rechazada en comisión").length,
-            rechazadas_sesion: reporte.filter((x) => x.observac === "Rechazada en sesión").length,
-            precluidas: reporte.filter((x) => x.observac === "Precluida").length,
-            total: reporte.length
+            pendientes: filtrado.filter((x) => x.observac === "Pendiente").length,
+            en_estudio: filtrado.filter((x) => x.observac === "En estudio").length,
+            dictaminadas: filtrado.filter((x) => x.observac === "Dictaminada").length,
+            aprobadas: filtrado.filter((x) => x.observac === "Aprobada").length,
+            rechazadas_comision: filtrado.filter((x) => x.observac === "Rechazada en comisión").length,
+            rechazadas_sesion: filtrado.filter((x) => x.observac === "Rechazada en sesión").length,
+            precluidas: filtrado.filter((x) => x.observac === "Precluida").length,
+            total: filtrado.length,
         };
         return res.status(200).json({
             ok: true,
-            data: {
-                comision_id: String(comision.id),
-                comision: comision.nombre,
-                total: reporte.length,
-                resumen,
-                iniciativas: reporte
-            }
+            data: { comision_id: String(comision.id), comision: comision.nombre, total: filtrado.length, resumen, iniciativas: filtrado },
         });
     }
     catch (error) {
-        console.error("Error al obtener iniciativas turnadas por comisión:", error);
-        return res.status(500).json({
-            ok: false,
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        console.error("Error al obtener iniciativas por comisión:", error);
+        return res.status(500).json({ ok: false, message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getIniciativasTurnadasPorComision = getIniciativasTurnadasPorComision;
@@ -801,22 +645,18 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             { header: "COMISIONES", key: "comisiones", width: 40 },
             { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
             { header: "OBSERVAC.", key: "observac", width: 20 },
-            { header: "PERIODO", key: "periodo", width: 15 }
+            { header: "PERIODO", key: "periodo", width: 15 },
         ], reporte);
     }
     catch (error) {
-        console.error("Error al generar Excel general de iniciativas:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getifnini = getifnini;
 const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();
-        const filtrado = reporte.filter((item) => item.observac === "En estudio");
+        const filtrado = reporte.filter((i) => i.observac === "En estudio");
         return yield generarExcelSimple(res, "En estudio", "reporte_iniciativas_en_estudio.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
@@ -829,22 +669,18 @@ const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, 
             { header: "PRESENTAC.", key: "presentac", width: 15 },
             { header: "COMISIONES", key: "comisiones", width: 40 },
             { header: "OBSERVAC.", key: "observac", width: 20 },
-            { header: "PERIODO", key: "periodo", width: 15 }
+            { header: "PERIODO", key: "periodo", width: 15 },
         ], filtrado);
     }
     catch (error) {
-        console.error("Error al generar Excel de iniciativas en estudio:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getIniciativasEnEstudio = getIniciativasEnEstudio;
 const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();
-        const filtrado = reporte.filter((item) => item.observac === "Aprobada");
+        const filtrado = reporte.filter((i) => i.observac === "Aprobada");
         return yield generarExcelSimple(res, "Aprobadas", "reporte_iniciativas_aprobadas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
@@ -858,15 +694,11 @@ const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, 
             { header: "COMISIONES", key: "comisiones", width: 40 },
             { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
             { header: "OBSERVAC.", key: "observac", width: 20 },
-            { header: "PERIODO", key: "periodo", width: 15 }
+            { header: "PERIODO", key: "periodo", width: 15 },
         ], filtrado);
     }
     catch (error) {
-        console.error("Error al generar Excel de iniciativas aprobadas:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getIniciativasAprobadas = getIniciativasAprobadas;
@@ -877,44 +709,19 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
         for (const item of reporte) {
             const diputado = item.diputado || "-";
             const grupo = item.grupo_parlamentario || "-";
-            // if (diputado  == '-' && grupo == '-'){
-            //   console.log(reporte)
-            //   return 500;
-            // }
             const llave = `${diputado}__${grupo}`;
-            if (!mapa.has(llave)) {
-                mapa.set(llave, {
-                    diputado,
-                    grupo_parlamentario: grupo,
-                    pendientes: 0,
-                    en_estudio: 0,
-                    aprobadas: 0,
-                    total: 0
-                });
-            }
+            if (!mapa.has(llave))
+                mapa.set(llave, { diputado, grupo_parlamentario: grupo, pendientes: 0, en_estudio: 0, aprobadas: 0, total: 0 });
             const fila = mapa.get(llave);
-            if (item.observac === "En estudio") {
+            if (item.observac === "En estudio")
                 fila.en_estudio += 1;
-            }
-            if (item.observac === "Aprobada") {
+            if (item.observac === "Aprobada")
                 fila.aprobadas += 1;
-            }
-            if (item.observac === "Pendiente") {
+            if (item.observac === "Pendiente")
                 fila.pendientes += 1;
-            }
             fila.total += 1;
         }
-        const resultado = Array.from(mapa.values()).sort((a, b) => {
-            if (a.grupo_parlamentario < b.grupo_parlamentario)
-                return -1;
-            if (a.grupo_parlamentario > b.grupo_parlamentario)
-                return 1;
-            if (a.diputado < b.diputado)
-                return -1;
-            if (a.diputado > b.diputado)
-                return 1;
-            return 0;
-        });
+        const resultado = [...mapa.values()].sort((a, b) => a.grupo_parlamentario.localeCompare(b.grupo_parlamentario) || a.diputado.localeCompare(b.diputado));
         return yield generarExcelSimple(res, "Grupo y Diputado", "reporte_iniciativas_grupo_diputado.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "DIPUTADO", key: "diputado", width: 35 },
@@ -922,15 +729,11 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
             { header: "PENDIENTES", key: "pendientes", width: 15 },
             { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
             { header: "APROBADAS", key: "aprobadas", width: 15 },
-            { header: "TOTAL", key: "total", width: 12 }
+            { header: "TOTAL", key: "total", width: 12 },
         ], resultado);
     }
     catch (error) {
-        console.error("Error al generar Excel por grupo y diputado:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getIniciativasPorGrupoYDiputado = getIniciativasPorGrupoYDiputado;
@@ -940,344 +743,105 @@ const getTotalesPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const mapa = new Map();
         for (const item of reporte) {
             const periodo = item.periodo || "-";
-            if (!mapa.has(periodo)) {
-                mapa.set(periodo, {
-                    periodo,
-                    pendientes: 0,
-                    en_estudio: 0,
-                    aprobadas: 0,
-                    total: 0
-                });
-            }
+            if (!mapa.has(periodo))
+                mapa.set(periodo, { periodo, pendientes: 0, en_estudio: 0, aprobadas: 0, total: 0 });
             const fila = mapa.get(periodo);
-            if (item.observac === "En estudio") {
+            if (item.observac === "En estudio")
                 fila.en_estudio += 1;
-            }
-            if (item.observac === "Aprobada") {
+            if (item.observac === "Aprobada")
                 fila.aprobadas += 1;
-            }
-            if (item.observac === "Pendiente") {
+            if (item.observac === "Pendiente")
                 fila.pendientes += 1;
-            }
             fila.total += 1;
         }
-        const resultado = Array.from(mapa.values()).sort((a, b) => {
-            if (a.periodo < b.periodo)
-                return -1;
-            if (a.periodo > b.periodo)
-                return 1;
-            return 0;
-        });
+        const resultado = [...mapa.values()].sort((a, b) => a.periodo.localeCompare(b.periodo));
         return yield generarExcelSimple(res, "Totales por periodo", "reporte_iniciativas_totales_periodo.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "PERIODO", key: "periodo", width: 18 },
             { header: "PENDIENTES", key: "pendientes", width: 15 },
             { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
             { header: "APROBADAS", key: "aprobadas", width: 15 },
-            { header: "TOTAL", key: "total", width: 12 }
+            { header: "TOTAL", key: "total", width: 12 },
         ], resultado);
     }
     catch (error) {
-        console.error("Error al generar Excel total por periodo:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getTotalesPorPeriodo = getTotalesPorPeriodo;
-// export const getReporteIniciativasIntegrantes = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { id_tipo, id } = req.body;
-//     if (![1, 2, "1", "2"].includes(id_tipo)) {
-//       return res.status(400).json({
-//         message: "id_tipo inválido. Debe ser 1 (Diputado) o 2 (Grupo Parlamentario)"
-//       });
-//     }
-//     if (id === undefined || id === null || id === "") {
-//       return res.status(400).json({
-//         message: "El campo id es obligatorio. Usa 0 para traer todos."
-//       });
-//     }
-//     const tipo = Number(id_tipo);
-//     const filtroId = String(id);
-//     let reporte = await construirReporteBase();
-//     // id_tipo = 2 => Diputado
-//     if (tipo === 2) {
-//       if (filtroId !== "0") {
-//         reporte = reporte.filter((item: any) =>
-//           Array.isArray(item.diputado_ids) &&
-//           item.diputado_ids.map(String).includes(filtroId)
-//         );
-//       }
-//       const mapa = new Map<string, any>();
-//       for (const item of reporte) {
-//         const diputado = item.diputado || "-";
-//         let diputadoIds = Array.isArray(item.diputado_ids) ? item.diputado_ids : [];
-//         if (filtroId !== "0") {
-//           diputadoIds = diputadoIds.filter((x: any) => String(x) === filtroId);
-//         }
-//         if (diputadoIds.length === 0) {
-//           if (filtroId === "0") {
-//             diputadoIds = ["0"];
-//           } else {
-//             continue;
-//           }
-//         }
-//         for (const dipId of diputadoIds) {
-//           const llave = String(dipId);
-//           if (!mapa.has(llave)) {
-//             mapa.set(llave, {
-//               diputado_id: String(dipId),
-//               diputado,
-//               pendientes: 0,
-//               en_estudio: 0,
-//               dictaminadas: 0,
-//               aprobadas: 0,
-//               rechazadas_comision: 0,
-//               rechazadas_sesion: 0,
-//               total: 0
-//             });
-//           }
-//           const fila = mapa.get(llave);
-//           if (item.observac === "Pendiente") fila.pendientes += 1;
-//           if (item.observac === "En estudio") fila.en_estudio += 1;
-//           if (item.observac === "Dictaminada") fila.dictaminadas += 1;
-//           if (item.observac === "Aprobada") fila.aprobadas += 1;
-//           if (item.observac === "Rechazada en comisión") fila.rechazadas_comision += 1;
-//           if (item.observac === "Rechazada en sesión") fila.rechazadas_sesion += 1;
-//           fila.total += 1;
-//         }
-//       }
-//       const resultado = Array.from(mapa.values()).sort((a, b) => {
-//         if (a.diputado < b.diputado) return -1;
-//         if (a.diputado > b.diputado) return 1;
-//         return 0;
-//       });
-//       return await generarExcelSimple(
-//         res,
-//         "Reporte Diputados",
-//         "reporte_iniciativas_diputados.xlsx",
-//         [
-//           { header: "NO.", key: "no", width: 8 },
-//           { header: "ID DIPUTADO", key: "diputado_id", width: 18 },
-//           { header: "DIPUTADO", key: "diputado", width: 35 },
-//           { header: "PENDIENTES", key: "pendientes", width: 15 },
-//           { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
-//           { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
-//           { header: "APROBADAS", key: "aprobadas", width: 15 },
-//           { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
-//           { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
-//           { header: "TOTAL", key: "total", width: 12 }
-//         ],
-//         resultado
-//       );
-//     }
-//     // id_tipo = 1 => Grupo Parlamentario
-//     if (tipo === 1) {
-//       if (filtroId !== "0") {
-//         reporte = reporte.filter((item: any) =>
-//           Array.isArray(item.grupo_parlamentario_ids) &&
-//           item.grupo_parlamentario_ids.map(String).includes(filtroId)
-//         );
-//       }
-//       const mapa = new Map<string, any>();
-//       for (const item of reporte) {
-//         const grupo = item.grupo_parlamentario || "-";
-//         let grupoIds = Array.isArray(item.grupo_parlamentario_ids)
-//           ? item.grupo_parlamentario_ids
-//           : [];
-//         if (filtroId !== "0") {
-//           grupoIds = grupoIds.filter((x: any) => String(x) === filtroId);
-//         }
-//         if (grupoIds.length === 0) {
-//           if (filtroId === "0") {
-//             grupoIds = ["0"];
-//           } else {
-//             continue;
-//           }
-//         }
-//         for (const grupoId of grupoIds) {
-//           const llave = String(grupoId);
-//           if (!mapa.has(llave)) {
-//             mapa.set(llave, {
-//               grupo_parlamentario_id: String(grupoId),
-//               grupo_parlamentario: grupo,
-//               pendientes: 0,
-//               en_estudio: 0,
-//               dictaminadas: 0,
-//               aprobadas: 0,
-//               rechazadas_comision: 0,
-//               rechazadas_sesion: 0,
-//               total: 0
-//             });
-//           }
-//           const fila = mapa.get(llave);
-//           if (item.observac === "Pendiente") fila.pendientes += 1;
-//           if (item.observac === "En estudio") fila.en_estudio += 1;
-//           if (item.observac === "Dictaminada") fila.dictaminadas += 1;
-//           if (item.observac === "Aprobada") fila.aprobadas += 1;
-//           if (item.observac === "Rechazada en comisión") fila.rechazadas_comision += 1;
-//           if (item.observac === "Rechazada en sesión") fila.rechazadas_sesion += 1;
-//           fila.total += 1;
-//         }
-//       }
-//       const resultado = Array.from(mapa.values()).sort((a, b) => {
-//         if (a.grupo_parlamentario < b.grupo_parlamentario) return -1;
-//         if (a.grupo_parlamentario > b.grupo_parlamentario) return 1;
-//         return 0;
-//       });
-//       return await generarExcelSimple(
-//         res,
-//         "Reporte Grupos",
-//         "reporte_iniciativas_grupos_parlamentarios.xlsx",
-//         [
-//           { header: "NO.", key: "no", width: 8 },
-//           { header: "ID GRUPO", key: "grupo_parlamentario_id", width: 18 },
-//           { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 35 },
-//           { header: "PENDIENTES", key: "pendientes", width: 15 },
-//           { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
-//           { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
-//           { header: "APROBADAS", key: "aprobadas", width: 15 },
-//           { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
-//           { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
-//           { header: "TOTAL", key: "total", width: 12 }
-//         ],
-//         resultado
-//       );
-//     }
-//     return res.status(400).json({
-//       message: "No se pudo procesar la solicitud"
-//     });
-//   } catch (error: any) {
-//     console.error("Error al generar Excel de integrantes:", error);
-//     return res.status(500).json({
-//       message: "Error interno del servidor",
-//       error: error.message
-//     });
-//   }
-// };
 const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
     try {
         const { id_tipo, id } = req.body;
-        if (![1, 2, "1", "2"].includes(id_tipo)) {
-            return res.status(400).json({
-                message: "id_tipo inválido. Debe ser 1 (Diputado) o 2 (Grupo Parlamentario)"
-            });
-        }
-        if (id === undefined || id === null || id === "") {
-            return res.status(400).json({
-                message: "El campo id es obligatorio. Usa 0 para traer todos."
-            });
-        }
+        if (![1, 2, "1", "2"].includes(id_tipo))
+            return res.status(400).json({ message: "id_tipo inválido. Debe ser 1 (Diputado) o 2 (Grupo Parlamentario)" });
+        if (id === undefined || id === null || id === "")
+            return res.status(400).json({ message: "El campo id es obligatorio. Usa 0 para traer todos." });
         const tipo = Number(id_tipo);
         const filtroId = String(id);
-        // AJUSTA ESTOS IDS SEGÚN TU CATÁLOGO proponentes
         const ID_TIPO_PRESENTA_DIPUTADO = 9;
         const ID_TIPO_PRESENTA_GRUPO = 19;
-        let wherePresenta = {};
+        const wherePresenta = { id_tipo_presenta: tipo === 2 ? ID_TIPO_PRESENTA_DIPUTADO : ID_TIPO_PRESENTA_GRUPO };
+        if (filtroId !== "0")
+            wherePresenta.id_presenta = filtroId;
+        const [relaciones, reporte] = yield Promise.all([
+            iniciativaspresenta_1.default.findAll({ where: wherePresenta, attributes: ["id_iniciativa", "id_presenta"], raw: true }),
+            construirReporteBase(),
+        ]);
+        if (!relaciones.length)
+            return res.status(404).json({ message: "No se encontraron iniciativas para el filtro enviado" });
+        const iniciativasIds = new Set(relaciones.map((r) => String(r.id_iniciativa)).filter(Boolean));
+        const reporteFiltrado = reporte.filter((i) => iniciativasIds.has(String(i.id)));
+        if (!reporteFiltrado.length)
+            return res.status(404).json({ message: "No se encontraron datos en el reporte base para esas iniciativas" });
+        const contarFila = (items) => (Object.assign({ pendientes: 0, en_estudio: 0, dictaminadas: 0, aprobadas: 0, rechazadas_comision: 0, rechazadas_sesion: 0, total: 0 }, items.reduce((acc, i) => {
+            if (i.observac === "Pendiente")
+                acc.pendientes += 1;
+            if (i.observac === "En estudio")
+                acc.en_estudio += 1;
+            if (i.observac === "Dictaminada")
+                acc.dictaminadas += 1;
+            if (i.observac === "Aprobada")
+                acc.aprobadas += 1;
+            if (i.observac === "Rechazada en comisión")
+                acc.rechazadas_comision += 1;
+            if (i.observac === "Rechazada en sesión")
+                acc.rechazadas_sesion += 1;
+            acc.total += 1;
+            return acc;
+        }, { pendientes: 0, en_estudio: 0, dictaminadas: 0, aprobadas: 0, rechazadas_comision: 0, rechazadas_sesion: 0, total: 0 })));
         if (tipo === 2) {
-            // Diputado
-            wherePresenta.id_tipo_presenta = ID_TIPO_PRESENTA_DIPUTADO;
-            if (filtroId !== "0") {
-                wherePresenta.id_presenta = filtroId;
-            }
-        }
-        if (tipo === 1) {
-            // Grupo Parlamentario
-            wherePresenta.id_tipo_presenta = ID_TIPO_PRESENTA_GRUPO;
-            if (filtroId !== "0") {
-                wherePresenta.id_presenta = filtroId;
-            }
-        }
-        const relaciones = yield iniciativaspresenta_1.default.findAll({
-            where: wherePresenta,
-            attributes: ["id_iniciativa", "id_presenta"],
-            raw: true
-        });
-        if (!relaciones.length) {
-            return res.status(404).json({
-                message: "No se encontraron iniciativas para el filtro enviado"
-            });
-        }
-        const iniciativasIds = [...new Set(relaciones.map((r) => String(r.id_iniciativa)).filter(Boolean))];
-        let reporte = yield construirReporteBase();
-        reporte = reporte.filter((item) => iniciativasIds.includes(String(item.id)));
-        if (!reporte.length) {
-            return res.status(404).json({
-                message: "No se encontraron datos en el reporte base para esas iniciativas"
-            });
-        }
-        // =========================
-        // REPORTE POR DIPUTADO
-        // =========================
-        if (tipo === 2) {
-            const diputadosIds = [...new Set(relaciones.map((r) => String(r.id_presenta)).filter(Boolean))];
-            const diputadosDB = yield diputado_1.default.findAll({
-                where: {
-                    id: {
-                        [sequelize_1.Op.in]: diputadosIds
-                    }
-                },
+            // Por Diputado
+            const presentasIds = [...new Set(relaciones.map((r) => String(r.id_presenta)).filter(Boolean))];
+            const dipDB = yield diputado_1.default.findAll({
+                where: { id: { [sequelize_1.Op.in]: presentasIds } },
                 attributes: ["id", "apaterno", "amaterno", "nombres"],
-                raw: true
+                raw: true,
             });
-            const diputadosMap = new Map();
-            for (const dip of diputadosDB) {
-                const nombre = `${(_a = dip.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = dip.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.nombres) !== null && _c !== void 0 ? _c : ""}`.trim();
-                diputadosMap.set(String(dip.id), nombre || "-");
+            const dipMap = new Map(dipDB.map((d) => {
+                var _a, _b, _c;
+                return [
+                    String(d.id),
+                    `${(_a = d.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = d.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.nombres) !== null && _c !== void 0 ? _c : ""}`.trim() || "-",
+                ];
+            }));
+            const iniPorDip = new Map();
+            for (const r of relaciones) {
+                const k = String(r.id_presenta);
+                if (!iniPorDip.has(k))
+                    iniPorDip.set(k, new Set());
+                iniPorDip.get(k).add(String(r.id_iniciativa));
             }
-            const iniciativasPorDiputado = new Map();
-            for (const row of relaciones) {
-                const dipId = String(row.id_presenta);
-                const iniId = String(row.id_iniciativa);
-                if (!iniciativasPorDiputado.has(dipId)) {
-                    iniciativasPorDiputado.set(dipId, new Set());
-                }
-                iniciativasPorDiputado.get(dipId).add(iniId);
-            }
-            const resultado = [];
-            for (const dipId of diputadosIds) {
-                const iniciativasDelDip = iniciativasPorDiputado.get(dipId);
-                if (!iniciativasDelDip || iniciativasDelDip.size === 0) {
-                    continue;
-                }
-                const itemsDip = reporte.filter((item) => iniciativasDelDip.has(String(item.id)));
-                if (!itemsDip.length) {
-                    continue;
-                }
-                const fila = {
-                    diputado_id: dipId,
-                    diputado: diputadosMap.get(dipId) || "-",
-                    pendientes: 0,
-                    en_estudio: 0,
-                    dictaminadas: 0,
-                    aprobadas: 0,
-                    rechazadas_comision: 0,
-                    rechazadas_sesion: 0,
-                    total: 0
-                };
-                for (const item of itemsDip) {
-                    if (item.observac === "Pendiente")
-                        fila.pendientes += 1;
-                    if (item.observac === "En estudio")
-                        fila.en_estudio += 1;
-                    if (item.observac === "Dictaminada")
-                        fila.dictaminadas += 1;
-                    if (item.observac === "Aprobada")
-                        fila.aprobadas += 1;
-                    if (item.observac === "Rechazada en comisión")
-                        fila.rechazadas_comision += 1;
-                    if (item.observac === "Rechazada en sesión")
-                        fila.rechazadas_sesion += 1;
-                    fila.total += 1;
-                }
-                if (fila.diputado !== "-" && fila.total > 0) {
-                    resultado.push(fila);
-                }
-            }
-            resultado.sort((a, b) => a.diputado.localeCompare(b.diputado));
+            const resultado = presentasIds
+                .map((dipId) => {
+                var _a, _b;
+                const iniSet = (_a = iniPorDip.get(dipId)) !== null && _a !== void 0 ? _a : new Set();
+                const items = reporteFiltrado.filter((i) => iniSet.has(String(i.id)));
+                if (!items.length)
+                    return null;
+                return Object.assign({ diputado_id: dipId, diputado: (_b = dipMap.get(dipId)) !== null && _b !== void 0 ? _b : "-" }, contarFila(items));
+            })
+                .filter((r) => r && r.diputado !== "-" && r.total > 0)
+                .sort((a, b) => a.diputado.localeCompare(b.diputado));
             return yield generarExcelSimple(res, "Reporte Diputados", "reporte_iniciativas_diputados.xlsx", [
                 { header: "NO.", key: "no", width: 8 },
                 { header: "ID DIPUTADO", key: "diputado_id", width: 18 },
@@ -1288,100 +852,51 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
                 { header: "APROBADAS", key: "aprobadas", width: 15 },
                 { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
                 { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
-                { header: "TOTAL", key: "total", width: 12 }
+                { header: "TOTAL", key: "total", width: 12 },
             ], resultado);
         }
-        // =========================
-        // REPORTE POR GRUPO
-        // =========================
-        if (tipo === 1) {
-            const gruposIds = [...new Set(relaciones.map((r) => String(r.id_presenta)).filter(Boolean))];
-            const gruposDB = yield partidos_1.default.findAll({
-                where: {
-                    id: {
-                        [sequelize_1.Op.in]: gruposIds
-                    }
-                },
-                attributes: ["id", "nombre"],
-                raw: true
-            });
-            const gruposMap = new Map();
-            for (const grupo of gruposDB) {
-                gruposMap.set(String(grupo.id), grupo.nombre || "-");
-            }
-            const iniciativasPorGrupo = new Map();
-            for (const row of relaciones) {
-                const grupoId = String(row.id_presenta);
-                const iniId = String(row.id_iniciativa);
-                if (!iniciativasPorGrupo.has(grupoId)) {
-                    iniciativasPorGrupo.set(grupoId, new Set());
-                }
-                iniciativasPorGrupo.get(grupoId).add(iniId);
-            }
-            const resultado = [];
-            for (const grupoId of gruposIds) {
-                const iniciativasDelGrupo = iniciativasPorGrupo.get(grupoId);
-                if (!iniciativasDelGrupo || iniciativasDelGrupo.size === 0) {
-                    continue;
-                }
-                const itemsGrupo = reporte.filter((item) => iniciativasDelGrupo.has(String(item.id)));
-                if (!itemsGrupo.length) {
-                    continue;
-                }
-                const fila = {
-                    grupo_parlamentario_id: grupoId,
-                    grupo_parlamentario: gruposMap.get(grupoId) || "-",
-                    pendientes: 0,
-                    en_estudio: 0,
-                    dictaminadas: 0,
-                    aprobadas: 0,
-                    rechazadas_comision: 0,
-                    rechazadas_sesion: 0,
-                    total: 0
-                };
-                for (const item of itemsGrupo) {
-                    if (item.observac === "Pendiente")
-                        fila.pendientes += 1;
-                    if (item.observac === "En estudio")
-                        fila.en_estudio += 1;
-                    if (item.observac === "Dictaminada")
-                        fila.dictaminadas += 1;
-                    if (item.observac === "Aprobada")
-                        fila.aprobadas += 1;
-                    if (item.observac === "Rechazada en comisión")
-                        fila.rechazadas_comision += 1;
-                    if (item.observac === "Rechazada en sesión")
-                        fila.rechazadas_sesion += 1;
-                    fila.total += 1;
-                }
-                if (fila.grupo_parlamentario !== "-" && fila.total > 0) {
-                    resultado.push(fila);
-                }
-            }
-            resultado.sort((a, b) => a.grupo_parlamentario.localeCompare(b.grupo_parlamentario));
-            return yield generarExcelSimple(res, "Reporte Grupos", "reporte_iniciativas_grupos_parlamentarios.xlsx", [
-                { header: "NO.", key: "no", width: 8 },
-                { header: "ID GRUPO", key: "grupo_parlamentario_id", width: 18 },
-                { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 35 },
-                { header: "PENDIENTES", key: "pendientes", width: 15 },
-                { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
-                { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
-                { header: "APROBADAS", key: "aprobadas", width: 15 },
-                { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
-                { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
-                { header: "TOTAL", key: "total", width: 12 }
-            ], resultado);
-        }
-        return res.status(400).json({
-            message: "No se pudo procesar la solicitud"
+        // Por Grupo Parlamentario
+        const gruposIds = [...new Set(relaciones.map((r) => String(r.id_presenta)).filter(Boolean))];
+        const gruposDB = yield partidos_1.default.findAll({
+            where: { id: { [sequelize_1.Op.in]: gruposIds } },
+            attributes: ["id", "nombre"],
+            raw: true,
         });
+        const gruposMap = new Map(gruposDB.map((g) => [String(g.id), g.nombre || "-"]));
+        const iniPorGrupo = new Map();
+        for (const r of relaciones) {
+            const k = String(r.id_presenta);
+            if (!iniPorGrupo.has(k))
+                iniPorGrupo.set(k, new Set());
+            iniPorGrupo.get(k).add(String(r.id_iniciativa));
+        }
+        const resultado = gruposIds
+            .map((grupoId) => {
+            var _a, _b;
+            const iniSet = (_a = iniPorGrupo.get(grupoId)) !== null && _a !== void 0 ? _a : new Set();
+            const items = reporteFiltrado.filter((i) => iniSet.has(String(i.id)));
+            if (!items.length)
+                return null;
+            return Object.assign({ grupo_parlamentario_id: grupoId, grupo_parlamentario: (_b = gruposMap.get(grupoId)) !== null && _b !== void 0 ? _b : "-" }, contarFila(items));
+        })
+            .filter((r) => r && r.grupo_parlamentario !== "-" && r.total > 0)
+            .sort((a, b) => a.grupo_parlamentario.localeCompare(b.grupo_parlamentario));
+        return yield generarExcelSimple(res, "Reporte Grupos", "reporte_iniciativas_grupos_parlamentarios.xlsx", [
+            { header: "NO.", key: "no", width: 8 },
+            { header: "ID GRUPO", key: "grupo_parlamentario_id", width: 18 },
+            { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 35 },
+            { header: "PENDIENTES", key: "pendientes", width: 15 },
+            { header: "EN ESTUDIO", key: "en_estudio", width: 15 },
+            { header: "DICTAMINADAS", key: "dictaminadas", width: 15 },
+            { header: "APROBADAS", key: "aprobadas", width: 15 },
+            { header: "RECH. COMISIÓN", key: "rechazadas_comision", width: 18 },
+            { header: "RECH. SESIÓN", key: "rechazadas_sesion", width: 18 },
+            { header: "TOTAL", key: "total", width: 12 },
+        ], resultado);
     }
     catch (error) {
         console.error("Error al generar Excel de integrantes:", error);
-        return res.status(500).json({
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 });
 exports.getReporteIniciativasIntegrantes = getReporteIniciativasIntegrantes;
