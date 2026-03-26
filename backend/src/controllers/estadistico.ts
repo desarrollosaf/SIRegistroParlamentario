@@ -696,105 +696,113 @@ export const getResumenTotalesEndpoint = async (req: Request, res: Response): Pr
 
 export const getIniciativasPresentadasPorDiputado = async (req: Request, res: Response): Promise<any> => {
   try {
-    const diputadoId = String(req.params.id ?? req.query.id ?? req.body.id ?? "").trim();
+    const id =
+      req.params.id ??
+      req.query.id ??
+      req.body.id;
 
-    if (!diputadoId) {
+    if (!id) {
       return res.status(400).json({
+        ok: false,
         message: "El id del diputado es obligatorio"
       });
     }
 
-    const ID_TIPO_PRESENTA_DIPUTADO = 9;
+    const diputadoId = String(id);
 
     const diputado: any = await Diputado.findOne({
       where: { id: diputadoId },
-      attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true
+      include: [
+        {
+          model: IntegranteLegislatura,
+          as: "integrante",
+        }
+      ]
     });
 
-    const relaciones = await IniciativasPresenta.findAll({
-      where: {
-        id_tipo_presenta: ID_TIPO_PRESENTA_DIPUTADO,
-        id_presenta: diputadoId
-      },
-      attributes: ["id_iniciativa", "id_presenta"],
-      raw: true
-    });
-
-    if (!relaciones.length) {
+    if (!diputado) {
       return res.status(404).json({
-        message: "No se encontraron iniciativas para el diputado enviado",
-        diputado_id: diputadoId,
-        diputado: diputado
-          ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
-          : "-",
-        total: 0,
-        data: []
+        ok: false,
+        message: "Diputado no encontrado"
       });
     }
 
-    const iniciativasIds = [...new Set(relaciones.map((r: any) => String(r.id_iniciativa)).filter(Boolean))];
+    const nombreDiputado = `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim();
 
-    let reporte = await construirReporteBase();
-    reporte = reporte.filter((item: any) => iniciativasIds.includes(String(item.id)));
+    const grupoId = diputado.integrante?.partido_id
+      ? String(diputado.integrante.partido_id)
+      : null;
 
-    if (!reporte.length) {
-      return res.status(404).json({
-        message: "No se encontraron datos en el reporte base para esas iniciativas",
-        diputado_id: diputadoId,
-        total: 0,
-        data: []
+    let grupoNombre = "-";
+
+    if (grupoId) {
+      const partido: any = await Partidos.findOne({
+        where: { id: grupoId },
+        attributes: ["id", "nombre"],
+        raw: true
       });
+
+      grupoNombre = partido?.nombre ?? "-";
     }
 
-    const nombreDiputado = diputado
-      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
-      : (reporte[0]?.diputado || "-");
+    const reporte = await construirReporteBase();
 
-    const data = reporte
-      .map((item: any, index: number) => ({
-        no: index + 1,
-        id: item.id,
-        tipo: item.tipo,
-        autor: item.autor,
-        autor_detalle: item.autor_detalle,
-        iniciativa: item.iniciativa,
-        materia: item.materia,
-        presentac: item.presentac,
-        fecha_presentacion: item.fecha_evento_raw,
-        fecha_presentacion_formateada: formatearFechaCorta(item.fecha_evento_raw),
-        comisiones: item.comisiones,
-        expedicion: item.expedicion,
-        observac: item.observac,
-        diputado: nombreDiputado,
-        grupo_parlamentario: item.grupo_parlamentario,
-        periodo: item.periodo
-      }))
-      .sort((a: any, b: any) => {
-        const fa = a.fecha_presentacion ? new Date(a.fecha_presentacion).getTime() : 0;
-        const fb = b.fecha_presentacion ? new Date(b.fecha_presentacion).getTime() : 0;
-        return fb - fa;
-      })
-      .map((item: any, index: number) => ({ ...item, no: index + 1 }));
+    const autorElla = reporte.filter((item: any) =>
+      Array.isArray(item.diputado_ids) &&
+      item.diputado_ids.map(String).includes(diputadoId)
+    );
+
+    const autorGrupo = grupoId
+      ? reporte.filter((item: any) =>
+          Array.isArray(item.grupo_parlamentario_ids) &&
+          item.grupo_parlamentario_ids.map(String).includes(String(grupoId))
+        )
+      : [];
+
+    // total general sin duplicar iniciativas
+    const mapaGeneral = new Map<string, any>();
+
+    [...autorElla, ...autorGrupo].forEach((item: any) => {
+      mapaGeneral.set(String(item.id), item);
+    });
+
+    const totalGeneral = Array.from(mapaGeneral.values());
+
+    const contarResumen = (items: any[]) => {
+      return {
+        pendientes: items.filter((x) => x.observac === "Pendiente").length,
+        en_estudio: items.filter((x) => x.observac === "En estudio").length,
+        dictaminadas: items.filter((x) => x.observac === "Dictaminada").length,
+        aprobadas: items.filter((x) => x.observac === "Aprobada").length,
+        rechazadas_comision: items.filter((x) => x.observac === "Rechazada en comisión").length,
+        rechazadas_sesion: items.filter((x) => x.observac === "Rechazada en sesión").length,
+        precluidas: items.filter((x) => x.observac === "Precluida").length,
+        total: items.length
+      };
+    };
 
     return res.status(200).json({
       ok: true,
-      diputado_id: diputadoId,
-      diputado: nombreDiputado || "-",
-      total: data.length,
-      resumen: {
-        pendientes: data.filter((x: any) => x.observac === "Pendiente").length,
-        en_estudio: data.filter((x: any) => x.observac === "En estudio").length,
-        dictaminadas: data.filter((x: any) => x.observac === "Dictaminada").length,
-        aprobadas: data.filter((x: any) => x.observac === "Aprobada").length,
-        rechazadas_comision: data.filter((x: any) => x.observac === "Rechazada en comisión").length,
-        rechazadas_sesion: data.filter((x: any) => x.observac === "Rechazada en sesión").length,
-      },
-      data
+      data: {
+        diputado_id: diputadoId,
+        diputado: nombreDiputado || "-",
+        grupo_parlamentario_id: grupoId,
+        grupo_parlamentario: grupoNombre,
+        resumen_general: contarResumen(totalGeneral),
+        autor_ella: {
+          resumen: contarResumen(autorElla),
+          data: autorElla
+        },
+        autor_grupo: {
+          resumen: contarResumen(autorGrupo),
+          data: autorGrupo
+        }
+      }
     });
   } catch (error: any) {
     console.error("Error al obtener iniciativas presentadas por diputado:", error);
     return res.status(500).json({
+      ok: false,
       message: "Error interno del servidor",
       error: error.message
     });

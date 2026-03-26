@@ -582,97 +582,92 @@ const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0
 });
 exports.getResumenTotalesEndpoint = getResumenTotalesEndpoint;
 const getIniciativasPresentadasPorDiputado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _a, _b, _c, _d, _e, _f, _g;
     try {
-        const diputadoId = String((_c = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id) !== null && _c !== void 0 ? _c : "").trim();
-        if (!diputadoId) {
+        const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
+        if (!id) {
             return res.status(400).json({
+                ok: false,
                 message: "El id del diputado es obligatorio"
             });
         }
-        const ID_TIPO_PRESENTA_DIPUTADO = 9;
+        const diputadoId = String(id);
         const diputado = yield diputado_1.default.findOne({
             where: { id: diputadoId },
-            attributes: ["id", "apaterno", "amaterno", "nombres"],
-            raw: true
+            include: [
+                {
+                    model: integrante_legislaturas_1.default,
+                    as: "integrante",
+                }
+            ]
         });
-        const relaciones = yield iniciativaspresenta_1.default.findAll({
-            where: {
-                id_tipo_presenta: ID_TIPO_PRESENTA_DIPUTADO,
-                id_presenta: diputadoId
-            },
-            attributes: ["id_iniciativa", "id_presenta"],
-            raw: true
-        });
-        if (!relaciones.length) {
+        if (!diputado) {
             return res.status(404).json({
-                message: "No se encontraron iniciativas para el diputado enviado",
-                diputado_id: diputadoId,
-                diputado: diputado
-                    ? `${(_d = diputado.apaterno) !== null && _d !== void 0 ? _d : ""} ${(_e = diputado.amaterno) !== null && _e !== void 0 ? _e : ""} ${(_f = diputado.nombres) !== null && _f !== void 0 ? _f : ""}`.trim()
-                    : "-",
-                total: 0,
-                data: []
+                ok: false,
+                message: "Diputado no encontrado"
             });
         }
-        const iniciativasIds = [...new Set(relaciones.map((r) => String(r.id_iniciativa)).filter(Boolean))];
-        let reporte = yield construirReporteBase();
-        reporte = reporte.filter((item) => iniciativasIds.includes(String(item.id)));
-        if (!reporte.length) {
-            return res.status(404).json({
-                message: "No se encontraron datos en el reporte base para esas iniciativas",
-                diputado_id: diputadoId,
-                total: 0,
-                data: []
+        const nombreDiputado = `${(_c = diputado.apaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = diputado.amaterno) !== null && _d !== void 0 ? _d : ""} ${(_e = diputado.nombres) !== null && _e !== void 0 ? _e : ""}`.trim();
+        const grupoId = ((_f = diputado.integrante) === null || _f === void 0 ? void 0 : _f.partido_id)
+            ? String(diputado.integrante.partido_id)
+            : null;
+        let grupoNombre = "-";
+        if (grupoId) {
+            const partido = yield partidos_1.default.findOne({
+                where: { id: grupoId },
+                attributes: ["id", "nombre"],
+                raw: true
             });
+            grupoNombre = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : "-";
         }
-        const nombreDiputado = diputado
-            ? `${(_g = diputado.apaterno) !== null && _g !== void 0 ? _g : ""} ${(_h = diputado.amaterno) !== null && _h !== void 0 ? _h : ""} ${(_j = diputado.nombres) !== null && _j !== void 0 ? _j : ""}`.trim()
-            : (((_k = reporte[0]) === null || _k === void 0 ? void 0 : _k.diputado) || "-");
-        const data = reporte
-            .map((item, index) => ({
-            no: index + 1,
-            id: item.id,
-            tipo: item.tipo,
-            autor: item.autor,
-            autor_detalle: item.autor_detalle,
-            iniciativa: item.iniciativa,
-            materia: item.materia,
-            presentac: item.presentac,
-            fecha_presentacion: item.fecha_evento_raw,
-            fecha_presentacion_formateada: formatearFechaCorta(item.fecha_evento_raw),
-            comisiones: item.comisiones,
-            expedicion: item.expedicion,
-            observac: item.observac,
-            diputado: nombreDiputado,
-            grupo_parlamentario: item.grupo_parlamentario,
-            periodo: item.periodo
-        }))
-            .sort((a, b) => {
-            const fa = a.fecha_presentacion ? new Date(a.fecha_presentacion).getTime() : 0;
-            const fb = b.fecha_presentacion ? new Date(b.fecha_presentacion).getTime() : 0;
-            return fb - fa;
-        })
-            .map((item, index) => (Object.assign(Object.assign({}, item), { no: index + 1 })));
+        const reporte = yield construirReporteBase();
+        const autorElla = reporte.filter((item) => Array.isArray(item.diputado_ids) &&
+            item.diputado_ids.map(String).includes(diputadoId));
+        const autorGrupo = grupoId
+            ? reporte.filter((item) => Array.isArray(item.grupo_parlamentario_ids) &&
+                item.grupo_parlamentario_ids.map(String).includes(String(grupoId)))
+            : [];
+        // total general sin duplicar iniciativas
+        const mapaGeneral = new Map();
+        [...autorElla, ...autorGrupo].forEach((item) => {
+            mapaGeneral.set(String(item.id), item);
+        });
+        const totalGeneral = Array.from(mapaGeneral.values());
+        const contarResumen = (items) => {
+            return {
+                pendientes: items.filter((x) => x.observac === "Pendiente").length,
+                en_estudio: items.filter((x) => x.observac === "En estudio").length,
+                dictaminadas: items.filter((x) => x.observac === "Dictaminada").length,
+                aprobadas: items.filter((x) => x.observac === "Aprobada").length,
+                rechazadas_comision: items.filter((x) => x.observac === "Rechazada en comisión").length,
+                rechazadas_sesion: items.filter((x) => x.observac === "Rechazada en sesión").length,
+                precluidas: items.filter((x) => x.observac === "Precluida").length,
+                total: items.length
+            };
+        };
         return res.status(200).json({
             ok: true,
-            diputado_id: diputadoId,
-            diputado: nombreDiputado || "-",
-            total: data.length,
-            resumen: {
-                pendientes: data.filter((x) => x.observac === "Pendiente").length,
-                en_estudio: data.filter((x) => x.observac === "En estudio").length,
-                dictaminadas: data.filter((x) => x.observac === "Dictaminada").length,
-                aprobadas: data.filter((x) => x.observac === "Aprobada").length,
-                rechazadas_comision: data.filter((x) => x.observac === "Rechazada en comisión").length,
-                rechazadas_sesion: data.filter((x) => x.observac === "Rechazada en sesión").length,
-            },
-            data
+            data: {
+                diputado_id: diputadoId,
+                diputado: nombreDiputado || "-",
+                grupo_parlamentario_id: grupoId,
+                grupo_parlamentario: grupoNombre,
+                resumen_general: contarResumen(totalGeneral),
+                autor_ella: {
+                    resumen: contarResumen(autorElla),
+                    data: autorElla
+                },
+                autor_grupo: {
+                    resumen: contarResumen(autorGrupo),
+                    data: autorGrupo
+                }
+            }
         });
     }
     catch (error) {
         console.error("Error al obtener iniciativas presentadas por diputado:", error);
         return res.status(500).json({
+            ok: false,
             message: "Error interno del servidor",
             error: error.message
         });
