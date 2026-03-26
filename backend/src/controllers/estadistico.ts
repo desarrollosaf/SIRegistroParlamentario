@@ -809,6 +809,139 @@ export const getIniciativasPresentadasPorDiputado = async (req: Request, res: Re
   }
 };
 
+
+export const getIniciativasTurnadasPorComision = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const id =
+      req.params.id ??
+      req.query.id ??
+      req.body.id;
+
+    if (!id) {
+      return res.status(400).json({
+        ok: false,
+        message: "El id de la comisión es obligatorio"
+      });
+    }
+
+    const comisionId = String(id).trim();
+
+    const comision: any = await Comision.findOne({
+      where: { id: comisionId },
+      attributes: ["id", "nombre"],
+      raw: true
+    });
+
+    if (!comision) {
+      return res.status(404).json({
+        ok: false,
+        message: "Comisión no encontrada"
+      });
+    }
+
+    const puntosComisiones = await PuntosComisiones.findAll({
+      attributes: ["id_punto", "id_comision"],
+      raw: true
+    });
+
+    const puntosIds = [
+      ...new Set(
+        (puntosComisiones as any[])
+          .filter((row: any) => {
+            const ids = String(row.id_comision ?? "")
+              .replace(/[\[\]]/g, "")
+              .split(",")
+              .map((x: string) => x.trim())
+              .filter(Boolean);
+
+            return ids.includes(comisionId);
+          })
+          .map((row: any) => String(row.id_punto))
+          .filter(Boolean)
+      )
+    ];
+
+    if (!puntosIds.length) {
+      return res.status(404).json({
+        ok: false,
+        message: "No se encontraron iniciativas turnadas a esta comisión",
+        data: {
+          comision_id: comisionId,
+          comision: comision.nombre,
+          total: 0,
+          iniciativas: []
+        }
+      });
+    }
+
+    const iniciativasDB = await IniciativaPuntoOrden.findAll({
+      where: {
+        id_punto: {
+          [Op.in]: puntosIds
+        }
+      },
+      attributes: ["id", "id_punto"],
+      raw: true
+    });
+
+    const iniciativasIds = [
+      ...new Set(
+        (iniciativasDB as any[])
+          .map((row: any) => String(row.id))
+          .filter(Boolean)
+      )
+    ];
+
+    if (!iniciativasIds.length) {
+      return res.status(404).json({
+        ok: false,
+        message: "Se encontraron puntos turnados, pero no iniciativas relacionadas",
+        data: {
+          comision_id: comisionId,
+          comision: comision.nombre,
+          total: 0,
+          iniciativas: []
+        }
+      });
+    }
+
+    let reporte = await construirReporteBase();
+
+    reporte = reporte.filter((item: any) =>
+      iniciativasIds.includes(String(item.id))
+    );
+
+    const resumen = {
+      pendientes: reporte.filter((x: any) => x.observac === "Pendiente").length,
+      en_estudio: reporte.filter((x: any) => x.observac === "En estudio").length,
+      dictaminadas: reporte.filter((x: any) => x.observac === "Dictaminada").length,
+      aprobadas: reporte.filter((x: any) => x.observac === "Aprobada").length,
+      rechazadas_comision: reporte.filter((x: any) => x.observac === "Rechazada en comisión").length,
+      rechazadas_sesion: reporte.filter((x: any) => x.observac === "Rechazada en sesión").length,
+      precluidas: reporte.filter((x: any) => x.observac === "Precluida").length,
+      total: reporte.length
+    };
+
+    return res.status(200).json({
+      ok: true,
+      data: {
+        comision_id: String(comision.id),
+        comision: comision.nombre,
+        total: reporte.length,
+        resumen,
+        iniciativas: reporte
+      }
+    });
+  } catch (error: any) {
+    console.error("Error al obtener iniciativas turnadas por comisión:", error);
+    return res.status(500).json({
+      ok: false,
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
 export const getifnini = async (req: Request, res: Response): Promise<any> => {
   try {
     const reporte = await construirReporteBase();

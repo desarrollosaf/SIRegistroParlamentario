@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -674,6 +674,117 @@ const getIniciativasPresentadasPorDiputado = (req, res) => __awaiter(void 0, voi
     }
 });
 exports.getIniciativasPresentadasPorDiputado = getIniciativasPresentadasPorDiputado;
+const getIniciativasTurnadasPorComision = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
+        if (!id) {
+            return res.status(400).json({
+                ok: false,
+                message: "El id de la comisión es obligatorio"
+            });
+        }
+        const comisionId = String(id).trim();
+        const comision = yield comisions_1.default.findOne({
+            where: { id: comisionId },
+            attributes: ["id", "nombre"],
+            raw: true
+        });
+        if (!comision) {
+            return res.status(404).json({
+                ok: false,
+                message: "Comisión no encontrada"
+            });
+        }
+        const puntosComisiones = yield puntos_comisiones_1.default.findAll({
+            attributes: ["id_punto", "id_comision"],
+            raw: true
+        });
+        const puntosIds = [
+            ...new Set(puntosComisiones
+                .filter((row) => {
+                var _a;
+                const ids = String((_a = row.id_comision) !== null && _a !== void 0 ? _a : "")
+                    .replace(/[\[\]]/g, "")
+                    .split(",")
+                    .map((x) => x.trim())
+                    .filter(Boolean);
+                return ids.includes(comisionId);
+            })
+                .map((row) => String(row.id_punto))
+                .filter(Boolean))
+        ];
+        if (!puntosIds.length) {
+            return res.status(404).json({
+                ok: false,
+                message: "No se encontraron iniciativas turnadas a esta comisión",
+                data: {
+                    comision_id: comisionId,
+                    comision: comision.nombre,
+                    total: 0,
+                    iniciativas: []
+                }
+            });
+        }
+        const iniciativasDB = yield inciativas_puntos_ordens_1.default.findAll({
+            where: {
+                id_punto: {
+                    [sequelize_1.Op.in]: puntosIds
+                }
+            },
+            attributes: ["id", "id_punto"],
+            raw: true
+        });
+        const iniciativasIds = [
+            ...new Set(iniciativasDB
+                .map((row) => String(row.id))
+                .filter(Boolean))
+        ];
+        if (!iniciativasIds.length) {
+            return res.status(404).json({
+                ok: false,
+                message: "Se encontraron puntos turnados, pero no iniciativas relacionadas",
+                data: {
+                    comision_id: comisionId,
+                    comision: comision.nombre,
+                    total: 0,
+                    iniciativas: []
+                }
+            });
+        }
+        let reporte = yield construirReporteBase();
+        reporte = reporte.filter((item) => iniciativasIds.includes(String(item.id)));
+        const resumen = {
+            pendientes: reporte.filter((x) => x.observac === "Pendiente").length,
+            en_estudio: reporte.filter((x) => x.observac === "En estudio").length,
+            dictaminadas: reporte.filter((x) => x.observac === "Dictaminada").length,
+            aprobadas: reporte.filter((x) => x.observac === "Aprobada").length,
+            rechazadas_comision: reporte.filter((x) => x.observac === "Rechazada en comisión").length,
+            rechazadas_sesion: reporte.filter((x) => x.observac === "Rechazada en sesión").length,
+            precluidas: reporte.filter((x) => x.observac === "Precluida").length,
+            total: reporte.length
+        };
+        return res.status(200).json({
+            ok: true,
+            data: {
+                comision_id: String(comision.id),
+                comision: comision.nombre,
+                total: reporte.length,
+                resumen,
+                iniciativas: reporte
+            }
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener iniciativas turnadas por comisión:", error);
+        return res.status(500).json({
+            ok: false,
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.getIniciativasTurnadasPorComision = getIniciativasTurnadasPorComision;
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();

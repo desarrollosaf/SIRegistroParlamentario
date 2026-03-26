@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path';
 import eventos from "../routes/eventos";
 import reportes from "../routes/reporte";
+import estadistico from "../routes/estadistico";
 import user from "../routes/user";
 import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
@@ -63,6 +64,7 @@ class Server {
        this.app.use(catalogos);
        this.app.use(reportes);
        this.app.use(iniciativas);
+       this.app.use(estadistico);
     }
 
     
@@ -100,10 +102,13 @@ class Server {
                 '/api/reporte/iniciativas/grupo-diputado/',
                 '/api/reporte/iniciativas/totales-periodo/',
                 '/api/reporte/iniciativas/integrantes/',
-                '/api/iniciativas/iniciativas/'
+                '/api/iniciativas/iniciativas/',
+                '/api/estadistico/iniciativas/resumen',
+                '/api/estadistico/diputado/iniciativas',
+                '/api/estadistico/comision/iniciativas'
             ];
 
-            const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
+            const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;
             
             if (isPublic) {
                 return next(); 
