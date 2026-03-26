@@ -95,6 +95,10 @@ export class EventoService {
    deleteDiputadoComisionSesion(id: any): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deleteintlista/${id}`)
   }
+
+   deleteDiputadoAsociado(id: any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deletedipasociado/${id}`)
+  }
   
   ActualizarTodosAsistencia(data: any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl1}/acttodosasistencia/`,data)
