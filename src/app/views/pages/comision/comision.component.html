@@ -380,6 +380,64 @@
             </div>
         </div>
 
+        <!-- DIPUTADOS ASOCIADOS -->
+        <div *ngIf="diputadosAsociados.length > 0" class="mt-5">
+
+        <div class="comision-header-institucional mb-3">
+            <h5 class="fw-bold">
+            <i class="bi bi-people me-2"></i>
+            Diputados Asociados
+            </h5>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+            <div class="table-responsive table-scroll">
+                <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                    <th>Nombre</th>
+                    <th>Partido</th>
+                    <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let integrante of diputadosAsociados">
+                    <td class="align-middle">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <strong>{{ integrante.diputado }}</strong>
+                        </div>
+                    </td>
+                    <td class="align-middle">
+                        <span class="badge bg-success badge-fixed">{{ integrante.partido }}</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-delete-animated" 
+                            (click)="eliminarDiputadoAsociado(integrante.id)"
+                            title="Eliminar integrante">
+                            <i class="bi bi-trash-fill icon-trash"></i>
+                            <i class="bi bi-x-lg icon-x"></i>
+                            <span class="btn-text">Eliminar</span>
+                        </button>
+                    </td>
+                    </tr>
+
+                    <tr *ngIf="diputadosAsociados.length === 0">
+                    <td colspan="3" class="text-center text-muted">
+                        No hay diputados asociados
+                    </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+
+        </div>
+
     </div>
 
     <div class="modal-footer bg-light">
