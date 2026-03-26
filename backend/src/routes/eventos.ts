@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas, exportdatos, getAgendaHoy} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 import  uploadAgenda from  "../controllers/uploadAgenda";
 const router = Router();
@@ -48,6 +48,7 @@ router.get("/api/eventos/votacionpunto/:id", generarPDFVotacion );
 router.get("/api/eventos/gestionintegrantes/:id", gestionIntegrantes );
 router.post("/api/eventos/agregardipasistencia/", addDipLista );
 router.get("/api/eventos/deleteintlista/:id", Eliminarlista );
+router.get("/api/eventos/deletedipasociado/:id", EliminardipAsociado );
 router.post("/api/eventos/enviarvotacionpunto", enviarWhatsVotacionPDF );
 router.get('/api/eventos/asintenciapdf/:id', generarPDFAsistencia);
 router.get('/api/eventos/notasintenciapdf/:id', enviarWhatsAsistenciaPDF);
