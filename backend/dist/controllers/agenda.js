@@ -3609,7 +3609,7 @@ function generarDetalleComision(doc, votos, drawBackground, getColorSentido) {
 //   }
 // };
 const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1;
     try {
         const { body } = req;
         if (!body.idPunto) {
@@ -3997,21 +3997,21 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         // ===== BLOQUE DERECHO — info evento + type=1 sesión/punto =====
         rightY = drawSectionHeader('INFORMACIÓN DEL EVENTO', rightX, rightY, rightW);
         [
-            { label: 'Tipo', value: ((_u = evento.tipoevento) === null || _u === void 0 ? void 0 : _u.nombre) || 'N/A' },
-            { label: 'Sede', value: ((_v = evento.sede) === null || _v === void 0 ? void 0 : _v.sede) || 'N/A' },
-            { label: 'Fecha', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
+            { label: 'Tipo:', value: ((_u = evento.tipoevento) === null || _u === void 0 ? void 0 : _u.nombre) || 'N/A' },
+            { label: 'Sede:', value: ((_v = evento.sede) === null || _v === void 0 ? void 0 : _v.sede) || 'N/A' },
+            { label: 'Fecha:', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
         ].forEach((row, i) => {
             rightY = drawInfoRow(row.label, row.value, rightX, rightY, rightW, i % 2 === 0);
         });
         if (!esExpediente && sesionInfo) {
             rightY = drawSectionHeader('SESIÓN DE ORIGEN', rightX, rightY, rightW);
-            rightY = drawInfoRow('Fecha', sesionInfo.fecha, rightX, rightY, rightW, true);
-            rightY = drawInfoRow('Descripción', sesionInfo.descripcion, rightX, rightY, rightW, false);
+            rightY = drawInfoRow('Fecha:', sesionInfo.fecha, rightX, rightY, rightW, true);
+            rightY = drawInfoRow('Descripción:', sesionInfo.descripcion, rightX, rightY, rightW, false);
         }
         if (!esExpediente && puntoOrigenInfo) {
             rightY = drawSectionHeader('PUNTO DE ORIGEN', rightX, rightY, rightW);
-            rightY = drawInfoRow('Número', String(puntoOrigenInfo.nopunto), rightX, rightY, rightW, true);
-            rightY = drawInfoRow('Punto', puntoOrigenInfo.punto, rightX, rightY, rightW, false);
+            rightY = drawInfoRow('Número:', String(puntoOrigenInfo.nopunto), rightX, rightY, rightW, true);
+            rightY = drawInfoRow('Punto:', puntoOrigenInfo.punto, rightX, rightY, rightW, false);
         }
         // ===== BLOQUE VINO =====
         const vinoH = rightY - vinoY;
@@ -4029,7 +4029,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         if (!esExpediente && iniciativaInfo) {
             let secY = doc.y;
             secY = drawSectionHeader('INICIATIVA', fullX, secY, fullW);
-            secY = drawInfoRow('Descripción', (_w = iniciativaInfo.iniciativa) !== null && _w !== void 0 ? _w : 'N/A', fullX, secY, fullW, true);
+            secY = drawInfoRow('Descripción:', (_w = iniciativaInfo.iniciativa) !== null && _w !== void 0 ? _w : 'N/A', fullX, secY, fullW, true);
             doc.y = secY;
         }
         // --- TYPE=2: EXPEDIENTE — un solo encabezado, subencabezados por punto ---
@@ -4050,11 +4050,11 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                 secY += 18;
                 // Filas del punto
                 let ri = 0;
-                secY = drawInfoRow('Sesión', sesion.descripcion, fullX, secY, fullW, ri++ % 2 === 0);
-                secY = drawInfoRow('Número', String(sesion.nopunto), fullX, secY, fullW, ri++ % 2 === 0);
-                secY = drawInfoRow('Punto', sesion.punto, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Sesión:', sesion.descripcion, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Número:', String(sesion.nopunto), fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Punto:', sesion.punto, fullX, secY, fullW, ri++ % 2 === 0);
                 if (iniciativa) {
-                    secY = drawInfoRow('Iniciativa', (_a = iniciativa.iniciativa) !== null && _a !== void 0 ? _a : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+                    secY = drawInfoRow('Iniciativa:', (_a = iniciativa.iniciativa) !== null && _a !== void 0 ? _a : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
                 }
                 // Línea separadora entre puntos (excepto el último)
                 if (idx < sesionesOrigenInfo.length - 1) {
@@ -4072,10 +4072,10 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                 let secY = doc.y;
                 let ri = 0;
                 secY = drawSectionHeader(estudiosInfo.length > 1 ? `ESTUDIO EN COMISIÓN (${idx + 1})` : 'ESTUDIO EN COMISIÓN', fullX, secY, fullW);
-                secY = drawInfoRow('Tipo evento', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
-                secY = drawInfoRow('Fecha', est.fecha, fullX, secY, fullW, ri++ % 2 === 0);
-                secY = drawInfoRow('Número', est.numpunto, fullX, secY, fullW, ri++ % 2 === 0);
-                secY = drawInfoRow('Punto', est.punto, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Fecha:', est.fecha, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Número:', est.numpunto, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Punto:', est.punto, fullX, secY, fullW, ri++ % 2 === 0);
                 doc.y = secY;
             });
         }
@@ -4084,14 +4084,11 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             let secY = doc.y;
             let ri = 0;
             secY = drawSectionHeader('DICTAMEN', fullX, secY, fullW);
-            secY = drawInfoRow('Tipo evento', dictamenInfo.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
-            secY = drawInfoRow('Comisiones', dictamenInfo.comisiones, fullX, secY, fullW, ri++ % 2 === 0);
-            if (dictamenInfo.autores) {
-                secY = drawInfoRow('Autores', dictamenInfo.autores, fullX, secY, fullW, ri++ % 2 === 0);
-            }
-            secY = drawInfoRow('Fecha', dictamenInfo.fecha, fullX, secY, fullW, ri++ % 2 === 0);
-            secY = drawInfoRow('Número', String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
-            secY = drawInfoRow('Punto', dictamenInfo.punto, fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Tipo evento:', dictamenInfo.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Comisiones:', dictamenInfo.comisiones, fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Fecha:', dictamenInfo.fecha, fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Número:', String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Punto:', dictamenInfo.punto, fullX, secY, fullW, ri++ % 2 === 0);
             doc.y = secY;
         }
         // --- INFORMACIÓN DEL PUNTO ---
@@ -4099,10 +4096,13 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             let secY = doc.y;
             let ri = 0;
             secY = drawSectionHeader('INFORMACIÓN DEL PUNTO', fullX, secY, fullW);
-            secY = drawInfoRow('Número', String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
-            secY = drawInfoRow('Descripción', punto.punto || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Tipo:', ((_x = evento.tipoevento) === null || _x === void 0 ? void 0 : _x.nombre) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Sede:', ((_y = evento.sede) === null || _y === void 0 ? void 0 : _y.sede) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Fecha:', evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Número:', String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Descripción:', punto.punto || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
             if (temaInfo) {
-                secY = drawInfoRow('Reserva', temaInfo.tema_votacion || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Reserva:', temaInfo.tema_votacion || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
             }
             doc.y = secY;
         }
@@ -4165,7 +4165,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
             `*Punto:* ${cortarTexto(punto.punto || 'N/A', 300)}\n` +
             (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
-            `*Evento:* ${((_x = evento.tipoevento) === null || _x === void 0 ? void 0 : _x.nombre) || 'N/A'}\n` +
+            `*Evento:* ${((_z = evento.tipoevento) === null || _z === void 0 ? void 0 : _z.nombre) || 'N/A'}\n` +
             `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
             `*Resultados:*\n` +
             `A favor: ${totales.favor}\n` +
@@ -4179,7 +4179,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
         const formData = new URLSearchParams();
         formData.append('token', 'ml56a7d6tn7ha7cc');
-        formData.append('to', '+525561081154');
+        formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741');
         formData.append('filename', fileName);
         formData.append('document', base64PDF);
         formData.append('caption', mensajeTexto);
@@ -4204,13 +4204,13 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             console.error("Error de Axios:", {
                 message: error.message,
                 code: error.code,
-                response: (_y = error.response) === null || _y === void 0 ? void 0 : _y.data
+                response: (_0 = error.response) === null || _0 === void 0 ? void 0 : _0.data
             });
         }
         return res.status(500).json({
             message: "Error al generar y enviar PDF de votación por WhatsApp",
             error: error.message,
-            details: axios_1.default.isAxiosError(error) ? (_z = error.response) === null || _z === void 0 ? void 0 : _z.data : undefined
+            details: axios_1.default.isAxiosError(error) ? (_1 = error.response) === null || _1 === void 0 ? void 0 : _1.data : undefined
         });
     }
 });
