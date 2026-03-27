@@ -4706,23 +4706,23 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     // ===== BLOQUE DERECHO — info evento + type=1 sesión/punto =====
     rightY = drawSectionHeader('INFORMACIÓN DEL EVENTO', rightX, rightY, rightW);
     [
-      { label: 'Tipo',  value: evento.tipoevento?.nombre || 'N/A' },
-      { label: 'Sede',  value: evento.sede?.sede || 'N/A' },
-      { label: 'Fecha', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
+      { label: 'Tipo:',  value: evento.tipoevento?.nombre || 'N/A' },
+      { label: 'Sede:',  value: evento.sede?.sede || 'N/A' },
+      { label: 'Fecha:', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
     ].forEach((row, i) => {
       rightY = drawInfoRow(row.label, row.value, rightX, rightY, rightW, i % 2 === 0);
     });
 
     if (!esExpediente && sesionInfo) {
       rightY = drawSectionHeader('SESIÓN DE ORIGEN', rightX, rightY, rightW);
-      rightY = drawInfoRow('Fecha',       sesionInfo.fecha,       rightX, rightY, rightW, true);
-      rightY = drawInfoRow('Descripción', sesionInfo.descripcion, rightX, rightY, rightW, false);
+      rightY = drawInfoRow('Fecha:',       sesionInfo.fecha,       rightX, rightY, rightW, true);
+      rightY = drawInfoRow('Descripción:', sesionInfo.descripcion, rightX, rightY, rightW, false);
     }
 
     if (!esExpediente && puntoOrigenInfo) {
       rightY = drawSectionHeader('PUNTO DE ORIGEN', rightX, rightY, rightW);
-      rightY = drawInfoRow('Número', String(puntoOrigenInfo.nopunto), rightX, rightY, rightW, true);
-      rightY = drawInfoRow('Punto',  puntoOrigenInfo.punto,           rightX, rightY, rightW, false);
+      rightY = drawInfoRow('Número:', String(puntoOrigenInfo.nopunto), rightX, rightY, rightW, true);
+      rightY = drawInfoRow('Punto:',  puntoOrigenInfo.punto,           rightX, rightY, rightW, false);
     }
 
     // ===== BLOQUE VINO =====
@@ -4743,7 +4743,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     if (!esExpediente && iniciativaInfo) {
       let secY = doc.y;
       secY = drawSectionHeader('INICIATIVA', fullX, secY, fullW);
-      secY = drawInfoRow('Descripción', iniciativaInfo.iniciativa ?? 'N/A', fullX, secY, fullW, true);
+      secY = drawInfoRow('Descripción:', iniciativaInfo.iniciativa ?? 'N/A', fullX, secY, fullW, true);
       doc.y = secY;
     }
 
@@ -4772,11 +4772,11 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
         // Filas del punto
         let ri = 0;
-        secY = drawInfoRow('Sesión',     sesion.descripcion,              fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Número',     String(sesion.nopunto),          fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Punto',      sesion.punto,                    fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Sesión:',     sesion.descripcion,              fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Número:',     String(sesion.nopunto),          fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Punto:',      sesion.punto,                    fullX, secY, fullW, ri++ % 2 === 0);
         if (iniciativa) {
-          secY = drawInfoRow('Iniciativa', iniciativa.iniciativa ?? 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+          secY = drawInfoRow('Iniciativa:', iniciativa.iniciativa ?? 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
         }
 
         // Línea separadora entre puntos (excepto el último)
@@ -4800,10 +4800,10 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
           estudiosInfo.length > 1 ? `ESTUDIO EN COMISIÓN (${idx + 1})` : 'ESTUDIO EN COMISIÓN',
           fullX, secY, fullW
         );
-        secY = drawInfoRow('Tipo evento', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Fecha',       est.fecha,       fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Número',      est.numpunto,    fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Punto',       est.punto,       fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Fecha:',       est.fecha,       fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Número:',      est.numpunto,    fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Punto:',       est.punto,       fullX, secY, fullW, ri++ % 2 === 0);
         doc.y = secY;
       });
     }
@@ -4813,14 +4813,11 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       let secY = doc.y;
       let ri = 0;
       secY = drawSectionHeader('DICTAMEN', fullX, secY, fullW);
-      secY = drawInfoRow('Tipo evento', dictamenInfo.tipo_evento,      fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Comisiones',  dictamenInfo.comisiones,       fullX, secY, fullW, ri++ % 2 === 0);
-      if (dictamenInfo.autores) {
-        secY = drawInfoRow('Autores',   dictamenInfo.autores,          fullX, secY, fullW, ri++ % 2 === 0);
-      }
-      secY = drawInfoRow('Fecha',       dictamenInfo.fecha,            fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Número',      String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Punto',       dictamenInfo.punto,            fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Tipo evento:', dictamenInfo.tipo_evento,      fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Comisiones:',  dictamenInfo.comisiones,       fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Fecha:',       dictamenInfo.fecha,            fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Número:',      String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Punto:',       dictamenInfo.punto,            fullX, secY, fullW, ri++ % 2 === 0);
       doc.y = secY;
     }
 
@@ -4829,10 +4826,13 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       let secY = doc.y;
       let ri = 0;
       secY = drawSectionHeader('INFORMACIÓN DEL PUNTO', fullX, secY, fullW);
-      secY = drawInfoRow('Número',      String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Descripción', punto.punto || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Tipo:', evento.tipoevento?.nombre || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Sede:', evento.sede?.sede || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Fecha:', evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' ,  fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Número:',      String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Descripción:', punto.punto || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
       if (temaInfo) {
-        secY = drawInfoRow('Reserva', temaInfo.tema_votacion || 'N/A',  fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Reserva:', temaInfo.tema_votacion || 'N/A',  fullX, secY, fullW, ri++ % 2 === 0);
       }
       doc.y = secY;
     }
@@ -4924,7 +4924,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const formData = new URLSearchParams();
     formData.append('token', 'ml56a7d6tn7ha7cc');
-    formData.append('to', '+525561081154');
+    formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741');
     formData.append('filename', fileName);
     formData.append('document', base64PDF);
     formData.append('caption', mensajeTexto);
