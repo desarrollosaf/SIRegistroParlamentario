@@ -56,7 +56,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     { numero: 2, nombre: 'Orden del día' },
     { numero: 3, nombre: 'Votaciones' },
     { numero: 4, nombre: 'Resumen' }
-  ];
+  ];  
   //VOTACION
   votantes: Votante[] = [];
   columnaVotantes1: Votante[] = [];
@@ -138,6 +138,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   mostrarSelectIniciativaPrecargada = false;
   iniciativaPrecargadaSeleccionada: any = null;
 
+  tiposIniciativa = [
+    { id: 1, label: 'Iniciativa' },
+    { id: 2, label: 'Punto de acuerdo' },
+    { id: 3, label: 'Minuta' }
+  ];
+
   puntosTurnadosSeleccionados: any[] = [];
   dictamenesSeleccionados: any[] = [];
 
@@ -193,11 +199,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this.formIniciativa = this.fb.group({
       descripcion: ['', Validators.required],
+      tipo: ['', Validators.required],
       id_proponente: [[]],
-      id_presenta: [[]]
+      id_presenta: [[]],
+      
     });
+    
 
   }
+  
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
@@ -776,6 +786,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             iniciativas: (punto.iniciativas || []).map((ini: any) => ({
               ...ini,
               iniciativa: ini.iniciativa || ini.descripcion || '—',
+              tipo: ini.tipo || null,
               proponente: ini.proponente
                 ? (typeof ini.proponente === 'string' ? ini.proponente : ini.proponente?.valor || '—')
                 : (ini.proponentes ? ini.proponentes.map((p: any) => p.valor || p.nombre || p).join(', ') : '—'),
@@ -881,7 +892,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: this.puntoSeleccionadoIniciativa.id,
       iniciativa: iniciativaSeleccionada.id,
       id_proponente: this.formIniciativa.value?.id_proponente || null,
-      id_presenta: this.formIniciativa.value?.id_presenta || null
+      id_presenta: this.formIniciativa.value?.id_presenta || null,
+      tipo: this.formIniciativa.value?.tipo || null
     };
     console.log(datos);
 
@@ -1026,6 +1038,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         descripcion: this.formIniciativa.value.descripcion,
         id_proponente: this.formIniciativa.value.id_proponente,
         id_presenta: this.formIniciativa.value.id_presenta,
+        tipo: this.formIniciativa.value?.tipo,
         proponente: this.slctProponentes
           ?.filter((p: any) => idsProponente.includes(p.id))
           .map((p: any) => p.valor)
@@ -1059,7 +1072,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: this.puntoSeleccionadoIniciativa.id,
       descripcion: this.formIniciativa.value.descripcion,
       id_proponente: this.formIniciativa.value.id_proponente,
-      id_presenta: this.formIniciativa.value.id_presenta
+      id_presenta: this.formIniciativa.value.id_presenta,
+      tipo: this.formIniciativa.value?.tipo,
     };
 
     console.log('INICIATIVAS A ENVIAR: ', datos);
@@ -1881,6 +1895,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         descripcion: i.descripcion,
         id_proponente: i.id_proponente,
         id_presenta: i.id_presenta,
+        tipo: i.tipo,
       }));
       formData.append('iniciativas', JSON.stringify(iniciativasParaEnviar));
     }

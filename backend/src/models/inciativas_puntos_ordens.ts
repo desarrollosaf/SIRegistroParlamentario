@@ -23,6 +23,7 @@ class IniciativaPuntoOrden extends Model {
   declare expediente: number | null;
   declare path_doc: string | null;
   declare precluida: number | null;
+  declare publico: number | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -82,6 +83,11 @@ IniciativaPuntoOrden.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+    },
+    publico: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     },
     createdAt: {
       type: DataTypes.DATE,

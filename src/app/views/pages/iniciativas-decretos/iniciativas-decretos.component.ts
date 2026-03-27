@@ -43,6 +43,7 @@ export interface Iniciativa {
   periodo: string;
   comisiones: string;
   fecha_evento_raw: string;
+  publico: number;
 }
 
 // Catálogo central de tipos — un solo lugar para cambiar etiquetas/colores
@@ -167,27 +168,55 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     },
     {
       headerName: 'Acción',
-      width: 130,
+      width: 200, // aumenta un poco el ancho
       pinned: 'right',
       sortable: false,
       filter: false,
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px 0 8px' },
+      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0 8px' },
       cellRenderer: (params: any) => {
-        const btn = document.createElement('button');
-        btn.innerText = '+ Cargar';
-        btn.style.cssText = `
-          padding:6px 14px;border-radius:6px;border:1px solid #bfdbfe;
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex;gap:6px;align-items:center;width:100%;';
+
+        // Botón Cargar
+        const btnCargar = document.createElement('button');
+        btnCargar.innerText = '+ Cargar';
+        btnCargar.style.cssText = `
+          padding:6px 10px;border-radius:6px;border:1px solid #bfdbfe;
           background:#eff6ff;color:#1d4ed8;font-size:12px;
-          cursor:pointer;white-space:nowrap;font-weight:500;
-          display:block;width:100%;
+          cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
         `;
-        btn.addEventListener('mouseenter', () => { btn.style.background = '#dbeafe'; });
-        btn.addEventListener('mouseleave', () => { btn.style.background = '#eff6ff'; });
-        btn.addEventListener('click', () => {
+        btnCargar.addEventListener('mouseenter', () => { btnCargar.style.background = '#dbeafe'; });
+        btnCargar.addEventListener('mouseleave', () => { btnCargar.style.background = '#eff6ff'; });
+        btnCargar.addEventListener('click', () => {
           this.abrirModal(params.data);
           this.cdr.detectChanges();
         });
-        return btn;
+
+        // Botón Publicar/Despublicar
+        const esPublico = params.data.publico === 1;
+        const btnPublico = document.createElement('button');
+        btnPublico.innerText = esPublico ? '👁 Público' : '🚫 Privado';
+        btnPublico.style.cssText = `
+          padding:6px 10px;border-radius:6px;font-size:12px;
+          cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
+          border:1px solid ${esPublico ? '#bbf7d0' : '#fecaca'};
+          background:${esPublico ? '#f0fdf4' : '#fff1f2'};
+          color:${esPublico ? '#15803d' : '#dc2626'};
+        `;
+        btnPublico.addEventListener('mouseenter', () => {
+          btnPublico.style.background = esPublico ? '#dcfce7' : '#ffe4e6';
+        });
+        btnPublico.addEventListener('mouseleave', () => {
+          btnPublico.style.background = esPublico ? '#f0fdf4' : '#fff1f2';
+        });
+        btnPublico.addEventListener('click', () => {
+          this.togglePublico(params.data);
+          this.cdr.detectChanges();
+        });
+
+        wrapper.appendChild(btnCargar);
+        wrapper.appendChild(btnPublico);
+        return wrapper;
       },
     },
   ];
@@ -422,6 +451,45 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
         });
     });
   }
+
+  togglePublico(iniciativa: Iniciativa): void {
+  const nuevoValor = iniciativa.publico === 1 ? 0 : 1;
+  
+  Swal.fire({
+    title: nuevoValor === 1 ? '¿Publicar iniciativa?' : '¿Despublicar iniciativa?',
+    text: iniciativa.iniciativa.substring(0, 80) + '...',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: nuevoValor === 1 ? 'Sí, publicar' : 'Sí, despublicar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: nuevoValor === 1 ? '#059669' : '#dc2626',
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    this._eventoService.togglePublicoIniciativa(iniciativa.id, nuevoValor)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Actualizar localmente sin recargar todo
+          const item = this.listaIniciativas.find(i => i.id === iniciativa.id);
+          if (item) (item as any).publico = nuevoValor;
+          this.aplicarFiltros();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: nuevoValor === 1 ? 'Iniciativa publicada' : 'Iniciativa despublicada',
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        },
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al actualizar:', e);
+          Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+        }
+      });
+  });
+}
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 

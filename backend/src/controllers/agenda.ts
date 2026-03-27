@@ -1208,6 +1208,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
           iniciativa: iniciativa.descripcion,
+          tipo: iniciativa.tipo,
           fecha_votacion: null,
         });
 
@@ -1350,7 +1351,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: IniciativaPuntoOrden,
           as: "iniciativas",
-          attributes: ["id", "iniciativa"],
+          attributes: ["id", "iniciativa","tipo"],
           include: [
             {
               model: IniciativasPresenta,
@@ -1441,7 +1442,8 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             id: ini.id,
             iniciativa: ini.iniciativa,
             proponente: proponentesString,
-            presenta: presentaString
+            presenta: presentaString,
+            tipo: ini.tipo,
           };
         })
       );

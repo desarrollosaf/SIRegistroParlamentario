@@ -54,6 +54,11 @@ IniciativaPuntoOrden.init({
         allowNull: true,
         defaultValue: null,
     },
+    publico: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

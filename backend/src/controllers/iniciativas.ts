@@ -555,3 +555,21 @@ export const eliminardecreto = async (req: Request, res: Response): Promise<any>
     });
   }
 };
+
+export const actualizarIniciativa = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { publico } = req.body;
+
+    await IniciativaPuntoOrden.update(
+      { publico },
+      { where: { id } }
+    );
+
+    return res.status(200).json({ message: 'Actualizado correctamente' });
+
+  } catch (error: any) {
+    console.error('Error al actualizar iniciativa:', error);
+    return res.status(500).json({ message: 'Error interno', error: error.message });
+  }
+};
