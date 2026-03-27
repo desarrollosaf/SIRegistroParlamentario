@@ -2185,7 +2185,7 @@
                                 {{ iniciativa.iniciativa || iniciativa.descripcion }}
                             </td>
                             <td class="align-top pt-3" style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
-                                {{ iniciativa.tipo == 1 ? 'Iniciativa' : iniciativa.tipo == 2 ? 'Punto de acuerdo' : 'Minuta' }}  
+                                {{ +iniciativa.tipo === 1 ? 'Iniciativa' : +iniciativa.tipo === 2 ? 'Punto de acuerdo' : +iniciativa.tipo === 3 ? 'Minuta' : '—' }}
                             </td>
                             <td class="align-top pt-3"
                                 style="word-break: break-word; white-space: normal; font-size: 0.85rem;">

@@ -56,7 +56,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     { numero: 2, nombre: 'Orden del día' },
     { numero: 3, nombre: 'Votaciones' },
     { numero: 4, nombre: 'Resumen' }
-  ];  
+  ];
   //VOTACION
   votantes: Votante[] = [];
   columnaVotantes1: Votante[] = [];
@@ -168,7 +168,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       punto: [''],
       observaciones: [''],
       se_turna_comision: [false],
-      dispensa: [false],   
+      dispensa: [false],
       id_comision: [[]],
       id_punto_turnado: [''],
       id_dictamen: ['']
@@ -202,12 +202,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       tipo: ['', Validators.required],
       id_proponente: [[]],
       id_presenta: [[]],
-      
+
     });
-    
+
 
   }
-  
+
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
@@ -816,7 +816,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               tribuna: [punto.tribuna],
               punto: [punto.punto],
               observaciones: [punto.observaciones],
-              dispensa: [punto.dispensa === true || punto.dispensa === 1], 
+              dispensa: [punto.dispensa === true || punto.dispensa === 1],
               se_turna_comision: [seTurnaComision],
               id_comision: [comisionesIds],
               id_punto_turnado: [idPuntoTurnadoInicial]
@@ -864,101 +864,76 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   guardarIniciativaPrecargada() {
     if (!this.iniciativaPrecargadaSeleccionada) {
       Swal.fire({
-        position: "center",
-        icon: "warning",
-        title: "¡Atención!",
+        position: "center", icon: "warning", title: "¡Atención!",
         text: "Debe seleccionar una iniciativa.",
-        showConfirmButton: false,
-        timer: 2000
+        showConfirmButton: false, timer: 2000
       });
       return;
     }
 
     if (!this.puntoSeleccionadoIniciativa) {
       Swal.fire({
-        position: "center",
-        icon: "error",
-        title: "Error",
+        position: "center", icon: "error", title: "Error",
         text: "No se puede agregar iniciativa sin un punto seleccionado.",
-        showConfirmButton: false,
-        timer: 2000
+        showConfirmButton: false, timer: 2000
       });
       return;
     }
 
+
+    const idsProponente: any[] = this.formIniciativa.value?.id_proponente || [];
+    const idsPresenta: any[] = this.formIniciativa.value?.id_presenta || [];
+    const tipoValor = this.formIniciativa.value?.tipo;
     const iniciativaSeleccionada = { ...this.iniciativaPrecargadaSeleccionada };
+
+
+    const getNombreProponente = () =>
+      this.slctProponentes
+        ?.filter((p: any) => idsProponente.map(Number).includes(Number(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
+
+    const getNombrePresenta = () =>
+      this.slcPresenta
+        ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
 
     const datos = {
       punto: this.puntoSeleccionadoIniciativa.id,
       iniciativa: iniciativaSeleccionada.id,
-      id_proponente: this.formIniciativa.value?.id_proponente || null,
-      id_presenta: this.formIniciativa.value?.id_presenta || null,
-      tipo: this.formIniciativa.value?.tipo || null
+      id_proponente: idsProponente,
+      id_presenta: idsPresenta,
+      tipo: Number(tipoValor) || null
     };
-    console.log(datos);
 
     this._eventoService.saveIniciativasCargadas(datos).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true
+          toast: true, position: "top-end",
+          showConfirmButton: false, timer: 2000, timerProgressBar: true
         });
-        Toast.fire({
-          icon: "success",
-          title: "Iniciativa guardada correctamente."
-        });
+        Toast.fire({ icon: "success", title: "Iniciativa guardada correctamente." });
+
 
         this.iniciativaPrecargadaSeleccionada = null;
 
-        if (response.data) {
-          const idsProponente = this.formIniciativa.value?.id_proponente || [];
-          const idsPresenta = this.formIniciativa.value?.id_presenta || [];
 
-          const iniciativaConNombres = {
-            ...response.data,
-            iniciativa: response.data.iniciativa || iniciativaSeleccionada.iniciativa,
-            proponente: response.data.proponente || this.slctProponentes
-              ?.filter((p: any) => idsProponente.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—',
-            presenta: response.data.presenta || this.slcPresenta
-              ?.filter((p: any) => idsPresenta.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—'
-          };
-          this.listaIniciativas.push(iniciativaConNombres);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(response.data);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [response.data];
-          }
-        } else {
-          const idsProponente = this.formIniciativa.value?.id_proponente || [];
-          const idsPresenta = this.formIniciativa.value?.id_presenta || [];
+        const iniciativaConNombres = {
+          ...(response.data || {}),
+          id: response.data?.id || response.id || Date.now(),
+          iniciativa: response.data?.iniciativa || iniciativaSeleccionada.iniciativa,
+          tipo: Number(response.data?.tipo ?? tipoValor),
+          proponente: response.data?.proponente || getNombreProponente(),
+          presenta: response.data?.presenta || getNombrePresenta()
+        };
 
-          const nuevaIniciativa = {
-            id: response.id || iniciativaSeleccionada.id,
-            iniciativa: iniciativaSeleccionada.iniciativa,
-            proponente: this.slctProponentes
-              ?.filter((p: any) => idsProponente.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—',
-            presenta: this.slcPresenta
-              ?.filter((p: any) => idsPresenta.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—'
-          };
+        this.listaIniciativas.push(iniciativaConNombres);
 
-          this.listaIniciativas.push(nuevaIniciativa);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
-          }
+        if (!this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas = [];
         }
+        this.puntoSeleccionadoIniciativa.iniciativas.push(iniciativaConNombres);
 
         const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
         if (puntoIndex !== -1) {
@@ -966,18 +941,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         }
 
         this.cargarIniciativasDisponibles();
-
         this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: msg,
-          timer: 3000
-        });
+        Swal.fire({ icon: "error", title: "Error", text: msg, timer: 3000 });
       }
     });
   }
@@ -1020,50 +988,47 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   guardarIniciativa() {
     if (this.formIniciativa.invalid) {
       Swal.fire({
-        position: "center",
-        icon: "warning",
-        title: "¡Atención!",
+        position: "center", icon: "warning", title: "¡Atención!",
         text: "Debe escribir la descripción de la iniciativa.",
-        showConfirmButton: false,
-        timer: 2000
+        showConfirmButton: false, timer: 2000
       });
       return;
     }
 
+
+    const idsProponente: any[] = this.formIniciativa.value.id_proponente || [];
+    const idsPresenta: any[] = this.formIniciativa.value.id_presenta || [];
+    const tipoValor = this.formIniciativa.value?.tipo;
+
+
+    const getNombreProponente = () =>
+      this.slctProponentes
+        ?.filter((p: any) => idsProponente.map(Number).includes(Number(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
+
+    const getNombrePresenta = () =>
+      this.slcPresenta
+        ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
+
     if (!this.puntoSeleccionadoIniciativa) {
-      const idsProponente = this.formIniciativa.value.id_proponente || [];
-      const idsPresenta = this.formIniciativa.value.id_presenta || [];
       const nuevaIniciativa = {
         id: Date.now(),
         descripcion: this.formIniciativa.value.descripcion,
-        id_proponente: this.formIniciativa.value.id_proponente,
-        id_presenta: this.formIniciativa.value.id_presenta,
-        tipo: this.formIniciativa.value?.tipo,
-        proponente: this.slctProponentes
-          ?.filter((p: any) => idsProponente.includes(p.id))
-          .map((p: any) => p.valor)
-          .join(', ') || '',
-        presenta: this.slcPresenta
-          ?.filter((p: any) => idsPresenta.includes(p.id))
-          .map((p: any) => p.valor)
-          .join(', ') || ''
+        iniciativa: this.formIniciativa.value.descripcion,
+        id_proponente: idsProponente,
+        id_presenta: idsPresenta,
+        tipo: Number(tipoValor),
+        proponente: getNombreProponente(),
+        presenta: getNombrePresenta()
       };
-
       this.listaIniciativas.push(nuevaIniciativa);
       this.iniciativasTemporales.push(nuevaIniciativa);
 
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
-      });
-      Toast.fire({
-        icon: "success",
-        title: "Se agregó iniciativa (se guardará con el punto)."
-      });
-
+      const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 2000, timerProgressBar: true });
+      Toast.fire({ icon: "success", title: "Se agregó iniciativa (se guardará con el punto)." });
       this.toggleformIniciativa();
       return;
     }
@@ -1071,96 +1036,46 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const datos = {
       punto: this.puntoSeleccionadoIniciativa.id,
       descripcion: this.formIniciativa.value.descripcion,
-      id_proponente: this.formIniciativa.value.id_proponente,
-      id_presenta: this.formIniciativa.value.id_presenta,
-      tipo: this.formIniciativa.value?.tipo,
+      id_proponente: idsProponente,
+      id_presenta: idsPresenta,
+      tipo: Number(tipoValor),
     };
 
-    console.log('INICIATIVAS A ENVIAR: ', datos);
     this._eventoService.saveIniciativa(datos).subscribe({
       next: (response: any) => {
-        const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: "success",
-          title: "Iniciativa guardada correctamente."
-        });
-
+        const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 2000, timerProgressBar: true });
+        Toast.fire({ icon: "success", title: "Iniciativa guardada correctamente." });
         this.toggleformIniciativa();
 
-        if (response.data) {
-          const idsProponente = this.formIniciativa.value.id_proponente || [];
-          const idsPresenta = this.formIniciativa.value.id_presenta || [];
+        const iniciativaConNombres = {
+          ...(response.data || {}),
+          id: response.data?.id || response.id || Date.now(),
+          descripcion: datos.descripcion,
+          iniciativa: response.data?.iniciativa || datos.descripcion,
+          tipo: Number(response.data?.tipo ?? tipoValor),
 
-          const iniciativaConNombres = {
-            ...response.data,
-            proponente: response.data.proponente || this.slctProponentes
-              ?.filter((p: any) => idsProponente.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—',
-            presenta: response.data.presenta || this.slcPresenta
-              ?.filter((p: any) => idsPresenta.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—'
-          };
-          this.listaIniciativas.push(iniciativaConNombres);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(iniciativaConNombres);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [iniciativaConNombres];
-          }
-        } else {
-          const idsProponente = this.formIniciativa.value.id_proponente || [];
-          const idsPresenta = this.formIniciativa.value.id_presenta || [];
+          proponente: response.data?.proponente || getNombreProponente(),
+          presenta: response.data?.presenta || getNombrePresenta()
+        };
 
-          const nuevaIniciativa = {
-            id: response.id || Date.now(),
-            descripcion: datos.descripcion,
-            iniciativa: datos.descripcion,
-            proponente: this.slctProponentes
-              ?.filter((p: any) => idsProponente.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—',
-            presenta: this.slcPresenta
-              ?.filter((p: any) => idsPresenta.includes(p.id))
-              .map((p: any) => p.valor)
-              .join(', ') || '—'
-          };
+        this.listaIniciativas.push(iniciativaConNombres);
 
-          this.listaIniciativas.push(nuevaIniciativa);
-          if (this.puntoSeleccionadoIniciativa.iniciativas) {
-            this.puntoSeleccionadoIniciativa.iniciativas.push(nuevaIniciativa);
-          } else {
-            this.puntoSeleccionadoIniciativa.iniciativas = [nuevaIniciativa];
-          }
+        if (!this.puntoSeleccionadoIniciativa.iniciativas) {
+          this.puntoSeleccionadoIniciativa.iniciativas = [];
         }
+        this.puntoSeleccionadoIniciativa.iniciativas.push(iniciativaConNombres);
 
         const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
         if (puntoIndex !== -1) {
           this.listaPuntos[puntoIndex].iniciativas = [...this.puntoSeleccionadoIniciativa.iniciativas];
         }
-
         this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: msg,
-          timer: 3000
-        });
+        Swal.fire({ icon: "error", title: "Error", text: msg, timer: 3000 });
       }
     });
-
-
-
   }
 
   eliminarIniciativa(iniciativa: any, index: number) {
