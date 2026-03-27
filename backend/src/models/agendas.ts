@@ -28,6 +28,7 @@ class Agenda extends Model {
   declare version_estenografica: string | null;
   declare orden_dia: string | null;
   declare tipo_reunion: number | null;
+  declare publico: number | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -137,6 +138,11 @@ Agenda.init(
     tipo_reunion: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    publico: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     },
     createdAt: {
       type: DataTypes.DATE,

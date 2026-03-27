@@ -29,7 +29,8 @@
     "sequelize": "^6.37.7",
     "sequelize-auto": "^0.8.8",
     "sequelize-typescript": "^2.1.6",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.4",
@@ -43,7 +44,6 @@
     "@types/node-cache": "^4.2.5",
     "@types/nodemailer": "^6.4.16",
     "@types/socket.io": "^3.0.2",
-    "@types/uuid": "^11.0.0",
     "mysql2": "^3.15.3",
     "nodemon": "^3.1.10",
     "sequelize-cli": "^6.6.3",

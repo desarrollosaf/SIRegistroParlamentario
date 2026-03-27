@@ -1208,6 +1208,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
           iniciativa: iniciativa.descripcion,
+          tipo: iniciativa.tipo,
           fecha_votacion: null,
         });
 
@@ -1350,7 +1351,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: IniciativaPuntoOrden,
           as: "iniciativas",
-          attributes: ["id", "iniciativa"],
+          attributes: ["id", "iniciativa","tipo"],
           include: [
             {
               model: IniciativasPresenta,
@@ -1441,7 +1442,8 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             id: ini.id,
             iniciativa: ini.iniciativa,
             proponente: proponentesString,
-            presenta: presentaString
+            presenta: presentaString,
+            tipo: ini.tipo,
           };
         })
       );
@@ -4301,9 +4303,10 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     });
 
     // type=1 (normal)
-    let sesionInfo:      any = null;
-    let puntoOrigenInfo: any = null;
-    let iniciativaInfo:  any = null;
+    let sesionInfo:      any   = null;
+    let puntoOrigenInfo: any   = null;
+    let iniciativaInfo:  any   = null;
+    let estudiosInfoNormal: any[] = []; // estudios type=1
 
     // type=2 (expediente)
     let sesionesOrigenInfo: any[] = [];
@@ -4352,6 +4355,41 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
           };
         }
 
+        // ===== ESTUDIOS TYPE=1 =====
+        const estudiosNormalDB = await IniciativaEstudio.findAll({
+          where: {
+            punto_origen_id: puntoOrigenId,
+            status: "1",
+            type: "1"
+          },
+          include: [{
+            model: PuntosOrden, as: "iniciativa",
+            attributes: ["id", "nopunto", "punto"],
+            include: [{
+              model: Agenda, as: "evento",
+              attributes: ["id", "fecha", "descripcion"],
+              include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }]
+            }]
+          }]
+        });
+
+        estudiosInfoNormal = await Promise.all(estudiosNormalDB.map(async (e: any) => {
+          const pd = e.iniciativa;
+          const ev = pd?.evento;
+
+          // Comisiones del estudio
+          const comisionesData = pd?.id ? await getComisionesTurnado(pd.id) : null;
+
+          return {
+            fecha:       ev?.fecha ? new Date(ev.fecha).toLocaleDateString('es-MX') : 'N/A',
+            tipo_evento: ev?.tipoevento?.nombre ?? 'N/A',
+            numpunto:    pd?.nopunto ?? 'N/A',
+            punto:       pd?.punto   ?? 'N/A',
+            comisiones:  comisionesData?.comisiones_turnado ?? 'N/A'
+          };
+        }));
+
+        // Dictamen type=1
         const dictamen = await IniciativaEstudio.findOne({
           where: { punto_origen_id: puntoOrigenId, status: "2" },
           include: [{
@@ -4431,12 +4469,10 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
             attributes: ["id", "iniciativa", "expediente", "id_punto"]
           });
 
-          // Mapeamos por id_punto para emparejar correctamente con cada sesión
           const iniciativasPorPunto = new Map(
             iniciativas.map((ini: any) => [String(ini.id_punto), ini])
           );
 
-          // Emparejamos sesiones con sus iniciativas en el mismo orden
           iniciativasInfo = puntosOrigenIds.map((pid: any) => {
             const ini = iniciativasPorPunto.get(String(pid));
             return ini ? {
@@ -4459,7 +4495,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
           console.log("TODOS EXPEDIENTE IDS:", todosExpedienteIds);
 
           if (todosExpedienteIds.length > 0) {
-            // Estudios
+            // ===== ESTUDIOS TYPE=2 =====
             const estudiosDB = await IniciativaEstudio.findAll({
               where: { punto_origen_id: { [Op.in]: todosExpedienteIds }, status: "1", type: "2" },
               include: [{
@@ -4472,14 +4508,33 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
                 }]
               }]
             });
-            estudiosInfo = estudiosDB.map((e: any) => ({
-              fecha:       e.iniciativa?.evento?.fecha ? new Date(e.iniciativa.evento.fecha).toLocaleDateString('es-MX') : 'N/A',
-              tipo_evento: e.iniciativa?.evento?.tipoevento?.nombre ?? 'N/A',
-              numpunto:    e.iniciativa?.nopunto ?? 'N/A',
-              punto:       e.iniciativa?.punto   ?? 'N/A'
+
+            estudiosInfo = await Promise.all(estudiosDB.map(async (e: any) => {
+              const pd = e.iniciativa;
+              const ev = pd?.evento;
+
+              // Comisiones de todos los puntos origen del expediente
+              const comisionesPromises = puntosOrigenIds.map((pid: any) => getComisionesTurnado(pid));
+              const comisionesResults  = await Promise.all(comisionesPromises);
+              const todasComisiones = [
+                ...new Set(
+                  comisionesResults
+                    .filter((r: any) => r?.comisiones_turnado)
+                    .flatMap((r: any) => r.comisiones_turnado.split(',').map((c: string) => c.trim()))
+                    .filter(Boolean)
+                )
+              ].join(', ');
+
+              return {
+                fecha:       ev?.fecha ? new Date(ev.fecha).toLocaleDateString('es-MX') : 'N/A',
+                tipo_evento: ev?.tipoevento?.nombre ?? 'N/A',
+                numpunto:    pd?.nopunto ?? 'N/A',
+                punto:       pd?.punto   ?? 'N/A',
+                comisiones:  todasComisiones || 'N/A'
+              };
             }));
 
-            // Dictamen
+            // Dictamen type=2
             const dictamen = await IniciativaEstudio.findOne({
               where: { punto_origen_id: { [Op.in]: todosExpedienteIds }, status: "2", type: "2" },
               include: [{
@@ -4496,7 +4551,18 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
             if (dictamen) {
               const puntoDict  = dictamen.iniciativa;
               const eventoDict = puntoDict?.evento;
-              const comisionesData = await getComisionesTurnado(puntosOrigenIds[0]);
+
+              const comisionesPromises = puntosOrigenIds.map((pid: any) => getComisionesTurnado(pid));
+              const comisionesResults  = await Promise.all(comisionesPromises);
+              const todasComisiones = [
+                ...new Set(
+                  comisionesResults
+                    .filter((r: any) => r?.comisiones_turnado)
+                    .flatMap((r: any) => r.comisiones_turnado.split(',').map((c: string) => c.trim()))
+                    .filter(Boolean)
+                )
+              ].join(', ');
+
               let autoresString = '';
               if (puntoDict?.id) {
                 const iniciativaDictamen = await IniciativaPuntoOrden.findOne({
@@ -4513,12 +4579,13 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
                   autoresString = resultado.proponentesString;
                 }
               }
+
               dictamenInfo = {
                 fecha:       eventoDict?.fecha ? new Date(eventoDict.fecha).toLocaleDateString('es-MX') : 'N/A',
                 tipo_evento: eventoDict?.tipoevento?.nombre ?? 'N/A',
                 numpunto:    puntoDict?.nopunto ?? 'N/A',
                 punto:       puntoDict?.punto   ?? 'N/A',
-                comisiones:  comisionesData?.comisiones_turnado ?? 'N/A',
+                comisiones:  todasComisiones || 'N/A',
                 autores:     autoresString
               };
             }
@@ -4703,7 +4770,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const fullW  = doc.page.width - 60;
     let rightY = vinoY;
 
-    // ===== BLOQUE DERECHO — info evento + type=1 sesión/punto =====
+    // ===== BLOQUE DERECHO =====
     rightY = drawSectionHeader('INFORMACIÓN DEL EVENTO', rightX, rightY, rightW);
     [
       { label: 'Tipo:',  value: evento.tipoevento?.nombre || 'N/A' },
@@ -4747,39 +4814,50 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       doc.y = secY;
     }
 
-    // --- TYPE=2: EXPEDIENTE — un solo encabezado, subencabezados por punto ---
+    // --- TYPE=1: estudios en comisión ---
+    if (!esExpediente && estudiosInfoNormal.length > 0) {
+      estudiosInfoNormal.forEach((est: any, idx: number) => {
+        let secY = doc.y;
+        let ri = 0;
+        secY = drawSectionHeader(
+          estudiosInfoNormal.length > 1 ? `ESTUDIO EN COMISIÓN (${idx + 1})` : 'ESTUDIO EN COMISIÓN',
+          fullX, secY, fullW
+        );
+        secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Comisiones:',  est.comisiones,  fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Fecha:',       est.fecha,       fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Número:',      est.numpunto,    fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Punto:',       est.punto,       fullX, secY, fullW, ri++ % 2 === 0);
+        doc.y = secY;
+      });
+    }
+
+    // --- TYPE=2: EXPEDIENTE ---
     if (esExpediente && sesionesOrigenInfo.length > 0) {
       let secY = doc.y;
-
-      // Encabezado único vino
       secY = drawSectionHeader('EXPEDIENTE', fullX, secY, fullW);
 
       sesionesOrigenInfo.forEach((sesion: any, idx: number) => {
         const iniciativa = iniciativasInfo[idx];
-
         secY = checkPageBreak(secY, 80);
 
-        // Subencabezado gris por punto — igual que subtítulos de comisión
         doc.rect(fullX, secY, fullW, 18).fill('#7a7a7a');
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
           .text(
-            // `PUNTO ${idx + 1}  —  ${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`,
-             `${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`,
+            `${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`,
             fullX + 10, secY + 4,
             { width: fullW - 20, align: 'center' }
           );
         secY += 18;
 
-        // Filas del punto
         let ri = 0;
-        secY = drawInfoRow('Sesión:',     sesion.descripcion,              fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Número:',     String(sesion.nopunto),          fullX, secY, fullW, ri++ % 2 === 0);
-        secY = drawInfoRow('Punto:',      sesion.punto,                    fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Sesión:',    sesion.descripcion,              fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Número:',    String(sesion.nopunto),          fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Punto:',     sesion.punto,                    fullX, secY, fullW, ri++ % 2 === 0);
         if (iniciativa) {
           secY = drawInfoRow('Iniciativa:', iniciativa.iniciativa ?? 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
         }
 
-        // Línea separadora entre puntos (excepto el último)
         if (idx < sesionesOrigenInfo.length - 1) {
           doc.moveTo(fullX + 10, secY + 4)
             .lineTo(fullX + fullW - 10, secY + 4)
@@ -4801,6 +4879,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
           fullX, secY, fullW
         );
         secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Comisiones:',  est.comisiones,  fullX, secY, fullW, ri++ % 2 === 0);
         secY = drawInfoRow('Fecha:',       est.fecha,       fullX, secY, fullW, ri++ % 2 === 0);
         secY = drawInfoRow('Número:',      est.numpunto,    fullX, secY, fullW, ri++ % 2 === 0);
         secY = drawInfoRow('Punto:',       est.punto,       fullX, secY, fullW, ri++ % 2 === 0);
@@ -4815,6 +4894,9 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       secY = drawSectionHeader('DICTAMEN', fullX, secY, fullW);
       secY = drawInfoRow('Tipo evento:', dictamenInfo.tipo_evento,      fullX, secY, fullW, ri++ % 2 === 0);
       secY = drawInfoRow('Comisiones:',  dictamenInfo.comisiones,       fullX, secY, fullW, ri++ % 2 === 0);
+      if (dictamenInfo.autores) {
+        secY = drawInfoRow('Autores:',   dictamenInfo.autores,          fullX, secY, fullW, ri++ % 2 === 0);
+      }
       secY = drawInfoRow('Fecha:',       dictamenInfo.fecha,            fullX, secY, fullW, ri++ % 2 === 0);
       secY = drawInfoRow('Número:',      String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
       secY = drawInfoRow('Punto:',       dictamenInfo.punto,            fullX, secY, fullW, ri++ % 2 === 0);
@@ -4826,13 +4908,13 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       let secY = doc.y;
       let ri = 0;
       secY = drawSectionHeader('INFORMACIÓN DEL PUNTO', fullX, secY, fullW);
-      secY = drawInfoRow('Tipo:', evento.tipoevento?.nombre || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Sede:', evento.sede?.sede || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Fecha:', evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' ,  fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Número:',      String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
-      secY = drawInfoRow('Descripción:', punto.punto || 'N/A',           fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Tipo:',        evento.tipoevento?.nombre || 'N/A',                                    fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Sede:',        evento.sede?.sede || 'N/A',                                            fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Fecha:',       evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Número:',      String(punto.nopunto || 'N/A'),                                        fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Descripción:', punto.punto || 'N/A',                                                  fullX, secY, fullW, ri++ % 2 === 0);
       if (temaInfo) {
-        secY = drawInfoRow('Reserva:', temaInfo.tema_votacion || 'N/A',  fullX, secY, fullW, ri++ % 2 === 0);
+        secY = drawInfoRow('Reserva:',   temaInfo.tema_votacion || 'N/A',                                       fullX, secY, fullW, ri++ % 2 === 0);
       }
       doc.y = secY;
     }
@@ -4925,6 +5007,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const formData = new URLSearchParams();
     formData.append('token', 'ml56a7d6tn7ha7cc');
     formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741');
+    // formData.append('to', '+525561081154');
     formData.append('filename', fileName);
     formData.append('document', base64PDF);
     formData.append('caption', mensajeTexto);

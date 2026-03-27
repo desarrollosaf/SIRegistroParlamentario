@@ -1064,6 +1064,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
                     iniciativa: iniciativa.descripcion,
+                    tipo: iniciativa.tipo,
                     fecha_votacion: null,
                 });
                 for (const item of presentaArray) {
@@ -1200,7 +1201,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
-                    attributes: ["id", "iniciativa"],
+                    attributes: ["id", "iniciativa", "tipo"],
                     include: [
                         {
                             model: iniciativaspresenta_1.default,
@@ -1283,7 +1284,8 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     id: ini.id,
                     iniciativa: ini.iniciativa,
                     proponente: proponentesString,
-                    presenta: presentaString
+                    presenta: presentaString,
+                    tipo: ini.tipo,
                 };
             })));
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
@@ -3609,7 +3611,7 @@ function generarDetalleComision(doc, votos, drawBackground, getColorSentido) {
 //   }
 // };
 const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0;
     try {
         const { body } = req;
         if (!body.idPunto) {
@@ -3649,6 +3651,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         let sesionInfo = null;
         let puntoOrigenInfo = null;
         let iniciativaInfo = null;
+        let estudiosInfoNormal = []; // estudios type=1
         // type=2 (expediente)
         let sesionesOrigenInfo = [];
         let iniciativasInfo = [];
@@ -3689,6 +3692,38 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                         expediente: iniciativa.expediente
                     };
                 }
+                // ===== ESTUDIOS TYPE=1 =====
+                const estudiosNormalDB = yield iniciativas_estudio_1.default.findAll({
+                    where: {
+                        punto_origen_id: puntoOrigenId,
+                        status: "1",
+                        type: "1"
+                    },
+                    include: [{
+                            model: puntos_ordens_1.default, as: "iniciativa",
+                            attributes: ["id", "nopunto", "punto"],
+                            include: [{
+                                    model: agendas_1.default, as: "evento",
+                                    attributes: ["id", "fecha", "descripcion"],
+                                    include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
+                                }]
+                        }]
+                });
+                estudiosInfoNormal = yield Promise.all(estudiosNormalDB.map((e) => __awaiter(void 0, void 0, void 0, function* () {
+                    var _a, _b, _c, _d, _e;
+                    const pd = e.iniciativa;
+                    const ev = pd === null || pd === void 0 ? void 0 : pd.evento;
+                    // Comisiones del estudio
+                    const comisionesData = (pd === null || pd === void 0 ? void 0 : pd.id) ? yield getComisionesTurnado(pd.id) : null;
+                    return {
+                        fecha: (ev === null || ev === void 0 ? void 0 : ev.fecha) ? new Date(ev.fecha).toLocaleDateString('es-MX') : 'N/A',
+                        tipo_evento: (_b = (_a = ev === null || ev === void 0 ? void 0 : ev.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : 'N/A',
+                        numpunto: (_c = pd === null || pd === void 0 ? void 0 : pd.nopunto) !== null && _c !== void 0 ? _c : 'N/A',
+                        punto: (_d = pd === null || pd === void 0 ? void 0 : pd.punto) !== null && _d !== void 0 ? _d : 'N/A',
+                        comisiones: (_e = comisionesData === null || comisionesData === void 0 ? void 0 : comisionesData.comisiones_turnado) !== null && _e !== void 0 ? _e : 'N/A'
+                    };
+                })));
+                // Dictamen type=1
                 const dictamen = yield iniciativas_estudio_1.default.findOne({
                     where: { punto_origen_id: puntoOrigenId, status: "2" },
                     include: [{
@@ -3764,9 +3799,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                         where: { id_punto: { [sequelize_1.Op.in]: puntosOrigenIds } },
                         attributes: ["id", "iniciativa", "expediente", "id_punto"]
                     });
-                    // Mapeamos por id_punto para emparejar correctamente con cada sesión
                     const iniciativasPorPunto = new Map(iniciativas.map((ini) => [String(ini.id_punto), ini]));
-                    // Emparejamos sesiones con sus iniciativas en el mismo orden
                     iniciativasInfo = puntosOrigenIds.map((pid) => {
                         const ini = iniciativasPorPunto.get(String(pid));
                         return ini ? {
@@ -3785,7 +3818,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                     ];
                     console.log("TODOS EXPEDIENTE IDS:", todosExpedienteIds);
                     if (todosExpedienteIds.length > 0) {
-                        // Estudios
+                        // ===== ESTUDIOS TYPE=2 =====
                         const estudiosDB = yield iniciativas_estudio_1.default.findAll({
                             where: { punto_origen_id: { [sequelize_1.Op.in]: todosExpedienteIds }, status: "1", type: "2" },
                             include: [{
@@ -3798,16 +3831,28 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                                         }]
                                 }]
                         });
-                        estudiosInfo = estudiosDB.map((e) => {
-                            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-                            return ({
-                                fecha: ((_b = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento) === null || _b === void 0 ? void 0 : _b.fecha) ? new Date(e.iniciativa.evento.fecha).toLocaleDateString('es-MX') : 'N/A',
-                                tipo_evento: (_f = (_e = (_d = (_c = e.iniciativa) === null || _c === void 0 ? void 0 : _c.evento) === null || _d === void 0 ? void 0 : _d.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre) !== null && _f !== void 0 ? _f : 'N/A',
-                                numpunto: (_h = (_g = e.iniciativa) === null || _g === void 0 ? void 0 : _g.nopunto) !== null && _h !== void 0 ? _h : 'N/A',
-                                punto: (_k = (_j = e.iniciativa) === null || _j === void 0 ? void 0 : _j.punto) !== null && _k !== void 0 ? _k : 'N/A'
-                            });
-                        });
-                        // Dictamen
+                        estudiosInfo = yield Promise.all(estudiosDB.map((e) => __awaiter(void 0, void 0, void 0, function* () {
+                            var _a, _b, _c, _d;
+                            const pd = e.iniciativa;
+                            const ev = pd === null || pd === void 0 ? void 0 : pd.evento;
+                            // Comisiones de todos los puntos origen del expediente
+                            const comisionesPromises = puntosOrigenIds.map((pid) => getComisionesTurnado(pid));
+                            const comisionesResults = yield Promise.all(comisionesPromises);
+                            const todasComisiones = [
+                                ...new Set(comisionesResults
+                                    .filter((r) => r === null || r === void 0 ? void 0 : r.comisiones_turnado)
+                                    .flatMap((r) => r.comisiones_turnado.split(',').map((c) => c.trim()))
+                                    .filter(Boolean))
+                            ].join(', ');
+                            return {
+                                fecha: (ev === null || ev === void 0 ? void 0 : ev.fecha) ? new Date(ev.fecha).toLocaleDateString('es-MX') : 'N/A',
+                                tipo_evento: (_b = (_a = ev === null || ev === void 0 ? void 0 : ev.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : 'N/A',
+                                numpunto: (_c = pd === null || pd === void 0 ? void 0 : pd.nopunto) !== null && _c !== void 0 ? _c : 'N/A',
+                                punto: (_d = pd === null || pd === void 0 ? void 0 : pd.punto) !== null && _d !== void 0 ? _d : 'N/A',
+                                comisiones: todasComisiones || 'N/A'
+                            };
+                        })));
+                        // Dictamen type=2
                         const dictamen = yield iniciativas_estudio_1.default.findOne({
                             where: { punto_origen_id: { [sequelize_1.Op.in]: todosExpedienteIds }, status: "2", type: "2" },
                             include: [{
@@ -3823,7 +3868,14 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                         if (dictamen) {
                             const puntoDict = dictamen.iniciativa;
                             const eventoDict = puntoDict === null || puntoDict === void 0 ? void 0 : puntoDict.evento;
-                            const comisionesData = yield getComisionesTurnado(puntosOrigenIds[0]);
+                            const comisionesPromises = puntosOrigenIds.map((pid) => getComisionesTurnado(pid));
+                            const comisionesResults = yield Promise.all(comisionesPromises);
+                            const todasComisiones = [
+                                ...new Set(comisionesResults
+                                    .filter((r) => r === null || r === void 0 ? void 0 : r.comisiones_turnado)
+                                    .flatMap((r) => r.comisiones_turnado.split(',').map((c) => c.trim()))
+                                    .filter(Boolean))
+                            ].join(', ');
                             let autoresString = '';
                             if (puntoDict === null || puntoDict === void 0 ? void 0 : puntoDict.id) {
                                 const iniciativaDictamen = yield inciativas_puntos_ordens_1.default.findOne({
@@ -3845,7 +3897,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                                 tipo_evento: (_q = (_p = eventoDict === null || eventoDict === void 0 ? void 0 : eventoDict.tipoevento) === null || _p === void 0 ? void 0 : _p.nombre) !== null && _q !== void 0 ? _q : 'N/A',
                                 numpunto: (_r = puntoDict === null || puntoDict === void 0 ? void 0 : puntoDict.nopunto) !== null && _r !== void 0 ? _r : 'N/A',
                                 punto: (_s = puntoDict === null || puntoDict === void 0 ? void 0 : puntoDict.punto) !== null && _s !== void 0 ? _s : 'N/A',
-                                comisiones: (_t = comisionesData === null || comisionesData === void 0 ? void 0 : comisionesData.comisiones_turnado) !== null && _t !== void 0 ? _t : 'N/A',
+                                comisiones: todasComisiones || 'N/A',
                                 autores: autoresString
                             };
                         }
@@ -3994,11 +4046,11 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         const fullX = 30;
         const fullW = doc.page.width - 60;
         let rightY = vinoY;
-        // ===== BLOQUE DERECHO — info evento + type=1 sesión/punto =====
+        // ===== BLOQUE DERECHO =====
         rightY = drawSectionHeader('INFORMACIÓN DEL EVENTO', rightX, rightY, rightW);
         [
-            { label: 'Tipo:', value: ((_u = evento.tipoevento) === null || _u === void 0 ? void 0 : _u.nombre) || 'N/A' },
-            { label: 'Sede:', value: ((_v = evento.sede) === null || _v === void 0 ? void 0 : _v.sede) || 'N/A' },
+            { label: 'Tipo:', value: ((_t = evento.tipoevento) === null || _t === void 0 ? void 0 : _t.nombre) || 'N/A' },
+            { label: 'Sede:', value: ((_u = evento.sede) === null || _u === void 0 ? void 0 : _u.sede) || 'N/A' },
             { label: 'Fecha:', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
         ].forEach((row, i) => {
             rightY = drawInfoRow(row.label, row.value, rightX, rightY, rightW, i % 2 === 0);
@@ -4029,26 +4081,35 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         if (!esExpediente && iniciativaInfo) {
             let secY = doc.y;
             secY = drawSectionHeader('INICIATIVA', fullX, secY, fullW);
-            secY = drawInfoRow('Descripción:', (_w = iniciativaInfo.iniciativa) !== null && _w !== void 0 ? _w : 'N/A', fullX, secY, fullW, true);
+            secY = drawInfoRow('Descripción:', (_v = iniciativaInfo.iniciativa) !== null && _v !== void 0 ? _v : 'N/A', fullX, secY, fullW, true);
             doc.y = secY;
         }
-        // --- TYPE=2: EXPEDIENTE — un solo encabezado, subencabezados por punto ---
+        // --- TYPE=1: estudios en comisión ---
+        if (!esExpediente && estudiosInfoNormal.length > 0) {
+            estudiosInfoNormal.forEach((est, idx) => {
+                let secY = doc.y;
+                let ri = 0;
+                secY = drawSectionHeader(estudiosInfoNormal.length > 1 ? `ESTUDIO EN COMISIÓN (${idx + 1})` : 'ESTUDIO EN COMISIÓN', fullX, secY, fullW);
+                secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Comisiones:', est.comisiones, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Fecha:', est.fecha, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Número:', est.numpunto, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Punto:', est.punto, fullX, secY, fullW, ri++ % 2 === 0);
+                doc.y = secY;
+            });
+        }
+        // --- TYPE=2: EXPEDIENTE ---
         if (esExpediente && sesionesOrigenInfo.length > 0) {
             let secY = doc.y;
-            // Encabezado único vino
             secY = drawSectionHeader('EXPEDIENTE', fullX, secY, fullW);
             sesionesOrigenInfo.forEach((sesion, idx) => {
                 var _a;
                 const iniciativa = iniciativasInfo[idx];
                 secY = checkPageBreak(secY, 80);
-                // Subencabezado gris por punto — igual que subtítulos de comisión
                 doc.rect(fullX, secY, fullW, 18).fill('#7a7a7a');
                 doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-                    .text(
-                // `PUNTO ${idx + 1}  —  ${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`,
-                `${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`, fullX + 10, secY + 4, { width: fullW - 20, align: 'center' });
+                    .text(`${sesion.tipo_evento || ''}  ${sesion.fecha || ''}`, fullX + 10, secY + 4, { width: fullW - 20, align: 'center' });
                 secY += 18;
-                // Filas del punto
                 let ri = 0;
                 secY = drawInfoRow('Sesión:', sesion.descripcion, fullX, secY, fullW, ri++ % 2 === 0);
                 secY = drawInfoRow('Número:', String(sesion.nopunto), fullX, secY, fullW, ri++ % 2 === 0);
@@ -4056,7 +4117,6 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (iniciativa) {
                     secY = drawInfoRow('Iniciativa:', (_a = iniciativa.iniciativa) !== null && _a !== void 0 ? _a : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
                 }
-                // Línea separadora entre puntos (excepto el último)
                 if (idx < sesionesOrigenInfo.length - 1) {
                     doc.moveTo(fullX + 10, secY + 4)
                         .lineTo(fullX + fullW - 10, secY + 4)
@@ -4073,6 +4133,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
                 let ri = 0;
                 secY = drawSectionHeader(estudiosInfo.length > 1 ? `ESTUDIO EN COMISIÓN (${idx + 1})` : 'ESTUDIO EN COMISIÓN', fullX, secY, fullW);
                 secY = drawInfoRow('Tipo evento:', est.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
+                secY = drawInfoRow('Comisiones:', est.comisiones, fullX, secY, fullW, ri++ % 2 === 0);
                 secY = drawInfoRow('Fecha:', est.fecha, fullX, secY, fullW, ri++ % 2 === 0);
                 secY = drawInfoRow('Número:', est.numpunto, fullX, secY, fullW, ri++ % 2 === 0);
                 secY = drawInfoRow('Punto:', est.punto, fullX, secY, fullW, ri++ % 2 === 0);
@@ -4086,6 +4147,9 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             secY = drawSectionHeader('DICTAMEN', fullX, secY, fullW);
             secY = drawInfoRow('Tipo evento:', dictamenInfo.tipo_evento, fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Comisiones:', dictamenInfo.comisiones, fullX, secY, fullW, ri++ % 2 === 0);
+            if (dictamenInfo.autores) {
+                secY = drawInfoRow('Autores:', dictamenInfo.autores, fullX, secY, fullW, ri++ % 2 === 0);
+            }
             secY = drawInfoRow('Fecha:', dictamenInfo.fecha, fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Número:', String(dictamenInfo.numpunto), fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Punto:', dictamenInfo.punto, fullX, secY, fullW, ri++ % 2 === 0);
@@ -4096,8 +4160,8 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             let secY = doc.y;
             let ri = 0;
             secY = drawSectionHeader('INFORMACIÓN DEL PUNTO', fullX, secY, fullW);
-            secY = drawInfoRow('Tipo:', ((_x = evento.tipoevento) === null || _x === void 0 ? void 0 : _x.nombre) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
-            secY = drawInfoRow('Sede:', ((_y = evento.sede) === null || _y === void 0 ? void 0 : _y.sede) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Tipo:', ((_w = evento.tipoevento) === null || _w === void 0 ? void 0 : _w.nombre) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
+            secY = drawInfoRow('Sede:', ((_x = evento.sede) === null || _x === void 0 ? void 0 : _x.sede) || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Fecha:', evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Número:', String(punto.nopunto || 'N/A'), fullX, secY, fullW, ri++ % 2 === 0);
             secY = drawInfoRow('Descripción:', punto.punto || 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
@@ -4165,7 +4229,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             : `*VOTACION - PUNTO ${punto.nopunto}*\n\n`) +
             `*Punto:* ${cortarTexto(punto.punto || 'N/A', 300)}\n` +
             (temaInfo ? `*Reserva:* ${temaInfo.tema_votacion || 'N/A'}\n` : '') +
-            `*Evento:* ${((_z = evento.tipoevento) === null || _z === void 0 ? void 0 : _z.nombre) || 'N/A'}\n` +
+            `*Evento:* ${((_y = evento.tipoevento) === null || _y === void 0 ? void 0 : _y.nombre) || 'N/A'}\n` +
             `*Fecha:* ${fechaFormateada}${infoComisiones}\n` +
             `*Resultados:*\n` +
             `A favor: ${totales.favor}\n` +
@@ -4180,6 +4244,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         const formData = new URLSearchParams();
         formData.append('token', 'ml56a7d6tn7ha7cc');
         formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741');
+        // formData.append('to', '+525561081154');
         formData.append('filename', fileName);
         formData.append('document', base64PDF);
         formData.append('caption', mensajeTexto);
@@ -4204,13 +4269,13 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
             console.error("Error de Axios:", {
                 message: error.message,
                 code: error.code,
-                response: (_0 = error.response) === null || _0 === void 0 ? void 0 : _0.data
+                response: (_z = error.response) === null || _z === void 0 ? void 0 : _z.data
             });
         }
         return res.status(500).json({
             message: "Error al generar y enviar PDF de votación por WhatsApp",
             error: error.message,
-            details: axios_1.default.isAxiosError(error) ? (_1 = error.response) === null || _1 === void 0 ? void 0 : _1.data : undefined
+            details: axios_1.default.isAxiosError(error) ? (_0 = error.response) === null || _0 === void 0 ? void 0 : _0.data : undefined
         });
     }
 });

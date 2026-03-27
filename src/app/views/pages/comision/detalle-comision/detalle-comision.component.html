@@ -2067,6 +2067,20 @@
                             </ng-select>
                         </div>
 
+                        <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-tag-fill me-1"></i> Tipo
+                        </label>
+                        <ng-select
+                            [items]="tiposIniciativa"
+                            bindLabel="label"
+                            bindValue="id"
+                            formControlName="tipo"
+                            placeholder="Selecciona un tipo"
+                            [clearable]="true"
+                        ></ng-select>
+                        </div>
+
                         <div class="col-12">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-chat-left-text-fill me-1"></i> Descripción de la iniciativa
@@ -2111,6 +2125,19 @@
                                 placeholder="Selecciona quien(es) presenta(n)">
                             </ng-select>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-tag-fill me-1"></i> Tipo
+                            </label>
+                            <ng-select
+                                [items]="tiposIniciativa"
+                                bindLabel="label"
+                                bindValue="id"
+                                formControlName="tipo"
+                                placeholder="Selecciona un tipo"
+                                [clearable]="true"
+                            ></ng-select>
+                        </div>
 
                         <div class="col-12">
                             <label class="form-label fw-semibold">
@@ -2145,6 +2172,7 @@
                         <tr>
                             <th style="width: 35px;">#</th>
                             <th style="width: auto;">Descripción</th>
+                            <th style="width: 120px;">Tipo</th>
                             <th style="width: 160px;">Proponente</th>
                             <th style="width: 160px;">Presenta</th>
                             <th style="width: 70px;" class="text-center">Acciones</th>
@@ -2155,6 +2183,9 @@
                             <td class="fw-semibold text-muted align-top pt-3">{{ i + 1 }}</td>
                             <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
                                 {{ iniciativa.iniciativa || iniciativa.descripcion }}
+                            </td>
+                            <td class="align-top pt-3" style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
+                                {{ +iniciativa.tipo === 1 ? 'Iniciativa' : +iniciativa.tipo === 2 ? 'Punto de acuerdo' : +iniciativa.tipo === 3 ? 'Minuta' : '—' }}
                             </td>
                             <td class="align-top pt-3"
                                 style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
