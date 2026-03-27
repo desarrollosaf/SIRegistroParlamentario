@@ -233,6 +233,8 @@ exports.actvototodos = actvototodos;
 const creariniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;
+        // console.log(body)
+        // return 500;
         const punto = yield puntos_ordens_1.default.findOne({
             where: { id: body.punto },
         });
@@ -257,6 +259,7 @@ const creariniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function
             id_punto: punto.id,
             id_evento: punto.id_evento,
             iniciativa: body.descripcion,
+            tipo: body.tipo,
             fecha_votacion: null,
             status: 1,
         });

@@ -1064,6 +1064,7 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
                     iniciativa: iniciativa.descripcion,
+                    tipo: iniciativa.tipo,
                     fecha_votacion: null,
                 });
                 for (const item of presentaArray) {
@@ -1200,7 +1201,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
-                    attributes: ["id", "iniciativa"],
+                    attributes: ["id", "iniciativa", "tipo"],
                     include: [
                         {
                             model: iniciativaspresenta_1.default,
@@ -1283,7 +1284,8 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     id: ini.id,
                     iniciativa: ini.iniciativa,
                     proponente: proponentesString,
-                    presenta: presentaString
+                    presenta: presentaString,
+                    tipo: ini.tipo,
                 };
             })));
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];

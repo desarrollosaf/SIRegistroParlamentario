@@ -257,7 +257,8 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
 export const creariniciativa = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    
+    // console.log(body)
+    // return 500;
     const punto = await PuntosOrden.findOne({
       where: { id: body.punto },
     });
@@ -286,6 +287,7 @@ export const creariniciativa = async (req: Request, res: Response): Promise<any>
       id_punto: punto.id,
       id_evento: punto.id_evento,
       iniciativa: body.descripcion,
+      tipo: body.tipo,
       fecha_votacion: null,
       status: 1,
     });
