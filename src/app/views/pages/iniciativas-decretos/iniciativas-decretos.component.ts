@@ -453,43 +453,43 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   }
 
   togglePublico(iniciativa: Iniciativa): void {
-  const nuevoValor = iniciativa.publico === 1 ? 0 : 1;
-  
-  Swal.fire({
-    title: nuevoValor === 1 ? '¿Publicar iniciativa?' : '¿Despublicar iniciativa?',
-    text: iniciativa.iniciativa.substring(0, 80) + '...',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: nuevoValor === 1 ? 'Sí, publicar' : 'Sí, despublicar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: nuevoValor === 1 ? '#059669' : '#dc2626',
-  }).then((result) => {
-    if (!result.isConfirmed) return;
+    const nuevoValor = iniciativa.publico === 1 ? 0 : 1;
+    
+    Swal.fire({
+      title: nuevoValor === 1 ? '¿Publicar iniciativa?' : '¿Despublicar iniciativa?',
+      text: iniciativa.iniciativa.substring(0, 80) + '...',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: nuevoValor === 1 ? 'Sí, publicar' : 'Sí, despublicar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: nuevoValor === 1 ? '#059669' : '#dc2626',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-    this._eventoService.togglePublicoIniciativa(iniciativa.id, nuevoValor)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Actualizar localmente sin recargar todo
-          const item = this.listaIniciativas.find(i => i.id === iniciativa.id);
-          if (item) (item as any).publico = nuevoValor;
-          this.aplicarFiltros();
-          this.cdr.detectChanges();
+      this._eventoService.togglePublicoIniciativa(iniciativa.id, nuevoValor)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            // Actualizar localmente sin recargar todo
+            const item = this.listaIniciativas.find(i => i.id === iniciativa.id);
+            if (item) (item as any).publico = nuevoValor;
+            this.aplicarFiltros();
+            this.cdr.detectChanges();
 
-          Swal.fire({
-            icon: 'success',
-            title: nuevoValor === 1 ? 'Iniciativa publicada' : 'Iniciativa despublicada',
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        },
-        error: (e: HttpErrorResponse) => {
-          console.error('Error al actualizar:', e);
-          Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
-        }
-      });
-  });
-}
+            Swal.fire({
+              icon: 'success',
+              title: nuevoValor === 1 ? 'Iniciativa publicada' : 'Iniciativa despublicada',
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          },
+          error: (e: HttpErrorResponse) => {
+            console.error('Error al actualizar:', e);
+            Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+          }
+        });
+    });
+  }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 

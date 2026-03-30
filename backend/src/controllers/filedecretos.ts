@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto"; // 👈 viene con Node.js, no necesitas instalar nada
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -13,7 +13,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `tmp_${uuidv4()}${ext}`); // 👈 nombre temporal, el controlador lo renombra
+    const uniqueId = crypto.randomBytes(16).toString("hex"); // 👈 genera un id único similar a uuid
+    cb(null, `tmp_${uniqueId}${ext}`);
   }
 });
 

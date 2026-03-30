@@ -11,5 +11,6 @@ router.get("/api/iniciativas/iniciativas/", iniciativas_1.getiniciativas);
 router.post("/api/iniciativas/savedecreto/", filedecretos_1.default.single("path_doc"), iniciativas_1.guardardecreto);
 router.get("/api/iniciativas/getdecretos/:id", iniciativas_1.getdecretos);
 router.get("/api/iniciativas/eliminardecreto/:id", iniciativas_1.eliminardecreto);
-router.patch('/api/iniciativas/:id', iniciativas_1.actualizarIniciativa);
+router.patch('/api/iniciativas/publicarini/:id', iniciativas_1.actualizarIniciativa);
+router.patch('/api/iniciativas/publicarevento/:id', iniciativas_1.publicarAgenda);
 exports.default = router;

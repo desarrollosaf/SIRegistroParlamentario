@@ -75,7 +75,7 @@
     "@types/jasmine": "~5.1.0",
     "@types/pdfkit": "^0.17.3",
     "@types/sortablejs": "^1.15.8",
-    "@types/uuid": "^11.0.0",
+    "@types/uuid": "^8.3.4",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

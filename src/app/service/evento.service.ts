@@ -229,8 +229,12 @@ export class EventoService {
   }
 
   togglePublicoIniciativa(id: string, publico: number): Observable<any> {
-  return this.http.patch(`${this.myAppUrl}${this.myAPIUrl3}/publicarini/${id}`, { publico });
-}
+    return this.http.patch(`${this.myAppUrl}${this.myAPIUrl3}/publicarini/${id}`, { publico });
+  }
+
+  togglePublicoEvento(id: string, publico: number): Observable<any> {
+    return this.http.patch(`${this.myAppUrl}${this.myAPIUrl3}/publicarevento/${id}`, { publico });
+  }
 
   
 }

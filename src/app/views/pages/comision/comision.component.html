@@ -81,6 +81,14 @@
                                         title="Integrantes" (click)="verificarIntegrantes(row.id)">
                                         <i class="bi bi-person-exclamation"></i>
                                     </a>
+                                    <a class="btn action-btn" 
+                                        [class.btn-success]="row.publico === 1"
+                                        [class.btn-outline-secondary]="row.publico !== 1"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                        [title]="row.publico === 1 ? 'Publicado' : 'Privado'"
+                                        (click)="togglePublico(row)">
+                                        <i class="bi" [class.bi-eye-fill]="row.publico === 1" [class.bi-eye-slash]="row.publico !== 1"></i>
+                                    </a>
                                 </div>
                             </ng-template>
                         </ngx-datatable-column>
