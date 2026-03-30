@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -498,3 +498,16 @@ const actualizarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.actualizarIniciativa = actualizarIniciativa;
+const publicarAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { publico } = req.body;
+        yield agendas_1.default.update({ publico }, { where: { id } });
+        return res.status(200).json({ message: 'Actualizado correctamente' });
+    }
+    catch (error) {
+        console.error('Error al actualizar iniciativa:', error);
+        return res.status(500).json({ message: 'Error interno', error: error.message });
+    }
+});
+exports.publicarAgenda = publicarAgenda;

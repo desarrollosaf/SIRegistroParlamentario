@@ -573,3 +573,21 @@ export const actualizarIniciativa = async (req: Request, res: Response): Promise
     return res.status(500).json({ message: 'Error interno', error: error.message });
   }
 };
+
+export const publicarAgenda = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { publico } = req.body;
+
+    await Agenda.update(
+      { publico },
+      { where: { id } }
+    );
+
+    return res.status(200).json({ message: 'Actualizado correctamente' });
+
+  } catch (error: any) {
+    console.error('Error al actualizar iniciativa:', error);
+    return res.status(500).json({ message: 'Error interno', error: error.message });
+  }
+};
