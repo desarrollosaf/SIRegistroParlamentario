@@ -371,30 +371,71 @@ export class ComisionComponent {
   }
 
   eliminarDiputadoAsociado(id: number) {
-  Swal.fire({
-    title: '¿Está seguro?',
-    text: 'Esta acción lo eliminará',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar'
-  }).then(result => {
-    if (result.isConfirmed) {
+    Swal.fire({
+      title: '¿Está seguro?',
+      text: 'Esta acción lo eliminará',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar'
+    }).then(result => {
+      if (result.isConfirmed) {
 
-      // quitar del arreglo
-      this.diputadosAsociados = this.diputadosAsociados.filter(d => d.id !== id);
-      this._eventoService.deleteDiputadoAsociado(id).subscribe({
+        // quitar del arreglo
+        this.diputadosAsociados = this.diputadosAsociados.filter(d => d.id !== id);
+        this._eventoService.deleteDiputadoAsociado(id).subscribe({
+          next: () => {
+            this.mostrarExito('Diputado asociado eliminado');
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.mostrarError('Error al eliminar');
+          }
+        });
+
+      }
+    });
+  }
+
+  togglePublico(row: any): void {
+    const nuevoValor = row.publico === 1 ? 0 : 1;
+
+    Swal.fire({
+      title: nuevoValor === 1 ? '¿Publicar evento?' : '¿Despublicar evento?',
+      text: (row.descripcion || '').substring(0, 80),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: nuevoValor === 1 ? 'Sí, publicar' : 'Sí, despublicar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: nuevoValor === 1 ? '#059669' : '#dc2626',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      this._eventoService.togglePublicoEvento(row.id, nuevoValor).subscribe({
         next: () => {
-          this.mostrarExito('Diputado asociado eliminado');
+          // Actualizar localmente sin recargar
+          const allData = this.originalData();
+          const item = allData.find(i => i.id === row.id);
+          if (item) item.publico = nuevoValor;
+          row.publico = nuevoValor;
+
+          // Refrescar el grid
+          this.rows.set([...this.rows()]);
           this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: nuevoValor === 1 ? 'Publicado correctamente' : 'Despublicado correctamente',
+            timer: 1500,
+            showConfirmButton: false,
+          });
         },
-        error: () => {
-          this.mostrarError('Error al eliminar');
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al actualizar:', e);
+          Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
         }
       });
-
-    }
-  });
-}
+    });
+  }
 
 
   eliminarEvento(id: any) {

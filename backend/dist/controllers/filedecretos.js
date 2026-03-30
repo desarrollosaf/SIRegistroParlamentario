@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const uuid_1 = require("uuid");
+const crypto_1 = __importDefault(require("crypto")); // 👈 viene con Node.js, no necesitas instalar nada
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
         const dir = path_1.default.join(process.cwd(), "storage/decretos");
@@ -17,7 +17,8 @@ const storage = multer_1.default.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path_1.default.extname(file.originalname);
-        cb(null, `tmp_${(0, uuid_1.v4)()}${ext}`); // 👈 nombre temporal, el controlador lo renombra
+        const uniqueId = crypto_1.default.randomBytes(16).toString("hex"); // 👈 genera un id único similar a uuid
+        cb(null, `tmp_${uniqueId}${ext}`);
     }
 });
 const fileFilter = (req, file, cb) => {
