@@ -2,13 +2,14 @@ import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, TemplateRef, V
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbAccordionModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbModal, NgbModalRef, } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { enviroment } from '../../../../../enviroments/enviroment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
+declare var bootstrap: any;
 interface Integrante {
   id: number;
   id_diputado: string;
@@ -49,6 +50,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
   @ViewChild('xlModalI') xlModalI!: TemplateRef<any>;
+  @ViewChild('xlModalIntegrantes') xlModalIntegrantes!: TemplateRef<any>;
 
   step = 1;
   stepNames = [
@@ -147,6 +149,17 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntosTurnadosSeleccionados: any[] = [];
   dictamenesSeleccionados: any[] = [];
 
+  slctDiputados: any[] = [];
+  slctPartidos:  any[] = [];
+  slctCargo:     any[] = [];
+  diputadosAsociados: any[] = [];
+  mostrarFormulario = false;
+  tipoSeleccionado: 'legislatura' | 'comision' = 'legislatura';
+  tipoEventoAgenda: string = '';
+  integranteForm!: FormGroup;
+  modalRefIntegrantes!: NgbModalRef;
+  slctComisiones: any[] = [];
+
   consoleiniciativas: any[] = [];
   constructor(
     private fb: FormBuilder,
@@ -211,7 +224,28 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
+
+    this.integranteForm = this.fb.group({
+      diputadoId: ['', Validators.required],
+      partidoId: ['', Validators.required],
+      comisionId: [''],
+      cargo: ['']
+    });
+
+    this.integranteForm.get('cargo')?.valueChanges.subscribe(cargoId => {
+      const cargoSeleccionado = this.slctCargo.find((c: any) => c.id === cargoId);
+      const comisionControl = this.integranteForm.get('comisionId');
+      if (cargoSeleccionado?.valor === 'Diputado Asociado') {
+        comisionControl?.clearValidators();
+        comisionControl?.setValue('');
+      } else if (this.tipoSeleccionado === 'comision') {
+        comisionControl?.setValidators([Validators.required]);
+      }
+      comisionControl?.updateValueAndValidity();
+      this.cdr.detectChanges();
+    });
   }
+
 
   cargarIniciativasDisponibles() {
     if (!this.puntoSeleccionadoIniciativa) {
@@ -694,6 +728,75 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       default:
         return '';
     }
+  }
+
+   contarIntegrantesComision(integrantes: any[]): number {
+    return integrantes.length;
+  }
+
+  get tipoEstaBloqueo(): boolean {
+  return this.tipoEventoAgenda !== '';
+  }
+  get legislaturaDisponible(): boolean {
+    if (this.tipoEventoAgenda === '') return true;
+    return this.tipoEventoAgenda === 'Sesión';
+  }
+  get comisionDisponible(): boolean {
+    if (this.tipoEventoAgenda === '') return true;
+    return this.tipoEventoAgenda === 'Comisión';
+  }
+  get diputadoInvalid() {
+    const control = this.integranteForm.get('diputadoId');
+    return control?.invalid && control?.touched;
+  }
+  get partidoInvalid() {
+    const control = this.integranteForm.get('partidoId');
+    return control?.invalid && control?.touched;
+  }
+  get comisionInvalid() {
+    const control = this.integranteForm.get('comisionId');
+    const cargoId = this.integranteForm.get('cargo')?.value;
+    const cargoSeleccionado = this.slctCargo.find((c: any) => c.id === cargoId);
+    if (cargoSeleccionado?.valor === 'Diputado Asociado') return false;
+    return control?.invalid && control?.touched && this.tipoSeleccionado === 'comision';
+  }
+  get cargoInvalid() {
+    const control = this.integranteForm.get('cargo');
+    return control?.invalid && control?.touched && this.tipoSeleccionado === 'comision';
+  }
+
+  onTipoChange() {
+    const comisionControl = this.integranteForm.get('comisionId');
+    const cargoControl    = this.integranteForm.get('cargo');
+    if (this.tipoSeleccionado === 'comision') {
+      comisionControl?.setValidators([Validators.required]);
+      cargoControl?.setValidators([Validators.required]);
+      comisionControl?.setValue('');
+      cargoControl?.setValue('');
+    } else {
+      comisionControl?.clearValidators();
+      cargoControl?.clearValidators();
+      comisionControl?.setValue('');
+      cargoControl?.setValue('');
+    }
+    comisionControl?.updateValueAndValidity();
+    cargoControl?.updateValueAndValidity();
+  }
+
+  cancelarFormulario() {
+    this.mostrarFormulario = false;
+    this.integranteForm.reset({ diputadoId: '', partidoId: '', comisionId: '', cargo: '' });
+    if (this.tipoEventoAgenda === 'Comisión') {
+      this.tipoSeleccionado = 'comision';
+    } else {
+      this.tipoSeleccionado = 'legislatura';
+    }
+    this.onTipoChange();
+    this.integranteForm.markAsPristine();
+    this.integranteForm.markAsUntouched();
+    Object.keys(this.integranteForm.controls).forEach(key => {
+      this.integranteForm.get(key)?.setErrors(null);
+    });
   }
 
   private cargarOrdenDia(): void {
@@ -2408,5 +2511,181 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   quitarPuntoTurnadoPunto(punto: any, index: number): void {
     punto.puntosTurnadosSeleccionados.splice(index, 1);
+  }
+
+  verificarIntegrantes(): void {
+    this._eventoService.getEvento(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        this.tipoEventoAgenda  = response.evento.tipoevento.nombre;
+        this.diputadosAsociados = response.dipasociados || [];
+
+        if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
+          const primerElemento = response.integrantes[0];
+          if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
+            this.esComision      = true;
+            this.tipoSeleccionado = 'comision';
+            this.listaComisiones  = response.integrantes.map((comision: any) => ({
+              id:          comision.comision_id,
+              nombre:      comision.comision_nombre,
+              importancia: comision.importancia,
+              integrantes: comision.integrantes || [],
+              columna1:    [],
+              columna2:    []
+            }));
+            this.listaComisiones.forEach(comision => {
+              const mitad = Math.ceil(comision.integrantes.length / 2);
+              comision.columna1 = comision.integrantes.slice(0, mitad);
+              comision.columna2 = comision.integrantes.slice(mitad);
+            });
+          } else {
+            this.esComision       = false;
+            this.tipoSeleccionado = 'legislatura';
+            this.integrantes      = response.integrantes || [];
+          }
+        } else {
+          this.esComision  = false;
+          this.integrantes = [];
+        }
+
+        this.onTipoChange();
+        this.abrirModalIntegrantes();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error:', e);
+      }
+    });
+  }
+
+  abrirModalIntegrantes(): void {
+    this._eventoService.getIntegrantesEvento(this.idComisionRuta).subscribe({
+      next: (response: any) => {
+        this.slctDiputados = response.diputados || [];
+        this.slctPartidos  = response.partidos  || [];
+        this.slctComisiones = response.comisiones || [];
+        this.slctCargo     = response.cargos    || [];
+
+        this.mostrarFormulario = false;
+        this.integranteForm.reset({ diputadoId: '', partidoId: '', comisionId: '', cargo: '' });
+
+        this.modalRefIntegrantes = this.modalService.open(this.xlModalIntegrantes, {
+          size: 'xl',
+          backdrop: 'static',
+          scrollable: true
+        });
+
+        this.modalRefIntegrantes.result.then(
+          () => this.cancelarFormulario(),
+          () => this.cancelarFormulario()
+        );
+      },
+      error: (e: HttpErrorResponse) => console.error('Error catálogos:', e)
+    });
+  }
+
+  cerrarModalIntegrantes(): void {
+    this.modalRefIntegrantes?.close();
+  }
+
+  agregarIntegrante(): void {
+    this.integranteForm.markAllAsTouched();
+    if (this.integranteForm.invalid) return;
+
+    const fv       = this.integranteForm.value;
+    const diputado = this.slctDiputados.find((d: any) => d.id === fv.diputadoId);
+    const partido  = this.slctPartidos.find((p: any)  => p.id === fv.partidoId);
+    const comision = this.slctComisiones.find(c => c.id === fv.comisionId);
+    const cargo    = this.slctCargo.find((c: any)    => c.id === fv.cargo);
+
+    const nuevoIntegrante: any = {
+      id:          Date.now(),
+      id_diputado: fv.diputadoId,
+      diputado:    diputado?.nombre || '',
+      partido:     partido?.siglas  || '',
+      cargo:       cargo?.valor     || ''
+    };
+
+    if (cargo?.valor === 'Diputado Asociado') {
+      this.diputadosAsociados.push(nuevoIntegrante);
+    } else if (this.esComision) {
+      const idx = this.listaComisiones.findIndex((c: any) => c.id === fv.comisionId);
+      if (idx !== -1) {
+        this.listaComisiones[idx].integrantes.push(nuevoIntegrante);
+        const mitad = Math.ceil(this.listaComisiones[idx].integrantes.length / 2);
+        this.listaComisiones[idx].columna1 = this.listaComisiones[idx].integrantes.slice(0, mitad);
+        this.listaComisiones[idx].columna2 = this.listaComisiones[idx].integrantes.slice(mitad);
+      }
+    } else {
+      this.integrantes.push(nuevoIntegrante);
+    }
+
+    const data = {
+      id_diputado:     fv.diputadoId,
+      id_partido:      fv.partidoId,
+      id_agenda:       this.idComisionRuta,
+      id_cargo_dip:    fv.cargo,
+      comision_dip_id: fv.comisionId,
+    };
+
+    this._eventoService.addDiputadoComisionSesion(data).subscribe({
+      next: () => {
+        this.cancelarFormulario();
+        this.cdr.detectChanges();
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 })
+          .fire({ icon: 'success', title: 'Integrante agregado' });
+      },
+      error: (e: HttpErrorResponse) => {
+        Swal.fire('Error', e.error?.msg || 'Error al agregar', 'error');
+      }
+    });
+  }
+
+  eliminarIntegranteModal(id: number, comisionId?: string): void {
+    Swal.fire({
+      title: '¿Eliminar integrante?', icon: 'warning',
+      showCancelButton: true, confirmButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      if (this.esComision && comisionId) {
+        const idx = this.listaComisiones.findIndex((c: any) => c.id === comisionId);
+        if (idx !== -1) {
+          this.listaComisiones[idx].integrantes = this.listaComisiones[idx].integrantes.filter((i: any) => i.id !== id);
+          const mitad = Math.ceil(this.listaComisiones[idx].integrantes.length / 2);
+          this.listaComisiones[idx].columna1 = this.listaComisiones[idx].integrantes.slice(0, mitad);
+          this.listaComisiones[idx].columna2 = this.listaComisiones[idx].integrantes.slice(mitad);
+        }
+      } else {
+        this.integrantes = this.integrantes.filter((i: any) => i.id !== id);
+      }
+
+      this._eventoService.deleteDiputadoComisionSesion(id).subscribe({
+        next: () => {
+          this.cdr.detectChanges();
+          Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 })
+            .fire({ icon: 'success', title: 'Eliminado correctamente' });
+        },
+        error: () => Swal.fire('Error', 'No se pudo eliminar', 'error')
+      });
+    });
+  }
+
+  eliminarDiputadoAsociadoModal(id: number): void {
+    Swal.fire({
+      title: '¿Eliminar diputado asociado?', icon: 'warning',
+      showCancelButton: true, confirmButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.diputadosAsociados = this.diputadosAsociados.filter((d: any) => d.id !== id);
+      this._eventoService.deleteDiputadoAsociado(id).subscribe({
+        next: () => {
+          this.cdr.detectChanges();
+          Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 })
+            .fire({ icon: 'success', title: 'Eliminado correctamente' });
+        },
+        error: () => Swal.fire('Error', 'No se pudo eliminar', 'error')
+      });
+    });
   }
 }
