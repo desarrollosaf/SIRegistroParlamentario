@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportdatos = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -5052,6 +5052,344 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.enviarWhatsAsistenciaPDF = enviarWhatsAsistenciaPDF;
+const enviarNotInicioEvento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        evento.update({ fecha_hora_inicio: Date.now() });
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const asistenciasRaw = yield asistencia_votos_1.default.findAll({
+            where: { id_agenda: id },
+            raw: true,
+        });
+        if (asistenciasRaw.length === 0) {
+            return res.status(404).json({ msg: "No hay asistencias registradas para este evento" });
+        }
+        const diputadoIds = asistenciasRaw.map(a => a.id_diputado).filter(Boolean);
+        const diputados = yield diputado_1.default.findAll({
+            where: { id: diputadoIds },
+            attributes: ["id", "apaterno", "amaterno", "nombres"],
+            raw: true,
+        });
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
+        const partidoIds = asistenciasRaw.map(a => a.partido_dip).filter(Boolean);
+        const partidos = yield partidos_1.default.findAll({
+            where: { id: partidoIds },
+            attributes: ["id", "siglas"],
+            raw: true,
+        });
+        const partidosMap = new Map(partidos.map(p => [p.id, p]));
+        let comisionesMap = new Map();
+        let cargosMap = new Map();
+        if (!esSesion) {
+            const comisionIds = asistenciasRaw.map(a => a.comision_dip_id).filter(Boolean);
+            if (comisionIds.length > 0) {
+                const comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre", "importancia"],
+                    raw: true,
+                });
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            }
+            const cargoIds = asistenciasRaw.map(a => a.id_cargo_dip).filter(Boolean);
+            if (cargoIds.length > 0) {
+                const cargos = yield tipo_cargo_comisions_1.default.findAll({
+                    where: { id: cargoIds },
+                    attributes: ["id", "valor", "nivel"],
+                    raw: true,
+                });
+                cargosMap = new Map(cargos.map(c => [c.id, c]));
+            }
+        }
+        const getAsistenciaTexto = (sentido) => {
+            switch (sentido) {
+                case 1: return "ASISTENCIA";
+                case 2: return "ASISTENCIA ZOOM";
+                case 0: return "PENDIENTE";
+                default: return "PENDIENTE";
+            }
+        };
+        const asistenciasConDetalles = asistenciasRaw.map((asistencia) => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(asistencia.id_diputado);
+            const partido = partidosMap.get(asistencia.partido_dip);
+            const comision = comisionesMap.get(asistencia.comision_dip_id);
+            const cargo = cargosMap.get(asistencia.id_cargo_dip);
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : "Sin nombre";
+            return Object.assign(Object.assign({}, asistencia), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido", comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || null, comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo_nombre: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999, asistenciaTexto: getAsistenciaTexto(asistencia.sentido_voto), asistenciaNumerico: asistencia.sentido_voto });
+        });
+        const totales = {
+            asistencia: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 1).length,
+            asistenciaZoom: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 2).length,
+            pendiente: asistenciasConDetalles.filter(a => a.asistenciaNumerico === 0).length,
+        };
+        const totalDiputados = asistenciasConDetalles.length;
+        // ===== CÁLCULO DE QUÓRUM =====
+        const tienetipoReunion = evento.tipo_reunion === 1;
+        const asistentesGeneral = totales.asistencia + totales.asistenciaZoom;
+        const quorumGeneralRequerido = Math.floor(totalDiputados / 2) + 1;
+        const quorumPorComision = new Map();
+        if (!esSesion && tienetipoReunion) {
+            asistenciasConDetalles.forEach((a) => {
+                if (!a.comision_nombre)
+                    return;
+                if (!quorumPorComision.has(a.comision_nombre)) {
+                    quorumPorComision.set(a.comision_nombre, {
+                        nombre: a.comision_nombre, total: 0, asistentes: 0,
+                        requerido: 0, tieneQuorum: false, importancia: a.comision_importancia
+                    });
+                }
+                const comData = quorumPorComision.get(a.comision_nombre);
+                comData.total += 1;
+                if (a.asistenciaNumerico === 1 || a.asistenciaNumerico === 2)
+                    comData.asistentes += 1;
+            });
+            quorumPorComision.forEach((comData) => {
+                comData.requerido = Math.floor(comData.total / 2) + 1;
+                comData.tieneQuorum = comData.asistentes >= comData.requerido;
+            });
+        }
+        const todasConQuorum = quorumPorComision.size > 0 &&
+            Array.from(quorumPorComision.values()).every(c => c.tieneQuorum);
+        // ===== DIPUTADOS ASOCIADOS =====
+        const diputadosAsociadosRaw = yield diputados_asociados_1.default.findAll({
+            where: { id_agenda: evento.id },
+            raw: true,
+        });
+        let diputadosAsociadosConDetalles = [];
+        if (diputadosAsociadosRaw.length > 0) {
+            const asociadosIds = diputadosAsociadosRaw.map((d) => d.id_diputado).filter(Boolean);
+            const asociadosPartidoIds = diputadosAsociadosRaw.map((d) => d.partido_dip).filter(Boolean);
+            const diputadosAsoc = yield diputado_1.default.findAll({
+                where: { id: asociadosIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+            });
+            const diputadosAsocMap = new Map(diputadosAsoc.map((d) => [d.id, d]));
+            const partidosAsoc = yield partidos_1.default.findAll({
+                where: { id: asociadosPartidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+            });
+            const partidosAsocMap = new Map(partidosAsoc.map((p) => [p.id, p]));
+            diputadosAsociadosConDetalles = diputadosAsociadosRaw.map((da) => {
+                var _a, _b, _c;
+                const dip = diputadosAsocMap.get(da.id_diputado);
+                const partido = partidosAsocMap.get(da.partido_dip);
+                return {
+                    nombre: dip
+                        ? `${(_a = dip.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = dip.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                        : "Sin nombre",
+                    partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || "Sin partido",
+                };
+            });
+        }
+        // ===== CREAR PDF =====
+        const doc = new pdfkit_1.default({
+            size: 'LETTER',
+            margins: { top: 0, bottom: 30, left: 0, right: 0 },
+            bufferPages: true
+        });
+        const fileName = `asistencia-evento-${id}-${Date.now()}.pdf`;
+        const outputPath = path_1.default.join(__dirname, '../../storage/pdfs', fileName);
+        const dir = path_1.default.dirname(outputPath);
+        if (!fs_1.default.existsSync(dir))
+            fs_1.default.mkdirSync(dir, { recursive: true });
+        const writeStream = fs_1.default.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+        const bgPath = path_1.default.join(__dirname, "../assets/membretesecretariaejecutiva4.jpg");
+        const drawBackground = () => {
+            doc.image(bgPath, 0, 0, {
+                width: doc.page.width,
+                height: doc.page.height,
+            });
+            doc.y = 106;
+        };
+        drawBackground();
+        // ===== BLOQUE IZQUIERDO VINO - "REGISTRO DE ASISTENCIA" =====
+        const vinoX = 30;
+        const vinoY = 106;
+        const vinoW = 150;
+        const vinoH = 200;
+        doc.rect(vinoX, vinoY, vinoW, vinoH).fill('#96134b');
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
+            .text('REGISTRO DE', vinoX + 10, vinoY + 50, { width: vinoW - 20, align: 'left' });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
+            .text('ASISTENCIA', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
+        doc.moveDown(0.5);
+        doc.fontSize(8).font('Helvetica').fillColor('#fff')
+            .text('Legislatura del Estado de México', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
+        // ===== BLOQUE DERECHO - INFORMACIÓN DEL EVENTO =====
+        const rightX = vinoX + vinoW + 20;
+        const rightW = doc.page.width - rightX - 30;
+        let rightY = vinoY;
+        // -- Encabezado INFORMACIÓN DEL EVENTO con icono diamante --
+        doc.rect(rightX, rightY, rightW, 22).fill('#96134b');
+        // Icono diamante simulado con rectángulo rotado
+        doc.save();
+        doc.translate(rightX - 8, rightY + 11).rotate(45);
+        doc.rect(-7, -7, 14, 14).fill('#96134b');
+        doc.restore();
+        doc.save();
+        doc.translate(rightX - 8, rightY + 11).rotate(45);
+        doc.rect(-5, -5, 10, 10).fill('#c0395e');
+        doc.restore();
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#fff')
+            .text('INFORMACIÓN DEL EVENTO', rightX + 10, rightY + 6, { width: rightW - 20 });
+        rightY += 22;
+        // Filas de info del evento
+        const infoRows = [
+            { label: 'Tipo', value: ((_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) || 'N/A' },
+            { label: 'Sede', value: ((_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede) || 'N/A' },
+            { label: 'Fecha', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
+            { label: 'Desripción', value: evento.descripcion || 'N/A' },
+        ];
+        infoRows.forEach((row, i) => {
+            const rowH = row.label === 'Desripción' ? 35 : 18;
+            doc.rect(rightX, rightY, rightW, rowH).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
+                .text(row.label, rightX + 10, rightY + 5, { width: 70, align: 'right' });
+            doc.fontSize(9).font('Helvetica').fillColor('#000')
+                .text(row.value, rightX + 90, rightY + 5, { width: rightW - 100 });
+            rightY += rowH;
+        });
+        // -- Encabezado RESUMEN DE ASISTENCIA con icono diamante --
+        doc.rect(rightX, rightY, rightW, 22).fill('#96134b');
+        doc.save();
+        doc.translate(rightX - 8, rightY + 11).rotate(45);
+        doc.rect(-7, -7, 14, 14).fill('#96134b');
+        doc.restore();
+        doc.save();
+        doc.translate(rightX - 8, rightY + 11).rotate(45);
+        doc.rect(-5, -5, 10, 10).fill('#c0395e');
+        doc.restore();
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#fff')
+            .text('RESUMEN DE ASISTENCIA', rightX + 10, rightY + 6, { width: rightW - 20 });
+        rightY += 22;
+        // Filas del resumen
+        const resumenRows = [
+            { label: 'Asistencia', value: totales.asistencia.toString(), color: '#22c55e' },
+            { label: 'Asistencia Zoom', value: totales.asistenciaZoom.toString(), color: '#3b82f6' },
+            { label: 'Pendiente', value: totales.pendiente.toString(), color: '#f59e0b' },
+            { label: 'Total', value: totalDiputados.toString(), color: '#000000' },
+        ];
+        resumenRows.forEach((row, i) => {
+            doc.rect(rightX, rightY, rightW, 18).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
+                .text(row.label, rightX + 10, rightY + 4, { width: 100, align: 'right' });
+            doc.fontSize(9).font('Helvetica-Bold').fillColor(row.color)
+                .text(row.value, rightX + 120, rightY + 4, { width: rightW - 130 });
+            rightY += 18;
+        });
+        // ===== QUÓRUM (si aplica) =====
+        if (!esSesion && tienetipoReunion) {
+            rightY += 5;
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
+                .text('Quórum: ', rightX, rightY, { continued: true });
+            doc.fontSize(9).font('Helvetica-Bold')
+                .fillColor(todasConQuorum ? '#22c55e' : '#dc2626')
+                .text(todasConQuorum ? 'CON QUÓRUM' : 'SIN QUÓRUM');
+            doc.fillColor('#000');
+            rightY += 16;
+        }
+        // Avanzar Y después del bloque principal
+        doc.y = Math.max(vinoY + vinoH, rightY) + 15;
+        // ===== DETALLE =====
+        if (esSesion) {
+            generarDetalleSesionAsistencia(doc, asistenciasConDetalles, drawBackground);
+        }
+        else {
+            generarDetalleComisionAsistencia(doc, asistenciasConDetalles, drawBackground, tienetipoReunion ? quorumPorComision : new Map(), diputadosAsociadosConDetalles);
+        }
+        doc.end();
+        yield new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+        console.log('PDF de asistencia generado exitosamente en:', outputPath);
+        // ===== WHATSAPP =====
+        let fechaFormateada = "";
+        if (evento.fecha) {
+            fechaFormateada = (0, date_fns_1.format)(new Date(evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
+        }
+        let infoComisiones = "";
+        if (!esSesion) {
+            const comisionesUnicas = [...new Set(asistenciasConDetalles
+                    .map(a => a.comision_nombre)
+                    .filter(nombre => nombre && nombre !== 'Sin Comisión'))].sort();
+            if (comisionesUnicas.length > 0) {
+                infoComisiones = `\n*Comisiones:*\n${comisionesUnicas.map(c => `- ${c}`).join('\n')}\n`;
+            }
+        }
+        const quorumMsg = (!esSesion && tienetipoReunion)
+            ? `\n*Quórum:* ${asistentesGeneral}/${totalDiputados} — ${todasConQuorum ? '✅ CON QUÓRUM' : '❌ SIN QUÓRUM'}\n`
+            : '';
+        const mensajeTexto = `*ASISTENCIA - ${((_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre) || 'Evento'}*\n\n` +
+            `*Descripcion:* ${evento.descripcion || 'N/A'}\n` +
+            `*Sede:* ${((_e = evento.sede) === null || _e === void 0 ? void 0 : _e.sede) || 'N/A'}\n` +
+            `*Fecha:* ${fechaFormateada}${infoComisiones}` +
+            quorumMsg +
+            `\n*Resumen:*\n` +
+            `Asistencia: ${totales.asistencia}\n` +
+            `Asistencia Zoom: ${totales.asistenciaZoom}\n` +
+            `Pendiente: ${totales.pendiente}\n\n` +
+            `Total de diputados: ${totalDiputados}\n\n` +
+            `Adjunto PDF con detalle completo`;
+        if (!fs_1.default.existsSync(outputPath)) {
+            throw new Error('El archivo PDF no se generó correctamente');
+        }
+        const pdfBuffer = fs_1.default.readFileSync(outputPath);
+        const base64PDF = pdfBuffer.toString('base64');
+        const params = {
+            token: 'ml56a7d6tn7ha7cc',
+            to: "+527222035605,",
+            // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            filename: fileName,
+            document: base64PDF,
+            caption: mensajeTexto
+        };
+        const whatsappResponse = yield axios_1.default.post('https://api.ultramsg.com/instance144598/messages/document', new URLSearchParams(params), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            timeout: 60000,
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
+        });
+        return res.status(200).json({
+            message: "PDF de asistencia generado y enviado por WhatsApp correctamente",
+            enviado: true,
+            archivo: fileName,
+            totales,
+            quorum: tienetipoReunion ? {
+                general: { asistentes: asistentesGeneral, requerido: quorumGeneralRequerido, total: totalDiputados, todasConQuorum }
+            } : null,
+            whatsappResponse: whatsappResponse.data
+        });
+    }
+    catch (error) {
+        console.error("Error completo al generar y enviar PDF de asistencia:", error);
+        if (axios_1.default.isAxiosError(error)) {
+            console.error("Error de Axios:", { message: error.message, code: error.code, response: (_f = error.response) === null || _f === void 0 ? void 0 : _f.data });
+        }
+        return res.status(500).json({
+            message: "Error al generar y enviar PDF de asistencia por WhatsApp",
+            error: error.message,
+            details: axios_1.default.isAxiosError(error) ? (_g = error.response) === null || _g === void 0 ? void 0 : _g.data : undefined
+        });
+    }
+});
+exports.enviarNotInicioEvento = enviarNotInicioEvento;
 function generarDetalleComisionAsistencia(doc, asistencias, drawBackground, quorumPorComision, diputadosAsociados = []) {
     const titY = doc.y;
     doc.rect(30, titY, doc.page.width - 60, 22).fill('#96134b');
