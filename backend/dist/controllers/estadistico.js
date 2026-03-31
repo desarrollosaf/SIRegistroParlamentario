@@ -215,6 +215,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
                 include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
             }
         ],
+        where: { publico: 1 },
         order: [["createdAt", "ASC"]]
     });
 });
@@ -595,7 +596,7 @@ const getIniciativasTurnadasPorComision = (req, res) => __awaiter(void 0, void 0
             });
         }
         const iniciativasDB = yield inciativas_puntos_ordens_1.default.findAll({
-            where: { id_punto: { [sequelize_1.Op.in]: puntosIds } },
+            where: { id_punto: { [sequelize_1.Op.in]: puntosIds }, publico: 1 },
             attributes: ["id", "id_punto"],
             raw: true,
         });

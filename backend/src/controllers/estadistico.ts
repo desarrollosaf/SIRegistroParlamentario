@@ -256,6 +256,7 @@ const obtenerIniciativasBase = async () =>
         include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }]
       }
     ],
+    where: { publico: 1 },
     order: [["createdAt","ASC"]]
   });
 
@@ -665,7 +666,7 @@ export const getIniciativasTurnadasPorComision = async (req: Request, res: Respo
     }
 
     const iniciativasDB = await IniciativaPuntoOrden.findAll({
-      where: { id_punto: { [Op.in]: puntosIds } },
+      where: { id_punto: { [Op.in]: puntosIds }, publico: 1 },
       attributes: ["id","id_punto"],
       raw: true,
     });

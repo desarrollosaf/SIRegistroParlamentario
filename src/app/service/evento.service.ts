@@ -119,7 +119,10 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/notasintenciapdf/${id}`)
   }
 
-  
+  notificarInicioEvento(id:any): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/notinicioeven/${id}`)
+  }
+
   saveReserva(data: any): Observable<string> {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savereserva/`,data)
   }
