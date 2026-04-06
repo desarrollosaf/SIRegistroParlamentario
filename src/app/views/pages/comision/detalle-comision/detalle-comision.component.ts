@@ -723,6 +723,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         return 'asistencia-presente';
       case 2:
         return 'asistencia-remota';
+      case 3: 
+        return 'asistencia-justificada';
       case 0:
         return 'asistencia-ausente';
       default:

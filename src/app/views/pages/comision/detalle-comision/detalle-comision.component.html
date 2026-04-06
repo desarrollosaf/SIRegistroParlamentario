@@ -76,7 +76,21 @@
                                                     </div>
                                                 </div>
                                             </div>
-
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(3)">
+                                                <div class="card stats-card stats-justificada">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-clock-history"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Justificada</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(3) }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
                                                     <div class="card-body p-2">
@@ -115,10 +129,10 @@
                                             <h5 class="mb-0">Lista de Asistencia</h5>
                                             <div class="d-flex gap-2 flex-wrap">
                                                 <button class="btn btn-light btn-sm" (click)="iniciarEvento(2)">
-                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar 
+                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar
                                                 </button>
                                                 <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
-                                                    <i class="bi bi-people-fill me-1"></i> Integrantes 
+                                                    <i class="bi bi-people-fill me-1"></i> Integrantes
                                                 </button>
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
@@ -156,6 +170,13 @@
                                                                             (click)="marcarAsistencia(integrante, 2)"
                                                                             title="Remota">
                                                                             <i class="bi bi-display"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-secondary  flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 3"
+                                                                            (click)="marcarAsistencia(integrante, 3)"
+                                                                            title="Justificada">
+                                                                            <i class="bi bi-clock-history"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-warning flex-fill"
@@ -200,6 +221,13 @@
                                                                             (click)="marcarAsistencia(integrante, 2)"
                                                                             title="Remota">
                                                                             <i class="bi bi-display"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-secondary  flex-fill"
+                                                                            [class.active]="integrante.sentido_voto === 3"
+                                                                            (click)="marcarAsistencia(integrante, 3)"
+                                                                            title="Justificada">
+                                                                            <i class="bi bi-clock-history"></i>
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-warning flex-fill"
@@ -254,7 +282,22 @@
                                                     </div>
                                                 </div>
                                             </div>
-
+                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(3)">
+                                                <div class="card stats-card stats-justificada">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon me-3">
+                                                                <i class="bi bi-clock-history"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <p class="text-muted mb-1 small">Justificada</p>
+                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(3)
+                                                                    }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
                                                     <div class="card-body p-2">
@@ -296,9 +339,9 @@
                                                 <i class="bi bi-skip-start-btn-fill"></i> Iniciar
                                             </button>
                                             <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
-                                                    <i class="bi bi-people-fill me-1"></i> Integrantes 
+                                                <i class="bi bi-people-fill me-1"></i> Integrantes
                                             </button>
-                                           
+
                                             <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                 <i class="bi bi-whatsapp me-1"></i> Notificar
                                             </button>
@@ -330,7 +373,12 @@
                                                         <span class="badge ms-1">{{
                                                             contarAsistenciasComision(comision.integrantes, 1) }}</span>
                                                     </div>
-
+                                                    <div class="contador-item">
+                                                        <i class="bi bi-clock-history me-2"></i>
+                                                        <span class="fw-semibold">Justificada:</span>
+                                                        <span class="badge ms-1">{{
+                                                            contarAsistenciasComision(comision.integrantes, 3) }}</span>
+                                                    </div>
                                                     <div class="contador-item">
                                                         <i class="bi bi-camera-video-fill me-2"></i>
                                                         <span class="fw-semibold">Remota:</span>
@@ -382,6 +430,13 @@
                                                                                 <i class="bi bi-display"></i>
                                                                             </button>
                                                                             <button type="button"
+                                                                                class="btn btn-outline-secondary  flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 3"
+                                                                                (click)="marcarAsistencia(integrante, 3)"
+                                                                                title="Justificada">
+                                                                                <i class="bi bi-clock-history"></i>
+                                                                            </button>
+                                                                            <button type="button"
                                                                                 class="btn btn-outline-warning flex-fill"
                                                                                 [class.active]="integrante.sentido_voto === 0"
                                                                                 (click)="marcarAsistenciaComision(integrante, 0, integrante.id)"
@@ -426,6 +481,13 @@
                                                                                 (click)="marcarAsistenciaComision(integrante, 2, integrante.id)"
                                                                                 title="Remota">
                                                                                 <i class="bi bi-display"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary  flex-fill"
+                                                                                [class.active]="integrante.sentido_voto === 3"
+                                                                                (click)="marcarAsistenciaComision(integrante, 3, integrante.id)"
+                                                                                title="Justificada">
+                                                                                <i class="bi bi-clock-history"></i>
                                                                             </button>
                                                                             <button type="button"
                                                                                 class="btn btn-outline-warning flex-fill"
@@ -2075,17 +2137,11 @@
                         </div>
 
                         <div class="col-md-6">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-tag-fill me-1"></i> Tipo
-                        </label>
-                        <ng-select
-                            [items]="tiposIniciativa"
-                            bindLabel="label"
-                            bindValue="id"
-                            formControlName="tipo"
-                            placeholder="Selecciona un tipo"
-                            [clearable]="true"
-                        ></ng-select>
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-tag-fill me-1"></i> Tipo
+                            </label>
+                            <ng-select [items]="tiposIniciativa" bindLabel="label" bindValue="id" formControlName="tipo"
+                                placeholder="Selecciona un tipo" [clearable]="true"></ng-select>
                         </div>
 
                         <div class="col-12">
@@ -2136,14 +2192,8 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-tag-fill me-1"></i> Tipo
                             </label>
-                            <ng-select
-                                [items]="tiposIniciativa"
-                                bindLabel="label"
-                                bindValue="id"
-                                formControlName="tipo"
-                                placeholder="Selecciona un tipo"
-                                [clearable]="true"
-                            ></ng-select>
+                            <ng-select [items]="tiposIniciativa" bindLabel="label" bindValue="id" formControlName="tipo"
+                                placeholder="Selecciona un tipo" [clearable]="true"></ng-select>
                         </div>
 
                         <div class="col-12">
@@ -2191,8 +2241,10 @@
                             <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
                                 {{ iniciativa.iniciativa || iniciativa.descripcion }}
                             </td>
-                            <td class="align-top pt-3" style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
-                                {{ +iniciativa.tipo === 1 ? 'Iniciativa' : +iniciativa.tipo === 2 ? 'Punto de acuerdo' : +iniciativa.tipo === 3 ? 'Minuta' : '—' }}
+                            <td class="align-top pt-3"
+                                style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
+                                {{ +iniciativa.tipo === 1 ? 'Iniciativa' : +iniciativa.tipo === 2 ? 'Punto de acuerdo' :
+                                +iniciativa.tipo === 3 ? 'Minuta' : '—' }}
                             </td>
                             <td class="align-top pt-3"
                                 style="word-break: break-word; white-space: normal; font-size: 0.85rem;">
@@ -2400,7 +2452,8 @@
                             <tr *ngFor="let integrante of integrantes; let i = index" [class.table-light]="i % 2 === 0">
                                 <td class="align-middle">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                        <div
+                                            class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
                                             <i class="bi bi-person-fill"></i>
                                         </div>
                                         <strong>{{ integrante.diputado }}</strong>
@@ -2440,7 +2493,7 @@
 
             <!-- Iterar sobre cada comisión -->
             <div *ngFor="let comision of listaComisiones; let isLast = last" class="mb-5">
-                
+
                 <!-- Encabezado de la comisión -->
                 <div class="comision-header-institucional mb-3">
                     <h5 class="fw-bold">
@@ -2474,10 +2527,12 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr *ngFor="let integrante of comision.integrantes; let i = index" [class.table-light]="i % 2 === 0">
+                                    <tr *ngFor="let integrante of comision.integrantes; let i = index"
+                                        [class.table-light]="i % 2 === 0">
                                         <td class="align-middle">
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                                <div
+                                                    class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
                                                     <i class="bi bi-person-fill"></i>
                                                 </div>
                                                 <strong>{{ integrante.diputado }}</strong>
@@ -2490,9 +2545,9 @@
                                             {{ integrante.cargo || '-' }}
                                         </td>
                                         <td class="align-middle text-center">
-                                            <button class="btn-delete-animated" 
-                                                    (click)="eliminarIntegranteModal(integrante.id, comision.id)"
-                                                    title="Eliminar integrante">
+                                            <button class="btn-delete-animated"
+                                                (click)="eliminarIntegranteModal(integrante.id, comision.id)"
+                                                title="Eliminar integrante">
                                                 <i class="bi bi-trash-fill icon-trash"></i>
                                                 <i class="bi bi-x-lg icon-x"></i>
                                                 <span class="btn-text">Eliminar</span>
@@ -2519,58 +2574,59 @@
         <!-- DIPUTADOS ASOCIADOS -->
         <div *ngIf="diputadosAsociados.length > 0" class="mt-5">
 
-        <div class="comision-header-institucional mb-3">
-            <h5 class="fw-bold">
-            <i class="bi bi-people me-2"></i>
-            Diputados Asociados
-            </h5>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-body p-0">
-            <div class="table-responsive table-scroll">
-                <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                    <th>Nombre</th>
-                    <th>Partido</th>
-                    <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let integrante of diputadosAsociados">
-                    <td class="align-middle">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
-                                <i class="bi bi-person-fill"></i>
-                            </div>
-                            <strong>{{ integrante.diputado }}</strong>
-                        </div>
-                    </td>
-                    <td class="align-middle">
-                        <span class="badge bg-success badge-fixed">{{ integrante.partido }}</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn-delete-animated" 
-                            (click)="eliminarDiputadoAsociadoModal(integrante.id)"
-                            title="Eliminar integrante">
-                            <i class="bi bi-trash-fill icon-trash"></i>
-                            <i class="bi bi-x-lg icon-x"></i>
-                            <span class="btn-text">Eliminar</span>
-                        </button>
-                    </td>
-                    </tr>
-
-                    <tr *ngIf="diputadosAsociados.length === 0">
-                    <td colspan="3" class="text-center text-muted">
-                        No hay diputados asociados
-                    </td>
-                    </tr>
-                </tbody>
-                </table>
+            <div class="comision-header-institucional mb-3">
+                <h5 class="fw-bold">
+                    <i class="bi bi-people me-2"></i>
+                    Diputados Asociados
+                </h5>
             </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive table-scroll">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Partido</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let integrante of diputadosAsociados">
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <div
+                                                class="avatar-circle bg-primary text-white me-2 d-flex justify-content-center align-items-center">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <strong>{{ integrante.diputado }}</strong>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="badge bg-success badge-fixed">{{ integrante.partido }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn-delete-animated"
+                                            (click)="eliminarDiputadoAsociadoModal(integrante.id)"
+                                            title="Eliminar integrante">
+                                            <i class="bi bi-trash-fill icon-trash"></i>
+                                            <i class="bi bi-x-lg icon-x"></i>
+                                            <span class="btn-text">Eliminar</span>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <tr *ngIf="diputadosAsociados.length === 0">
+                                    <td colspan="3" class="text-center text-muted">
+                                        No hay diputados asociados
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
 
         </div>
 
