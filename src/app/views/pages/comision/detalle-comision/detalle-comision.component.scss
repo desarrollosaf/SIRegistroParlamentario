@@ -147,6 +147,43 @@
     border-color: #28a745;
   }
 }
+// Tarjeta stats
+.stats-justificada {
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+
+  .stats-icon {
+    color: white;
+    i {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5);
+  }
+}
+
+// Fila de tabla
+.asistencia-justificada {
+  background-color: rgba(168, 85, 247, 0.1) !important;
+  border-left: 4px solid #a855f7 !important;
+
+  td {
+    color: #5b21b6;
+    font-weight: 500;
+  }
+
+  .btn-outline-secondary.active {
+    background-color: #a855f7 !important;
+    color: white !important;
+    border-color: #a855f7 !important;
+
+    i {
+      color: white !important;
+    }
+  }
+}
 
 .asistencia-remota {
   background-color: rgba(23, 162, 184, 0.1) !important;
