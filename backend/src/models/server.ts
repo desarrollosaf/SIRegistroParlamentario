@@ -105,7 +105,8 @@ class Server {
                 '/api/iniciativas/iniciativas/',
                 '/api/estadistico/iniciativas/resumen',
                 '/api/estadistico/diputado/iniciativas',
-                '/api/estadistico/comision/iniciativas'
+                '/api/estadistico/comision/iniciativas',
+                '/api/estadistico/comision/eventos'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;

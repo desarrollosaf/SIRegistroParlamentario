@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -33,6 +33,7 @@ const diputado_1 = __importDefault(require("../models/diputado"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
+const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS PUROS (sin I/O)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -630,6 +631,208 @@ const getIniciativasTurnadasPorComision = (req, res) => __awaiter(void 0, void 0
     }
 });
 exports.getIniciativasTurnadasPorComision = getIniciativasTurnadasPorComision;
+const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
+        if (!id)
+            return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
+        const comisionId = String(id).trim();
+        // 1) Verificar que la comisión existe
+        const comisionRaw = yield comisions_1.default.findOne({
+            where: { id: comisionId },
+            attributes: ["id", "nombre"],
+            raw: true,
+        });
+        if (!comisionRaw)
+            return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
+        const comision = comisionRaw;
+        // 2) Obtener todas las agendas donde esta comisión fue anfitrión
+        const anfitrionesRaw = yield anfitrion_agendas_1.default.findAll({
+            where: { autor_id: comisionId },
+            attributes: ["agenda_id", "autor_id"],
+            raw: true,
+        });
+        if (!anfitrionesRaw.length) {
+            return res.status(200).json({
+                ok: true,
+                data: {
+                    comision_id: comisionId,
+                    comision: comision.nombre,
+                    resumen: {
+                        total_eventos: 0,
+                        total_iniciativas: 0,
+                        total_votadas: 0,
+                        total_no_votadas: 0,
+                        aprobadas: 0,
+                        rechazadas_sesion: 0,
+                        rechazadas_comision: 0,
+                        en_estudio: 0,
+                    },
+                    eventos: [],
+                },
+            });
+        }
+        const agendaIds = [
+            ...new Set(anfitrionesRaw.map((a) => String(a.agenda_id))),
+        ];
+        // 3) Obtener detalles de cada agenda
+        const agendasRaw = yield agendas_1.default.findAll({
+            where: { id: { [sequelize_1.Op.in]: agendaIds } },
+            attributes: ["id", "fecha", "descripcion", "liga"],
+            include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }],
+        });
+        const agendasMap = new Map();
+        for (const ag of agendasRaw) {
+            const agJson = typeof ag.toJSON === "function" ? ag.toJSON() : ag;
+            agendasMap.set(String(agJson.id), agJson);
+        }
+        // 4) Obtener TODOS los puntos de orden de esas agendas (orden del día completo)
+        //    ⚠️ Ajusta "id_evento" al nombre real del FK en tu modelo PuntosOrden
+        const puntosOrdenRaw = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: { [sequelize_1.Op.in]: agendaIds } },
+            attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "id_evento"],
+            order: [["nopunto", "ASC"]],
+            raw: true,
+        });
+        // Map: puntoId → punto completo
+        const puntosMap = new Map();
+        // Map: agendaId → puntos[]  (orden del día)
+        const puntosPorAgenda = new Map();
+        for (const p of puntosOrdenRaw) {
+            puntosMap.set(String(p.id), p);
+            const agId = String(p.id_evento);
+            if (!puntosPorAgenda.has(agId))
+                puntosPorAgenda.set(agId, []);
+            puntosPorAgenda.get(agId).push(p);
+        }
+        const todosLosPuntosIds = [...puntosMap.keys()];
+        // 5) Obtener iniciativas públicas vinculadas a esos puntos
+        const iniciativasDB = todosLosPuntosIds.length
+            ? yield inciativas_puntos_ordens_1.default.findAll({
+                where: { id_punto: { [sequelize_1.Op.in]: todosLosPuntosIds }, publico: 1 },
+                attributes: ["id", "id_punto"],
+                raw: true,
+            })
+            : [];
+        // Map: puntoId → iniciativaId[]
+        const iniciativasPorPunto = new Map();
+        const iniciativasIds = new Set();
+        for (const ini of iniciativasDB) {
+            const puntoId = String(ini.id_punto);
+            const iniId = String(ini.id);
+            iniciativasIds.add(iniId);
+            if (!iniciativasPorPunto.has(puntoId))
+                iniciativasPorPunto.set(puntoId, []);
+            iniciativasPorPunto.get(puntoId).push(iniId);
+        }
+        // 6) Votos: una sola query batch para todos los puntos
+        const votosRaw = todosLosPuntosIds.length
+            ? yield votos_punto_1.default.findAll({
+                where: {
+                    id_punto: { [sequelize_1.Op.in]: todosLosPuntosIds },
+                    deletedAt: null,
+                },
+                attributes: ["id_punto"],
+                group: ["id_punto"],
+                raw: true,
+            })
+            : [];
+        // Set de puntoIds que SÍ tienen votos registrados
+        const puntosConVoto = new Set(votosRaw.map((v) => String(v.id_punto)));
+        // 7) Construir reporte base y armar map por id de iniciativa
+        const reporte = yield construirReporteBase();
+        const reporteMap = new Map();
+        for (const item of reporte) {
+            reporteMap.set(String(item.id), item);
+        }
+        const fueVotada = (observac) => ["Aprobada", "Rechazada en sesión", "Rechazada en comisión"].includes(observac);
+        // 8) Armar eventos con orden del día completo
+        const todasLasIniciativasFiltradas = [];
+        const eventos = agendaIds
+            .map((agId) => {
+            var _a, _b, _c, _d, _e, _f;
+            const agenda = agendasMap.get(agId);
+            const puntosDelDia = (_a = puntosPorAgenda.get(agId)) !== null && _a !== void 0 ? _a : [];
+            const ordenDelDia = puntosDelDia.map((punto) => {
+                var _a, _b, _c;
+                const iniIds = (_a = iniciativasPorPunto.get(String(punto.id))) !== null && _a !== void 0 ? _a : [];
+                const iniciativas = iniIds
+                    .map((iniId) => {
+                    const item = reporteMap.get(iniId);
+                    if (!item)
+                        return null;
+                    todasLasIniciativasFiltradas.push(item);
+                    return Object.assign(Object.assign({}, item), { votada: fueVotada(item.observac) });
+                })
+                    .filter(Boolean);
+                return {
+                    punto_id: punto.id,
+                    nopunto: (_b = punto.nopunto) !== null && _b !== void 0 ? _b : null,
+                    descripcion: (_c = punto.punto) !== null && _c !== void 0 ? _c : "-",
+                    tribuna: String(punto.tribuna) === "1",
+                    dispensa: String(punto.dispensa) === "1",
+                    voto: puntosConVoto.has(String(punto.id)), // true = se votó
+                    tiene_iniciativas: iniciativas.length > 0,
+                    iniciativas,
+                };
+            });
+            const todasIniEvento = ordenDelDia.flatMap((p) => p.iniciativas);
+            return {
+                evento_id: agId,
+                fecha: (_b = agenda === null || agenda === void 0 ? void 0 : agenda.fecha) !== null && _b !== void 0 ? _b : null,
+                fecha_fmt: formatearFechaCorta(agenda === null || agenda === void 0 ? void 0 : agenda.fecha),
+                descripcion: (_c = agenda === null || agenda === void 0 ? void 0 : agenda.descripcion) !== null && _c !== void 0 ? _c : "-",
+                liga: (_d = agenda === null || agenda === void 0 ? void 0 : agenda.liga) !== null && _d !== void 0 ? _d : null,
+                tipo_evento: (_f = (_e = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre) !== null && _f !== void 0 ? _f : "-",
+                total_puntos: ordenDelDia.length,
+                total_iniciativas: todasIniEvento.length,
+                votadas: todasIniEvento.filter((i) => i.votada).length,
+                no_votadas: todasIniEvento.filter((i) => !i.votada).length,
+                orden_del_dia: ordenDelDia,
+            };
+        })
+            .sort((a, b) => {
+            if (!a.fecha && !b.fecha)
+                return 0;
+            if (!a.fecha)
+                return 1;
+            if (!b.fecha)
+                return -1;
+            return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        });
+        // 9) Deduplicar para el resumen global
+        const iniciativasUnicas = deduplicarPorId(todasLasIniciativasFiltradas);
+        const resumenGlobal = {
+            total_eventos: eventos.length,
+            total_iniciativas: iniciativasUnicas.length,
+            total_votadas: iniciativasUnicas.filter((i) => fueVotada(i.observac)).length,
+            total_no_votadas: iniciativasUnicas.filter((i) => !fueVotada(i.observac)).length,
+            aprobadas: iniciativasUnicas.filter((i) => i.observac === "Aprobada").length,
+            rechazadas_sesion: iniciativasUnicas.filter((i) => i.observac === "Rechazada en sesión").length,
+            rechazadas_comision: iniciativasUnicas.filter((i) => i.observac === "Rechazada en comisión").length,
+            en_estudio: iniciativasUnicas.filter((i) => i.observac === "En estudio").length,
+        };
+        return res.status(200).json({
+            ok: true,
+            data: {
+                comision_id: String(comision.id),
+                comision: comision.nombre,
+                resumen: resumenGlobal,
+                eventos,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener eventos por comisión:", error);
+        return res.status(500).json({
+            ok: false,
+            message: "Error interno del servidor",
+            error: error.message,
+        });
+    }
+});
+exports.getEventosPorComision = getEventosPorComision;
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();
