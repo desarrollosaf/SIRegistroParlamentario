@@ -856,6 +856,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.puntoSeleccionadoReserva = punto;
     this.listaReservas = [...(punto.reservas || [])];
 
+    // Si el punto ya tiene proponentes, precarga el presenta
+    if (punto.presentaDisponibles?.length > 0) {
+      this.slcPresentaReserva = [...punto.presentaDisponibles];
+    }
+
     this.modalRefT = this.modalService.open(this.xlModalT, {
       size: 'xl',
       windowClass: 'modal-top-centered',
@@ -1556,6 +1561,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Capturar ANTES de que toggleformReserva limpie todo
+    const listaPresenta = this.slcPresentaReserva?.length
+      ? [...this.slcPresentaReserva]
+      : [...(this.puntoSeleccionadoReserva?.presentaDisponibles || [])];
+
     const idsProponente: any[] = this.formReserva.value.id_proponente || [];
     const idsPresenta: any[] = this.formReserva.value.id_presenta || [];
 
@@ -1566,10 +1576,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         .join(', ') || '—';
 
     const getNombrePresenta = () =>
-      this.slcPresentaReserva
+      listaPresenta
         ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
         .map((p: any) => p.valor)
         .join(', ') || '—';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     if (!this.puntoSeleccionadoReserva) {
       const nuevoTema = {
