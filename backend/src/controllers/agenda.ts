@@ -45,6 +45,7 @@ import IniciativaPuntoOrden from "../models/inciativas_puntos_ordens";
 import IniciativaEstudio from "../models/iniciativas_estudio";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import DiputadosAsociados from "../models/diputados_asociados";
+import ReservasPresenta from "../models/reservas_presenta";
 
 
 
@@ -1027,8 +1028,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     const { body } = req;
     const file = req.file;
     
-    // console.log(body);
-    // return 500;
+   
     const presentaArray = (body.presenta || "")
       .split(",")
       .map((item: string) => item.trim())
@@ -1040,6 +1040,7 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
           autorId: autorId 
         };
       });
+
 
 
     const proponentesIds = (body.proponente || "")
@@ -1174,17 +1175,27 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
     }
 
     if (body.reservas) {
-      const temasArray = typeof body.reservas === 'string' 
-        ? JSON.parse(body.reservas) 
+      const temasArray = typeof body.reservas === 'string'
+        ? JSON.parse(body.reservas)
         : body.reservas;
-      
+
       for (const item of temasArray) {
-        await TemasPuntosVotos.create({
+        const reserva = await TemasPuntosVotos.create({
           id_punto: puntonuevo.id,
           id_evento: evento!.id,
           tema_votacion: item.descripcion,
           fecha_votacion: null,
         });
+
+        // Iterar cada presenta del array
+        for (const presenta of item.id_presenta || []) {
+          const [proponenteId, autorId] = presenta.split('/');
+          await ReservasPresenta.create({
+            id_reserva: reserva.id,
+            id_tipo_presenta: parseInt(proponenteId),
+            id_presenta: autorId,
+          });
+        }
       }
     }
 
@@ -1350,7 +1361,14 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: TemasPuntosVotos,
           as: "reservas",
-          attributes: ["id", "tema_votacion"]
+          attributes: ["id", "tema_votacion"],
+          include: [
+            {
+              model: ReservasPresenta,
+              as: "presentan",
+              required: false
+            }
+          ],
         },
         {
           model: IniciativaPuntoOrden,
@@ -1544,6 +1562,14 @@ export const crearreserva = async (req: Request, res: Response): Promise<any> =>
     if (!punto) {
       return res.status(404).json({ message: "Punto no encontrado" });
     }
+     
+    const presentaArray = (body.id_presenta || []).map((item: string) => {
+    const [proponenteId, autorId] = item.split('/');
+      return {
+        proponenteId: parseInt(proponenteId),
+        autorId: autorId,
+      };
+    });
     
     const nuevoTema = await TemasPuntosVotos.create({
       id_punto: punto.id,
@@ -1551,6 +1577,14 @@ export const crearreserva = async (req: Request, res: Response): Promise<any> =>
       tema_votacion: body.descripcion,
       fecha_votacion: null,
     });
+
+    for (const item of presentaArray) {
+      await ReservasPresenta.create({
+        id_reserva: nuevoTema.id,
+        id_tipo_presenta: item.proponenteId, 
+        id_presenta: item.autorId
+      });
+    }
     
     return res.status(200).json({ 
       message: "Reserva creada exitosamente",
@@ -1595,14 +1629,21 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
     const { id } = req.params;
     const reserva = await TemasPuntosVotos.findAll({ 
       where: { id_punto: id },
-      attributes: ["id", "tema_votacion"]
+      attributes: ["id", "tema_votacion"],
+      include: [
+        {
+          model: ReservasPresenta,
+          as: "presentan",
+          required: false
+        }
+      ],
     });
 
     const iniciativa = await IniciativaPuntoOrden.findAll({ 
       where: { id_punto: id },
-      attributes: ["id", "iniciativa"]
+      attributes: ["id", "iniciativa"],
     });
-    
+    console.log(reserva)
     return res.status(200).json({
       data: {
         reservas: reserva,

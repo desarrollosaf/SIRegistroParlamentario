@@ -54,6 +54,7 @@ const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas
 const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_estudio"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const diputados_asociados_1 = __importDefault(require("../models/diputados_asociados"));
+const reservas_presenta_1 = __importDefault(require("../models/reservas_presenta"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -909,8 +910,6 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { id } = req.params;
         const { body } = req;
         const file = req.file;
-        // console.log(body);
-        // return 500;
         const presentaArray = (body.presenta || "")
             .split(",")
             .map((item) => item.trim())
@@ -1039,12 +1038,21 @@ const guardarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 ? JSON.parse(body.reservas)
                 : body.reservas;
             for (const item of temasArray) {
-                yield temas_puntos_votos_1.default.create({
+                const reserva = yield temas_puntos_votos_1.default.create({
                     id_punto: puntonuevo.id,
                     id_evento: evento.id,
                     tema_votacion: item.descripcion,
                     fecha_votacion: null,
                 });
+                // Iterar cada presenta del array
+                for (const presenta of item.id_presenta || []) {
+                    const [proponenteId, autorId] = presenta.split('/');
+                    yield reservas_presenta_1.default.create({
+                        id_reserva: reserva.id,
+                        id_tipo_presenta: parseInt(proponenteId),
+                        id_presenta: autorId,
+                    });
+                }
             }
         }
         if (body.iniciativas) {
@@ -1200,7 +1208,14 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: temas_puntos_votos_1.default,
                     as: "reservas",
-                    attributes: ["id", "tema_votacion"]
+                    attributes: ["id", "tema_votacion"],
+                    include: [
+                        {
+                            model: reservas_presenta_1.default,
+                            as: "presentan",
+                            required: false
+                        }
+                    ],
                 },
                 {
                     model: inciativas_puntos_ordens_1.default,
@@ -1377,12 +1392,26 @@ const crearreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (!punto) {
             return res.status(404).json({ message: "Punto no encontrado" });
         }
+        const presentaArray = (body.id_presenta || []).map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return {
+                proponenteId: parseInt(proponenteId),
+                autorId: autorId,
+            };
+        });
         const nuevoTema = yield temas_puntos_votos_1.default.create({
             id_punto: punto.id,
             id_evento: punto.id_evento,
             tema_votacion: body.descripcion,
             fecha_votacion: null,
         });
+        for (const item of presentaArray) {
+            yield reservas_presenta_1.default.create({
+                id_reserva: nuevoTema.id,
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId
+            });
+        }
         return res.status(200).json({
             message: "Reserva creada exitosamente",
         });
@@ -1427,12 +1456,20 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const { id } = req.params;
         const reserva = yield temas_puntos_votos_1.default.findAll({
             where: { id_punto: id },
-            attributes: ["id", "tema_votacion"]
+            attributes: ["id", "tema_votacion"],
+            include: [
+                {
+                    model: reservas_presenta_1.default,
+                    as: "presentan",
+                    required: false
+                }
+            ],
         });
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id_punto: id },
-            attributes: ["id", "iniciativa"]
+            attributes: ["id", "iniciativa"],
         });
+        console.log(reserva);
         return res.status(200).json({
             data: {
                 reservas: reserva,
