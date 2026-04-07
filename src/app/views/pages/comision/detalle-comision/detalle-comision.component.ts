@@ -730,15 +730,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id: idIntegrante,
       sentido: sentido
     };
-console.log(datos);
-    this._eventoService.actualizaAsistencia(datos).subscribe({
-      next: (response: any) => {
-      },
-      error: (e: HttpErrorResponse) => {
-        const msg = e.error?.msg || 'Error desconocido';
-        console.error('Error del servidor:', msg);
-      }
-    });
+    console.log(datos);
+    // this._eventoService.actualizaAsistencia(datos).subscribe({
+    //   next: (response: any) => {
+    //   },
+    //   error: (e: HttpErrorResponse) => {
+    //     const msg = e.error?.msg || 'Error desconocido';
+    //     console.error('Error del servidor:', msg);
+    //   }
+    // });
   }
 
   getClaseAsistencia(sentido_voto: number): string {
@@ -1943,7 +1943,9 @@ console.log(datos);
 
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
-        descripcion: t.tema_votacion
+        descripcion:   t.tema_votacion,
+        id_proponente: t.id_proponente || [],
+        id_presenta:   t.id_presenta   || []
       }));
       formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
