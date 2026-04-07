@@ -6,4 +6,5 @@ const router = (0, express_1.Router)();
 router.get("/api/estadistico/iniciativas/resumen", estadistico_1.getResumenTotalesEndpoint);
 router.get("/api/estadistico/diputado/iniciativas", estadistico_1.getIniciativasPresentadasPorDiputado);
 router.get("/api/estadistico/comision/iniciativas", estadistico_1.getIniciativasTurnadasPorComision);
+router.get("/api/estadistico/comision/eventos", estadistico_1.getEventosPorComision);
 exports.default = router;

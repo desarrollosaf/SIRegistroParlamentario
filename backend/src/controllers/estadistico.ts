@@ -20,6 +20,7 @@ import Diputado from "../models/diputado";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
+import VotosPunto from "../models/votos_punto";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPOS
@@ -703,6 +704,228 @@ export const getIniciativasTurnadasPorComision = async (req: Request, res: Respo
   } catch (error: any) {
     console.error("Error al obtener iniciativas por comisión:", error);
     return res.status(500).json({ ok: false, message: "Error interno del servidor", error: error.message });
+  }
+};
+
+
+export const getEventosPorComision = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const id = req.params.id ?? req.query.id ?? req.body.id;
+    if (!id) return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
+
+    const comisionId = String(id).trim();
+
+    // 1) Verificar que la comisión existe
+    const comisionRaw = await Comision.findOne({
+      where: { id: comisionId },
+      attributes: ["id", "nombre"],
+      raw: true,
+    });
+    if (!comisionRaw)
+      return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
+    const comision: any = comisionRaw;
+
+    // 2) Obtener todas las agendas donde esta comisión fue anfitrión
+    const anfitrionesRaw = await AnfitrionAgenda.findAll({
+      where: { autor_id: comisionId },
+      attributes: ["agenda_id", "autor_id"],
+      raw: true,
+    });
+
+    if (!(anfitrionesRaw as any[]).length) {
+      return res.status(200).json({
+        ok: true,
+        data: {
+          comision_id: comisionId,
+          comision:    comision.nombre,
+          resumen: {
+            total_eventos:       0,
+            total_iniciativas:   0,
+            total_votadas:       0,
+            total_no_votadas:    0,
+            aprobadas:           0,
+            rechazadas_sesion:   0,
+            rechazadas_comision: 0,
+            en_estudio:          0,
+          },
+          eventos: [],
+        },
+      });
+    }
+
+    const agendaIds = [
+      ...new Set((anfitrionesRaw as any[]).map((a) => String(a.agenda_id))),
+    ];
+
+    // 3) Obtener detalles de cada agenda
+    const agendasRaw = await Agenda.findAll({
+      where: { id: { [Op.in]: agendaIds } },
+      attributes: ["id", "fecha", "descripcion", "liga"],
+      include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }],
+    });
+
+    const agendasMap = new Map<string, any>();
+    for (const ag of agendasRaw as any[]) {
+      const agJson = typeof ag.toJSON === "function" ? ag.toJSON() : ag;
+      agendasMap.set(String(agJson.id), agJson);
+    }
+
+    // 4) Obtener TODOS los puntos de orden de esas agendas (orden del día completo)
+    //    ⚠️ Ajusta "id_evento" al nombre real del FK en tu modelo PuntosOrden
+    const puntosOrdenRaw = await PuntosOrden.findAll({
+      where: { id_evento: { [Op.in]: agendaIds } },
+      attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "id_evento"],
+      order: [["nopunto", "ASC"]],
+      raw: true,
+    });
+
+    // Map: puntoId → punto completo
+    const puntosMap = new Map<string, any>();
+    // Map: agendaId → puntos[]  (orden del día)
+    const puntosPorAgenda = new Map<string, any[]>();
+
+    for (const p of puntosOrdenRaw as any[]) {
+      puntosMap.set(String(p.id), p);
+      const agId = String(p.id_evento);
+      if (!puntosPorAgenda.has(agId)) puntosPorAgenda.set(agId, []);
+      puntosPorAgenda.get(agId)!.push(p);
+    }
+
+    const todosLosPuntosIds = [...puntosMap.keys()];
+
+    // 5) Obtener iniciativas públicas vinculadas a esos puntos
+    const iniciativasDB = todosLosPuntosIds.length
+      ? await IniciativaPuntoOrden.findAll({
+          where: { id_punto: { [Op.in]: todosLosPuntosIds }, publico: 1 },
+          attributes: ["id", "id_punto"],
+          raw: true,
+        })
+      : [];
+
+    // Map: puntoId → iniciativaId[]
+    const iniciativasPorPunto = new Map<string, string[]>();
+    const iniciativasIds      = new Set<string>();
+
+    for (const ini of iniciativasDB as any[]) {
+      const puntoId = String(ini.id_punto);
+      const iniId   = String(ini.id);
+      iniciativasIds.add(iniId);
+      if (!iniciativasPorPunto.has(puntoId)) iniciativasPorPunto.set(puntoId, []);
+      iniciativasPorPunto.get(puntoId)!.push(iniId);
+    }
+
+    // 6) Votos: una sola query batch para todos los puntos
+    const votosRaw = todosLosPuntosIds.length
+      ? await VotosPunto.findAll({
+          where: {
+            id_punto:  { [Op.in]: todosLosPuntosIds },
+            deletedAt: null,
+          },
+          attributes: ["id_punto"],
+          group: ["id_punto"],
+          raw: true,
+        })
+      : [];
+
+    // Set de puntoIds que SÍ tienen votos registrados
+    const puntosConVoto = new Set<string>(
+      (votosRaw as any[]).map((v) => String(v.id_punto))
+    );
+
+    // 7) Construir reporte base y armar map por id de iniciativa
+    const reporte    = await construirReporteBase();
+    const reporteMap = new Map<string, ReporteBaseItem>();
+    for (const item of reporte) {
+      reporteMap.set(String(item.id), item);
+    }
+
+    const fueVotada = (observac: string): boolean =>
+      ["Aprobada", "Rechazada en sesión", "Rechazada en comisión"].includes(observac);
+
+    // 8) Armar eventos con orden del día completo
+    const todasLasIniciativasFiltradas: ReporteBaseItem[] = [];
+
+    const eventos = agendaIds
+      .map((agId) => {
+        const agenda       = agendasMap.get(agId);
+        const puntosDelDia = puntosPorAgenda.get(agId) ?? [];
+
+        const ordenDelDia = puntosDelDia.map((punto) => {
+          const iniIds      = iniciativasPorPunto.get(String(punto.id)) ?? [];
+          const iniciativas = iniIds
+            .map((iniId) => {
+              const item = reporteMap.get(iniId);
+              if (!item) return null;
+              todasLasIniciativasFiltradas.push(item);
+              return { ...item, votada: fueVotada(item.observac) };
+            })
+            .filter(Boolean);
+
+          return {
+            punto_id:          punto.id,
+            nopunto:           punto.nopunto  ?? null,
+            descripcion:       punto.punto    ?? "-",
+            tribuna:           String(punto.tribuna)  === "1",
+            dispensa:          String(punto.dispensa) === "1",
+            voto:              puntosConVoto.has(String(punto.id)), // true = se votó
+            tiene_iniciativas: iniciativas.length > 0,
+            iniciativas,
+          };
+        });
+
+        const todasIniEvento = ordenDelDia.flatMap((p) => p.iniciativas);
+
+        return {
+          evento_id:         agId,
+          fecha:             agenda?.fecha       ?? null,
+          fecha_fmt:         formatearFechaCorta(agenda?.fecha),
+          descripcion:       agenda?.descripcion ?? "-",
+          liga:              agenda?.liga        ?? null,
+          tipo_evento:       agenda?.tipoevento?.nombre ?? "-",
+          total_puntos:      ordenDelDia.length,
+          total_iniciativas: todasIniEvento.length,
+          votadas:           todasIniEvento.filter((i: any) => i.votada).length,
+          no_votadas:        todasIniEvento.filter((i: any) => !i.votada).length,
+          orden_del_dia:     ordenDelDia,
+        };
+      })
+      .sort((a, b) => {
+        if (!a.fecha && !b.fecha) return 0;
+        if (!a.fecha) return 1;
+        if (!b.fecha) return -1;
+        return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+      });
+
+    // 9) Deduplicar para el resumen global
+    const iniciativasUnicas = deduplicarPorId(todasLasIniciativasFiltradas);
+
+    const resumenGlobal = {
+      total_eventos:       eventos.length,
+      total_iniciativas:   iniciativasUnicas.length,
+      total_votadas:       iniciativasUnicas.filter((i) => fueVotada(i.observac)).length,
+      total_no_votadas:    iniciativasUnicas.filter((i) => !fueVotada(i.observac)).length,
+      aprobadas:           iniciativasUnicas.filter((i) => i.observac === "Aprobada").length,
+      rechazadas_sesion:   iniciativasUnicas.filter((i) => i.observac === "Rechazada en sesión").length,
+      rechazadas_comision: iniciativasUnicas.filter((i) => i.observac === "Rechazada en comisión").length,
+      en_estudio:          iniciativasUnicas.filter((i) => i.observac === "En estudio").length,
+    };
+
+    return res.status(200).json({
+      ok: true,
+      data: {
+        comision_id: String(comision.id),
+        comision:    comision.nombre,
+        resumen:     resumenGlobal,
+        eventos,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error al obtener eventos por comisión:", error);
+    return res.status(500).json({
+      ok: false,
+      message: "Error interno del servidor",
+      error: error.message,
+    });
   }
 };
 
