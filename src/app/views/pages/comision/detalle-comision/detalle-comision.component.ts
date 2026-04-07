@@ -732,14 +732,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       sentido: sentido
     };
     console.log(datos);
-    // this._eventoService.actualizaAsistencia(datos).subscribe({
-    //   next: (response: any) => {
-    //   },
-    //   error: (e: HttpErrorResponse) => {
-    //     const msg = e.error?.msg || 'Error desconocido';
-    //     console.error('Error del servidor:', msg);
-    //   }
-    // });
+    this._eventoService.actualizaAsistencia(datos).subscribe({
+      next: (response: any) => {
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
 
   getClaseAsistencia(sentido_voto: number): string {
