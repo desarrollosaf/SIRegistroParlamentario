@@ -1,5 +1,6 @@
 import { Model, DataTypes, CreationOptional } from 'sequelize';
 import sequelize from '../database/registrocomisiones';
+import Proponentes from './proponentes';
 
 class ReservasPresenta extends Model {
   declare id: CreationOptional<number>;
@@ -52,4 +53,5 @@ ReservasPresenta.init(
   }
 );
 
+ReservasPresenta.belongsTo(Proponentes, { foreignKey: 'id_tipo_presenta', as: 'tipo_presenta' });
 export default ReservasPresenta;
