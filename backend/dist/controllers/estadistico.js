@@ -638,7 +638,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
         if (!id)
             return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
         const comisionId = String(id).trim();
-        // 1) Verificar que la comisión existe
         const comisionRaw = yield comisions_1.default.findOne({
             where: { id: comisionId },
             attributes: ["id", "nombre"],
@@ -647,7 +646,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
         if (!comisionRaw)
             return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
         const comision = comisionRaw;
-        // 2) Obtener todas las agendas donde esta comisión fue anfitrión
         const anfitrionesRaw = yield anfitrion_agendas_1.default.findAll({
             where: { autor_id: comisionId },
             attributes: ["agenda_id", "autor_id"],
@@ -676,7 +674,36 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
         const agendaIds = [
             ...new Set(anfitrionesRaw.map((a) => String(a.agenda_id))),
         ];
-        // 3) Obtener detalles de cada agenda
+        const todosAnfitrionesRaw = yield anfitrion_agendas_1.default.findAll({
+            where: {
+                agenda_id: { [sequelize_1.Op.in]: agendaIds },
+            },
+            attributes: ["agenda_id", "autor_id", "tipo_autor_id"],
+            raw: true,
+            paranoid: false, // por si tiene deletedAt
+        });
+        const autoresPorAgenda = new Map();
+        for (const a of todosAnfitrionesRaw) {
+            const key = String(a.agenda_id);
+            if (!autoresPorAgenda.has(key))
+                autoresPorAgenda.set(key, []);
+            autoresPorAgenda.get(key).push(String(a.autor_id));
+        }
+        const idsComisionesUnidas = [
+            ...new Set(todosAnfitrionesRaw
+                .map((a) => String(a.autor_id))
+                .filter((aid) => aid !== comisionId)),
+        ];
+        // Nombres de las comisiones unidas en batch
+        const comisionesUnidasBD = idsComisionesUnidas.length
+            ? yield comisions_1.default.findAll({
+                where: { id: { [sequelize_1.Op.in]: idsComisionesUnidas } },
+                attributes: ["id", "nombre"],
+                raw: true,
+                paranoid: false,
+            })
+            : [];
+        const comisionesUnidasMapa = new Map(comisionesUnidasBD.map((c) => { var _a; return [String(c.id), (_a = c.nombre) !== null && _a !== void 0 ? _a : "-"]; }));
         const agendasRaw = yield agendas_1.default.findAll({
             where: { id: { [sequelize_1.Op.in]: agendaIds } },
             attributes: ["id", "fecha", "descripcion", "liga"],
@@ -687,17 +714,13 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
             const agJson = typeof ag.toJSON === "function" ? ag.toJSON() : ag;
             agendasMap.set(String(agJson.id), agJson);
         }
-        // 4) Obtener TODOS los puntos de orden de esas agendas (orden del día completo)
-        //    ⚠️ Ajusta "id_evento" al nombre real del FK en tu modelo PuntosOrden
         const puntosOrdenRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: { [sequelize_1.Op.in]: agendaIds } },
             attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "id_evento"],
             order: [["nopunto", "ASC"]],
             raw: true,
         });
-        // Map: puntoId → punto completo
         const puntosMap = new Map();
-        // Map: agendaId → puntos[]  (orden del día)
         const puntosPorAgenda = new Map();
         for (const p of puntosOrdenRaw) {
             puntosMap.set(String(p.id), p);
@@ -707,7 +730,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
             puntosPorAgenda.get(agId).push(p);
         }
         const todosLosPuntosIds = [...puntosMap.keys()];
-        // 5) Obtener iniciativas públicas vinculadas a esos puntos
         const iniciativasDB = todosLosPuntosIds.length
             ? yield inciativas_puntos_ordens_1.default.findAll({
                 where: { id_punto: { [sequelize_1.Op.in]: todosLosPuntosIds }, publico: 1 },
@@ -715,7 +737,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 raw: true,
             })
             : [];
-        // Map: puntoId → iniciativaId[]
         const iniciativasPorPunto = new Map();
         const iniciativasIds = new Set();
         for (const ini of iniciativasDB) {
@@ -726,7 +747,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 iniciativasPorPunto.set(puntoId, []);
             iniciativasPorPunto.get(puntoId).push(iniId);
         }
-        // 6) Votos: una sola query batch para todos los puntos
         const votosRaw = todosLosPuntosIds.length
             ? yield votos_punto_1.default.findAll({
                 where: {
@@ -738,22 +758,29 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 raw: true,
             })
             : [];
-        // Set de puntoIds que SÍ tienen votos registrados
         const puntosConVoto = new Set(votosRaw.map((v) => String(v.id_punto)));
-        // 7) Construir reporte base y armar map por id de iniciativa
         const reporte = yield construirReporteBase();
         const reporteMap = new Map();
         for (const item of reporte) {
             reporteMap.set(String(item.id), item);
         }
         const fueVotada = (observac) => ["Aprobada", "Rechazada en sesión", "Rechazada en comisión"].includes(observac);
-        // 8) Armar eventos con orden del día completo
         const todasLasIniciativasFiltradas = [];
         const eventos = agendaIds
             .map((agId) => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             const agenda = agendasMap.get(agId);
             const puntosDelDia = (_a = puntosPorAgenda.get(agId)) !== null && _a !== void 0 ? _a : [];
+            const autoresDelEvento = (_b = autoresPorAgenda.get(agId)) !== null && _b !== void 0 ? _b : [];
+            const comisionesUnidas = autoresDelEvento
+                .filter((aid) => aid !== comisionId)
+                .map((aid) => {
+                var _a;
+                return ({
+                    comision_id: aid,
+                    nombre: (_a = comisionesUnidasMapa.get(aid)) !== null && _a !== void 0 ? _a : "-",
+                });
+            });
             const ordenDelDia = puntosDelDia.map((punto) => {
                 var _a, _b, _c;
                 const iniIds = (_a = iniciativasPorPunto.get(String(punto.id))) !== null && _a !== void 0 ? _a : [];
@@ -772,7 +799,7 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
                     descripcion: (_c = punto.punto) !== null && _c !== void 0 ? _c : "-",
                     tribuna: String(punto.tribuna) === "1",
                     dispensa: String(punto.dispensa) === "1",
-                    voto: puntosConVoto.has(String(punto.id)), // true = se votó
+                    voto: puntosConVoto.has(String(punto.id)),
                     tiene_iniciativas: iniciativas.length > 0,
                     iniciativas,
                 };
@@ -780,11 +807,13 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
             const todasIniEvento = ordenDelDia.flatMap((p) => p.iniciativas);
             return {
                 evento_id: agId,
-                fecha: (_b = agenda === null || agenda === void 0 ? void 0 : agenda.fecha) !== null && _b !== void 0 ? _b : null,
+                fecha: (_c = agenda === null || agenda === void 0 ? void 0 : agenda.fecha) !== null && _c !== void 0 ? _c : null,
                 fecha_fmt: formatearFechaCorta(agenda === null || agenda === void 0 ? void 0 : agenda.fecha),
-                descripcion: (_c = agenda === null || agenda === void 0 ? void 0 : agenda.descripcion) !== null && _c !== void 0 ? _c : "-",
-                liga: (_d = agenda === null || agenda === void 0 ? void 0 : agenda.liga) !== null && _d !== void 0 ? _d : null,
-                tipo_evento: (_f = (_e = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _e === void 0 ? void 0 : _e.nombre) !== null && _f !== void 0 ? _f : "-",
+                descripcion: (_d = agenda === null || agenda === void 0 ? void 0 : agenda.descripcion) !== null && _d !== void 0 ? _d : "-",
+                liga: (_e = agenda === null || agenda === void 0 ? void 0 : agenda.liga) !== null && _e !== void 0 ? _e : null,
+                tipo_evento: (_g = (_f = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _f === void 0 ? void 0 : _f.nombre) !== null && _g !== void 0 ? _g : "-",
+                es_unida: comisionesUnidas.length > 0,
+                comisiones_unidas: comisionesUnidas,
                 total_puntos: ordenDelDia.length,
                 total_iniciativas: todasIniEvento.length,
                 votadas: todasIniEvento.filter((i) => i.votada).length,
@@ -801,7 +830,6 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 return -1;
             return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
         });
-        // 9) Deduplicar para el resumen global
         const iniciativasUnicas = deduplicarPorId(todasLasIniciativasFiltradas);
         const resumenGlobal = {
             total_eventos: eventos.length,
