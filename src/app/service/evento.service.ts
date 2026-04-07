@@ -239,5 +239,12 @@ export class EventoService {
     return this.http.patch(`${this.myAppUrl}${this.myAPIUrl3}/publicarevento/${id}`, { publico });
   }
 
-  
+  saveComentario(data:any): Observable<string> {
+    return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savecomentarios/`,data)
+  }
+
+  deleteComentario(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deletecomentario/${id}`)
+  }
+
 }

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -55,6 +55,7 @@ const iniciativas_estudio_1 = __importDefault(require("../models/iniciativas_est
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const diputados_asociados_1 = __importDefault(require("../models/diputados_asociados"));
 const reservas_presenta_1 = __importDefault(require("../models/reservas_presenta"));
+const comentario_evento_1 = __importDefault(require("../models/comentario_evento"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -210,6 +211,11 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!esSesion) {
             dipasociados = yield procesarDiputadosAsociadosComision(dipasociadosRaw);
         }
+        const comentarios = yield comentario_evento_1.default.findAll({
+            where: { id_evento: id },
+            order: [['createdAt', 'DESC']],
+            raw: true
+        });
         // 5. Si NO existen asistencias, crearlas
         if (asistenciasExistentes.length === 0) {
             yield crearAsistencias(evento, esSesion);
@@ -229,7 +235,8 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 titulo,
                 tipoEvento,
                 puntos,
-                dipasociados
+                dipasociados,
+                comentarios
             });
         }
         // 6. Si SÍ existen asistencias, procesarlas
@@ -241,7 +248,8 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             titulo,
             tipoEvento,
             puntos,
-            dipasociados
+            dipasociados,
+            comentarios
         });
     }
     catch (error) {
@@ -5740,3 +5748,40 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
         comisiones_turnado: comisiones.map((c) => c.nombre).join(', ')
     };
 });
+const saveComentarioEvento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id, comentario } = req.body;
+        if (!id || !comentario) {
+            return res.status(400).json({ msg: 'El id del evento y el comentario son requeridos.' });
+        }
+        const nuevoComentario = yield comentario_evento_1.default.create({
+            id_evento: id,
+            comentario: comentario.trim()
+        });
+        return res.status(201).json({
+            msg: 'Comentario guardado correctamente.',
+            data: nuevoComentario
+        });
+    }
+    catch (error) {
+        console.error('Error al guardar comentario:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor.' });
+    }
+});
+exports.saveComentarioEvento = saveComentarioEvento;
+const deleteComentarioEvento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const comentario = yield comentario_evento_1.default.findByPk(id);
+        if (!comentario) {
+            return res.status(404).json({ msg: 'Comentario no encontrado.' });
+        }
+        yield comentario.destroy();
+        return res.status(200).json({ msg: 'Comentario eliminado correctamente.' });
+    }
+    catch (error) {
+        console.error('Error al eliminar comentario:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor.' });
+    }
+});
+exports.deleteComentarioEvento = deleteComentarioEvento;

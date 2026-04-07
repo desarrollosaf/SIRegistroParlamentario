@@ -46,7 +46,7 @@ import IniciativaEstudio from "../models/iniciativas_estudio";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import DiputadosAsociados from "../models/diputados_asociados";
 import ReservasPresenta from "../models/reservas_presenta";
-
+import ComentarioEvento from '../models/comentario_evento';
 
 
 
@@ -241,6 +241,11 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       dipasociados = await procesarDiputadosAsociadosComision(dipasociadosRaw);
     }
 
+    const comentarios = await ComentarioEvento.findAll({
+      where: { id_evento: id },
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
     
     // 5. Si NO existen asistencias, crearlas
     if (asistenciasExistentes.length === 0) {
@@ -262,7 +267,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         titulo,
         tipoEvento,
         puntos,
-        dipasociados
+        dipasociados,
+        comentarios  
       });
     }
     
@@ -278,7 +284,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
       titulo,
       tipoEvento, 
       puntos,
-      dipasociados
+      dipasociados,
+      comentarios  
     });
     
   } catch (error) {
@@ -6881,4 +6888,50 @@ const getComisionesTurnado = async (puntoId: string) => {
     turnado: true,
     comisiones_turnado: comisiones.map((c: any) => c.nombre).join(', ')
   };
+};
+
+
+export const saveComentarioEvento = async (req: Request, res: Response) => {
+  try {
+    const { id, comentario } = req.body;
+
+    if (!id || !comentario) {
+      return res.status(400).json({ msg: 'El id del evento y el comentario son requeridos.' });
+    }
+
+    const nuevoComentario = await ComentarioEvento.create({
+      id_evento:  id,
+      comentario: comentario.trim()
+    });
+
+    return res.status(201).json({
+      msg:  'Comentario guardado correctamente.',
+      data: nuevoComentario
+    });
+
+  } catch (error) {
+    console.error('Error al guardar comentario:', error);
+    return res.status(500).json({ msg: 'Error interno del servidor.' });
+  }
+};
+
+
+export const deleteComentarioEvento = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const comentario = await ComentarioEvento.findByPk(id);
+
+    if (!comentario) {
+      return res.status(404).json({ msg: 'Comentario no encontrado.' });
+    }
+
+    await comentario.destroy();
+
+    return res.status(200).json({ msg: 'Comentario eliminado correctamente.' });
+
+  } catch (error) {
+    console.error('Error al eliminar comentario:', error);
+    return res.status(500).json({ msg: 'Error interno del servidor.' });
+  }
 };
