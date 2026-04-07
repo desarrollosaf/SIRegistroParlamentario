@@ -51,6 +51,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
   @ViewChild('xlModalI') xlModalI!: TemplateRef<any>;
   @ViewChild('xlModalIntegrantes') xlModalIntegrantes!: TemplateRef<any>;
+  @ViewChild('modalComentario') modalComentario!: TemplateRef<any>;
 
   step = 1;
   stepNames = [
@@ -96,6 +97,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   slcComisiones: any;
   slcPuntosTurnados: any;
   slcDictamenes: any;
+  slcPresentaReserva: any[] = [];
   tipo_evento: any;
   listaPuntos: any[] = [];
   mostrarFormularioPunto = false;
@@ -104,7 +106,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   modalRef!: NgbModalRef;
   modalRefT!: NgbModalRef;
   modalRefI!: NgbModalRef;
+  modalRefComentario!: NgbModalRef;
 
+
+  textoComentario: string = '';
   formIntervencion!: FormGroup;
   mostrarFormIntervencion = false;
   tipoIntervencionActual: number = 1;
@@ -150,8 +155,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   dictamenesSeleccionados: any[] = [];
 
   slctDiputados: any[] = [];
-  slctPartidos:  any[] = [];
-  slctCargo:     any[] = [];
+  slctPartidos: any[] = [];
+  slctCargo: any[] = [];
   diputadosAsociados: any[] = [];
   mostrarFormulario = false;
   tipoSeleccionado: 'legislatura' | 'comision' = 'legislatura';
@@ -207,6 +212,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
 
     this.formReserva = this.fb.group({
+      id_proponente: [[]],
+      id_presenta: [[]],
       descripcion: ['', Validators.required]
     });
 
@@ -224,6 +231,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
+    this.cargarCatalogosBase();
 
     this.integranteForm = this.fb.group({
       diputadoId: ['', Validators.required],
@@ -245,6 +253,22 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
   }
+
+  private cargarCatalogosBase(): void {
+    this._eventoService.getCatalogos().subscribe({
+      next: (response: any) => {
+        this.slctProponentes = response.proponentes;
+        this.slcTribunaDip = response.diputados;
+        this.slcComisiones = response.comisiones;
+        this.slcDictamenes = response.dictamenes;
+        this.slcTipIntervencion = response.tipointer;
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar catálogos base:', e);
+      }
+    });
+  }
+
 
 
   cargarIniciativasDisponibles() {
@@ -706,7 +730,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id: idIntegrante,
       sentido: sentido
     };
-
+console.log(datos);
     this._eventoService.actualizaAsistencia(datos).subscribe({
       next: (response: any) => {
       },
@@ -723,7 +747,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         return 'asistencia-presente';
       case 2:
         return 'asistencia-remota';
-      case 3: 
+      case 3:
         return 'asistencia-justificada';
       case 0:
         return 'asistencia-ausente';
@@ -732,12 +756,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
-   contarIntegrantesComision(integrantes: any[]): number {
+  contarIntegrantesComision(integrantes: any[]): number {
     return integrantes.length;
   }
 
   get tipoEstaBloqueo(): boolean {
-  return this.tipoEventoAgenda !== '';
+    return this.tipoEventoAgenda !== '';
   }
   get legislaturaDisponible(): boolean {
     if (this.tipoEventoAgenda === '') return true;
@@ -769,7 +793,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   onTipoChange() {
     const comisionControl = this.integranteForm.get('comisionId');
-    const cargoControl    = this.integranteForm.get('cargo');
+    const cargoControl = this.integranteForm.get('cargo');
     if (this.tipoSeleccionado === 'comision') {
       comisionControl?.setValidators([Validators.required]);
       cargoControl?.setValidators([Validators.required]);
@@ -825,10 +849,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   abrirModalReservaPunto(punto: any) {
-    this.formReserva.reset();
+    this.formReserva.reset({ id_proponente: [], id_presenta: [], descripcion: '' });
+    this.slcPresentaReserva = [];
     this.mostrarformReserva = false;
     this.puntoSeleccionadoReserva = punto;
-
     this.listaReservas = [...(punto.reservas || [])];
 
     this.modalRefT = this.modalService.open(this.xlModalT, {
@@ -1480,7 +1504,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   abrirModalReserva() {
-    this.formReserva.reset();
+    this.formReserva.reset({ id_proponente: [], id_presenta: [], descripcion: '' });
+    this.slcPresentaReserva = [];
     this.mostrarformReserva = false;
     this.puntoSeleccionadoReserva = null;
     this.listaReservas = [...this.reservasTemporales];
@@ -1495,89 +1520,107 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   toggleformReserva() {
     this.mostrarformReserva = !this.mostrarformReserva;
     if (!this.mostrarformReserva) {
-      this.formReserva.reset();
+      this.formReserva.reset({ id_proponente: [], id_presenta: [], descripcion: '' });
+      this.slcPresentaReserva = [];
     }
   }
+
+  getTipoPReserva(event: any): void {
+    this.formReserva.get('id_presenta')?.setValue([]);
+    this.slcPresentaReserva = [];
+
+    if (!event || (Array.isArray(event) && event.length === 0)) return;
+
+    this._eventoService.getTipo(event).subscribe({
+      next: (response: any) => {
+        this.slcPresentaReserva = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar presenta reserva:', e);
+      }
+    });
+  }
+
 
   guardarTema() {
     if (this.formReserva.invalid) {
       Swal.fire({
-        position: "center",
-        icon: "warning",
-        title: "¡Atención!",
+        position: "center", icon: "warning", title: "¡Atención!",
         text: "Debe escribir la descripción de la reserva.",
-        showConfirmButton: false,
-        timer: 2000
+        showConfirmButton: false, timer: 2000
       });
       return;
     }
 
+    const idsProponente: any[] = this.formReserva.value.id_proponente || [];
+    const idsPresenta: any[] = this.formReserva.value.id_presenta || [];
+
+    const getNombreProponente = () =>
+      this.slctProponentes
+        ?.filter((p: any) => idsProponente.map(Number).includes(Number(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
+
+    const getNombrePresenta = () =>
+      this.slcPresentaReserva
+        ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || '—';
+
     if (!this.puntoSeleccionadoReserva) {
       const nuevoTema = {
         id: Date.now(),
-        tema_votacion: this.formReserva.value.descripcion
+        tema_votacion: this.formReserva.value.descripcion,
+        id_proponente: idsProponente,
+        id_presenta: idsPresenta,
+        proponente: getNombreProponente(),
+        presenta: getNombrePresenta()
       };
 
       this.listaReservas.push(nuevoTema);
       this.reservasTemporales.push(nuevoTema);
 
       const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
+        toast: true, position: "top-end",
+        showConfirmButton: false, timer: 2000, timerProgressBar: true
       });
-      Toast.fire({
-        icon: "success",
-        title: "Se agregó reserva (se guardará con el punto)."
-      });
-
+      Toast.fire({ icon: "success", title: "Se agregó reserva (se guardará con el punto)." });
       this.toggleformReserva();
       return;
     }
 
     const datos = {
       punto: this.puntoSeleccionadoReserva.id,
-      descripcion: this.formReserva.value.descripcion
+      descripcion: this.formReserva.value.descripcion,
+      id_proponente: idsProponente,
+      id_presenta: idsPresenta,
     };
 
     this._eventoService.saveReserva(datos).subscribe({
       next: (response: any) => {
         const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true
+          toast: true, position: "top-end",
+          showConfirmButton: false, timer: 2000, timerProgressBar: true
         });
-        Toast.fire({
-          icon: "success",
-          title: "Reserva guardada correctamente."
-        });
-
+        Toast.fire({ icon: "success", title: "Reserva guardada correctamente." });
         this.toggleformReserva();
 
-        if (response.data) {
-          this.listaReservas.push(response.data);
-          if (this.puntoSeleccionadoReserva.reservas) {
-            this.puntoSeleccionadoReserva.reservas.push(response.data);
-          } else {
-            this.puntoSeleccionadoReserva.reservas = [response.data];
-          }
+        const nuevaReserva = {
+          id: response.data?.id || response.id || Date.now(),
+          tema_votacion: datos.descripcion,
+          proponente: response.data?.proponente || getNombreProponente(),
+          presenta: response.data?.presenta || getNombrePresenta()
+        };
+
+        this.listaReservas.push(nuevaReserva);
+
+        if (this.puntoSeleccionadoReserva.reservas) {
+          this.puntoSeleccionadoReserva.reservas.push(nuevaReserva);
         } else {
-          const nuevaReserva = {
-            id: response.id || Date.now(),
-            tema_votacion: datos.descripcion,
-          };
-
-          this.listaReservas.push(nuevaReserva);
-
-          if (this.puntoSeleccionadoReserva.reservas) {
-            this.puntoSeleccionadoReserva.reservas.push(nuevaReserva);
-          } else {
-            this.puntoSeleccionadoReserva.reservas = [nuevaReserva];
-          }
+          this.puntoSeleccionadoReserva.reservas = [nuevaReserva];
         }
 
         const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoReserva.id);
@@ -1590,12 +1633,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
         console.error('Error del servidor:', msg);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: msg,
-          timer: 3000
-        });
+        Swal.fire({ icon: "error", title: "Error", text: msg, timer: 3000 });
       }
     });
   }
@@ -2384,30 +2422,30 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   iniciarEvento(tipo: number): void {
     this._eventoService.notificarInicioEvento(this.idComisionRuta).subscribe({
-        next: (response: any) => {
-          Swal.close();
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Notificación enviada correctamente',
-            timer: 3000,
-            showConfirmButton: false
-          });
-        },
-        error: (e: HttpErrorResponse) => {
-          console.error('Error al notificar:', e);
-          Swal.close();
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo enviar la notificación',
-            toast: true,
-            position: 'top-end',
-            timer: 3000,
-            showConfirmButton: false
-          });
-        }
+      next: (response: any) => {
+        Swal.close();
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Notificación enviada correctamente',
+          timer: 3000,
+          showConfirmButton: false
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al notificar:', e);
+        Swal.close();
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo enviar la notificación',
+          toast: true,
+          position: 'top-end',
+          timer: 3000,
+          showConfirmButton: false
+        });
+      }
     });
   }
 
@@ -2547,21 +2585,21 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   verificarIntegrantes(): void {
     this._eventoService.getEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
-        this.tipoEventoAgenda  = response.evento.tipoevento.nombre;
+        this.tipoEventoAgenda = response.evento.tipoevento.nombre;
         this.diputadosAsociados = response.dipasociados || [];
 
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
           const primerElemento = response.integrantes[0];
           if (primerElemento.comision_id && primerElemento.integrantes && Array.isArray(primerElemento.integrantes)) {
-            this.esComision      = true;
+            this.esComision = true;
             this.tipoSeleccionado = 'comision';
-            this.listaComisiones  = response.integrantes.map((comision: any) => ({
-              id:          comision.comision_id,
-              nombre:      comision.comision_nombre,
+            this.listaComisiones = response.integrantes.map((comision: any) => ({
+              id: comision.comision_id,
+              nombre: comision.comision_nombre,
               importancia: comision.importancia,
               integrantes: comision.integrantes || [],
-              columna1:    [],
-              columna2:    []
+              columna1: [],
+              columna2: []
             }));
             this.listaComisiones.forEach(comision => {
               const mitad = Math.ceil(comision.integrantes.length / 2);
@@ -2569,12 +2607,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
               comision.columna2 = comision.integrantes.slice(mitad);
             });
           } else {
-            this.esComision       = false;
+            this.esComision = false;
             this.tipoSeleccionado = 'legislatura';
-            this.integrantes      = response.integrantes || [];
+            this.integrantes = response.integrantes || [];
           }
         } else {
-          this.esComision  = false;
+          this.esComision = false;
           this.integrantes = [];
         }
 
@@ -2591,9 +2629,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this._eventoService.getIntegrantesEvento(this.idComisionRuta).subscribe({
       next: (response: any) => {
         this.slctDiputados = response.diputados || [];
-        this.slctPartidos  = response.partidos  || [];
+        this.slctPartidos = response.partidos || [];
         this.slctComisiones = response.comisiones || [];
-        this.slctCargo     = response.cargos    || [];
+        this.slctCargo = response.cargos || [];
 
         this.mostrarFormulario = false;
         this.integranteForm.reset({ diputadoId: '', partidoId: '', comisionId: '', cargo: '' });
@@ -2621,18 +2659,18 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.integranteForm.markAllAsTouched();
     if (this.integranteForm.invalid) return;
 
-    const fv       = this.integranteForm.value;
+    const fv = this.integranteForm.value;
     const diputado = this.slctDiputados.find((d: any) => d.id === fv.diputadoId);
-    const partido  = this.slctPartidos.find((p: any)  => p.id === fv.partidoId);
+    const partido = this.slctPartidos.find((p: any) => p.id === fv.partidoId);
     const comision = this.slctComisiones.find(c => c.id === fv.comisionId);
-    const cargo    = this.slctCargo.find((c: any)    => c.id === fv.cargo);
+    const cargo = this.slctCargo.find((c: any) => c.id === fv.cargo);
 
     const nuevoIntegrante: any = {
-      id:          Date.now(),
+      id: Date.now(),
       id_diputado: fv.diputadoId,
-      diputado:    diputado?.nombre || '',
-      partido:     partido?.siglas  || '',
-      cargo:       cargo?.valor     || ''
+      diputado: diputado?.nombre || '',
+      partido: partido?.siglas || '',
+      cargo: cargo?.valor || ''
     };
 
     if (cargo?.valor === 'Diputado Asociado') {
@@ -2650,10 +2688,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
 
     const data = {
-      id_diputado:     fv.diputadoId,
-      id_partido:      fv.partidoId,
-      id_agenda:       this.idComisionRuta,
-      id_cargo_dip:    fv.cargo,
+      id_diputado: fv.diputadoId,
+      id_partido: fv.partidoId,
+      id_agenda: this.idComisionRuta,
+      id_cargo_dip: fv.cargo,
       comision_dip_id: fv.comisionId,
     };
 
@@ -2719,4 +2757,46 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       });
     });
   }
+
+  abrirModalComentario(): void {
+    this.textoComentario = '';
+    this.modalRefComentario = this.modalService.open(this.modalComentario, {
+      size: 'lg',
+      windowClass: 'modal-top-centered',
+      backdrop: 'static'
+    });
+  }
+
+  cerrarModalComentario(): void {
+    this.modalRefComentario?.close();
+  }
+
+  guardarComentario(): void {
+    if (!this.textoComentario?.trim()) return;
+
+    const datos = {
+      id: this.idEvento,
+      comentario: this.textoComentario.trim()
+    };
+
+    // Llama a tu servicio aquí, por ejemplo:
+    // this._eventoService.saveComentario(datos).subscribe({ ... })
+
+    console.log('Comentario a enviar:', datos);
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true
+    });
+    Toast.fire({ icon: 'success', title: 'Comentario enviado correctamente.' });
+    this.cerrarModalComentario();
+  }
+
+
+
+
+
 }
