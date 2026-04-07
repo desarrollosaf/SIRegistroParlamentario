@@ -7,7 +7,6 @@ import {
 } from 'sequelize';
 import sequelize from '../database/registrocomisiones';
 import RolUsers from './role_users'; 
-import { v4 as uuidv4 } from 'uuid';
 // import { dp_fum_datos_generales } from './fun/dp_fum_datos_generales';
 
 

@@ -6,6 +6,7 @@ import {
 } from "sequelize";
 import sequelize from "../database/registrocomisiones";
 import VotosPunto from "./votos_punto";
+import ReservasPresenta from "./reservas_presenta";
 
 class TemasPuntosVotos extends Model {
   declare id: string;
@@ -67,6 +68,10 @@ TemasPuntosVotos.init(
 TemasPuntosVotos.hasMany(VotosPunto, {
   foreignKey: "id_tema_punto_voto",
   as: "votospuntos",
+});
+
+TemasPuntosVotos.hasMany(ReservasPresenta, {
+  foreignKey: 'id_reserva', as: 'presentan'
 });
 
 export default TemasPuntosVotos;
