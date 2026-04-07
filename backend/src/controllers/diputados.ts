@@ -118,13 +118,17 @@ export const actualizartodos = async (req: Request, res: Response): Promise<any>
         nuevoSentido = 2;
         nuevoMensaje = "ASISTENCIA ZOOM";
         break;
+      case 3:
+        nuevoSentido = 3;
+        nuevoMensaje = "ASISTENCIA JUSTIFICADA";
+      break;
       case 0:
         nuevoSentido = 0;
         nuevoMensaje = "PENDIENTE";
         break;
       default:
         return res.status(400).json({
-          msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (ASISTENCIA) o 2 (ASISTENCIA ZOOM)",
+          msg: "Sentido de voto inválido. Usa 0 (PENDIENTE), 1 (ASISTENCIA), 2 (ASISTENCIA ZOOM)  O 3 (ASISTENCIA JUSTIFICADA)",
           estatus: 400
         });
     }

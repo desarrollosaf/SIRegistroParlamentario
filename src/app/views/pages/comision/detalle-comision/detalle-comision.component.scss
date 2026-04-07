@@ -1511,3 +1511,120 @@
   text-align: center;
 }
 
+
+// ==================== MODAL COMENTARIOS ====================
+
+.modal-comentario-header {
+ background: #f3f4f6;
+  color: #374151;
+  border-bottom: none;
+  padding: 1.25rem 1.5rem;
+
+  .modal-comentario-icon {
+    width: 42px;
+    height: 42px;
+    background: rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #374151;
+  }
+
+  .btn-close {
+    filter: none;
+    opacity: 0.6;
+    &:hover { opacity: 1; }
+  }
+}
+
+.modal-comentario-body {
+  padding: 1.75rem;
+  background: #fafafa;
+
+  .comentario-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .comentario-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+  }
+
+  .comentario-textarea {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    resize: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    background: white;
+    color: #1f2937;
+    line-height: 1.6;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+      outline: none;
+    }
+  }
+
+  .comentario-footer-info {
+    display: flex;
+    justify-content: flex-end;
+
+    .char-counter {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      transition: color 0.2s;
+    }
+  }
+}
+
+.modal-comentario-footer {
+  background: #f3f4f6;
+  border-top: 1px solid #e5e7eb;
+
+  .btn-cancel {
+    border-color: #d1d5db;
+    color: #374151;
+
+    &:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+  }
+
+  .btn-comentario-enviar {
+    background: #374151;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+    &:hover:not(:disabled) {
+      background: #1f2937;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
