@@ -715,7 +715,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
 
     const comisionId = String(id).trim();
 
-    // 1) Verificar que la comisión existe
+    
     const comisionRaw = await Comision.findOne({
       where: { id: comisionId },
       attributes: ["id", "nombre"],
@@ -725,7 +725,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
       return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
     const comision: any = comisionRaw;
 
-    // 2) Obtener todas las agendas donde esta comisión fue anfitrión
+
     const anfitrionesRaw = await AnfitrionAgenda.findAll({
       where: { autor_id: comisionId },
       attributes: ["agenda_id", "autor_id"],
@@ -757,7 +757,48 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
       ...new Set((anfitrionesRaw as any[]).map((a) => String(a.agenda_id))),
     ];
 
-    // 3) Obtener detalles de cada agenda
+    
+    const todosAnfitrionesRaw = await AnfitrionAgenda.findAll({
+      where: {
+        agenda_id: { [Op.in]: agendaIds },
+      },
+      attributes: ["agenda_id", "autor_id", "tipo_autor_id"],
+      raw: true,
+      paranoid: false, // por si tiene deletedAt
+    });
+
+    
+    const autoresPorAgenda = new Map<string, string[]>();
+    for (const a of todosAnfitrionesRaw as any[]) {
+      const key = String(a.agenda_id);
+      if (!autoresPorAgenda.has(key)) autoresPorAgenda.set(key, []);
+      autoresPorAgenda.get(key)!.push(String(a.autor_id));
+    }
+
+    
+    const idsComisionesUnidas = [
+      ...new Set(
+        (todosAnfitrionesRaw as any[])
+          .map((a) => String(a.autor_id))
+          .filter((aid) => aid !== comisionId)
+      ),
+    ];
+
+    // Nombres de las comisiones unidas en batch
+    const comisionesUnidasBD = idsComisionesUnidas.length
+      ? await Comision.findAll({
+          where: { id: { [Op.in]: idsComisionesUnidas } },
+          attributes: ["id", "nombre"],
+          raw: true,
+          paranoid: false,
+        })
+      : [];
+
+    const comisionesUnidasMapa = new Map<string, string>(
+      (comisionesUnidasBD as any[]).map((c: any) => [String(c.id), c.nombre ?? "-"])
+    );
+
+   
     const agendasRaw = await Agenda.findAll({
       where: { id: { [Op.in]: agendaIds } },
       attributes: ["id", "fecha", "descripcion", "liga"],
@@ -770,8 +811,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
       agendasMap.set(String(agJson.id), agJson);
     }
 
-    // 4) Obtener TODOS los puntos de orden de esas agendas (orden del día completo)
-    //    ⚠️ Ajusta "id_evento" al nombre real del FK en tu modelo PuntosOrden
+   
     const puntosOrdenRaw = await PuntosOrden.findAll({
       where: { id_evento: { [Op.in]: agendaIds } },
       attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "id_evento"],
@@ -779,9 +819,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
       raw: true,
     });
 
-    // Map: puntoId → punto completo
-    const puntosMap = new Map<string, any>();
-    // Map: agendaId → puntos[]  (orden del día)
+    const puntosMap      = new Map<string, any>();
     const puntosPorAgenda = new Map<string, any[]>();
 
     for (const p of puntosOrdenRaw as any[]) {
@@ -793,7 +831,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
 
     const todosLosPuntosIds = [...puntosMap.keys()];
 
-    // 5) Obtener iniciativas públicas vinculadas a esos puntos
+    
     const iniciativasDB = todosLosPuntosIds.length
       ? await IniciativaPuntoOrden.findAll({
           where: { id_punto: { [Op.in]: todosLosPuntosIds }, publico: 1 },
@@ -802,7 +840,6 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
         })
       : [];
 
-    // Map: puntoId → iniciativaId[]
     const iniciativasPorPunto = new Map<string, string[]>();
     const iniciativasIds      = new Set<string>();
 
@@ -814,7 +851,6 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
       iniciativasPorPunto.get(puntoId)!.push(iniId);
     }
 
-    // 6) Votos: una sola query batch para todos los puntos
     const votosRaw = todosLosPuntosIds.length
       ? await VotosPunto.findAll({
           where: {
@@ -827,12 +863,11 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
         })
       : [];
 
-    // Set de puntoIds que SÍ tienen votos registrados
     const puntosConVoto = new Set<string>(
       (votosRaw as any[]).map((v) => String(v.id_punto))
     );
 
-    // 7) Construir reporte base y armar map por id de iniciativa
+   
     const reporte    = await construirReporteBase();
     const reporteMap = new Map<string, ReporteBaseItem>();
     for (const item of reporte) {
@@ -842,13 +877,22 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
     const fueVotada = (observac: string): boolean =>
       ["Aprobada", "Rechazada en sesión", "Rechazada en comisión"].includes(observac);
 
-    // 8) Armar eventos con orden del día completo
+    
     const todasLasIniciativasFiltradas: ReporteBaseItem[] = [];
 
     const eventos = agendaIds
       .map((agId) => {
         const agenda       = agendasMap.get(agId);
         const puntosDelDia = puntosPorAgenda.get(agId) ?? [];
+
+        
+        const autoresDelEvento  = autoresPorAgenda.get(agId) ?? [];
+        const comisionesUnidas  = autoresDelEvento
+          .filter((aid) => aid !== comisionId)
+          .map((aid) => ({
+            comision_id: aid,
+            nombre:      comisionesUnidasMapa.get(aid) ?? "-",
+          }));
 
         const ordenDelDia = puntosDelDia.map((punto) => {
           const iniIds      = iniciativasPorPunto.get(String(punto.id)) ?? [];
@@ -867,7 +911,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
             descripcion:       punto.punto    ?? "-",
             tribuna:           String(punto.tribuna)  === "1",
             dispensa:          String(punto.dispensa) === "1",
-            voto:              puntosConVoto.has(String(punto.id)), // true = se votó
+            voto:              puntosConVoto.has(String(punto.id)),
             tiene_iniciativas: iniciativas.length > 0,
             iniciativas,
           };
@@ -882,6 +926,8 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
           descripcion:       agenda?.descripcion ?? "-",
           liga:              agenda?.liga        ?? null,
           tipo_evento:       agenda?.tipoevento?.nombre ?? "-",
+          es_unida:          comisionesUnidas.length > 0,   
+          comisiones_unidas: comisionesUnidas,              
           total_puntos:      ordenDelDia.length,
           total_iniciativas: todasIniEvento.length,
           votadas:           todasIniEvento.filter((i: any) => i.votada).length,
@@ -896,7 +942,7 @@ export const getEventosPorComision = async (req: Request, res: Response): Promis
         return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
       });
 
-    // 9) Deduplicar para el resumen global
+    
     const iniciativasUnicas = deduplicarPorId(todasLasIniciativasFiltradas);
 
     const resumenGlobal = {

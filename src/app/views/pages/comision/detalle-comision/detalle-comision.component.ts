@@ -164,7 +164,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   integranteForm!: FormGroup;
   modalRefIntegrantes!: NgbModalRef;
   slctComisiones: any[] = [];
-
+  listaComentarios: any[] = [];
   consoleiniciativas: any[] = [];
   constructor(
     private fb: FormBuilder,
@@ -578,6 +578,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
         this.slcPuntosTurnados = response.puntos;
+        this.listaComentarios = response.comentarios || [];
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
           const primerElemento = response.integrantes[0];
 
@@ -731,14 +732,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       sentido: sentido
     };
     console.log(datos);
-    // this._eventoService.actualizaAsistencia(datos).subscribe({
-    //   next: (response: any) => {
-    //   },
-    //   error: (e: HttpErrorResponse) => {
-    //     const msg = e.error?.msg || 'Error desconocido';
-    //     console.error('Error del servidor:', msg);
-    //   }
-    // });
+    this._eventoService.actualizaAsistencia(datos).subscribe({
+      next: (response: any) => {
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        console.error('Error del servidor:', msg);
+      }
+    });
   }
 
   getClaseAsistencia(sentido_voto: number): string {
@@ -854,6 +855,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.mostrarformReserva = false;
     this.puntoSeleccionadoReserva = punto;
     this.listaReservas = [...(punto.reservas || [])];
+
+    // Si el punto ya tiene proponentes, precarga el presenta
+    if (punto.presentaDisponibles?.length > 0) {
+      this.slcPresentaReserva = [...punto.presentaDisponibles];
+    }
 
     this.modalRefT = this.modalService.open(this.xlModalT, {
       size: 'xl',
@@ -1555,6 +1561,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Capturar ANTES de que toggleformReserva limpie todo
+    const listaPresenta = this.slcPresentaReserva?.length
+      ? [...this.slcPresentaReserva]
+      : [...(this.puntoSeleccionadoReserva?.presentaDisponibles || [])];
+
     const idsProponente: any[] = this.formReserva.value.id_proponente || [];
     const idsPresenta: any[] = this.formReserva.value.id_presenta || [];
 
@@ -1565,10 +1576,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         .join(', ') || '—';
 
     const getNombrePresenta = () =>
-      this.slcPresentaReserva
+      listaPresenta
         ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
         .map((p: any) => p.valor)
         .join(', ') || '—';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     if (!this.puntoSeleccionadoReserva) {
       const nuevoTema = {
@@ -1943,9 +1968,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     if (this.reservasTemporales.length > 0) {
       const reservasParaEnviar = this.reservasTemporales.map(t => ({
-        descripcion:   t.tema_votacion,
+        descripcion: t.tema_votacion,
         id_proponente: t.id_proponente || [],
-        id_presenta:   t.id_presenta   || []
+        id_presenta: t.id_presenta || []
       }));
       formData.append('reservas', JSON.stringify(reservasParaEnviar));
     }
@@ -2763,7 +2788,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   abrirModalComentario(): void {
     this.textoComentario = '';
     this.modalRefComentario = this.modalService.open(this.modalComentario, {
-      size: 'lg',
+      size: 'xl',
       windowClass: 'modal-top-centered',
       backdrop: 'static'
     });
@@ -2781,23 +2806,61 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       comentario: this.textoComentario.trim()
     };
 
-    // Llama a tu servicio aquí, por ejemplo:
-    // this._eventoService.saveComentario(datos).subscribe({ ... })
+    this._eventoService.saveComentario(datos).subscribe({
+      next: (response: any) => {
+        // Agrega el nuevo comentario a la lista
+        const nuevoComentario = {
+          id: response.data?.id || Date.now(),
+          comentario: datos.comentario,
+          createdAt: response.data?.createdAt || new Date().toISOString()
+        };
+        this.listaComentarios.unshift(nuevoComentario); // unshift para que quede arriba
+        this.textoComentario = '';
+        this.cdr.detectChanges();
 
-    console.log('Comentario a enviar:', datos);
-
-    const Toast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2500,
-      timerProgressBar: true
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2500,
+          timerProgressBar: true
+        });
+        Toast.fire({ icon: 'success', title: 'Comentario guardado correctamente.' });
+      },
+      error: (e: HttpErrorResponse) => {
+        const msg = e.error?.msg || 'Error desconocido';
+        Swal.fire('Error', msg, 'error');
+      }
     });
-    Toast.fire({ icon: 'success', title: 'Comentario enviado correctamente.' });
-    this.cerrarModalComentario();
   }
 
+  eliminarComentario(comentario: any, index: number): void {
+    Swal.fire({
+      title: '¿Eliminar comentario?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
 
+      this._eventoService.deleteComentario(comentario.id).subscribe({
+        next: () => {
+          this.listaComentarios.splice(index, 1);
+          this.cdr.detectChanges();
+          Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 })
+            .fire({ icon: 'success', title: 'Comentario eliminado correctamente.' });
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          Swal.fire('Error', msg, 'error');
+        }
+      });
+    });
+  }
 
 
 

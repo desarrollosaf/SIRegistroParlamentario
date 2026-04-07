@@ -132,7 +132,7 @@
                                             <h5 class="mb-0">Lista de Asistencia</h5>
                                             <div class="d-flex gap-2 flex-wrap">
                                                 <button class="btn btn-light btn-sm" (click)="iniciarEvento(2)">
-                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar2
+                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar
                                                 </button>
                                                 <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                     <i class="bi bi-people-fill me-1"></i> Integrantes
@@ -345,7 +345,7 @@
 
                                         <div class="d-flex gap-2 flex-wrap justify-content-end">
                                             <button class="btn btn-light btn-sm" (click)="iniciarEvento(1)">
-                                                <i class="bi bi-skip-start-btn-fill"></i> Iniciar1
+                                                <i class="bi bi-skip-start-btn-fill"></i> Iniciar
                                             </button>
                                             <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                 <i class="bi bi-people-fill me-1"></i> Integrantes
@@ -2699,18 +2699,20 @@
             </div>
             <div>
                 <h5 class="modal-title mb-0">Comentarios</h5>
-                <small class="text-white-50">{{ tituloC }}</small>
+                <small style="color: #9ca3af;">{{ tituloC }}</small>
             </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" (click)="cerrarModalComentario()"></button>
+        <button type="button" class="btn-close" (click)="cerrarModalComentario()"></button>
     </div>
 
     <div class="modal-body modal-comentario-body">
-        <div class="comentario-wrapper">
+
+        <!-- Textarea para escribir -->
+        <div class="comentario-wrapper mb-4">
             <label class="comentario-label">
                 <i class="bi bi-pencil-square me-2"></i>Escribe tu comentario
             </label>
-            <textarea class="form-control comentario-textarea" [(ngModel)]="textoComentario" rows="6"
+            <textarea class="form-control comentario-textarea" [(ngModel)]="textoComentario" rows="4"
                 placeholder="Escribe aquí tu comentario sobre la sesión...">
       </textarea>
             <div class="comentario-footer-info">
@@ -2719,15 +2721,69 @@
                 </span>
             </div>
         </div>
+
+        <!-- Botón enviar dentro del body -->
+        <div class="d-flex justify-content-end mb-4">
+            <button type="button" class="btn btn-comentario-enviar" (click)="guardarComentario()"
+                [disabled]="!textoComentario?.trim()">
+                <i class="bi bi-send-fill me-2"></i> Enviar comentario
+            </button>
+        </div>
+
+        <!-- Tabla de comentarios -->
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Comentarios registrados
+                </h6>
+                <span class="badge bg-secondary rounded-pill">{{ listaComentarios.length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive tabla-intervenciones-wrapper">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Comentario</th>
+                                <th style="width: 150px;">Fecha</th>
+                                <th class="text-center" style="width: 80px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let comentario of listaComentarios; let i = index">
+                                <td class="fw-semibold text-muted align-middle">{{ i + 1 }}</td>
+                                <td class="align-middle"
+                                    style="word-break: break-word; white-space: normal; text-align: justify;">
+                                    {{ comentario.comentario }}
+                                </td>
+                                <td class="align-middle text-muted" style="font-size: 0.85rem;">
+                                    {{ comentario.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                                </td>
+                                <td class="text-center align-middle">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                        (click)="eliminarComentario(comentario, i)" title="Eliminar">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="listaComentarios.length === 0">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-chat-square-text" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 mt-2">No hay comentarios registrados</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="modal-footer modal-comentario-footer">
-        <button type="button" class="btn btn-outline-light btn-cancel" (click)="cerrarModalComentario()">
-            <i class="bi bi-x-lg me-1"></i> Cancelar
-        </button>
-        <button type="button" class="btn btn-comentario-enviar" (click)="guardarComentario()"
-            [disabled]="!textoComentario?.trim()">
-            <i class="bi bi-send-fill me-2"></i> Enviar comentario
+        <button type="button" class="btn btn-cancel" (click)="cerrarModalComentario()">
+            <i class="bi bi-x-lg me-1"></i> Cerrar
         </button>
     </div>
 </ng-template>
