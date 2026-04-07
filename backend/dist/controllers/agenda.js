@@ -2660,7 +2660,8 @@ const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void
         }
         yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            //to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            to: "+527222035605",
             body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
             priority: "1",
             referenceId: "",
@@ -2715,7 +2716,8 @@ const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
         const params = {
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            //to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
+            to: "+527222035605",
             body: mensaje,
             priority: "1",
             referenceId: "",
