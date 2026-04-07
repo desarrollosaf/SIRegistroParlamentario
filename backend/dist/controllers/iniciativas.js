@@ -31,7 +31,6 @@ const sequelize_1 = require("sequelize");
 const decreto_1 = __importDefault(require("../models/decreto"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const uuid_1 = require("uuid");
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativasRaw = yield construirReporteBase();
@@ -417,7 +416,7 @@ const guardardecreto = (req, res) => __awaiter(void 0, void 0, void 0, function*
         let pathDoc = null;
         if (file) {
             const ext = path_1.default.extname(file.originalname);
-            const nuevoNombre = `${prefijo}_${(0, uuid_1.v4)()}${ext}`;
+            const nuevoNombre = `${prefijo}_${crypto.randomUUID()}${ext}`;
             const dirBase = path_1.default.join(process.cwd(), "storage/decretos");
             fs_1.default.renameSync(path_1.default.join(dirBase, file.filename), path_1.default.join(dirBase, nuevoNombre));
             pathDoc = `storage/decretos/${nuevoNombre}`;

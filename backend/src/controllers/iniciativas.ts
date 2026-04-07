@@ -19,7 +19,7 @@ import { Op } from "sequelize";
 import Decreto from "../models/decreto";
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+
 
 type ReporteBaseItem = {
   no: number;
@@ -481,7 +481,7 @@ export const guardardecreto = async (req: Request, res: Response): Promise<any> 
     let pathDoc = null;
     if (file) {
       const ext = path.extname(file.originalname);
-      const nuevoNombre = `${prefijo}_${uuidv4()}${ext}`;
+      const nuevoNombre = `${prefijo}_${crypto.randomUUID()}${ext}`;
       const dirBase = path.join(process.cwd(), "storage/decretos");
       
       fs.renameSync(
