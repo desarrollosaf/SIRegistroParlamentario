@@ -247,4 +247,8 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/deletecomentario/${id}`)
   }
 
+  deleteIntervencion(id: String): Observable<string> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarinter/${id}`)
+  }
+
 }
