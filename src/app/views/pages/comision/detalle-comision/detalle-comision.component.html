@@ -1870,12 +1870,23 @@
                             </ng-select>
                         </div>
 
+                        <!-- Resumen -->
+                        <div class="col-12" *ngIf="formIntervencion.get('resumen')?.enabled">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-file-text-fill me-1"></i> Resumen
+                            </label>
+                            <textarea class="form-control auto-resize-textarea" formControlName="resumen" rows="1"
+                                placeholder="Escribe el resumen..." (input)="autoResize($event)">
+                            </textarea>
+                        </div>
+
+                        <!-- Comentario -->
                         <div class="col-12" *ngIf="formIntervencion.get('comentario')?.enabled">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-chat-left-text-fill me-1"></i> Comentario
                             </label>
-                            <textarea class="form-control" formControlName="comentario" rows="3"
-                                placeholder="Escribe el comentario...">
+                            <textarea class="form-control auto-resize-textarea" formControlName="comentario" rows="1"
+                                placeholder="Escribe el comentario..." (input)="autoResize($event)">
                             </textarea>
                         </div>
                         <div class="col-12">

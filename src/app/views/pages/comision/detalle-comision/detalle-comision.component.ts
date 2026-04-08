@@ -207,6 +207,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       id_diputado: [[]],
       id_tipo_intervencion: [null],
       comentario: [{ value: '', disabled: true }],
+      resumen: [{ value: '', disabled: true }],
       destacada: [false],
       liga: ['']
     });
@@ -1774,16 +1775,25 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
-    const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
-    const comentarioControl = this.formIntervencion.get('comentario');
-    if (tipoValor === 'comentario') {
-      comentarioControl?.enable();
-    } else {
-      comentarioControl?.disable();
-      comentarioControl?.setValue('');
-    }
+onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
+  const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
+  const comentarioControl = this.formIntervencion.get('comentario');
+  const resumenControl = this.formIntervencion.get('resumen');
+
+  if (tipoValor === 'comentario') {
+    comentarioControl?.enable();
+    resumenControl?.enable();
+  } else if (tipoValor === 'a favor' || tipoValor === 'en contra') {
+    comentarioControl?.disable();
+    comentarioControl?.setValue('');
+    resumenControl?.enable();
+  } else {
+    comentarioControl?.disable();
+    comentarioControl?.setValue('');
+    resumenControl?.disable();
+    resumenControl?.setValue('');
   }
+}
 
   cargarIntervenciones() {
     const datos = {
@@ -1831,10 +1841,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
 
     const datos = {
-      ...this.formIntervencion.value,
-      tipo: this.tipoIntervencionActual,
-      id_punto: this.puntoSeleccionado?.id || null,
-      id_evento: this.idComisionRuta
+        ...this.formIntervencion.value,
+        resumen: this.formIntervencion.get('resumen')?.value || '',
+        comentario: this.formIntervencion.get('comentario')?.value || '',
+        tipo: this.tipoIntervencionActual,
+        id_punto: this.puntoSeleccionado?.id || null,
+        id_evento: this.idComisionRuta
     };
 
     this._eventoService.saveIntervencion(datos).subscribe({
@@ -1863,6 +1875,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+autoResize(event: Event): void {
+  const textarea = event.target as HTMLTextAreaElement;
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
 
 
  eliminarIntervencion(intervencion: any, index: number) {
