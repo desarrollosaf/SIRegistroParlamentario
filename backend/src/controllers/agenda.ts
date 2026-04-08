@@ -3121,7 +3121,7 @@ const enviarWhatsIntervencion = async (intervencion: any) => {
       "https://api.ultramsg.com/instance144598/messages/chat",
       new URLSearchParams({
         token: "ml56a7d6tn7ha7cc",
-        to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+        to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
         body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
         priority: "1",
         referenceId: "",
@@ -3184,7 +3184,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+      to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -5120,7 +5120,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const formData = new URLSearchParams();
     formData.append('token', 'ml56a7d6tn7ha7cc');
-    formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442');
+    formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127');
     // formData.append('to', '+525561081154');
     formData.append('filename', fileName);
     formData.append('document', base64PDF);
@@ -6520,7 +6520,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
  
     const params = {
       token:    'ml56a7d6tn7ha7cc',
-      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442',
+      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
       // to:       '+525561081154 ,',
       filename: fileName,
       document: base64PDF,
@@ -6946,7 +6946,7 @@ export const enviarNotInicioEvento = async (req: Request, res: Response): Promis
     const params = {
       token: 'ml56a7d6tn7ha7cc',
       to: "+527222035605,",
-      // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+      // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
