@@ -6465,13 +6465,14 @@ export const enviarNotInicioEvento = async (req: Request, res: Response): Promis
 
     drawBackground();
 
-    // ===== BLOQUE IZQUIERDO VINO - "REGISTRO DE ASISTENCIA" =====
+    // ===== BLOQUE IZQUIERDO VINO - "REGISTRO DE ASISTENCIA holi" =====
     const vinoX = 30;
     const vinoY = 106;
     const vinoW = 150;
     const vinoH = 200;
 
     doc.rect(vinoX, vinoY, vinoW, vinoH).fill('#96134b');
+
 
     doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
       .text('REGISTRO DE', vinoX + 10, vinoY + 50, { width: vinoW - 20, align: 'left' });
