@@ -4870,8 +4870,10 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
             };
         })));
         // Agrupar por id_punto
-        const intervencionesPorPunto = intervenciones.reduce((grupos, inte) => {
-            const key = inte.id_punto || 'sin_punto';
+        const intervencionesPorPunto = intervenciones
+            .filter((i) => i.id_punto) // ✅ solo las que tienen punto
+            .reduce((grupos, inte) => {
+            const key = inte.id_punto;
             if (!grupos[key])
                 grupos[key] = [];
             grupos[key].push(inte);
@@ -5211,6 +5213,85 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                     .text('INTERVENCIONES', 30, intTitY + 5, { width: doc.page.width - 60, align: 'center' });
                 doc.y = intTitY + 22;
                 const tableW = doc.page.width - 60;
+                // ===== INTERVENCIONES GENERALES (sin id_punto) =====
+                const intervencionesGenerales = intervenciones.filter((i) => !i.id_punto || i.id_punto === null);
+                if (intervencionesGenerales.length > 0) {
+                    if (doc.y > 650) {
+                        doc.addPage();
+                        drawBackground();
+                        doc.y = 106;
+                    }
+                    // Subheader gris
+                    const subY = doc.y;
+                    doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
+                    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                        .text('INTERVENCIONES GENERALES', 35, subY + 5, { width: tableW - 10, align: 'center' });
+                    doc.y = subY + 20;
+                    let currentY = doc.y;
+                    intervencionesGenerales.forEach((inte, index) => {
+                        var _a;
+                        const cleanText = (val) => String(val || '')
+                            .replace(/[\r\n\t]+/g, ' ')
+                            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                        const textoDiputado = cleanText(inte.diputado);
+                        const textoTipo = cleanText((_a = inte.tipointerven) === null || _a === void 0 ? void 0 : _a.valor);
+                        const textoResumen = cleanText(inte.resumen);
+                        const textoMensaje = cleanText(inte.mensaje);
+                        const labelW = 55;
+                        const valorW = tableW - 75;
+                        doc.fontSize(8);
+                        const filas = [
+                            { label: 'Diputado:', texto: textoDiputado },
+                            { label: 'Tipo:', texto: textoTipo },
+                            ...(textoResumen ? [{ label: 'Resumen:', texto: textoResumen }] : []),
+                            ...(textoMensaje ? [{ label: 'Mensaje:', texto: textoMensaje }] : []),
+                        ];
+                        const padding = 8;
+                        const rowGap = 4;
+                        const fichaH = filas.reduce((acc, f) => {
+                            const alt = doc.heightOfString(f.texto, {
+                                width: valorW,
+                                align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
+                            });
+                            return acc + alt + rowGap;
+                        }, 0) + padding * 2;
+                        if (currentY + fichaH > doc.page.height - 50) {
+                            doc.addPage();
+                            drawBackground();
+                            currentY = 106;
+                            const rY = doc.y;
+                            doc.rect(30, rY, tableW, 20).fill('#7a7a7a');
+                            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                                .text('INTERVENCIONES GENERALES (continuación)', 35, rY + 5, { width: tableW - 10, align: 'center' });
+                            currentY = rY + 20;
+                        }
+                        const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
+                        doc.rect(30, currentY, tableW, fichaH).fill(bgColor);
+                        doc.moveTo(30, currentY + fichaH)
+                            .lineTo(30 + tableW, currentY + fichaH)
+                            .stroke('#e0e0e0');
+                        let textY = currentY + padding;
+                        filas.forEach((fila) => {
+                            const alturaReal = doc.heightOfString(fila.texto, {
+                                width: valorW,
+                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
+                            });
+                            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
+                                .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
+                            doc.fontSize(8).font('Helvetica').fillColor('#000')
+                                .text(fila.texto, 40 + labelW, textY, {
+                                width: valorW,
+                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
+                                lineGap: 1,
+                            });
+                            textY += alturaReal + rowGap;
+                        });
+                        currentY += fichaH;
+                    });
+                    doc.y = currentY + 8;
+                }
                 // Iterar puntos en orden
                 puntosRaw.forEach((punto) => {
                     const ptoIntervenciones = intervencionesPorPunto[punto.id] || [];
@@ -5280,7 +5361,13 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                         ];
                         const padding = 8;
                         const rowGap = 4;
-                        const fichaH = filas.reduce((acc, f) => acc + f.alt + rowGap, 0) + padding * 2;
+                        const fichaH = filas.reduce((acc, f) => {
+                            const alt = doc.heightOfString(f.texto, {
+                                width: valorW,
+                                align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
+                            });
+                            return acc + alt + rowGap;
+                        }, 0) + padding * 2;
                         if (currentY + fichaH > doc.page.height - 50) {
                             doc.addPage();
                             drawBackground();
@@ -5298,6 +5385,11 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                             .stroke('#e0e0e0');
                         let textY = currentY + padding;
                         filas.forEach((fila) => {
+                            // ✅ Recalcular altura con el ancho real del valor
+                            const alturaReal = doc.heightOfString(fila.texto, {
+                                width: valorW,
+                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
+                            });
                             // Label en vino negrita
                             doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
                                 .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
@@ -5308,7 +5400,8 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                                 align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
                                 lineGap: 1,
                             });
-                            textY += fila.alt + rowGap;
+                            // ✅ Avanzar con la altura real + separación
+                            textY += alturaReal + rowGap;
                         });
                         currentY += fichaH;
                     });
