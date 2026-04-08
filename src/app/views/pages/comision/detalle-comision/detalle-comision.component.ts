@@ -1767,33 +1767,34 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (!this.mostrarFormIntervencion) {
       this.formIntervencion.reset({
         id_diputado: [],
-        id_tipo_intervencion: [],
+        id_tipo_intervencion: null,
         comentario: { value: '', disabled: true },
+        resumen: { value: '', disabled: true },
         destacada: false,
         liga: ''
       });
     }
   }
 
-onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
-  const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
-  const comentarioControl = this.formIntervencion.get('comentario');
-  const resumenControl = this.formIntervencion.get('resumen');
+  onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
+    const tipoValor = String(event?.valor ?? '').trim().toLowerCase();
+    const comentarioControl = this.formIntervencion.get('comentario');
+    const resumenControl = this.formIntervencion.get('resumen');
 
-  if (tipoValor === 'comentario') {
-    comentarioControl?.enable();
-    resumenControl?.enable();
-  } else if (tipoValor === 'a favor' || tipoValor === 'en contra') {
-    comentarioControl?.disable();
-    comentarioControl?.setValue('');
-    resumenControl?.enable();
-  } else {
-    comentarioControl?.disable();
-    comentarioControl?.setValue('');
-    resumenControl?.disable();
-    resumenControl?.setValue('');
+    if (tipoValor === 'comentario') {
+      comentarioControl?.enable();
+      resumenControl?.enable();
+    } else if (tipoValor === 'a favor' || tipoValor === 'en contra') {
+      comentarioControl?.disable();
+      comentarioControl?.setValue('');
+      resumenControl?.enable();
+    } else {
+      comentarioControl?.disable();
+      comentarioControl?.setValue('');
+      resumenControl?.disable();
+      resumenControl?.setValue('');
+    }
   }
-}
 
   cargarIntervenciones() {
     const datos = {
@@ -1841,12 +1842,12 @@ onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
     }
 
     const datos = {
-        ...this.formIntervencion.value,
-        resumen: this.formIntervencion.get('resumen')?.value || '',
-        comentario: this.formIntervencion.get('comentario')?.value || '',
-        tipo: this.tipoIntervencionActual,
-        id_punto: this.puntoSeleccionado?.id || null,
-        id_evento: this.idComisionRuta
+      ...this.formIntervencion.value,
+      resumen: this.formIntervencion.get('resumen')?.value || '',
+      comentario: this.formIntervencion.get('comentario')?.value || '',
+      tipo: this.tipoIntervencionActual,
+      id_punto: this.puntoSeleccionado?.id || null,
+      id_evento: this.idComisionRuta
     };
 
     this._eventoService.saveIntervencion(datos).subscribe({
@@ -1876,56 +1877,56 @@ onTipoIntervencionChange(event: { id?: number; valor?: string } | null) {
     });
   }
 
-autoResize(event: Event): void {
-  const textarea = event.target as HTMLTextAreaElement;
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-}
+  autoResize(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
 
 
- eliminarIntervencion(intervencion: any, index: number) {
-  Swal.fire({
-    title: "¿Está seguro?",
-    text: "Se eliminará esta intervención",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Confirmar",
-    cancelButtonText: "Cancelar"
-  }).then((result) => {
-    if (result.isConfirmed) {
-      this._eventoService.deleteIntervencion(intervencion.id).subscribe({
-        next: (response: any) => {
-          this.listaIntervenciones.splice(index, 1);
-          this.cdr.detectChanges();
+  eliminarIntervencion(intervencion: any, index: number) {
+    Swal.fire({
+      title: "¿Está seguro?",
+      text: "Se eliminará esta intervención",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirmar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._eventoService.deleteIntervencion(intervencion.id).subscribe({
+          next: (response: any) => {
+            this.listaIntervenciones.splice(index, 1);
+            this.cdr.detectChanges();
 
-          const Toast = Swal.mixin({
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
-          });
-          Toast.fire({
-            icon: "success",
-            title: "Intervención eliminada correctamente."
-          });
-        },
-        error: (e: HttpErrorResponse) => {
-          const msg = e.error?.msg || 'Error desconocido';
-          console.error('Error del servidor:', msg);
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: msg,
-            timer: 3000
-          });
-        }
-      });
-    }
-  });
-}
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true
+            });
+            Toast.fire({
+              icon: "success",
+              title: "Intervención eliminada correctamente."
+            });
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error del servidor:', msg);
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: msg,
+              timer: 3000
+            });
+          }
+        });
+      }
+    });
+  }
 
   getNombreDiputados(diputados: any[]): string {
     if (!diputados || diputados.length === 0) return 'Sin diputados';
