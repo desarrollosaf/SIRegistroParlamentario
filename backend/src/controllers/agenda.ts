@@ -5979,16 +5979,32 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
       { label: 'Tipo',       value: evento.tipoevento?.nombre || 'N/A' },
       { label: 'Sede',       value: evento.sede?.sede         || 'N/A' },
       { label: 'Fecha',      value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
-      { label: 'Descripción', value: evento.descripcion        || 'N/A' },
+      { 
+        label: 'Descripción', 
+        value: (evento.descripcion || 'N/A')
+          .replace(/[\r\n\t]+/g, ' ')
+          .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim()
+      },
     ];
  
     infoRows.forEach((row, i) => {
-      const rowH = row.label === 'Descripción' ? 35 : 18;
+      const esDescripcion = row.label === 'Descripción';
+      
+      // Calcular altura dinámica para descripción
+      const rowH = esDescripcion
+        ? doc.heightOfString(row.value, { width: rightW - 100, fontSize: 9, align: 'justify' }) + 10
+        : 18;
+
       doc.rect(rightX, rightY, rightW, rowH).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
       doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
         .text(row.label, rightX + 10, rightY + 5, { width: 70, align: 'right' });
       doc.fontSize(9).font('Helvetica').fillColor('#000')
-        .text(row.value, rightX + 90, rightY + 5, { width: rightW - 100 });
+        .text(row.value, rightX + 90, rightY + 5, { 
+          width:  rightW - 100,
+          align:  esDescripcion ? 'justify' : 'left',  // 👈
+        });
       rightY += rowH;
     });
  
@@ -6076,44 +6092,55 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
         let currentY = doc.y;
 
-        puntosRaw.forEach((punto: any, index: number) => {
-          const texto  = punto.descripcion || punto.punto || punto.titulo || 'Sin descripción';
-          // Calcular altura necesaria según largo del texto
-          const lineH  = texto.length > 120 ? 32 : texto.length > 60 ? 24 : 16;
+       puntosRaw.forEach((punto: any, index: number) => {
+      const textoRaw = punto.descripcion || punto.punto || punto.titulo || 'Sin descripción';
+      const texto = textoRaw
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
 
-          if (currentY + lineH > 700) {
-            doc.addPage();
-            drawBackground();
-            currentY = 106;
+      const colTextoW = tableW - 38; // ancho disponible para el texto
 
-            // Repetir subheader en página nueva
-            doc.rect(30, currentY, doc.page.width - 60, 20).fill('#7a7a7a');
-            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-              .text('ORDEN DEL DÍA (continuación)', 35, currentY + 5,
-                { width: doc.page.width - 70, align: 'center' });
-            currentY += 20;
+      // ✅ Calcular altura real que ocupará el texto ANTES de dibujar
+      const alturaTexto = doc.heightOfString(texto, {
+        width:   colTextoW,
+        fontSize: 8,
+        lineGap: 1,
+        align:    'justify',
+      });
+      const lineH = alturaTexto + 10; // padding vertical
 
-            // Repetir header columnas
-            doc.rect(30, currentY, tableW, 18).fill('#d4d4d4');
-            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
-            doc.text('No.',   32, currentY + 5, { width: 25 });
-            doc.text('PUNTO', 60, currentY + 5, { width: tableW - 32 });
-            currentY += 18;
-          }
+      // ✅ Salto de página solo si realmente no cabe
+      if (currentY + lineH > doc.page.height - 50) {
+        doc.addPage();
+        drawBackground();
+        currentY = 106;
 
-          // Fila alterna blanco / gris — igual que las filas de diputados
-          const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
-          doc.rect(30, currentY, tableW, lineH).fill(bgColor);
-          doc.moveTo(30, currentY + lineH)
-            .lineTo(30 + tableW, currentY + lineH)
-            .stroke('#e0e0e0');
+        // Header columnas en página nueva — sin "continuación"
+        doc.rect(30, currentY, tableW, 18).fill('#d4d4d4');
+        doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
+        doc.text('No.',   32, currentY + 5, { width: 25 });
+        doc.text('PUNTO', 60, currentY + 5, { width: colTextoW });
+        currentY += 18;
+      }
 
-          doc.fontSize(8).font('Helvetica').fillColor('#000');
-          doc.text(`${punto.nopunto ?? index + 1}`, 32, currentY + 4, { width: 25 });
-          doc.text(texto, 60, currentY + 4, { width: tableW - 32, ellipsis: false });
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
+      doc.rect(30, currentY, tableW, lineH).fill(bgColor);
+      doc.moveTo(30, currentY + lineH)
+        .lineTo(30 + tableW, currentY + lineH)
+        .stroke('#e0e0e0');
 
-          currentY += lineH;
-        });
+      doc.fontSize(8).font('Helvetica').fillColor('#000');
+      doc.text(`${punto.nopunto ?? index + 1}`, 32, currentY + 5, { width: 25 });
+      doc.text(texto, 60, currentY + 5, {
+        width:  colTextoW,
+        lineGap: 1,
+        align:   'justify',
+      });
+
+      currentY += lineH;
+    });
 
         doc.y = currentY + 10;
       }
@@ -6175,8 +6202,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
  
     const params = {
       token:    'ml56a7d6tn7ha7cc',
-      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741',
-      // to:       '+525561081154 ,',
+      // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741',
+      to:       '+525561081154 ,',
       filename: fileName,
       document: base64PDF,
       caption:  mensajeTexto,
