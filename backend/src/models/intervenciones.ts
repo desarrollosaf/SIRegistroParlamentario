@@ -20,6 +20,7 @@ class Intervencion extends Model {
   declare id_diputado: ForeignKey<string> | null;
   declare id_tipo_intervencion: ForeignKey<string> | null;
   declare mensaje: string | null;
+  declare resumen: string | null;
   declare liga: string | null;
   declare tipo: number | null;
   declare destacado: boolean;
@@ -64,6 +65,10 @@ Intervencion.init(
     },
     mensaje: {
       type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+    resumen: {
+      type: DataTypes.TEXT('long'),
       allowNull: true,
     },
     tipo: {
