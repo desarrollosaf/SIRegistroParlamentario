@@ -5013,15 +5013,29 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
             { label: 'Tipo', value: ((_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) || 'N/A' },
             { label: 'Sede', value: ((_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede) || 'N/A' },
             { label: 'Fecha', value: evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A' },
-            { label: 'Descripción', value: evento.descripcion || 'N/A' },
+            {
+                label: 'Descripción',
+                value: (evento.descripcion || 'N/A')
+                    .replace(/[\r\n\t]+/g, ' ')
+                    .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                    .replace(/\s{2,}/g, ' ')
+                    .trim()
+            },
         ];
         infoRows.forEach((row, i) => {
-            const rowH = row.label === 'Descripción' ? 35 : 18;
+            const esDescripcion = row.label === 'Descripción';
+            // Calcular altura dinámica para descripción
+            const rowH = esDescripcion
+                ? doc.heightOfString(row.value, { width: rightW - 100, fontSize: 9, align: 'justify' }) + 10
+                : 18;
             doc.rect(rightX, rightY, rightW, rowH).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
             doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
                 .text(row.label, rightX + 10, rightY + 5, { width: 70, align: 'right' });
             doc.fontSize(9).font('Helvetica').fillColor('#000')
-                .text(row.value, rightX + 90, rightY + 5, { width: rightW - 100 });
+                .text(row.value, rightX + 90, rightY + 5, {
+                width: rightW - 100,
+                align: esDescripcion ? 'justify' : 'left', // 👈
+            });
             rightY += rowH;
         });
         drawSectionHeader('RESUMEN DE ASISTENCIA', rightY);
@@ -5091,34 +5105,45 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                 let currentY = doc.y;
                 puntosRaw.forEach((punto, index) => {
                     var _a;
-                    const texto = punto.descripcion || punto.punto || punto.titulo || 'Sin descripción';
-                    // Calcular altura necesaria según largo del texto
-                    const lineH = texto.length > 120 ? 32 : texto.length > 60 ? 24 : 16;
-                    if (currentY + lineH > 700) {
+                    const textoRaw = punto.descripcion || punto.punto || punto.titulo || 'Sin descripción';
+                    const texto = textoRaw
+                        .replace(/[\r\n\t]+/g, ' ')
+                        .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                    const colTextoW = tableW - 38; // ancho disponible para el texto
+                    // ✅ Calcular altura real que ocupará el texto ANTES de dibujar
+                    const alturaTexto = doc.heightOfString(texto, {
+                        width: colTextoW,
+                        fontSize: 8,
+                        lineGap: 1,
+                        align: 'justify',
+                    });
+                    const lineH = alturaTexto + 10; // padding vertical
+                    // ✅ Salto de página solo si realmente no cabe
+                    if (currentY + lineH > doc.page.height - 50) {
                         doc.addPage();
                         drawBackground();
                         currentY = 106;
-                        // Repetir subheader en página nueva
-                        doc.rect(30, currentY, doc.page.width - 60, 20).fill('#7a7a7a');
-                        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-                            .text('ORDEN DEL DÍA (continuación)', 35, currentY + 5, { width: doc.page.width - 70, align: 'center' });
-                        currentY += 20;
-                        // Repetir header columnas
+                        // Header columnas en página nueva — sin "continuación"
                         doc.rect(30, currentY, tableW, 18).fill('#d4d4d4');
                         doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
                         doc.text('No.', 32, currentY + 5, { width: 25 });
-                        doc.text('PUNTO', 60, currentY + 5, { width: tableW - 32 });
+                        doc.text('PUNTO', 60, currentY + 5, { width: colTextoW });
                         currentY += 18;
                     }
-                    // Fila alterna blanco / gris — igual que las filas de diputados
                     const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
                     doc.rect(30, currentY, tableW, lineH).fill(bgColor);
                     doc.moveTo(30, currentY + lineH)
                         .lineTo(30 + tableW, currentY + lineH)
                         .stroke('#e0e0e0');
                     doc.fontSize(8).font('Helvetica').fillColor('#000');
-                    doc.text(`${(_a = punto.nopunto) !== null && _a !== void 0 ? _a : index + 1}`, 32, currentY + 4, { width: 25 });
-                    doc.text(texto, 60, currentY + 4, { width: tableW - 32, ellipsis: false });
+                    doc.text(`${(_a = punto.nopunto) !== null && _a !== void 0 ? _a : index + 1}`, 32, currentY + 5, { width: 25 });
+                    doc.text(texto, 60, currentY + 5, {
+                        width: colTextoW,
+                        lineGap: 1,
+                        align: 'justify',
+                    });
                     currentY += lineH;
                 });
                 doc.y = currentY + 10;
