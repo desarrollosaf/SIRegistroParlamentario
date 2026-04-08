@@ -1951,19 +1951,27 @@
                                     <i class="bi bi-star-fill text-warning" *ngIf="intervencion.destacado"></i>
                                 </td>
 
-                                <!-- Tipo + comentario -->
+                                <!-- Tipo + resumen + comentario -->
                                 <td class="align-top pt-3" style="word-break: break-word; white-space: normal;">
                                     <span class="badge-tipo-intervencion" [ngClass]="{
-                                        'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
-                                        'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
-                                        'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
-                                    }">
+                'badge-a-favor': intervencion.tipointerven.valor === 'A favor',
+                'badge-en-contra': intervencion.tipointerven.valor === 'En contra',
+                'badge-comentario': intervencion.tipointerven.valor === 'Comentario'
+            }">
                                         {{ intervencion.tipointerven.valor }}
                                     </span>
-                                    <small class="d-block text-muted mt-2" *ngIf="intervencion.mensaje"
+
+                                    <div class="d-block text-muted mt-2" *ngIf="intervencion.resumen"
                                         style="white-space: normal; word-break: break-word; line-height: 1.5;">
+                                        <span class="fw-semibold text-secondary">Resumen:</span>
+                                        {{ intervencion.resumen }}
+                                    </div>
+
+                                    <div class="d-block text-muted mt-1" *ngIf="intervencion.mensaje"
+                                        style="white-space: normal; word-break: break-word; line-height: 1.5;">
+                                        <span class="fw-semibold text-secondary">Comentario:</span>
                                         {{ intervencion.mensaje }}
-                                    </small>
+                                    </div>
                                 </td>
 
                                 <!-- Diputado -->
