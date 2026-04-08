@@ -5454,8 +5454,8 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         const base64PDF = pdfBuffer.toString('base64');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442',
-            to: '+525561081154 ,',
+            to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442',
+            // to:       '+525561081154 ,',
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto,
