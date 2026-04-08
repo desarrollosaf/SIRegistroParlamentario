@@ -4849,17 +4849,26 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       isEven: boolean,
       minRowH: number = 18
     ): number => {
+      // ✅ Limpiar caracteres raros
+      const cleanValue = String(value ?? '')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
       const labelWidth = 70;
       const valueWidth = w - 110;
-      const labelHeight = doc.heightOfString(label, { width: labelWidth, fontSize: 9 });
-      const valueHeight = doc.heightOfString(value || '', { width: valueWidth, fontSize: 9 });
+      doc.fontSize(9);
+      const labelHeight = doc.heightOfString(label, { width: labelWidth});
+      const valueHeight  = doc.heightOfString(cleanValue, { width: valueWidth, align: 'justify' });
       const rowH = Math.max(minRowH, labelHeight + 10, valueHeight + 10);
+
       y = checkPageBreak(y, rowH);
       doc.rect(x, y, w, rowH).fill(isEven ? '#ffffff' : '#f5f5f5');
       doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
         .text(label, x + 10, y + 5, { width: labelWidth, align: 'right' });
       doc.fontSize(9).font('Helvetica').fillColor('#000')
-        .text(value || '', x + 100, y + 5, { width: valueWidth });
+        .text(cleanValue, x + 100, y + 5, { width: valueWidth, align: 'justify' }); // ✅
       return y + rowH;
     };
 
