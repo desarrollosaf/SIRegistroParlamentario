@@ -1864,11 +1864,50 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  eliminarIntervencion(intervencion: Intervencion, index: number) {
-    if (confirm('¿Estás seguro de eliminar esta intervención?')) {
 
+ eliminarIntervencion(intervencion: any, index: number) {
+  Swal.fire({
+    title: "¿Está seguro?",
+    text: "Se eliminará esta intervención",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Confirmar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      this._eventoService.deleteIntervencion(intervencion.id).subscribe({
+        next: (response: any) => {
+          this.listaIntervenciones.splice(index, 1);
+          this.cdr.detectChanges();
+
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+          });
+          Toast.fire({
+            icon: "success",
+            title: "Intervención eliminada correctamente."
+          });
+        },
+        error: (e: HttpErrorResponse) => {
+          const msg = e.error?.msg || 'Error desconocido';
+          console.error('Error del servidor:', msg);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: msg,
+            timer: 3000
+          });
+        }
+      });
     }
-  }
+  });
+}
 
   getNombreDiputados(diputados: any[]): string {
     if (!diputados || diputados.length === 0) return 'Sin diputados';
