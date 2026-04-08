@@ -33,7 +33,7 @@ router.post("/api/eventos/saveagenda/", uploadAgenda_1.default.fields([
 ]), agenda_1.saveagenda);
 // router.post("/api/eventos/saveagenda/", saveagenda );
 router.get("/api/eventos/getagenda/:id", agenda_1.getAgenda);
-// router.post("/api/eventos/editagenda/:id", updateAgenda );
+// router.post("/api/eventos/editagenda/:id", updateAgenda  jsjsjsjsjs);
 router.post("/api/eventos/editagenda/:id", uploadAgenda_1.default.fields([
     { name: "version_estenografica", maxCount: 1 },
     { name: "orden_dia", maxCount: 1 }
@@ -50,6 +50,4 @@ router.get('/api/eventos/notasintenciapdf/:id', agenda_1.enviarWhatsAsistenciaPD
 router.get('/api/eventos/notinicioeven/:id', agenda_1.enviarNotInicioEvento);
 router.get("/api/eventos/exportevento", agenda_1.exportdatos);
 router.get("/api/eventos/getagendaHoy/:fecha", agenda_1.getAgendaHoy);
-router.post("/api/eventos/savecomentarios/", agenda_1.saveComentarioEvento);
-router.get("/api/eventos/deletecomentario/:id", agenda_1.deleteComentarioEvento);
 exports.default = router;
