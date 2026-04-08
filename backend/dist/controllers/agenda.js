@@ -5405,7 +5405,7 @@ const enviarNotInicioEvento = (req, res) => __awaiter(void 0, void 0, void 0, fu
             doc.y = 106;
         };
         drawBackground();
-        // ===== BLOQUE IZQUIERDO VINO - "REGISTRO DE ASISTENCIA" =====
+        // ===== BLOQUE IZQUIERDO VINO - "REGISTRO DE ASISTENCIA holi" =====
         const vinoX = 30;
         const vinoY = 106;
         const vinoW = 150;
