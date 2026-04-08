@@ -44,82 +44,78 @@
                                 <div *ngSwitchCase="1">
                                     <!-- CASO 1: ES SESIÓN (estructura actual) -->
                                     <div *ngIf="!esComision">
-                                        <div class="row g-3 mb-4">
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                        <br>
+                                        <div class="row g-2 mb-4 small-cards justify-content-center">
+                                            <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-people-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Total</p>
-                                                                <h3 class="mb-0 fw-bold">{{ integrantes.length }}</h3>
+                                                                <p class="text-muted mb-0 small">Total</p>
+                                                                <h5 class="mb-0 fw-bold">{{ integrantes.length }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="row g-3 mb-4">
-
-
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(1)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(1)">
                                                 <div class="card stats-card stats-presente">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-check-circle-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Presente</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(1) }}</h3>
+                                                                <p class="text-muted mb-0 small">Presente</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistencias(1) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(3)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(3)">
                                                 <div class="card stats-card stats-justificada">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-clock-history"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Justificada</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(3) }}</h3>
+                                                                <p class="text-muted mb-0 small">Justificada</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistencias(3) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-camera-video-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Remota</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(2) }}</h3>
+                                                                <p class="text-muted mb-0 small">Remota</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistencias(2) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(0)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(0)">
                                                 <div class="card stats-card stats-ausente">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-x-circle-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Pendiente</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistencias(0) }}</h3>
+                                                                <p class="text-muted mb-0 small">Pendiente</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistencias(0) }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -256,92 +252,91 @@
                                     <!-- CASO 2: ES COMISIÓN (múltiples listas) -->
                                     <div *ngIf="esComision">
                                         <!-- CONTADOR GENERAL (arriba con estilos fancy) -->
-                                        <div class="row g-3 mb-5">
-                                            <div class="col-6 col-sm-6 col-lg-3">
+                                        <br>
+                                        <div class="row g-2 mb-5 small-cards justify-content-center">
+                                            <div class="col-6 col-sm-4 col-md-2">
                                                 <div class="card stats-card stats-total">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-people-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Total General</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarTotalGeneral() }}</h3>
+                                                                <p class="text-muted mb-0 small">Total General</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarTotalGeneral() }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="row g-3 mb-5">
-
-
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(1)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(1)">
                                                 <div class="card stats-card stats-presente">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-check-circle-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Presente</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(1)
-                                                                    }}</h3>
+                                                                <p class="text-muted mb-0 small">Presente</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(1)
+                                                                    }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(3)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(3)">
                                                 <div class="card stats-card stats-justificada">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-clock-history"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Justificada</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(3)
-                                                                    }}</h3>
+                                                                <p class="text-muted mb-0 small">Justificada</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(3)
+                                                                    }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(2)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(2)">
                                                 <div class="card stats-card stats-remota">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-camera-video-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Remota</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(2)
-                                                                    }}</h3>
+                                                                <p class="text-muted mb-0 small">Remota</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(2)
+                                                                    }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div class="col-6 col-sm-6 col-lg-3" (click)="marcarTodosAsistencia(0)">
+                                            <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodosAsistencia(0)">
                                                 <div class="card stats-card stats-ausente">
-                                                    <div class="card-body p-2">
+                                                    <div class="card-body p-1">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon me-3">
+                                                            <div class="stats-icon me-2">
                                                                 <i class="bi bi-x-circle-fill"></i>
                                                             </div>
                                                             <div class="flex-grow-1">
-                                                                <p class="text-muted mb-1 small">Pendiente</p>
-                                                                <h3 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(0)
-                                                                    }}</h3>
+                                                                <p class="text-muted mb-0 small">Pendiente</p>
+                                                                <h5 class="mb-0 fw-bold">{{ contarAsistenciasGeneral(0)
+                                                                    }}</h5>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+
+
+
 
                                         <div class="d-flex gap-2 flex-wrap justify-content-end">
                                             <button class="btn btn-light btn-sm" (click)="iniciarEvento(1)">
