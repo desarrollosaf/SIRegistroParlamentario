@@ -244,6 +244,17 @@
 
 // Estilos para los botones
 .btn-group-sm {
+  .btn-outline-secondary {
+    &:hover {
+      background-color: #a855f7 !important;
+      color: white !important;
+      border-color: #a855f7 !important;
+
+      i {
+        color: white !important;
+      }
+    }
+  }
   .btn {
     padding: 0.5rem 0.75rem;
     transition: all 0.2s ease;
