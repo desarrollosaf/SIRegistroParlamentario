@@ -2662,7 +2662,7 @@ const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void
         }
         yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7222450127",
+            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741",
             body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
             priority: "1",
             referenceId: "",
@@ -5460,8 +5460,8 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         const base64PDF = pdfBuffer.toString('base64');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
-            to: '+525561081154 ,',
+            to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
+            // to:       '+525561081154 ,',
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto,
