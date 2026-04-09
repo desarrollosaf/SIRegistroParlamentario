@@ -5748,6 +5748,97 @@ function getAsistenciaTexto(sentido: number): string {
   }
 }
 
+const escribirTextoConSaltoPagina = (
+  doc: any,
+  tableW: number,
+  drawBackground: () => void,
+  texto: string,
+  x: number,
+  y: number,
+  width: number,
+  align: 'left' | 'justify',
+  continuacionLabel: string,
+): number => {
+  const lineHeight = 10;
+  const maxY = doc.page.height - 110;
+
+  // ✅ Setear font UNA vez antes de medir
+  doc.fontSize(8).font('Helvetica');
+
+  // Construir líneas midiendo cada palabra
+  const words = texto.split(' ').filter((w: string) => w.length > 0);
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const test = currentLine ? `${currentLine} ${word}` : word;
+    const testW = doc.widthOfString(test);
+    if (testW > width && currentLine !== '') {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = test;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+
+  let curY = y;
+
+  for (let i = 0; i < lines.length; i++) {
+    // ✅ Salto de página ANTES de dibujar la línea
+    if (curY + lineHeight > maxY) {
+      doc.addPage();
+      drawBackground();
+      curY = 106;
+
+      doc.rect(30, curY, tableW, 20).fill('#7a7a7a');
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+        .text(continuacionLabel, 35, curY + 5, {
+          width: tableW - 10,
+          align: 'center',
+          lineBreak: false,
+        });
+      curY += 26;
+
+      // ✅ Re-setear font después del salto
+      doc.fontSize(8).font('Helvetica');
+    }
+
+    const isLastLine = i === lines.length - 1;
+    const line = lines[i];
+
+    if (align === 'justify' && !isLastLine) {
+      const lineWords = line.split(' ');
+
+      if (lineWords.length === 1) {
+        // Una sola palabra: left
+        doc.fillColor('#000').text(line, x, curY, { lineBreak: false });
+      } else {
+        // ✅ Medir todas las palabras juntas ANTES de posicionar
+        doc.fontSize(8).font('Helvetica');
+        const wordWidths = lineWords.map((w: string) => doc.widthOfString(w));
+        const totalWordsWidth = wordWidths.reduce((a: number, b: number) => a + b, 0);
+        const spaceWidth = Math.max(1, (width - totalWordsWidth) / (lineWords.length - 1));
+
+        let wordX = x;
+        lineWords.forEach((word: string, wi: number) => {
+          doc.fontSize(8).font('Helvetica').fillColor('#000')
+            .text(word, wordX, curY, { lineBreak: false });
+          wordX += wordWidths[wi] + spaceWidth;
+        });
+      }
+    } else {
+      // Última línea o left
+      doc.fontSize(8).font('Helvetica').fillColor('#000')
+        .text(line, x, curY, { width, align: 'left', lineBreak: false });
+    }
+
+    curY += lineHeight;
+  }
+
+  return curY;
+};
+
 export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -6201,266 +6292,190 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
         doc.y = currentY + 10;
       }
-      // ===== INTERVENCIONES POR PUNTO =====
-      if (intervenciones.length > 0) {
-        if (doc.y > 600) {
-          doc.addPage();
-          drawBackground();
-          doc.y = 106;
-        }
-
-        doc.y += 10;
-
-        // Header principal vino
-        const intTitY = doc.y;
-        doc.rect(30, intTitY, doc.page.width - 60, 22).fill('#96134b');
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
-          .text('INTERVENCIONES', 30, intTitY + 5,
-            { width: doc.page.width - 60, align: 'center' });
-        doc.y = intTitY + 22;
-
-        const tableW = doc.page.width - 60;
-        // ===== INTERVENCIONES GENERALES (sin id_punto) =====
-        const intervencionesGenerales = intervenciones.filter(
-          (i: any) => !i.id_punto || i.id_punto === null
-        );
-
-        if (intervencionesGenerales.length > 0) {
-          if (doc.y > 650) {
+      // ===== INTERVENCIONES =====
+        if (intervenciones.length > 0) {
+          if (doc.y > 600) {
             doc.addPage();
             drawBackground();
             doc.y = 106;
           }
 
-          // Subheader gris
-          const subY = doc.y;
-          doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-            .text('INTERVENCIONES GENERALES', 35, subY + 5,
-              { width: tableW - 10, align: 'center' });
-          doc.y = subY + 20;
+          doc.y += 10;
 
-          let currentY = doc.y;
+          const tableW = doc.page.width - 60;
 
-          intervencionesGenerales.forEach((inte: any, index: number) => {
-          const cleanText = (val: any) => String(val || '')
-            .replace(/[\r\n\t]+/g, ' ')
-            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
+          // Header principal vino
+          const intTitY = doc.y;
+          doc.rect(30, intTitY, tableW, 22).fill('#96134b');
+          doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
+            .text('INTERVENCIONES', 30, intTitY + 5, { width: tableW, align: 'center' });
+          doc.y = intTitY + 22;
 
-          const textoDiputado = cleanText(inte.diputado);
-          const textoTipo     = cleanText(inte.tipointerven?.valor);
-          const textoResumen  = cleanText(inte.resumen);
-          const textoMensaje  = cleanText(inte.mensaje);
-
+          // ——— Helper renderFichas ———
+          const labelX = 40;
           const labelW = 55;
-          const valorW = tableW - 75;
-
-          doc.fontSize(8);
-
-          const filas = [
-            { label: 'Diputado:', texto: textoDiputado },
-            { label: 'Tipo:',     texto: textoTipo     },
-            ...(textoResumen ? [{ label: 'Resumen:', texto: textoResumen }] : []),
-            ...(textoMensaje ? [{ label: 'Mensaje:', texto: textoMensaje }] : []),
-          ];
-
+          const valorX = labelX + labelW;
+          const valorW = tableW - valorX - 10;
           const padding = 8;
-          const rowGap  = 4;
+          const rowGap  = 6;
 
-          const fichaH = filas.reduce((acc, f) => {
-            const alt = doc.heightOfString(f.texto, {
-              width: valorW,
-              align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
-            });
-            return acc + alt + rowGap;
-          }, 0) + padding * 2;
+          const renderFichas = (
+            lista: any[],
+            subheaderLabel: string,
+            continuacionLabel: string,
+          ) => {
+            if (lista.length === 0) return;
 
-          if (currentY + fichaH > doc.page.height - 50) {
-            doc.addPage();
-            drawBackground();
-            currentY = 106;
+            if (subheaderLabel) {
+              if (doc.y > 650) {
+                doc.addPage();
+                drawBackground();
+                doc.y = 106;
+              }
+              const subY = doc.y;
+              doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
+              doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                .text(subheaderLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
+              doc.y = subY + 20;
+            }
 
-            const rY = doc.y;
-            doc.rect(30, rY, tableW, 20).fill('#7a7a7a');
-            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-              .text('INTERVENCIONES GENERALES (continuación)',
-                35, rY + 5, { width: tableW - 10, align: 'center' });
-            currentY = rY + 20;
-          }
+            lista.forEach((inte: any, index: number) => {
+              const cleanText = (val: any) => String(val || '')
+                .normalize('NFC')
+                .replace(/[\r\n\t]+/g, ' ')
+                .replace(/[^\x20-\x7E\xA0-\xFF\u00C0-\u024F]/g, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
 
-          const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
-          doc.rect(30, currentY, tableW, fichaH).fill(bgColor);
-          doc.moveTo(30, currentY + fichaH)
-            .lineTo(30 + tableW, currentY + fichaH)
-            .stroke('#e0e0e0');
+              const filas = [
+                { label: 'Diputado:', texto: cleanText(inte.diputado) },
+                { label: 'Tipo:',     texto: cleanText(inte.tipointerven?.valor) },
+                ...(cleanText(inte.resumen) ? [{ label: 'Resumen:', texto: cleanText(inte.resumen) }] : []),
+                ...(cleanText(inte.mensaje) ? [{ label: 'Mensaje:', texto: cleanText(inte.mensaje) }] : []),
+              ];
 
-          let textY = currentY + padding;
-
-          filas.forEach((fila) => {
-            const alturaReal = doc.heightOfString(fila.texto, {
-              width: valorW,
-              align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-            });
-
-            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
-              .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
-
-            doc.fontSize(8).font('Helvetica').fillColor('#000')
-              .text(fila.texto, 40 + labelW, textY, {
-                width:   valorW,
-                align:   fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                lineGap: 1,
+              // ── Calcular altura total para decidir si salta ──
+              doc.fontSize(8).font('Helvetica');
+              let alturaTotal = padding * 2;
+              filas.forEach((fila) => {
+                const words = fila.texto.split(' ').filter((w: string) => w.length > 0);
+                const lines: string[] = [];
+                let cur = '';
+                for (const word of words) {
+                  const test = cur ? `${cur} ${word}` : word;
+                  if (doc.widthOfString(test) > valorW && cur !== '') {
+                    lines.push(cur); cur = word;
+                  } else { cur = test; }
+                }
+                if (cur) lines.push(cur);
+                alturaTotal += lines.length * 10 + rowGap;
               });
 
-            textY += alturaReal + rowGap;
-          });
+              const maxY = doc.page.height - 110;
 
-          currentY += fichaH;
-        });
+              // ── Saltar página si no cabe ni el inicio de la ficha ──
+              if (doc.y + 60 > maxY) {
+                doc.addPage();
+                drawBackground();
+                doc.y = 106;
+                doc.rect(30, doc.y, tableW, 20).fill('#7a7a7a');
+                doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                  .text(continuacionLabel, 35, doc.y + 5, { width: tableW - 10, align: 'center', lineBreak: false });
+                doc.y += 26;
+              }
 
-        doc.y = currentY + 8;
-        }      
-        // Iterar puntos en orden
-        puntosRaw.forEach((punto: any) => {
-          const ptoIntervenciones = intervencionesPorPunto[punto.id] || [];
-          if (ptoIntervenciones.length === 0) return;
+              let textY = doc.y + padding;
+              const fichaStartY = textY; // ← para la línea lateral
 
-          const textoSubheader = String(punto.punto || '')
-            .replace(/[\r\n\t]+/g, ' ')
-            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
+              // ── Dibujar filas ──
+              filas.forEach((fila) => {
+                const isJustify = fila.label === 'Resumen:' || fila.label === 'Mensaje:';
 
-          const subLabel = `PUNTO ${punto.nopunto} — ${textoSubheader}`;
+                doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
+                  .text(fila.label, labelX, textY, { width: labelW, lineBreak: false });
 
-          // ✅ Altura dinámica del subheader
-          doc.fontSize(9);
-          const subHeaderH = doc.heightOfString(subLabel, { width: tableW - 20 }) + 10;
+                const yFinal = escribirTextoConSaltoPagina(
+                  doc, tableW, drawBackground,
+                  fila.texto, valorX, textY, valorW,
+                  isJustify ? 'justify' : 'left',
+                  continuacionLabel,
+                );
 
-          if (doc.y + subHeaderH + 36 > doc.page.height - 50) {
-            doc.addPage();
-            drawBackground();
-            doc.y = 106;
-            const rY = doc.y;
-            doc.rect(30, rY, tableW, 22).fill('#96134b');
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
-              .text('INTERVENCIONES', 30, rY + 5, { width: tableW, align: 'center' });
-            doc.y = rY + 22;
-          }
-
-          // Subheader gris con altura dinámica
-          const subY = doc.y;
-          doc.rect(30, subY, tableW, subHeaderH).fill('#7a7a7a');
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-            .text(subLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
-          doc.y = subY + subHeaderH;
-
-          // Header columnas
-          const hY = doc.y;
-          doc.rect(30, hY, tableW, 18).fill('#d4d4d4');
-          doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
-          doc.text('DIPUTADO',         32,  hY + 5, { width: 160 });
-          doc.text('TIPO',            195,  hY + 5, { width: 80  });
-          doc.text('RESUMEN / MENSAJE', 278, hY + 5, { width: tableW - 250 });
-          doc.y = hY + 18;
-
-          let currentY = doc.y;
-          const colDipW    = 160;
-          const colTipoW   = 80;
-          const colTextoW  = tableW - 250; // ~282px para el texto largo
-
-          ptoIntervenciones.forEach((inte: any, index: number) => {
-          const cleanText = (val: any) => String(val || '')
-            .replace(/[\r\n\t]+/g, ' ')
-            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-
-          const textoDiputado = cleanText(inte.diputado);
-          const textoTipo     = cleanText(inte.tipointerven?.valor);
-          const textoResumen  = cleanText(inte.resumen);
-          const textoMensaje  = cleanText(inte.mensaje);
-
-          const labelW  = 55;
-          const valorW  = tableW - 75;
-
-          doc.fontSize(8);
-
-          // ✅ Calcular altura total de la ficha
-          const altDip     = doc.heightOfString(textoDiputado, { width: valorW });
-          const altTipo    = doc.heightOfString(textoTipo,     { width: valorW });
-          const altResumen = textoResumen ? doc.heightOfString(textoResumen, { width: valorW, align: 'justify' }) : 0;
-          const altMensaje = textoMensaje ? doc.heightOfString(textoMensaje, { width: valorW, align: 'justify' }) : 0;
-
-          const filas = [
-            { label: 'Diputado:', texto: textoDiputado, alt: altDip },
-            { label: 'Tipo:',     texto: textoTipo,     alt: altTipo },
-            ...(textoResumen ? [{ label: 'Resumen:', texto: textoResumen, alt: altResumen }] : []),
-            ...(textoMensaje ? [{ label: 'Mensaje:', texto: textoMensaje, alt: altMensaje }] : []),
-          ];
-
-          const padding  = 8;
-          const rowGap   = 4;
-          const fichaH = filas.reduce((acc, f) => {
-            const alt = doc.heightOfString(f.texto, {
-              width: valorW,
-              align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
-            });
-            return acc + alt + rowGap;
-          }, 0) + padding * 2;
-
-          if (currentY + fichaH > doc.page.height - 50) {
-            doc.addPage();
-            drawBackground();
-            currentY = 106;
-
-            // Repetir subheader en página nueva
-            doc.rect(30, currentY, tableW, 20).fill('#7a7a7a');
-            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-              .text(`PUNTO ${punto.nopunto} (continuación)`,
-                35, currentY + 5, { width: tableW - 10, align: 'center' });
-            currentY += 20;
-          }
-
-          const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
-          doc.rect(30, currentY, tableW, fichaH).fill(bgColor);
-          doc.moveTo(30, currentY + fichaH)
-            .lineTo(30 + tableW, currentY + fichaH)
-            .stroke('#e0e0e0');
-
-          let textY = currentY + padding;
-
-          filas.forEach((fila) => {
-            // ✅ Recalcular altura con el ancho real del valor
-            const alturaReal = doc.heightOfString(fila.texto, {
-              width: valorW,
-              align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-            });
-
-            // Label en vino negrita
-            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
-              .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
-
-            // Valor en negro normal
-            doc.fontSize(8).font('Helvetica').fillColor('#000')
-              .text(fila.texto, 40 + labelW, textY, {
-                width:  valorW,
-                align:  fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                lineGap: 1,
+                textY = yFinal + rowGap;
               });
 
-            // ✅ Avanzar con la altura real + separación
-            textY += alturaReal + rowGap;
+              // ── Línea lateral izquierda (sin rect de fondo) ──
+              // doc.moveTo(32, fichaStartY)
+              //   .lineTo(32, textY)
+              //   .lineWidth(3)
+              //   .stroke(index % 2 === 0 ? '#96134b' : '#d4d4d4');
+              // doc.lineWidth(1);
+
+              // ── Separador inferior ──
+              doc.save();
+              doc.moveTo(30, textY)
+                .lineTo(30 + tableW, textY)
+                .lineWidth(0.5)
+                .strokeColor('#e0e0e0')
+                .stroke();
+              doc.restore();
+
+              doc.y = textY + 4;
+            });
+
+            doc.y += 8;
+          };
+
+          // Generales (sin id_punto)
+          const intervencionesGenerales = intervenciones.filter(
+            (i: any) => !i.id_punto || i.id_punto === null
+          );
+          renderFichas(
+            intervencionesGenerales,
+            'INTERVENCIONES GENERALES',
+            'INTERVENCIONES GENERALES (continuación)',
+          );
+
+          // Por punto en orden
+          puntosRaw.forEach((punto: any) => {
+            const ptoIntervenciones = intervencionesPorPunto[punto.id] || [];
+            if (ptoIntervenciones.length === 0) return;
+
+            const textoSubheader = String(punto.punto || '')
+              .replace(/[\r\n\t]+/g, ' ')
+              .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+
+            const subLabel = `PUNTO ${punto.nopunto} — ${textoSubheader}`;
+
+            doc.fontSize(9).font('Helvetica-Bold');
+            const subHeaderH = doc.heightOfString(subLabel, { width: tableW - 20 }) + 10;
+
+            if (doc.y + subHeaderH + 36 > doc.page.height - 50) {
+              doc.addPage();
+              drawBackground();
+              doc.y = 106;
+              const rY = doc.y;
+              doc.rect(30, rY, tableW, 22).fill('#96134b');
+              doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
+                .text('INTERVENCIONES', 30, rY + 5, { width: tableW, align: 'center' });
+              doc.y = rY + 22;
+            }
+
+            const subY = doc.y;
+            doc.rect(30, subY, tableW, subHeaderH).fill('#7a7a7a');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+              .text(subLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
+            doc.y = subY + subHeaderH;
+
+            renderFichas(
+              ptoIntervenciones,
+              '',
+              `PUNTO ${punto.nopunto} (continuación)`,
+            );
           });
-
-          currentY += fichaH;
-        });
-
-          doc.y = currentY + 8;
-        });
-      }
+        }
 
     }
     doc.end();
@@ -6520,8 +6535,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
  
     const params = {
       token:    'ml56a7d6tn7ha7cc',
-      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
-      // to:       '+525561081154 ,',
+      // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
+      to:       '+525561081154 ,',
       filename: fileName,
       document: base64PDF,
       caption:  mensajeTexto,
