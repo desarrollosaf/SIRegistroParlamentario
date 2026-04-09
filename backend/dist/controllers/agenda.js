@@ -4821,6 +4821,77 @@ function getAsistenciaTexto(sentido) {
         default: return 'PENDIENTE';
     }
 }
+const escribirTextoConSaltoPagina = (doc, tableW, drawBackground, texto, x, y, width, align, continuacionLabel) => {
+    const lineHeight = 10;
+    const maxY = doc.page.height - 110;
+    // ✅ Setear font UNA vez antes de medir
+    doc.fontSize(8).font('Helvetica');
+    // Construir líneas midiendo cada palabra
+    const words = texto.split(' ').filter((w) => w.length > 0);
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+        const test = currentLine ? `${currentLine} ${word}` : word;
+        const testW = doc.widthOfString(test);
+        if (testW > width && currentLine !== '') {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+        else {
+            currentLine = test;
+        }
+    }
+    if (currentLine)
+        lines.push(currentLine);
+    let curY = y;
+    for (let i = 0; i < lines.length; i++) {
+        // ✅ Salto de página ANTES de dibujar la línea
+        if (curY + lineHeight > maxY) {
+            doc.addPage();
+            drawBackground();
+            curY = 106;
+            doc.rect(30, curY, tableW, 20).fill('#7a7a7a');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                .text(continuacionLabel, 35, curY + 5, {
+                width: tableW - 10,
+                align: 'center',
+                lineBreak: false,
+            });
+            curY += 26;
+            // ✅ Re-setear font después del salto
+            doc.fontSize(8).font('Helvetica');
+        }
+        const isLastLine = i === lines.length - 1;
+        const line = lines[i];
+        if (align === 'justify' && !isLastLine) {
+            const lineWords = line.split(' ');
+            if (lineWords.length === 1) {
+                // Una sola palabra: left
+                doc.fillColor('#000').text(line, x, curY, { lineBreak: false });
+            }
+            else {
+                // ✅ Medir todas las palabras juntas ANTES de posicionar
+                doc.fontSize(8).font('Helvetica');
+                const wordWidths = lineWords.map((w) => doc.widthOfString(w));
+                const totalWordsWidth = wordWidths.reduce((a, b) => a + b, 0);
+                const spaceWidth = Math.max(1, (width - totalWordsWidth) / (lineWords.length - 1));
+                let wordX = x;
+                lineWords.forEach((word, wi) => {
+                    doc.fontSize(8).font('Helvetica').fillColor('#000')
+                        .text(word, wordX, curY, { lineBreak: false });
+                    wordX += wordWidths[wi] + spaceWidth;
+                });
+            }
+        }
+        else {
+            // Última línea o left
+            doc.fontSize(8).font('Helvetica').fillColor('#000')
+                .text(line, x, curY, { width, align: 'left', lineBreak: false });
+        }
+        curY += lineHeight;
+    }
+    return curY;
+};
 const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
@@ -5198,7 +5269,7 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                 });
                 doc.y = currentY + 10;
             }
-            // ===== INTERVENCIONES POR PUNTO =====
+            // ===== INTERVENCIONES =====
             if (intervenciones.length > 0) {
                 if (doc.y > 600) {
                     doc.addPage();
@@ -5206,93 +5277,113 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                     doc.y = 106;
                 }
                 doc.y += 10;
+                const tableW = doc.page.width - 60;
                 // Header principal vino
                 const intTitY = doc.y;
-                doc.rect(30, intTitY, doc.page.width - 60, 22).fill('#96134b');
+                doc.rect(30, intTitY, tableW, 22).fill('#96134b');
                 doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
-                    .text('INTERVENCIONES', 30, intTitY + 5, { width: doc.page.width - 60, align: 'center' });
+                    .text('INTERVENCIONES', 30, intTitY + 5, { width: tableW, align: 'center' });
                 doc.y = intTitY + 22;
-                const tableW = doc.page.width - 60;
-                // ===== INTERVENCIONES GENERALES (sin id_punto) =====
-                const intervencionesGenerales = intervenciones.filter((i) => !i.id_punto || i.id_punto === null);
-                if (intervencionesGenerales.length > 0) {
-                    if (doc.y > 650) {
-                        doc.addPage();
-                        drawBackground();
-                        doc.y = 106;
-                    }
-                    // Subheader gris
-                    const subY = doc.y;
-                    doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
-                    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-                        .text('INTERVENCIONES GENERALES', 35, subY + 5, { width: tableW - 10, align: 'center' });
-                    doc.y = subY + 20;
-                    let currentY = doc.y;
-                    intervencionesGenerales.forEach((inte, index) => {
-                        var _a;
-                        const cleanText = (val) => String(val || '')
-                            .replace(/[\r\n\t]+/g, ' ')
-                            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
-                            .replace(/\s{2,}/g, ' ')
-                            .trim();
-                        const textoDiputado = cleanText(inte.diputado);
-                        const textoTipo = cleanText((_a = inte.tipointerven) === null || _a === void 0 ? void 0 : _a.valor);
-                        const textoResumen = cleanText(inte.resumen);
-                        const textoMensaje = cleanText(inte.mensaje);
-                        const labelW = 55;
-                        const valorW = tableW - 75;
-                        doc.fontSize(8);
-                        const filas = [
-                            { label: 'Diputado:', texto: textoDiputado },
-                            { label: 'Tipo:', texto: textoTipo },
-                            ...(textoResumen ? [{ label: 'Resumen:', texto: textoResumen }] : []),
-                            ...(textoMensaje ? [{ label: 'Mensaje:', texto: textoMensaje }] : []),
-                        ];
-                        const padding = 8;
-                        const rowGap = 4;
-                        const fichaH = filas.reduce((acc, f) => {
-                            const alt = doc.heightOfString(f.texto, {
-                                width: valorW,
-                                align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
-                            });
-                            return acc + alt + rowGap;
-                        }, 0) + padding * 2;
-                        if (currentY + fichaH > doc.page.height - 50) {
+                // ——— Helper renderFichas ———
+                const labelX = 40;
+                const labelW = 55;
+                const valorX = labelX + labelW;
+                const valorW = tableW - valorX - 10;
+                const padding = 8;
+                const rowGap = 6;
+                const renderFichas = (lista, subheaderLabel, continuacionLabel) => {
+                    if (lista.length === 0)
+                        return;
+                    if (subheaderLabel) {
+                        if (doc.y > 650) {
                             doc.addPage();
                             drawBackground();
-                            currentY = 106;
-                            const rY = doc.y;
-                            doc.rect(30, rY, tableW, 20).fill('#7a7a7a');
-                            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-                                .text('INTERVENCIONES GENERALES (continuación)', 35, rY + 5, { width: tableW - 10, align: 'center' });
-                            currentY = rY + 20;
+                            doc.y = 106;
                         }
-                        const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
-                        doc.rect(30, currentY, tableW, fichaH).fill(bgColor);
-                        doc.moveTo(30, currentY + fichaH)
-                            .lineTo(30 + tableW, currentY + fichaH)
-                            .stroke('#e0e0e0');
-                        let textY = currentY + padding;
+                        const subY = doc.y;
+                        doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
+                        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                            .text(subheaderLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
+                        doc.y = subY + 20;
+                    }
+                    lista.forEach((inte, index) => {
+                        var _a;
+                        const cleanText = (val) => String(val || '')
+                            .normalize('NFC')
+                            .replace(/[\r\n\t]+/g, ' ')
+                            .replace(/[^\x20-\x7E\xA0-\xFF\u00C0-\u024F]/g, '')
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                        const filas = [
+                            { label: 'Diputado:', texto: cleanText(inte.diputado) },
+                            { label: 'Tipo:', texto: cleanText((_a = inte.tipointerven) === null || _a === void 0 ? void 0 : _a.valor) },
+                            ...(cleanText(inte.resumen) ? [{ label: 'Resumen:', texto: cleanText(inte.resumen) }] : []),
+                            ...(cleanText(inte.mensaje) ? [{ label: 'Mensaje:', texto: cleanText(inte.mensaje) }] : []),
+                        ];
+                        // ── Calcular altura total para decidir si salta ──
+                        doc.fontSize(8).font('Helvetica');
+                        let alturaTotal = padding * 2;
                         filas.forEach((fila) => {
-                            const alturaReal = doc.heightOfString(fila.texto, {
-                                width: valorW,
-                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                            });
-                            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
-                                .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
-                            doc.fontSize(8).font('Helvetica').fillColor('#000')
-                                .text(fila.texto, 40 + labelW, textY, {
-                                width: valorW,
-                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                                lineGap: 1,
-                            });
-                            textY += alturaReal + rowGap;
+                            const words = fila.texto.split(' ').filter((w) => w.length > 0);
+                            const lines = [];
+                            let cur = '';
+                            for (const word of words) {
+                                const test = cur ? `${cur} ${word}` : word;
+                                if (doc.widthOfString(test) > valorW && cur !== '') {
+                                    lines.push(cur);
+                                    cur = word;
+                                }
+                                else {
+                                    cur = test;
+                                }
+                            }
+                            if (cur)
+                                lines.push(cur);
+                            alturaTotal += lines.length * 10 + rowGap;
                         });
-                        currentY += fichaH;
+                        const maxY = doc.page.height - 110;
+                        // ── Saltar página si no cabe ni el inicio de la ficha ──
+                        if (doc.y + 60 > maxY) {
+                            doc.addPage();
+                            drawBackground();
+                            doc.y = 106;
+                            doc.rect(30, doc.y, tableW, 20).fill('#7a7a7a');
+                            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                                .text(continuacionLabel, 35, doc.y + 5, { width: tableW - 10, align: 'center', lineBreak: false });
+                            doc.y += 26;
+                        }
+                        let textY = doc.y + padding;
+                        const fichaStartY = textY; // ← para la línea lateral
+                        // ── Dibujar filas ──
+                        filas.forEach((fila) => {
+                            const isJustify = fila.label === 'Resumen:' || fila.label === 'Mensaje:';
+                            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
+                                .text(fila.label, labelX, textY, { width: labelW, lineBreak: false });
+                            const yFinal = escribirTextoConSaltoPagina(doc, tableW, drawBackground, fila.texto, valorX, textY, valorW, isJustify ? 'justify' : 'left', continuacionLabel);
+                            textY = yFinal + rowGap;
+                        });
+                        // ── Línea lateral izquierda (sin rect de fondo) ──
+                        // doc.moveTo(32, fichaStartY)
+                        //   .lineTo(32, textY)
+                        //   .lineWidth(3)
+                        //   .stroke(index % 2 === 0 ? '#96134b' : '#d4d4d4');
+                        // doc.lineWidth(1);
+                        // ── Separador inferior ──
+                        doc.save();
+                        doc.moveTo(30, textY)
+                            .lineTo(30 + tableW, textY)
+                            .lineWidth(0.5)
+                            .strokeColor('#e0e0e0')
+                            .stroke();
+                        doc.restore();
+                        doc.y = textY + 4;
                     });
-                    doc.y = currentY + 8;
-                }
-                // Iterar puntos en orden
+                    doc.y += 8;
+                };
+                // Generales (sin id_punto)
+                const intervencionesGenerales = intervenciones.filter((i) => !i.id_punto || i.id_punto === null);
+                renderFichas(intervencionesGenerales, 'INTERVENCIONES GENERALES', 'INTERVENCIONES GENERALES (continuación)');
+                // Por punto en orden
                 puntosRaw.forEach((punto) => {
                     const ptoIntervenciones = intervencionesPorPunto[punto.id] || [];
                     if (ptoIntervenciones.length === 0)
@@ -5303,8 +5394,7 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                         .replace(/\s{2,}/g, ' ')
                         .trim();
                     const subLabel = `PUNTO ${punto.nopunto} — ${textoSubheader}`;
-                    // ✅ Altura dinámica del subheader
-                    doc.fontSize(9);
+                    doc.fontSize(9).font('Helvetica-Bold');
                     const subHeaderH = doc.heightOfString(subLabel, { width: tableW - 20 }) + 10;
                     if (doc.y + subHeaderH + 36 > doc.page.height - 50) {
                         doc.addPage();
@@ -5316,96 +5406,12 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                             .text('INTERVENCIONES', 30, rY + 5, { width: tableW, align: 'center' });
                         doc.y = rY + 22;
                     }
-                    // Subheader gris con altura dinámica
                     const subY = doc.y;
                     doc.rect(30, subY, tableW, subHeaderH).fill('#7a7a7a');
                     doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
                         .text(subLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
                     doc.y = subY + subHeaderH;
-                    // Header columnas
-                    const hY = doc.y;
-                    doc.rect(30, hY, tableW, 18).fill('#d4d4d4');
-                    doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
-                    doc.text('DIPUTADO', 32, hY + 5, { width: 160 });
-                    doc.text('TIPO', 195, hY + 5, { width: 80 });
-                    doc.text('RESUMEN / MENSAJE', 278, hY + 5, { width: tableW - 250 });
-                    doc.y = hY + 18;
-                    let currentY = doc.y;
-                    const colDipW = 160;
-                    const colTipoW = 80;
-                    const colTextoW = tableW - 250; // ~282px para el texto largo
-                    ptoIntervenciones.forEach((inte, index) => {
-                        var _a;
-                        const cleanText = (val) => String(val || '')
-                            .replace(/[\r\n\t]+/g, ' ')
-                            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
-                            .replace(/\s{2,}/g, ' ')
-                            .trim();
-                        const textoDiputado = cleanText(inte.diputado);
-                        const textoTipo = cleanText((_a = inte.tipointerven) === null || _a === void 0 ? void 0 : _a.valor);
-                        const textoResumen = cleanText(inte.resumen);
-                        const textoMensaje = cleanText(inte.mensaje);
-                        const labelW = 55;
-                        const valorW = tableW - 75;
-                        doc.fontSize(8);
-                        // ✅ Calcular altura total de la ficha
-                        const altDip = doc.heightOfString(textoDiputado, { width: valorW });
-                        const altTipo = doc.heightOfString(textoTipo, { width: valorW });
-                        const altResumen = textoResumen ? doc.heightOfString(textoResumen, { width: valorW, align: 'justify' }) : 0;
-                        const altMensaje = textoMensaje ? doc.heightOfString(textoMensaje, { width: valorW, align: 'justify' }) : 0;
-                        const filas = [
-                            { label: 'Diputado:', texto: textoDiputado, alt: altDip },
-                            { label: 'Tipo:', texto: textoTipo, alt: altTipo },
-                            ...(textoResumen ? [{ label: 'Resumen:', texto: textoResumen, alt: altResumen }] : []),
-                            ...(textoMensaje ? [{ label: 'Mensaje:', texto: textoMensaje, alt: altMensaje }] : []),
-                        ];
-                        const padding = 8;
-                        const rowGap = 4;
-                        const fichaH = filas.reduce((acc, f) => {
-                            const alt = doc.heightOfString(f.texto, {
-                                width: valorW,
-                                align: f.label === 'Resumen:' || f.label === 'Mensaje:' ? 'justify' : 'left',
-                            });
-                            return acc + alt + rowGap;
-                        }, 0) + padding * 2;
-                        if (currentY + fichaH > doc.page.height - 50) {
-                            doc.addPage();
-                            drawBackground();
-                            currentY = 106;
-                            // Repetir subheader en página nueva
-                            doc.rect(30, currentY, tableW, 20).fill('#7a7a7a');
-                            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-                                .text(`PUNTO ${punto.nopunto} (continuación)`, 35, currentY + 5, { width: tableW - 10, align: 'center' });
-                            currentY += 20;
-                        }
-                        const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
-                        doc.rect(30, currentY, tableW, fichaH).fill(bgColor);
-                        doc.moveTo(30, currentY + fichaH)
-                            .lineTo(30 + tableW, currentY + fichaH)
-                            .stroke('#e0e0e0');
-                        let textY = currentY + padding;
-                        filas.forEach((fila) => {
-                            // ✅ Recalcular altura con el ancho real del valor
-                            const alturaReal = doc.heightOfString(fila.texto, {
-                                width: valorW,
-                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                            });
-                            // Label en vino negrita
-                            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
-                                .text(fila.label, 40, textY, { width: labelW, lineBreak: false });
-                            // Valor en negro normal
-                            doc.fontSize(8).font('Helvetica').fillColor('#000')
-                                .text(fila.texto, 40 + labelW, textY, {
-                                width: valorW,
-                                align: fila.label === 'Resumen:' || fila.label === 'Mensaje:' ? 'justify' : 'left',
-                                lineGap: 1,
-                            });
-                            // ✅ Avanzar con la altura real + separación
-                            textY += alturaReal + rowGap;
-                        });
-                        currentY += fichaH;
-                    });
-                    doc.y = currentY + 8;
+                    renderFichas(ptoIntervenciones, '', `PUNTO ${punto.nopunto} (continuación)`);
                 });
             }
         }
@@ -5454,8 +5460,8 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         const base64PDF = pdfBuffer.toString('base64');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
-            // to:       '+525561081154 ,',
+            // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
+            to: '+525561081154 ,',
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto,
