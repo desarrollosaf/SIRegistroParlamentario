@@ -13,4 +13,6 @@ router.get("/api/iniciativas/getdecretos/:id", iniciativas_1.getdecretos);
 router.get("/api/iniciativas/eliminardecreto/:id", iniciativas_1.eliminardecreto);
 router.patch('/api/iniciativas/publicarini/:id', iniciativas_1.actualizarIniciativa);
 router.patch('/api/iniciativas/publicarevento/:id', iniciativas_1.publicarAgenda);
+router.delete('/api/iniciativas/:id/asistencia', iniciativas_1.eliminarAsistencia);
+router.delete('/api/iniciativas/:id/votacion', iniciativas_1.eliminarVotacion);
 exports.default = router;

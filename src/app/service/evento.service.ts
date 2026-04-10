@@ -251,4 +251,12 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarinter/${id}`)
   }
 
+    eliminarAsistencia(idAgenda: string): Observable<any> {
+    return this.http.delete(`${this.myAppUrl}${this.myAPIUrl3}/${idAgenda}/asistencia`);
+  }
+ 
+  eliminarVotacion(idEvento: string): Observable<any> {
+    return this.http.delete(`${this.myAppUrl}${this.myAPIUrl3}/${idEvento}/votacion`);
+  }
+
 }

@@ -89,6 +89,21 @@
                                         (click)="togglePublico(row)">
                                         <i class="bi" [class.bi-eye-fill]="row.publico === 1" [class.bi-eye-slash]="row.publico !== 1"></i>
                                     </a>
+
+                                    <a class="btn btn-warning action-btn"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                        title="Eliminar asistencia"
+                                        (click)="eliminarAsistencia(row.id)">
+                                        <i class="bi bi-person-dash-fill"></i>
+                                    </a>
+
+                                    <a class="btn btn-danger action-btn"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                        title="Eliminar votación"
+                                        (click)="eliminarVotacion(row.id)">
+                                        <i class="bi bi-slash-circle-fill"></i>
+                                    </a>
+
                                 </div>
                             </ng-template>
                         </ngx-datatable-column>
