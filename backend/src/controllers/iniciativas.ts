@@ -935,6 +935,7 @@ async function obtenerResultadosVotacionOptimizado(
     where: { id: diputadoIds },
     attributes: ["id", "apaterno", "amaterno", "nombres"],
     raw: true,
+    paranoid: false
   });
   const diputadosMap = new Map(
     diputados.map(d => [d.id, d])
