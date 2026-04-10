@@ -689,8 +689,12 @@ export const eliminarVotacion = async (req: Request, res: Response) => {
 };
 
 
+
 const getVotacionPorPunto = async (idPunto: string, res: Response): Promise<Response> => {
-  const punto = await PuntosOrden.findOne({ where: { id: idPunto } });
+  const punto = await PuntosOrden.findOne({
+    where: { id: idPunto },
+    attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+  });
  
   if (!punto) {
     return res.status(404).json({ msg: 'Punto no encontrado' });
@@ -699,7 +703,7 @@ const getVotacionPorPunto = async (idPunto: string, res: Response): Promise<Resp
   const evento = await Agenda.findOne({
     where: { id: punto.id_evento },
     include: [
-      { model: Sedes,      as: 'sede',       attributes: ['id', 'sede'] },
+      { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
       { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
     ],
   });
@@ -708,128 +712,118 @@ const getVotacionPorPunto = async (idPunto: string, res: Response): Promise<Resp
     return res.status(404).json({ msg: 'Evento no encontrado' });
   }
  
-  const esSesion  = evento.tipoevento?.nombre === 'Sesión';
+  const esSesion   = evento.tipoevento?.nombre === 'Sesión';
   const tipoEvento = esSesion ? 'sesion' : 'comision';
   const tipovento  = esSesion ? 1 : 2;
  
   let mensajeRespuesta = 'Punto con votos existentes';
  
-  const votosExistentes = await VotosPunto.findOne({
-    where: { id_punto: idPunto },
-  });
+  const votosExistentes = await VotosPunto.findOne({ where: { id_punto: idPunto } });
  
   if (!votosExistentes) {
     const listadoDiputados = await obtenerListadoDiputados(evento);
     const votospunto = listadoDiputados.map((dip: any) => ({
-      sentido:           0,
-      mensaje:           'PENDIENTE',
-      id_punto:          idPunto,
+      sentido:            0,
+      mensaje:            'PENDIENTE',
+      id_punto:           idPunto,
       id_tema_punto_voto: null,
-      id_diputado:       dip.id_diputado,
-      id_partido:        dip.id_partido,
-      id_comision_dip:   dip.comision_dip_id,
-      id_cargo_dip:      dip.id_cargo_dip,
+      id_diputado:        dip.id_diputado,
+      id_partido:         dip.id_partido,
+      id_comision_dip:    dip.comision_dip_id,
+      id_cargo_dip:       dip.id_cargo_dip,
     }));
- 
     await VotosPunto.bulkCreate(votospunto);
     mensajeRespuesta = 'Votacion creada correctamente';
   }
  
   const integrantes = await obtenerResultadosVotacionOptimizado(
-    null,      // tema = null (directo por punto)
+    null,
     idPunto,
     tipoEvento
   );
  
   return res.status(200).json({
     msg: mensajeRespuesta,
+    // ── Información del punto destino (donde se votó) ──
+    punto: {
+      id:      punto.id,
+      nopunto: punto.nopunto,
+      punto:   punto.punto,
+    },
     evento,
     integrantes,
     tipovento,
   });
 };
  
-// ─── GET VOTACIÓN DEL DICTAMEN ─────────────────────────────────────────────────
-// GET /iniciativa/:id/votos-dictamen
-// Busca el estudio con status "2" (dictamen) de la iniciativa y regresa su votación
+
+const getPuntoDestino = async (
+  idPunto: string,
+  status: '2' | '3'
+): Promise<string | null> => {
+ 
+  // Type 1: búsqueda directa
+  const estudioType1 = await IniciativaEstudio.findOne({
+    where: { status, punto_origen_id: idPunto, type: 1 },
+    order: [['createdAt', 'DESC']],
+  });
+ 
+  if (estudioType1?.punto_destino_id) {
+    return String(estudioType1.punto_destino_id);
+  }
+ 
+  // Type 2: búsqueda por expediente
+  const expedientes = await ExpedienteEstudiosPuntos.findAll({
+    where: { punto_origen_sesion_id: idPunto },
+    attributes: ['expediente_id'],
+  });
+ 
+  const expedienteIds = [
+    ...new Set(expedientes.map((e: any) => e.expediente_id).filter(Boolean))
+  ];
+ 
+  if (expedienteIds.length === 0) return null;
+ 
+  const estudioType2 = await IniciativaEstudio.findOne({
+    where: {
+      status,
+      type: 2,
+      punto_origen_id: { [Op.in]: expedienteIds },
+    },
+    order: [['createdAt', 'DESC']],
+  });
+ 
+  if (estudioType2?.punto_destino_id) {
+    return String(estudioType2.punto_destino_id);
+  }
+ 
+  return null;
+};
+ 
+
+const getIdPuntoDeIniciativa = async (idIniciativa: string): Promise<string | null> => {
+  const iniciativa = await IniciativaPuntoOrden.findOne({
+    where: { id: idIniciativa },
+    attributes: ['id_punto'],
+  });
+  return iniciativa?.id_punto ? String(iniciativa.id_punto) : null;
+};
+ 
 export const getVotosDictamen = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { id } = req.params; // id de IniciativaPuntoOrden
+    const { id } = req.params;
  
-    // Buscar el dictamen (status "2") relacionado al punto de esta iniciativa
-    const dictamen = await IniciativaEstudio.findOne({
-      where: { status: '2' },
-      include: [
-        {
-          model: PuntosOrden,
-          as: 'iniciativa',
-          required: true,
-          include: [
-            {
-              model: PuntosOrden,
-              as: 'punto',           // punto origen de la iniciativa
-              required: true,
-              where: {},
-            }
-          ]
-        }
-      ]
-    });
- 
-    // Buscar directamente por punto_origen_id ligado a la iniciativa
-    const iniciativaEstudio = await IniciativaEstudio.findOne({
-      where: { status: '2' },
-      include: [
-        {
-          model: PuntosOrden,
-          as: 'iniciativa',
-          required: true,
-        }
-      ],
-      // Filtramos por el punto que pertenece a la iniciativa dada
-      order: [['createdAt', 'DESC']],
-    });
- 
-    // Obtener el punto de la iniciativa para filtrar estudios relacionados
-    const puntosIniciativa = await PuntosOrden.findAll({
-      include: [
-        {
-          model: require('../models/inciativas_puntos_ordens').default,
-          as: 'iniciativas',
-          where: { id },
-          required: true,
-        }
-      ]
-    });
- 
-    if (!puntosIniciativa.length) {
+    const idPunto = await getIdPuntoDeIniciativa(id);
+    if (!idPunto) {
       return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
     }
  
-    const idPunto = puntosIniciativa[0].id;
- 
-    // Buscar dictamen con ese punto como origen
-    const dictamenFinal = await IniciativaEstudio.findOne({
-      where: {
-        status:          '2',
-        punto_origen_id: idPunto,
-      },
-      include: [
-        {
-          model: PuntosOrden,
-          as: 'iniciativa',
-          attributes: ['id', 'punto', 'nopunto'],
-        }
-      ],
-      order: [['createdAt', 'DESC']],
-    });
- 
-    if (!dictamenFinal || !dictamenFinal.punto_destino_id) {
+    const puntoDestino = await getPuntoDestino(idPunto, '2');
+    if (!puntoDestino) {
       return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
     }
  
-    // El punto destino es donde se votó el dictamen
-    return await getVotacionPorPunto(String(dictamenFinal.punto_destino_id), res);
+    return await getVotacionPorPunto(puntoDestino, res);
  
   } catch (error: any) {
     console.error('Error getVotosDictamen:', error);
@@ -837,53 +831,22 @@ export const getVotosDictamen = async (req: Request, res: Response): Promise<Res
   }
 };
  
-// ─── GET VOTACIÓN DEL CIERRE ───────────────────────────────────────────────────
-// GET /iniciativa/:id/votos-cierre
-// Busca el estudio con status "3" (cierre) de la iniciativa y regresa su votación
+
 export const getVotosCierre = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { id } = req.params; // id de IniciativaPuntoOrden
+    const { id } = req.params;
  
-    // Obtener el punto de la iniciativa
-    const puntosIniciativa = await PuntosOrden.findAll({
-      include: [
-        {
-          model: require('../models/inciativas_puntos_ordens').default,
-          as: 'iniciativas',
-          where: { id },
-          required: true,
-        }
-      ]
-    });
- 
-    if (!puntosIniciativa.length) {
+    const idPunto = await getIdPuntoDeIniciativa(id);
+    if (!idPunto) {
       return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
     }
  
-    const idPunto = puntosIniciativa[0].id;
- 
-    // Buscar cierre con ese punto como origen
-    const cierreFinal = await IniciativaEstudio.findOne({
-      where: {
-        status:          '3',
-        punto_origen_id: idPunto,
-      },
-      include: [
-        {
-          model: PuntosOrden,
-          as: 'iniciativa',
-          attributes: ['id', 'punto', 'nopunto'],
-        }
-      ],
-      order: [['createdAt', 'DESC']],
-    });
- 
-    if (!cierreFinal || !cierreFinal.punto_destino_id) {
+    const puntoDestino = await getPuntoDestino(idPunto, '3');
+    if (!puntoDestino) {
       return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
     }
  
-    // El punto destino es donde se votó el cierre
-    return await getVotacionPorPunto(String(cierreFinal.punto_destino_id), res);
+    return await getVotacionPorPunto(puntoDestino, res);
  
   } catch (error: any) {
     console.error('Error getVotosCierre:', error);
