@@ -39,7 +39,8 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
   cargando = true;
   esComision = false;
   isUpdating = false;
-
+  evento: any = null;
+  punto: any = null;
   // Sesión simple
   votantes: Votante[] = [];
   columna1: Votante[] = [];
@@ -116,6 +117,9 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
   }
 
   private procesarRespuesta(response: any, forzar: boolean): void {
+    this.evento = response.evento || null;
+    this.punto = response.punto || null;
+
     const integrantes = response.integrantes || response.data || [];
 
     if (!integrantes.length) {
@@ -198,7 +202,7 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
 
     try {
       await this._eventoService.ActualizarTodosVotos({
-        idpunto: this.idIniciativa,
+        idpunto: this.punto?.id ?? this.idIniciativa, // usa punto.id
         idReserva: null,
         sentido
       }).toPromise();
