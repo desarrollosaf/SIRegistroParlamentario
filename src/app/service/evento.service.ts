@@ -251,4 +251,8 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarinter/${id}`)
   }
 
+  getVotantesIniciativa(idIniciativa: string): Observable<any> {
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/votos-cierre/${idIniciativa}`)
+  }
+
 }
