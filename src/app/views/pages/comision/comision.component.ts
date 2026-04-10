@@ -437,6 +437,59 @@ export class ComisionComponent {
     });
   }
 
+    eliminarAsistencia(idAgenda: string): void {
+    Swal.fire({
+      title: '¿Eliminar asistencia?',
+      text: 'Se eliminarán todos los registros de asistencia de este evento.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._eventoService.eliminarAsistencia(idAgenda).subscribe({
+          next: (res: any) => {
+            this.mostrarExito(res.msg || 'Asistencia eliminada correctamente');
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error al eliminar asistencia:', msg);
+            this.mostrarError('Error al eliminar la asistencia');
+          }
+        });
+      }
+    });
+  }
+ 
+  eliminarVotacion(idEvento: string): void {
+    Swal.fire({
+      title: '¿Eliminar votación?',
+      text: 'Se eliminarán todos los votos de puntos y temas de este evento.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._eventoService.eliminarVotacion(idEvento).subscribe({
+          next: (res: any) => {
+            this.mostrarExito(res.msg || 'Votación eliminada correctamente');
+          },
+          error: (e: HttpErrorResponse) => {
+            const msg = e.error?.msg || 'Error desconocido';
+            console.error('Error al eliminar votación:', msg);
+            this.mostrarError('Error al eliminar la votación');
+          }
+        });
+      }
+    });
+  }
+
+
 
   eliminarEvento(id: any) {
 
