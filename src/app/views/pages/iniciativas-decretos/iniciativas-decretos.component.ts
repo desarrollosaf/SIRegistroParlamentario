@@ -276,6 +276,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           this.listaIniciativas = response.data || response.iniciativas || response || [];
+          console.log(response)
           this.aplicarFiltros();
           this.cargando = false;
           this.cdr.markForCheck();
@@ -510,6 +511,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
 
 
 abrirVotacion(iniciativa: Iniciativa): void {
+  console.log(iniciativa);
   const urlActual = window.location.href.split('?')[0];
   const base = urlActual.endsWith('/') ? urlActual : urlActual + '/';
   window.open(`${base}votacion/${iniciativa.id}`, '_blank');

@@ -252,9 +252,10 @@ export class EventoService {
   }
 
   getVotantesIniciativa(idIniciativa: string): Observable<any> {
-    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/votos-cierre/${idIniciativa}`)
+    return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl3}/votos-cierre/${idIniciativa}`)
   }
-    eliminarAsistencia(idAgenda: string): Observable<any> {
+
+  eliminarAsistencia(idAgenda: string): Observable<any> {
     return this.http.delete(`${this.myAppUrl}${this.myAPIUrl3}/${idAgenda}/asistencia`);
   }
  

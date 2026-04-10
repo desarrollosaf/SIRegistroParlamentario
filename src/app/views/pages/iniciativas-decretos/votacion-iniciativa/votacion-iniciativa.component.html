@@ -283,11 +283,29 @@
     </ng-container>
 
     <!-- Sin datos -->
-    <div *ngIf="!esComision && votantes.length === 0 || esComision && listaComisiones.length === 0"
-      class="text-center py-5">
-      <i class="bi bi-people text-muted" style="font-size:3rem;"></i>
-      <p class="text-muted mt-3">No hay votantes registrados para esta iniciativa</p>
+<ng-container *ngIf="!cargando && sinVotantes">
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="text-center p-5">
+      <div class="mb-4" style="
+        width: 90px; height: 90px; margin: 0 auto;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+      ">
+        <i class="bi bi-slash-circle" style="font-size: 2.8rem; color: #9ca3af;"></i>
+      </div>
+      <h5 class="fw-bold mb-2" style="color: #374151;">Sin votaciones registradas</h5>
+      <p class="text-muted mb-0" style="font-size: 0.95rem; max-width: 280px; margin: 0 auto;">
+        No hay votantes registrados para esta iniciativa en este momento.
+      </p>
+    <button class="btn btn-sm mt-4"
+  style="background:#800048;color:white;border-radius:8px;padding:0.5rem 1.5rem;"
+  (click)="cerrarPestana()">
+  <i class="bi bi-x-lg me-1"></i> Cerrar pestaña
+</button>
     </div>
+  </div>
+</ng-container>
 
   </ng-container>
 </div>

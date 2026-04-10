@@ -47,11 +47,11 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
 
   // Comisiones múltiples
   listaComisiones: any[] = [];
-
+  sinVotantes = false;
   constructor(
     private aRouter: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.idIniciativa = this.aRouter.snapshot.paramMap.get('id') || '';
@@ -72,7 +72,18 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
+          const integrantes = response.integrantes || response.data || [];
+
+          if (!integrantes.length) {
+            this.cargando = false;
+            clearInterval(this.pollInterval);
+            this.mostrarMensajeYCerrar();
+            return;
+          }
+
+          this.sinVotantes = false;
           this.procesarRespuesta(response, inicial);
+
           if (inicial) {
             this.cargando = false;
             this.cdr.detectChanges();
@@ -80,12 +91,28 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
         },
         error: (e: HttpErrorResponse) => {
           if (inicial) {
-            console.error('Error al cargar votantes:', e);
             this.cargando = false;
+            clearInterval(this.pollInterval);
+            this.mostrarMensajeYCerrar();
             this.cdr.detectChanges();
           }
         }
       });
+  }
+
+  mostrarMensajeYCerrar(): void {
+    Swal.fire({
+      icon: 'info',
+      title: 'Sin votaciones',
+      text: 'No hay votantes registrados para esta iniciativa.',
+      confirmButtonColor: '#800048',
+      confirmButtonText: 'Cerrar',
+      timer: 3000,
+      timerProgressBar: true,
+      allowOutsideClick: false,
+    }).then(() => {
+      window.close();
+    });
   }
 
   private procesarRespuesta(response: any, forzar: boolean): void {
@@ -228,5 +255,9 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
       0: 'votacion-pendiente'
     };
     return map[sentido] ?? '';
+  }
+
+  cerrarPestana(): void {
+    window.close();
   }
 }
