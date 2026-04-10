@@ -592,7 +592,10 @@ const eliminarVotacion = (req, res) => __awaiter(void 0, void 0, void 0, functio
 exports.eliminarVotacion = eliminarVotacion;
 const getVotacionPorPunto = (idPunto, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const punto = yield puntos_ordens_1.default.findOne({ where: { id: idPunto } });
+    const punto = yield puntos_ordens_1.default.findOne({
+        where: { id: idPunto },
+        attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+    });
     if (!punto) {
         return res.status(404).json({ msg: 'Punto no encontrado' });
     }
@@ -610,9 +613,7 @@ const getVotacionPorPunto = (idPunto, res) => __awaiter(void 0, void 0, void 0, 
     const tipoEvento = esSesion ? 'sesion' : 'comision';
     const tipovento = esSesion ? 1 : 2;
     let mensajeRespuesta = 'Punto con votos existentes';
-    const votosExistentes = yield votos_punto_1.default.findOne({
-        where: { id_punto: idPunto },
-    });
+    const votosExistentes = yield votos_punto_1.default.findOne({ where: { id_punto: idPunto } });
     if (!votosExistentes) {
         const listadoDiputados = yield obtenerListadoDiputados(evento);
         const votospunto = listadoDiputados.map((dip) => ({
@@ -628,88 +629,71 @@ const getVotacionPorPunto = (idPunto, res) => __awaiter(void 0, void 0, void 0, 
         yield votos_punto_1.default.bulkCreate(votospunto);
         mensajeRespuesta = 'Votacion creada correctamente';
     }
-    const integrantes = yield obtenerResultadosVotacionOptimizado(null, // tema = null (directo por punto)
-    idPunto, tipoEvento);
+    const integrantes = yield obtenerResultadosVotacionOptimizado(null, idPunto, tipoEvento);
     return res.status(200).json({
         msg: mensajeRespuesta,
+        // ── Información del punto destino (donde se votó) ──
+        punto: {
+            id: punto.id,
+            nopunto: punto.nopunto,
+            punto: punto.punto,
+        },
         evento,
         integrantes,
         tipovento,
     });
 });
-// ─── GET VOTACIÓN DEL DICTAMEN ─────────────────────────────────────────────────
-// GET /iniciativa/:id/votos-dictamen
-// Busca el estudio con status "2" (dictamen) de la iniciativa y regresa su votación
+const getPuntoDestino = (idPunto, status) => __awaiter(void 0, void 0, void 0, function* () {
+    // Type 1: búsqueda directa
+    const estudioType1 = yield iniciativas_estudio_1.default.findOne({
+        where: { status, punto_origen_id: idPunto, type: 1 },
+        order: [['createdAt', 'DESC']],
+    });
+    if (estudioType1 === null || estudioType1 === void 0 ? void 0 : estudioType1.punto_destino_id) {
+        return String(estudioType1.punto_destino_id);
+    }
+    // Type 2: búsqueda por expediente
+    const expedientes = yield expedientes_estudio_puntos_1.default.findAll({
+        where: { punto_origen_sesion_id: idPunto },
+        attributes: ['expediente_id'],
+    });
+    const expedienteIds = [
+        ...new Set(expedientes.map((e) => e.expediente_id).filter(Boolean))
+    ];
+    if (expedienteIds.length === 0)
+        return null;
+    const estudioType2 = yield iniciativas_estudio_1.default.findOne({
+        where: {
+            status,
+            type: 2,
+            punto_origen_id: { [sequelize_1.Op.in]: expedienteIds },
+        },
+        order: [['createdAt', 'DESC']],
+    });
+    if (estudioType2 === null || estudioType2 === void 0 ? void 0 : estudioType2.punto_destino_id) {
+        return String(estudioType2.punto_destino_id);
+    }
+    return null;
+});
+const getIdPuntoDeIniciativa = (idIniciativa) => __awaiter(void 0, void 0, void 0, function* () {
+    const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
+        where: { id: idIniciativa },
+        attributes: ['id_punto'],
+    });
+    return (iniciativa === null || iniciativa === void 0 ? void 0 : iniciativa.id_punto) ? String(iniciativa.id_punto) : null;
+});
 const getVotosDictamen = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params; // id de IniciativaPuntoOrden
-        // Buscar el dictamen (status "2") relacionado al punto de esta iniciativa
-        const dictamen = yield iniciativas_estudio_1.default.findOne({
-            where: { status: '2' },
-            include: [
-                {
-                    model: puntos_ordens_1.default,
-                    as: 'iniciativa',
-                    required: true,
-                    include: [
-                        {
-                            model: puntos_ordens_1.default,
-                            as: 'punto', // punto origen de la iniciativa
-                            required: true,
-                            where: {},
-                        }
-                    ]
-                }
-            ]
-        });
-        // Buscar directamente por punto_origen_id ligado a la iniciativa
-        const iniciativaEstudio = yield iniciativas_estudio_1.default.findOne({
-            where: { status: '2' },
-            include: [
-                {
-                    model: puntos_ordens_1.default,
-                    as: 'iniciativa',
-                    required: true,
-                }
-            ],
-            // Filtramos por el punto que pertenece a la iniciativa dada
-            order: [['createdAt', 'DESC']],
-        });
-        // Obtener el punto de la iniciativa para filtrar estudios relacionados
-        const puntosIniciativa = yield puntos_ordens_1.default.findAll({
-            include: [
-                {
-                    model: require('../models/inciativas_puntos_ordens').default,
-                    as: 'iniciativas',
-                    where: { id },
-                    required: true,
-                }
-            ]
-        });
-        if (!puntosIniciativa.length) {
+        const { id } = req.params;
+        const idPunto = yield getIdPuntoDeIniciativa(id);
+        if (!idPunto) {
             return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
         }
-        const idPunto = puntosIniciativa[0].id;
-        // Buscar dictamen con ese punto como origen
-        const dictamenFinal = yield iniciativas_estudio_1.default.findOne({
-            where: {
-                status: '2',
-                punto_origen_id: idPunto,
-            },
-            include: [
-                {
-                    model: puntos_ordens_1.default,
-                    as: 'iniciativa',
-                    attributes: ['id', 'punto', 'nopunto'],
-                }
-            ],
-            order: [['createdAt', 'DESC']],
-        });
-        if (!dictamenFinal || !dictamenFinal.punto_destino_id) {
+        const puntoDestino = yield getPuntoDestino(idPunto, '2');
+        if (!puntoDestino) {
             return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
         }
-        // El punto destino es donde se votó el dictamen
-        return yield getVotacionPorPunto(String(dictamenFinal.punto_destino_id), res);
+        return yield getVotacionPorPunto(puntoDestino, res);
     }
     catch (error) {
         console.error('Error getVotosDictamen:', error);
@@ -717,47 +701,18 @@ const getVotosDictamen = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getVotosDictamen = getVotosDictamen;
-// ─── GET VOTACIÓN DEL CIERRE ───────────────────────────────────────────────────
-// GET /iniciativa/:id/votos-cierre
-// Busca el estudio con status "3" (cierre) de la iniciativa y regresa su votación
 const getVotosCierre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id } = req.params; // id de IniciativaPuntoOrden
-        // Obtener el punto de la iniciativa
-        const puntosIniciativa = yield puntos_ordens_1.default.findAll({
-            include: [
-                {
-                    model: require('../models/inciativas_puntos_ordens').default,
-                    as: 'iniciativas',
-                    where: { id },
-                    required: true,
-                }
-            ]
-        });
-        if (!puntosIniciativa.length) {
+        const { id } = req.params;
+        const idPunto = yield getIdPuntoDeIniciativa(id);
+        if (!idPunto) {
             return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
         }
-        const idPunto = puntosIniciativa[0].id;
-        // Buscar cierre con ese punto como origen
-        const cierreFinal = yield iniciativas_estudio_1.default.findOne({
-            where: {
-                status: '3',
-                punto_origen_id: idPunto,
-            },
-            include: [
-                {
-                    model: puntos_ordens_1.default,
-                    as: 'iniciativa',
-                    attributes: ['id', 'punto', 'nopunto'],
-                }
-            ],
-            order: [['createdAt', 'DESC']],
-        });
-        if (!cierreFinal || !cierreFinal.punto_destino_id) {
+        const puntoDestino = yield getPuntoDestino(idPunto, '3');
+        if (!puntoDestino) {
             return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
         }
-        // El punto destino es donde se votó el cierre
-        return yield getVotacionPorPunto(String(cierreFinal.punto_destino_id), res);
+        return yield getVotacionPorPunto(puntoDestino, res);
     }
     catch (error) {
         console.error('Error getVotosCierre:', error);
