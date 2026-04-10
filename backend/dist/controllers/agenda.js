@@ -2662,7 +2662,7 @@ const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void
         }
         yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
             body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
             priority: "1",
             referenceId: "",
@@ -2717,7 +2717,7 @@ const enviarWhatsPunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
         const params = {
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
             body: mensaje,
             priority: "1",
             referenceId: "",
@@ -4339,7 +4339,7 @@ const enviarWhatsVotacionPDF = (req, res) => __awaiter(void 0, void 0, void 0, f
         console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
         const formData = new URLSearchParams();
         formData.append('token', 'ml56a7d6tn7ha7cc');
-        formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442');
+        formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127');
         // formData.append('to', '+525561081154');
         formData.append('filename', fileName);
         formData.append('document', base64PDF);
@@ -4821,6 +4821,77 @@ function getAsistenciaTexto(sentido) {
         default: return 'PENDIENTE';
     }
 }
+const escribirTextoConSaltoPagina = (doc, tableW, drawBackground, texto, x, y, width, align, continuacionLabel) => {
+    const lineHeight = 10;
+    const maxY = doc.page.height - 110;
+    // ✅ Setear font UNA vez antes de medir
+    doc.fontSize(8).font('Helvetica');
+    // Construir líneas midiendo cada palabra
+    const words = texto.split(' ').filter((w) => w.length > 0);
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+        const test = currentLine ? `${currentLine} ${word}` : word;
+        const testW = doc.widthOfString(test);
+        if (testW > width && currentLine !== '') {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+        else {
+            currentLine = test;
+        }
+    }
+    if (currentLine)
+        lines.push(currentLine);
+    let curY = y;
+    for (let i = 0; i < lines.length; i++) {
+        // ✅ Salto de página ANTES de dibujar la línea
+        if (curY + lineHeight > maxY) {
+            doc.addPage();
+            drawBackground();
+            curY = 106;
+            doc.rect(30, curY, tableW, 20).fill('#7a7a7a');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                .text(continuacionLabel, 35, curY + 5, {
+                width: tableW - 10,
+                align: 'center',
+                lineBreak: false,
+            });
+            curY += 26;
+            // ✅ Re-setear font después del salto
+            doc.fontSize(8).font('Helvetica');
+        }
+        const isLastLine = i === lines.length - 1;
+        const line = lines[i];
+        if (align === 'justify' && !isLastLine) {
+            const lineWords = line.split(' ');
+            if (lineWords.length === 1) {
+                // Una sola palabra: left
+                doc.fillColor('#000').text(line, x, curY, { lineBreak: false });
+            }
+            else {
+                // ✅ Medir todas las palabras juntas ANTES de posicionar
+                doc.fontSize(8).font('Helvetica');
+                const wordWidths = lineWords.map((w) => doc.widthOfString(w));
+                const totalWordsWidth = wordWidths.reduce((a, b) => a + b, 0);
+                const spaceWidth = Math.max(1, (width - totalWordsWidth) / (lineWords.length - 1));
+                let wordX = x;
+                lineWords.forEach((word, wi) => {
+                    doc.fontSize(8).font('Helvetica').fillColor('#000')
+                        .text(word, wordX, curY, { lineBreak: false });
+                    wordX += wordWidths[wi] + spaceWidth;
+                });
+            }
+        }
+        else {
+            // Última línea o left
+            doc.fontSize(8).font('Helvetica').fillColor('#000')
+                .text(line, x, curY, { width, align: 'left', lineBreak: false });
+        }
+        curY += lineHeight;
+    }
+    return curY;
+};
 const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
@@ -4836,6 +4907,49 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
             where: { id_evento: id },
             order: [['nopunto', 'ASC']],
         });
+        // Intervenciones agrupadas por punto, ordenadas por createdAt
+        const intervencionesRaw = yield intervenciones_1.default.findAll({
+            where: { id_evento: id },
+            order: [['createdAt', 'ASC']],
+            include: [
+                {
+                    model: tipo_intervencions_1.default,
+                    as: 'tipointerven',
+                    attributes: ['id', 'valor'],
+                },
+            ],
+        });
+        const intervenciones = yield Promise.all(intervencionesRaw.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c;
+            const diputado = yield diputado_1.default.findOne({
+                where: { id: inte.id_diputado },
+                attributes: ['apaterno', 'amaterno', 'nombres'],
+                raw: true,
+            });
+            return {
+                id: inte.id,
+                id_punto: inte.id_punto,
+                mensaje: inte.mensaje,
+                resumen: inte.resumen,
+                tipo: inte.tipo,
+                destacado: inte.destacado,
+                tipointerven: inte.tipointerven,
+                liga: inte.liga,
+                diputado: diputado
+                    ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ''}`.trim()
+                    : 'Sin nombre',
+            };
+        })));
+        // Agrupar por id_punto
+        const intervencionesPorPunto = intervenciones
+            .filter((i) => i.id_punto) // ✅ solo las que tienen punto
+            .reduce((grupos, inte) => {
+            const key = inte.id_punto;
+            if (!grupos[key])
+                grupos[key] = [];
+            grupos[key].push(inte);
+            return grupos;
+        }, {});
         if (!evento)
             return res.status(404).json({ msg: 'Evento no encontrado' });
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === 'Sesión';
@@ -5155,6 +5269,151 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
                 });
                 doc.y = currentY + 10;
             }
+            // ===== INTERVENCIONES =====
+            if (intervenciones.length > 0) {
+                if (doc.y > 600) {
+                    doc.addPage();
+                    drawBackground();
+                    doc.y = 106;
+                }
+                doc.y += 10;
+                const tableW = doc.page.width - 60;
+                // Header principal vino
+                const intTitY = doc.y;
+                doc.rect(30, intTitY, tableW, 22).fill('#96134b');
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
+                    .text('INTERVENCIONES', 30, intTitY + 5, { width: tableW, align: 'center' });
+                doc.y = intTitY + 22;
+                // ——— Helper renderFichas ———
+                const labelX = 40;
+                const labelW = 55;
+                const valorX = labelX + labelW;
+                const valorW = tableW - valorX - 10;
+                const padding = 8;
+                const rowGap = 6;
+                const renderFichas = (lista, subheaderLabel, continuacionLabel) => {
+                    if (lista.length === 0)
+                        return;
+                    if (subheaderLabel) {
+                        if (doc.y > 650) {
+                            doc.addPage();
+                            drawBackground();
+                            doc.y = 106;
+                        }
+                        const subY = doc.y;
+                        doc.rect(30, subY, tableW, 20).fill('#7a7a7a');
+                        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                            .text(subheaderLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
+                        doc.y = subY + 20;
+                    }
+                    lista.forEach((inte, index) => {
+                        var _a;
+                        const cleanText = (val) => String(val || '')
+                            .normalize('NFC')
+                            .replace(/[\r\n\t]+/g, ' ')
+                            .replace(/[^\x20-\x7E\xA0-\xFF\u00C0-\u024F]/g, '')
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                        const filas = [
+                            { label: 'Diputado:', texto: cleanText(inte.diputado) },
+                            { label: 'Tipo:', texto: cleanText((_a = inte.tipointerven) === null || _a === void 0 ? void 0 : _a.valor) },
+                            ...(cleanText(inte.resumen) ? [{ label: 'Resumen:', texto: cleanText(inte.resumen) }] : []),
+                            ...(cleanText(inte.mensaje) ? [{ label: 'Mensaje:', texto: cleanText(inte.mensaje) }] : []),
+                        ];
+                        // ── Calcular altura total para decidir si salta ──
+                        doc.fontSize(8).font('Helvetica');
+                        let alturaTotal = padding * 2;
+                        filas.forEach((fila) => {
+                            const words = fila.texto.split(' ').filter((w) => w.length > 0);
+                            const lines = [];
+                            let cur = '';
+                            for (const word of words) {
+                                const test = cur ? `${cur} ${word}` : word;
+                                if (doc.widthOfString(test) > valorW && cur !== '') {
+                                    lines.push(cur);
+                                    cur = word;
+                                }
+                                else {
+                                    cur = test;
+                                }
+                            }
+                            if (cur)
+                                lines.push(cur);
+                            alturaTotal += lines.length * 10 + rowGap;
+                        });
+                        const maxY = doc.page.height - 110;
+                        // ── Saltar página si no cabe ni el inicio de la ficha ──
+                        if (doc.y + 60 > maxY) {
+                            doc.addPage();
+                            drawBackground();
+                            doc.y = 106;
+                            doc.rect(30, doc.y, tableW, 20).fill('#7a7a7a');
+                            doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                                .text(continuacionLabel, 35, doc.y + 5, { width: tableW - 10, align: 'center', lineBreak: false });
+                            doc.y += 26;
+                        }
+                        let textY = doc.y + padding;
+                        const fichaStartY = textY; // ← para la línea lateral
+                        // ── Dibujar filas ──
+                        filas.forEach((fila) => {
+                            const isJustify = fila.label === 'Resumen:' || fila.label === 'Mensaje:';
+                            doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
+                                .text(fila.label, labelX, textY, { width: labelW, lineBreak: false });
+                            const yFinal = escribirTextoConSaltoPagina(doc, tableW, drawBackground, fila.texto, valorX, textY, valorW, isJustify ? 'justify' : 'left', continuacionLabel);
+                            textY = yFinal + rowGap;
+                        });
+                        // ── Línea lateral izquierda (sin rect de fondo) ──
+                        // doc.moveTo(32, fichaStartY)
+                        //   .lineTo(32, textY)
+                        //   .lineWidth(3)
+                        //   .stroke(index % 2 === 0 ? '#96134b' : '#d4d4d4');
+                        // doc.lineWidth(1);
+                        // ── Separador inferior ──
+                        doc.save();
+                        doc.moveTo(30, textY)
+                            .lineTo(30 + tableW, textY)
+                            .lineWidth(0.5)
+                            .strokeColor('#e0e0e0')
+                            .stroke();
+                        doc.restore();
+                        doc.y = textY + 4;
+                    });
+                    doc.y += 8;
+                };
+                // Generales (sin id_punto)
+                const intervencionesGenerales = intervenciones.filter((i) => !i.id_punto || i.id_punto === null);
+                renderFichas(intervencionesGenerales, 'INTERVENCIONES GENERALES', 'INTERVENCIONES GENERALES (continuación)');
+                // Por punto en orden
+                puntosRaw.forEach((punto) => {
+                    const ptoIntervenciones = intervencionesPorPunto[punto.id] || [];
+                    if (ptoIntervenciones.length === 0)
+                        return;
+                    const textoSubheader = String(punto.punto || '')
+                        .replace(/[\r\n\t]+/g, ' ')
+                        .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                    const subLabel = `PUNTO ${punto.nopunto} — ${textoSubheader}`;
+                    doc.fontSize(9).font('Helvetica-Bold');
+                    const subHeaderH = doc.heightOfString(subLabel, { width: tableW - 20 }) + 10;
+                    if (doc.y + subHeaderH + 36 > doc.page.height - 50) {
+                        doc.addPage();
+                        drawBackground();
+                        doc.y = 106;
+                        const rY = doc.y;
+                        doc.rect(30, rY, tableW, 22).fill('#96134b');
+                        doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
+                            .text('INTERVENCIONES', 30, rY + 5, { width: tableW, align: 'center' });
+                        doc.y = rY + 22;
+                    }
+                    const subY = doc.y;
+                    doc.rect(30, subY, tableW, subHeaderH).fill('#7a7a7a');
+                    doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+                        .text(subLabel, 35, subY + 5, { width: tableW - 10, align: 'center' });
+                    doc.y = subY + subHeaderH;
+                    renderFichas(ptoIntervenciones, '', `PUNTO ${punto.nopunto} (continuación)`);
+                });
+            }
         }
         doc.end();
         yield new Promise((resolve, reject) => {
@@ -5201,8 +5460,8 @@ const enviarWhatsAsistenciaPDF = (req, res) => __awaiter(void 0, void 0, void 0,
         const base64PDF = pdfBuffer.toString('base64');
         const params = {
             token: 'ml56a7d6tn7ha7cc',
-            to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442',
-            // to:       '+525561081154 ,',
+            // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
+            to: '+525561081154 ,',
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto,
@@ -5544,7 +5803,7 @@ const enviarNotInicioEvento = (req, res) => __awaiter(void 0, void 0, void 0, fu
         const params = {
             token: 'ml56a7d6tn7ha7cc',
             to: "+527222035605,",
-            // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+            // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
             filename: fileName,
             document: base64PDF,
             caption: mensajeTexto
