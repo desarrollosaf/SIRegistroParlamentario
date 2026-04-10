@@ -22,6 +22,8 @@ import fs from "fs";
 import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import AsistenciaVoto from "../models/asistencia_votos";
+import TipoCargoComision from "../models/tipo_cargo_comisions";
+import Sedes from "../models/sedes";
 
 
 type ReporteBaseItem = {
@@ -685,3 +687,376 @@ export const eliminarVotacion = async (req: Request, res: Response) => {
     return res.status(500).json({ ok: false, msg: 'Error al eliminar la votación' });
   }
 };
+
+
+
+const getVotacionPorPunto = async (idPunto: string, res: Response): Promise<Response> => {
+  const punto = await PuntosOrden.findOne({
+    where: { id: idPunto },
+    attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+  });
+ 
+  if (!punto) {
+    return res.status(404).json({ msg: 'Punto no encontrado' });
+  }
+ 
+  const evento = await Agenda.findOne({
+    where: { id: punto.id_evento },
+    include: [
+      { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
+      { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
+    ],
+  });
+ 
+  if (!evento) {
+    return res.status(404).json({ msg: 'Evento no encontrado' });
+  }
+ 
+  const esSesion   = evento.tipoevento?.nombre === 'Sesión';
+  const tipoEvento = esSesion ? 'sesion' : 'comision';
+  const tipovento  = esSesion ? 1 : 2;
+ 
+  let mensajeRespuesta = 'Punto con votos existentes';
+ 
+  const votosExistentes = await VotosPunto.findOne({ where: { id_punto: idPunto } });
+ 
+  if (!votosExistentes) {
+    const listadoDiputados = await obtenerListadoDiputados(evento);
+    const votospunto = listadoDiputados.map((dip: any) => ({
+      sentido:            0,
+      mensaje:            'PENDIENTE',
+      id_punto:           idPunto,
+      id_tema_punto_voto: null,
+      id_diputado:        dip.id_diputado,
+      id_partido:         dip.id_partido,
+      id_comision_dip:    dip.comision_dip_id,
+      id_cargo_dip:       dip.id_cargo_dip,
+    }));
+    await VotosPunto.bulkCreate(votospunto);
+    mensajeRespuesta = 'Votacion creada correctamente';
+  }
+ 
+  const integrantes = await obtenerResultadosVotacionOptimizado(
+    null,
+    idPunto,
+    tipoEvento
+  );
+ 
+  return res.status(200).json({
+    msg: mensajeRespuesta,
+    // ── Información del punto destino (donde se votó) ──
+    punto: {
+      id:      punto.id,
+      nopunto: punto.nopunto,
+      punto:   punto.punto,
+    },
+    evento,
+    integrantes,
+    tipovento,
+  });
+};
+ 
+
+const getPuntoDestino = async (
+  idPunto: string,
+  status: '2' | '3'
+): Promise<string | null> => {
+ 
+  // Type 1: búsqueda directa
+  const estudioType1 = await IniciativaEstudio.findOne({
+    where: { status, punto_origen_id: idPunto, type: 1 },
+    order: [['createdAt', 'DESC']],
+  });
+ 
+  if (estudioType1?.punto_destino_id) {
+    return String(estudioType1.punto_destino_id);
+  }
+ 
+  // Type 2: búsqueda por expediente
+  const expedientes = await ExpedienteEstudiosPuntos.findAll({
+    where: { punto_origen_sesion_id: idPunto },
+    attributes: ['expediente_id'],
+  });
+ 
+  const expedienteIds = [
+    ...new Set(expedientes.map((e: any) => e.expediente_id).filter(Boolean))
+  ];
+ 
+  if (expedienteIds.length === 0) return null;
+ 
+  const estudioType2 = await IniciativaEstudio.findOne({
+    where: {
+      status,
+      type: 2,
+      punto_origen_id: { [Op.in]: expedienteIds },
+    },
+    order: [['createdAt', 'DESC']],
+  });
+ 
+  if (estudioType2?.punto_destino_id) {
+    return String(estudioType2.punto_destino_id);
+  }
+ 
+  return null;
+};
+ 
+
+const getIdPuntoDeIniciativa = async (idIniciativa: string): Promise<string | null> => {
+  const iniciativa = await IniciativaPuntoOrden.findOne({
+    where: { id: idIniciativa },
+    attributes: ['id_punto'],
+  });
+  return iniciativa?.id_punto ? String(iniciativa.id_punto) : null;
+};
+ 
+export const getVotosDictamen = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+ 
+    const idPunto = await getIdPuntoDeIniciativa(id);
+    if (!idPunto) {
+      return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
+    }
+ 
+    const puntoDestino = await getPuntoDestino(idPunto, '2');
+    if (!puntoDestino) {
+      return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
+    }
+ 
+    return await getVotacionPorPunto(puntoDestino, res);
+ 
+  } catch (error: any) {
+    console.error('Error getVotosDictamen:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+ 
+
+export const getVotosCierre = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+ 
+    const idPunto = await getIdPuntoDeIniciativa(id);
+    if (!idPunto) {
+      return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
+    }
+ 
+    const puntoDestino = await getPuntoDestino(idPunto, '3');
+    if (!puntoDestino) {
+      return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+    }
+ 
+    return await getVotacionPorPunto(puntoDestino, res);
+ 
+  } catch (error: any) {
+    console.error('Error getVotosCierre:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+async function obtenerListadoDiputados(evento: any) {
+  const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null }[] = [];
+  
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const diputados = await AsistenciaVoto.findAll({
+      where: {
+        id_agenda: evento.id,
+      }
+    });
+    for (const inteLegis of diputados) {
+            listadoDiputados.push({
+            id_diputado: inteLegis.id_diputado,
+            id_partido: inteLegis.partido_dip,
+            comision_dip_id: inteLegis.comision_dip_id,
+            id_cargo_dip: inteLegis.id_cargo_dip,
+          });
+    }
+  return listadoDiputados;
+}
+
+interface ResultadoVotacion {
+  id: string;
+  sentido: number;
+  mensaje: string;
+  id_diputado: string;
+  id_partido: string;
+  id_comision_dip: string | null;
+  id_cargo_dip: string | null;
+  diputado: string | null;
+  partido: string | null;
+  comision_nombre?: string;
+  comision_importancia?: string;
+  cargo?: string;
+  nivel_cargo?: number;
+}
+
+interface ComisionAgrupada {
+  comision_id: string | null;
+  comision_nombre: string | null;
+  importancia: string | null;
+  integrantes: ResultadoVotacion[];
+}
+
+
+async function obtenerResultadosVotacionOptimizado(
+  idTemaPuntoVoto: string | null,
+  idPunto: string | null,
+  tipoEvento: 'sesion' | 'comision'
+): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
+    
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const whereConditions: any = {};
+    
+    if (idTemaPuntoVoto) {
+      whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
+    } else if (idPunto) {
+      whereConditions.id_punto = idPunto;
+    } else {
+      return []; // No hay nada que buscar
+    }
+
+    const votosRaw = await VotosPunto.findAll({
+      where: whereConditions,
+      raw: true,
+    });
+    
+    if (votosRaw.length === 0) {
+      return [];
+    }
+
+  const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
+  const diputados = await Diputado.findAll({
+    where: { id: diputadoIds },
+    attributes: ["id", "apaterno", "amaterno", "nombres"],
+    raw: true,
+    paranoid: false
+  });
+  const diputadosMap = new Map(
+    diputados.map(d => [d.id, d])
+  );
+
+  const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
+  const partidos = await Partidos.findAll({
+    where: { id: partidoIds },
+    attributes: ["id", "siglas"],
+    raw: true,
+  });
+  const partidosMap = new Map(
+    partidos.map(p => [p.id, p])
+  );
+
+  let comisionesMap = new Map();
+  let cargosMap = new Map();
+  
+  if (tipoEvento === 'comision') {
+    const comisionIds = votosRaw
+      .map(v => v.id_comision_dip)
+      .filter(Boolean);
+    
+    if (comisionIds.length > 0) {
+      const comisiones = await Comision.findAll({
+        where: { id: comisionIds },
+        attributes: ["id", "nombre", "importancia"],
+        raw: true,
+      });
+      comisionesMap = new Map(
+        comisiones.map(c => [c.id, c])
+      );
+    }
+
+    const cargoIds = votosRaw  
+      .map(v => v.id_cargo_dip)
+      .filter(Boolean);
+    
+    if (cargoIds.length > 0) {
+      const cargos = await TipoCargoComision.findAll({
+        where: { id: cargoIds },
+        attributes: ["id", "valor", "nivel"],
+        raw: true,
+      });
+      cargosMap = new Map(
+        cargos.map(c => [c.id, c] )
+      );
+    }
+  }
+
+  const resultados: ResultadoVotacion[] = votosRaw.map((voto) => {
+    const diputado = diputadosMap.get(voto.id_diputado);
+    const partido = partidosMap.get(voto.id_partido);
+    const comision = comisionesMap.get(voto.id_comision_dip);
+    const cargo = cargosMap.get(voto.id_cargo_dip);
+    
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    const resultado: ResultadoVotacion = {
+      id: voto.id,
+      sentido: voto.sentido,
+      mensaje: voto.mensaje,
+      id_diputado: voto.id_diputado,
+      id_partido: voto.id_partido,
+      id_comision_dip: voto.id_comision_dip,
+      id_cargo_dip: voto.id_cargo_dip,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+    };
+
+    if (tipoEvento === 'comision') {
+      resultado.comision_nombre = comision?.nombre || null;
+      resultado.comision_importancia = comision?.importancia || null;
+      resultado.cargo = cargo?.valor || null;
+      resultado.nivel_cargo = cargo?.nivel || 999;
+    }
+
+    return resultado;
+  });
+
+
+  if (tipoEvento === 'sesion') {
+   
+    resultados.sort((a, b) => {
+      const nombreA = a.diputado || '';
+      const nombreB = b.diputado || '';
+      return nombreA.localeCompare(nombreB, 'es');
+    });
+    return resultados;
+    
+  } else {
+    resultados.sort((a, b) => {
+      const nivelA = a.nivel_cargo || 999;
+      const nivelB = b.nivel_cargo || 999;
+      return nivelA - nivelB;
+    });
+
+    const agrupados = resultados.reduce((acc, voto) => {
+      const comisionId = voto.id_comision_dip || 'sin_comision';
+      
+      if (!acc[comisionId]) {
+        acc[comisionId] = {
+          comision_id: voto.id_comision_dip,
+          comision_nombre: voto.comision_nombre || null,
+          importancia: voto.comision_importancia || null,
+          integrantes: [],
+        };
+      }
+      
+      acc[comisionId].integrantes.push(voto);
+      return acc;
+    }, {} as Record<string, ComisionAgrupada>);
+
+    const resultado = Object.values(agrupados).sort((a, b) => {
+      const importanciaA = parseInt(a.importancia || '999');
+      const importanciaB = parseInt(b.importancia || '999');
+      return importanciaA - importanciaB;
+    });
+
+    return resultado;
+  }
+}
