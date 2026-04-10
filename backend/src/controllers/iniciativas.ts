@@ -19,6 +19,9 @@ import { Op } from "sequelize";
 import Decreto from "../models/decreto";
 import path from "path";
 import fs from "fs";
+import TemasPuntosVotos from "../models/temas_puntos_votos";
+import VotosPunto from "../models/votos_punto";
+import AsistenciaVoto from "../models/asistencia_votos";
 
 
 type ReporteBaseItem = {
@@ -591,5 +594,94 @@ export const publicarAgenda = async (req: Request, res: Response): Promise<any> 
   } catch (error: any) {
     console.error('Error al actualizar iniciativa:', error);
     return res.status(500).json({ message: 'Error interno', error: error.message });
+  }
+};
+
+export const eliminarAsistencia = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+ 
+    const total = await AsistenciaVoto.count({
+      where: { id_agenda: id, deletedAt: null },
+    });
+ 
+    if (total === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: 'No hay registros de asistencia para este evento',
+      });
+    }
+    await AsistenciaVoto.destroy({
+      where: { id_agenda: id },
+    });
+ 
+    return res.status(200).json({
+      ok: true,
+      msg: `Se eliminaron ${total} registros de asistencia`,
+      eliminados: total,
+    });
+ 
+  } catch (error) {
+    console.error('Error eliminarAsistencia:', error);
+    return res.status(500).json({ ok: false, msg: 'Error al eliminar la asistencia' });
+  }
+};
+ 
+
+
+
+
+export const eliminarVotacion = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+ 
+    let totalVotos = 0;
+ 
+    // ── 1. Votos de temas directos del evento (sin punto) 
+    const temasEvento = await TemasPuntosVotos.findAll({
+      where: { id_evento: id, deletedAt: null },
+    });
+ 
+    for (const tema of temasEvento) {
+      const eliminados = await VotosPunto.destroy({
+        where: { id_tema_punto_voto: tema.id },
+      });
+      totalVotos += eliminados;
+    }
+ 
+    // ── 2. Puntos del evento 
+    const puntos = await PuntosOrden.findAll({
+      where: { id_evento: id, deletedAt: null },
+    });
+ 
+    for (const punto of puntos) {
+      // 2a. Votos directos del punto (sin tema)
+      const votosPuntoDirecto = await VotosPunto.destroy({
+        where: { id_punto: punto.id },
+      });
+      totalVotos += votosPuntoDirecto;
+ 
+      // 2b. Temas del punto → sus votos
+      const temasPunto = await TemasPuntosVotos.findAll({
+        where: { id_punto: punto.id, deletedAt: null },
+      });
+ 
+      for (const tema of temasPunto) {
+        const votosTema = await VotosPunto.destroy({
+          where: { id_tema_punto_voto: tema.id },
+        });
+        totalVotos += votosTema;
+      }
+    }
+ 
+    return res.status(200).json({
+      ok: true,
+      msg: 'Votación eliminada correctamente',
+      votos_eliminados: totalVotos,
+    });
+ 
+  } catch (error) {
+    console.error('Error eliminarVotacion:', error);
+    return res.status(500).json({ ok: false, msg: 'Error al eliminar la votación' });
   }
 };

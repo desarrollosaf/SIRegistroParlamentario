@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -31,6 +31,9 @@ const sequelize_1 = require("sequelize");
 const decreto_1 = __importDefault(require("../models/decreto"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
+const votos_punto_1 = __importDefault(require("../models/votos_punto"));
+const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativasRaw = yield construirReporteBase();
@@ -511,3 +514,77 @@ const publicarAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.publicarAgenda = publicarAgenda;
+const eliminarAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const total = yield asistencia_votos_1.default.count({
+            where: { id_agenda: id, deletedAt: null },
+        });
+        if (total === 0) {
+            return res.status(404).json({
+                ok: false,
+                msg: 'No hay registros de asistencia para este evento',
+            });
+        }
+        yield asistencia_votos_1.default.destroy({
+            where: { id_agenda: id },
+        });
+        return res.status(200).json({
+            ok: true,
+            msg: `Se eliminaron ${total} registros de asistencia`,
+            eliminados: total,
+        });
+    }
+    catch (error) {
+        console.error('Error eliminarAsistencia:', error);
+        return res.status(500).json({ ok: false, msg: 'Error al eliminar la asistencia' });
+    }
+});
+exports.eliminarAsistencia = eliminarAsistencia;
+const eliminarVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        let totalVotos = 0;
+        // ── 1. Votos de temas directos del evento (sin punto) 
+        const temasEvento = yield temas_puntos_votos_1.default.findAll({
+            where: { id_evento: id, deletedAt: null },
+        });
+        for (const tema of temasEvento) {
+            const eliminados = yield votos_punto_1.default.destroy({
+                where: { id_tema_punto_voto: tema.id },
+            });
+            totalVotos += eliminados;
+        }
+        // ── 2. Puntos del evento 
+        const puntos = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id, deletedAt: null },
+        });
+        for (const punto of puntos) {
+            // 2a. Votos directos del punto (sin tema)
+            const votosPuntoDirecto = yield votos_punto_1.default.destroy({
+                where: { id_punto: punto.id },
+            });
+            totalVotos += votosPuntoDirecto;
+            // 2b. Temas del punto → sus votos
+            const temasPunto = yield temas_puntos_votos_1.default.findAll({
+                where: { id_punto: punto.id, deletedAt: null },
+            });
+            for (const tema of temasPunto) {
+                const votosTema = yield votos_punto_1.default.destroy({
+                    where: { id_tema_punto_voto: tema.id },
+                });
+                totalVotos += votosTema;
+            }
+        }
+        return res.status(200).json({
+            ok: true,
+            msg: 'Votación eliminada correctamente',
+            votos_eliminados: totalVotos,
+        });
+    }
+    catch (error) {
+        console.error('Error eliminarVotacion:', error);
+        return res.status(500).json({ ok: false, msg: 'Error al eliminar la votación' });
+    }
+});
+exports.eliminarVotacion = eliminarVotacion;
