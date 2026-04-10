@@ -1,0 +1,293 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<div class="container-fluid py-4">
+
+  <!-- Overlay actualizando -->
+  <div *ngIf="isUpdating" class="spinner-overlay">
+    <div class="spinner-container">
+      <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem;">
+        <span class="visually-hidden">Actualizando...</span>
+      </div>
+      <p class="mt-3 text-white fw-bold">Actualizando votaciones...</p>
+    </div>
+  </div>
+
+  <!-- Carga inicial -->
+  <div *ngIf="cargando" class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+    <p class="mt-3 text-muted">Cargando votantes...</p>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+
+    <!-- ══ SESIÓN SIMPLE ══ -->
+    <ng-container *ngIf="!esComision">
+
+      <!-- Contadores -->
+      <div class="row g-2 mb-4 small-cards justify-content-center">
+        <div class="col-6 col-sm-4 col-md-2">
+          <div class="card stats-card stats-total-votacion p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-people-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Total</p>
+                  <h5 class="mb-0 fw-bold">{{ votantes.length }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(1)" style="cursor:pointer">
+          <div class="card stats-card stats-favor p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hand-thumbs-up-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">A Favor</p>
+                  <h5 class="mb-0 fw-bold">{{ contar(1) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(2)" style="cursor:pointer">
+          <div class="card stats-card stats-abstencion p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-dash-circle-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Abstención</p>
+                  <h5 class="mb-0 fw-bold">{{ contar(2) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(3)" style="cursor:pointer">
+          <div class="card stats-card stats-contra p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hand-thumbs-down-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">En Contra</p>
+                  <h5 class="mb-0 fw-bold">{{ contar(3) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(0)" style="cursor:pointer">
+          <div class="card stats-card stats-pendiente p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hourglass-split"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Pendientes</p>
+                  <h5 class="mb-0 fw-bold">{{ contar(0) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista en dos columnas -->
+      <div class="row g-3">
+        <div class="col-12 col-lg-6" *ngFor="let col of [columna1, columna2]">
+          <table class="table table-hover mb-0">
+            <tbody>
+              <tr *ngFor="let v of col" [ngClass]="claseVotacion(v.sentido)">
+                <td class="align-middle py-3">
+                  <div class="fw-medium mb-1">{{ v.diputado }}</div>
+                  <small class="text-muted d-block">{{ v.partido }}</small>
+                </td>
+                <td class="align-middle text-end py-3" style="width:180px;">
+                  <div class="btn-group btn-group-sm d-flex" role="group">
+                    <button type="button" class="btn btn-outline-success flex-fill"
+                      [class.active]="v.sentido===1" (click)="marcarVoto(v,1)" title="A Favor">
+                      <i class="bi bi-hand-thumbs-up-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-warning flex-fill"
+                      [class.active]="v.sentido===2" (click)="marcarVoto(v,2)" title="Abstención">
+                      <i class="bi bi-dash-circle-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger flex-fill"
+                      [class.active]="v.sentido===3" (click)="marcarVoto(v,3)" title="En Contra">
+                      <i class="bi bi-hand-thumbs-down-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary flex-fill"
+                      [class.active]="v.sentido===0" (click)="marcarVoto(v,0)" title="Pendiente">
+                      <i class="bi bi-hourglass-split"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ COMISIONES MÚLTIPLES ══ -->
+    <ng-container *ngIf="esComision">
+
+      <!-- Contadores generales -->
+      <div class="row g-2 mb-4 small-cards justify-content-center">
+        <div class="col-6 col-sm-4 col-md-2">
+          <div class="card stats-card stats-total-votacion p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-people-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Total</p>
+                  <h5 class="mb-0 fw-bold">{{ totalGeneral() }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(1)" style="cursor:pointer">
+          <div class="card stats-card stats-favor p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hand-thumbs-up-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">A Favor</p>
+                  <h5 class="mb-0 fw-bold">{{ contarGeneral(1) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(2)" style="cursor:pointer">
+          <div class="card stats-card stats-abstencion p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-dash-circle-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Abstención</p>
+                  <h5 class="mb-0 fw-bold">{{ contarGeneral(2) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(3)" style="cursor:pointer">
+          <div class="card stats-card stats-contra p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hand-thumbs-down-fill"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">En Contra</p>
+                  <h5 class="mb-0 fw-bold">{{ contarGeneral(3) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2" (click)="marcarTodos(0)" style="cursor:pointer">
+          <div class="card stats-card stats-pendiente p-1">
+            <div class="card-body p-1">
+              <div class="d-flex align-items-center">
+                <div class="stats-icon me-2"><i class="bi bi-hourglass-split"></i></div>
+                <div class="flex-grow-1">
+                  <p class="text-muted mb-0 small">Pendientes</p>
+                  <h5 class="mb-0 fw-bold">{{ contarGeneral(0) }}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Una sección por comisión -->
+      <div *ngFor="let comision of listaComisiones; let isLast = last" class="mb-5">
+
+        <div class="comision-header-institucional mb-3">
+          <h5 class="fw-bold">
+            <i class="bi bi-building me-2"></i>{{ comision.nombre }}
+          </h5>
+        </div>
+
+        <!-- Contadores por comisión -->
+        <div class="contadores-institucionales mb-3">
+          <div class="d-flex flex-wrap gap-3 align-items-center">
+            <div class="contador-item">
+              <i class="bi bi-people-fill me-2"></i>
+              <span class="fw-semibold">Total:</span>
+              <span class="badge ms-1">{{ comision.integrantes.length }}</span>
+            </div>
+            <div class="contador-item">
+              <i class="bi bi-hand-thumbs-up-fill me-2"></i>
+              <span class="fw-semibold">A Favor:</span>
+              <span class="badge ms-1">{{ contarComision(comision.integrantes, 1) }}</span>
+            </div>
+            <div class="contador-item">
+              <i class="bi bi-dash-circle-fill me-2"></i>
+              <span class="fw-semibold">Abstención:</span>
+              <span class="badge ms-1">{{ contarComision(comision.integrantes, 2) }}</span>
+            </div>
+            <div class="contador-item">
+              <i class="bi bi-hand-thumbs-down-fill me-2"></i>
+              <span class="fw-semibold">En Contra:</span>
+              <span class="badge ms-1">{{ contarComision(comision.integrantes, 3) }}</span>
+            </div>
+            <div class="contador-item">
+              <i class="bi bi-hourglass-split me-2"></i>
+              <span class="fw-semibold">Pendiente:</span>
+              <span class="badge ms-1">{{ contarComision(comision.integrantes, 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista en dos columnas -->
+        <div class="row g-3">
+          <div class="col-12 col-lg-6" *ngFor="let col of [comision.columna1, comision.columna2]">
+            <table class="table table-hover mb-0">
+              <tbody>
+                <tr *ngFor="let i of col" [ngClass]="claseVotacion(i.sentido)">
+                  <td class="align-middle py-3">
+                    <div class="fw-medium mb-1">{{ i.diputado }}</div>
+                    <small class="text-muted d-block">{{ i.cargo }}</small>
+                    <small class="text-muted d-block">{{ i.partido }}</small>
+                  </td>
+                  <td class="align-middle text-end py-3" style="width:180px;">
+                    <div class="btn-group btn-group-sm d-flex" role="group">
+                      <button type="button" class="btn btn-outline-success flex-fill"
+                        [class.active]="i.sentido===1" (click)="marcarVoto(i,1)" title="A Favor">
+                        <i class="bi bi-hand-thumbs-up-fill"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-warning flex-fill"
+                        [class.active]="i.sentido===2" (click)="marcarVoto(i,2)" title="Abstención">
+                        <i class="bi bi-dash-circle-fill"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger flex-fill"
+                        [class.active]="i.sentido===3" (click)="marcarVoto(i,3)" title="En Contra">
+                        <i class="bi bi-hand-thumbs-down-fill"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary flex-fill"
+                        [class.active]="i.sentido===0" (click)="marcarVoto(i,0)" title="Pendiente">
+                        <i class="bi bi-hourglass-split"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr *ngIf="!isLast" class="my-5 border-2" style="border-color: #800048;">
+      </div>
+    </ng-container>
+
+    <!-- Sin datos -->
+    <div *ngIf="!esComision && votantes.length === 0 || esComision && listaComisiones.length === 0"
+      class="text-center py-5">
+      <i class="bi bi-people text-muted" style="font-size:3rem;"></i>
+      <p class="text-muted mt-3">No hay votantes registrados para esta iniciativa</p>
+    </div>
+
+  </ng-container>
+</div>

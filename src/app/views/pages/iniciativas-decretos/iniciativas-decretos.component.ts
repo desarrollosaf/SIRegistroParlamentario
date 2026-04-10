@@ -168,7 +168,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     },
     {
       headerName: 'Acción',
-      width: 200, // aumenta un poco el ancho
+      width: 280, // aumenta un poco el ancho
       pinned: 'right',
       sortable: false,
       filter: false,
@@ -191,6 +191,22 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
           this.abrirModal(params.data);
           this.cdr.detectChanges();
         });
+
+
+        const btnVotacion = document.createElement('button');
+          btnVotacion.innerText = '🗳 Votación';
+          btnVotacion.style.cssText = `
+            padding:6px 10px;border-radius:6px;border:1px solid #c4b5fd;
+            background:#f5f3ff;color:#6d28d9;font-size:12px;
+            cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
+          `;
+          btnVotacion.addEventListener('mouseenter', () => { btnVotacion.style.background = '#ede9fe'; });
+          btnVotacion.addEventListener('mouseleave', () => { btnVotacion.style.background = '#f5f3ff'; });
+          btnVotacion.addEventListener('click', () => {
+            this.abrirVotacion(params.data);
+            this.cdr.detectChanges();
+        });
+
 
         // Botón Publicar/Despublicar
         const esPublico = params.data.publico === 1;
@@ -216,6 +232,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
 
         wrapper.appendChild(btnCargar);
         wrapper.appendChild(btnPublico);
+        wrapper.appendChild(btnVotacion);
         return wrapper;
       },
     },
@@ -491,6 +508,12 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     });
   }
 
+
+abrirVotacion(iniciativa: Iniciativa): void {
+  const urlActual = window.location.href.split('?')[0];
+  const base = urlActual.endsWith('/') ? urlActual : urlActual + '/';
+  window.open(`${base}votacion/${iniciativa.id}`, '_blank');
+}
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   get totalMostrados(): number {
