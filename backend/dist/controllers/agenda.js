@@ -2072,6 +2072,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             where: { id: diputadoIds },
             attributes: ["id", "apaterno", "amaterno", "nombres"],
             raw: true,
+            paranoid: false,
         });
         const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
