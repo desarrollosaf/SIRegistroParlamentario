@@ -24,6 +24,9 @@ import VotosPunto from "../models/votos_punto";
 import AsistenciaVoto from "../models/asistencia_votos";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
 import Sedes from "../models/sedes";
+import IntegranteLegislatura from "../models/integrante_legislaturas";
+import AnfitrionAgenda from "../models/anfitrion_agendas";
+import IntegranteComision from "../models/integrante_comisions";
 
 
 type ReporteBaseItem = {
@@ -801,44 +804,126 @@ const getIdPuntoDeIniciativa = async (idIniciativa: string): Promise<string | nu
   return iniciativa?.id_punto ? String(iniciativa.id_punto) : null;
 };
  
-export const getVotosDictamen = async (req: Request, res: Response): Promise<Response> => {
-  try {
-    const { id } = req.params;
- 
-    const idPunto = await getIdPuntoDeIniciativa(id);
-    if (!idPunto) {
-      return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
-    }
- 
-    const puntoDestino = await getPuntoDestino(idPunto, '2');
-    if (!puntoDestino) {
-      return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
-    }
- 
-    return await getVotacionPorPunto(puntoDestino, res);
- 
-  } catch (error: any) {
-    console.error('Error getVotosDictamen:', error);
-    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
-  }
-};
- 
 export const getVotosCierre = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
- 
-    const idPunto = await getIdPuntoDeIniciativa(id);
-    if (!idPunto) {
+
+    // 1. Obtener el punto de la iniciativa
+    const iniciativa = await IniciativaPuntoOrden.findOne({
+      where: { id },
+      attributes: ['id_punto'],
+    });
+
+    if (!iniciativa?.id_punto) {
       return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
     }
- 
-    const puntoDestino = await getPuntoDestino(idPunto, '3');
-    if (!puntoDestino) {
-      return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+
+    const idPunto = String(iniciativa.id_punto);
+
+    // 2. Determinar el punto a usar para la votación
+    const puntoOrigen = await PuntosOrden.findOne({
+      where: { id: idPunto },
+      attributes: ['id', 'dispensa'],
+    });
+
+    if (!puntoOrigen) {
+      return res.status(404).json({ msg: 'Punto origen no encontrado' });
     }
- 
-    return await getVotacionPorPunto(puntoDestino, res);
- 
+
+    const tieneDispensa = puntoOrigen.dispensa === 1;
+
+    let puntoDestino: string;
+
+    if (tieneDispensa) {
+      // Si tiene dispensa, se votó en el mismo punto
+      puntoDestino = idPunto;
+    } else {
+      // Si no tiene dispensa, buscar el punto destino (cierre)
+      const destinoEncontrado = await getPuntoDestino(idPunto, '3');
+      if (!destinoEncontrado) {
+        return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+      }
+      puntoDestino = destinoEncontrado;
+    }
+
+    // 3. Obtener info del punto destino y su evento
+    const punto = await PuntosOrden.findOne({
+      where: { id: puntoDestino },
+      attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+    });
+
+    if (!punto) {
+      return res.status(404).json({ msg: 'Punto destino no encontrado' });
+    }
+
+    const evento = await Agenda.findOne({
+      where: { id: punto.id_evento },
+      include: [
+        { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
+        { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: 'Evento no encontrado' });
+    }
+
+    const esSesion   = evento.tipoevento?.nombre === 'Sesión';
+    const tipoEvento = esSesion ? 'sesion' : 'comision';
+    const tipovento  = esSesion ? 1 : 2;
+
+    // 4. Verificar si existe asistencia; si no, crearla
+    const asistenciasExistentes = await AsistenciaVoto.findAll({
+      where: { id_agenda: evento.id },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+
+    if (asistenciasExistentes.length === 0) {
+      await crearAsistencias(evento, esSesion);
+    }
+
+    // 5. Verificar si existe votación del punto; si no, crearla
+    let mensajeRespuesta = 'Punto con votos existentes';
+
+    const votosExistentes = await VotosPunto.findOne({ where: { id_punto: puntoDestino } });
+
+    if (!votosExistentes) {
+      const listadoDiputados = await obtenerListadoDiputados(evento);
+      const votospunto = listadoDiputados.map((dip: any) => ({
+        sentido:            0,
+        mensaje:            'PENDIENTE',
+        id_punto:           puntoDestino,
+        id_tema_punto_voto: null,
+        id_diputado:        dip.id_diputado,
+        id_partido:         dip.id_partido,
+        id_comision_dip:    dip.comision_dip_id,
+        id_cargo_dip:       dip.id_cargo_dip,
+      }));
+      await VotosPunto.bulkCreate(votospunto);
+      mensajeRespuesta = 'Votacion creada correctamente';
+    }
+
+    // 6. Obtener y retornar resultados
+    const integrantes = await obtenerResultadosVotacionOptimizado(
+      null,
+      puntoDestino,
+      tipoEvento
+    );
+
+    return res.status(200).json({
+      msg: mensajeRespuesta,
+      punto: {
+        id:      punto.id,
+        nopunto: punto.nopunto,
+        punto:   punto.punto,
+      },
+      evento,
+      integrantes,
+      tipovento,
+      dispensa: tieneDispensa,
+    });
+
   } catch (error: any) {
     console.error('Error getVotosCierre:', error);
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
@@ -891,6 +976,115 @@ interface ComisionAgrupada {
   integrantes: ResultadoVotacion[];
 }
 
+async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
+  
+  const listadoDiputados: { 
+    id_diputado: string; 
+    id_partido: string; 
+    comision_dip_id: string | null; 
+    cargo_dip_id: string | null; 
+  }[] = [];
+
+  if (esSesion) {
+    const { Op } = require('sequelize');
+    const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
+    if (!fechaEvento) {
+      throw new Error('El evento no tiene fecha válida');
+    }
+    // Para sesiones: todos los diputados de la legislatura actual
+    const legislatura = await Legislatura.findOne({
+      order: [["fecha_inicio", "DESC"]],
+    });
+
+    if (legislatura) {
+      const diputados = await IntegranteLegislatura.findAll({
+          where: { 
+            legislatura_id: legislatura.id,
+            fecha_inicio: {
+              [Op.lte]: fechaEvento // El diputado ya estaba en la legislatura
+            },
+            [Op.or]: [
+              {
+                fecha_fin: {
+                  [Op.gte]: fechaEvento // Aún no había terminado su periodo
+                }
+              },
+              {
+                fecha_fin: null // O está activo (sin fecha fin)
+              }
+            ]
+          },
+          include: [
+            { 
+              model: Diputado, 
+              as: "diputado",
+              paranoid: false // Incluir diputados eliminados también
+            }
+          ],
+          paranoid: false // Si también quieres incluir diputados eliminados
+        });
+        
+
+      for (const inteLegis of diputados) {
+        if (inteLegis.diputado) {
+          listadoDiputados.push({
+            id_diputado: inteLegis.diputado.id,
+            id_partido: inteLegis.partido_id,
+            comision_dip_id: null,
+            cargo_dip_id: null,
+          });
+        }
+      }
+    }
+  } else {
+    // Para comisiones: solo integrantes de las comisiones anfitrionas
+    const comisiones = await AnfitrionAgenda.findAll({
+      where: { agenda_id: evento.id },
+    });
+
+    if (comisiones.length > 0) {
+      const comisionIds = comisiones.map((c) => c.autor_id);
+      const integrantes = await IntegranteComision.findAll({
+        where: { comision_id: comisionIds },
+        include: [
+          {
+            model: IntegranteLegislatura,
+            as: "integranteLegislatura",
+            include: [{ model: Diputado, as: "diputado" }],
+          },
+        ],
+      });
+
+      for (const inte of integrantes) {
+        if (inte.integranteLegislatura?.diputado) {
+          listadoDiputados.push({
+            id_diputado: inte.integranteLegislatura.diputado.id,
+            id_partido: inte.integranteLegislatura.partido_id,
+            comision_dip_id: inte.comision_id,
+            cargo_dip_id: inte.tipo_cargo_comision_id
+          });
+        }
+      }
+    }
+  }
+
+  // Crear asistencias en bulk
+  const mensaje = "PENDIENTE";
+  const timestamp = new Date();
+
+  const asistencias = listadoDiputados.map((diputado) => ({
+    sentido_voto: 0,
+    mensaje,
+    timestamp,
+    id_diputado: diputado.id_diputado,
+    partido_dip: diputado.id_partido,
+    comision_dip_id: diputado.comision_dip_id,
+    id_cargo_dip: diputado.cargo_dip_id, // 👈 Ya se guarda en la tabla
+    id_agenda: evento.id,
+  }));
+
+  await AsistenciaVoto.bulkCreate(asistencias);
+}
 
 async function obtenerResultadosVotacionOptimizado(
   idTemaPuntoVoto: string | null,
@@ -1119,5 +1313,27 @@ export const eliminarAsistenciaYVotacion = async (req: Request, res: Response) =
   } catch (error) {
     console.error('Error eliminarAsistenciaYVotacion:', error);
     return res.status(500).json({ ok: false, msg: 'Error al eliminar asistencia y votación' });
+  }
+};
+
+export const getVotosDictamen = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+ 
+    const idPunto = await getIdPuntoDeIniciativa(id);
+    if (!idPunto) {
+      return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
+    }
+ 
+    const puntoDestino = await getPuntoDestino(idPunto, '2');
+    if (!puntoDestino) {
+      return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
+    }
+ 
+    return await getVotacionPorPunto(puntoDestino, res);
+ 
+  } catch (error: any) {
+    console.error('Error getVotosDictamen:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };

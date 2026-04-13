@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.eliminarAsistenciaYVotacion = exports.getVotosCierre = exports.getVotosDictamen = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.getVotosDictamen = exports.eliminarAsistenciaYVotacion = exports.getVotosCierre = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -36,6 +36,9 @@ const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const sedes_1 = __importDefault(require("../models/sedes"));
+const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
+const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
+const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const getiniciativas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const iniciativasRaw = yield construirReporteBase();
@@ -682,37 +685,103 @@ const getIdPuntoDeIniciativa = (idIniciativa) => __awaiter(void 0, void 0, void 
     });
     return (iniciativa === null || iniciativa === void 0 ? void 0 : iniciativa.id_punto) ? String(iniciativa.id_punto) : null;
 });
-const getVotosDictamen = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        const idPunto = yield getIdPuntoDeIniciativa(id);
-        if (!idPunto) {
-            return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
-        }
-        const puntoDestino = yield getPuntoDestino(idPunto, '2');
-        if (!puntoDestino) {
-            return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
-        }
-        return yield getVotacionPorPunto(puntoDestino, res);
-    }
-    catch (error) {
-        console.error('Error getVotosDictamen:', error);
-        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
-    }
-});
-exports.getVotosDictamen = getVotosDictamen;
 const getVotosCierre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
-        const idPunto = yield getIdPuntoDeIniciativa(id);
-        if (!idPunto) {
+        // 1. Obtener el punto de la iniciativa
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
+            where: { id },
+            attributes: ['id_punto'],
+        });
+        if (!(iniciativa === null || iniciativa === void 0 ? void 0 : iniciativa.id_punto)) {
             return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
         }
-        const puntoDestino = yield getPuntoDestino(idPunto, '3');
-        if (!puntoDestino) {
-            return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+        const idPunto = String(iniciativa.id_punto);
+        // 2. Determinar el punto a usar para la votación
+        const puntoOrigen = yield puntos_ordens_1.default.findOne({
+            where: { id: idPunto },
+            attributes: ['id', 'dispensa'],
+        });
+        if (!puntoOrigen) {
+            return res.status(404).json({ msg: 'Punto origen no encontrado' });
         }
-        return yield getVotacionPorPunto(puntoDestino, res);
+        const tieneDispensa = puntoOrigen.dispensa === 1;
+        let puntoDestino;
+        if (tieneDispensa) {
+            // Si tiene dispensa, se votó en el mismo punto
+            puntoDestino = idPunto;
+        }
+        else {
+            // Si no tiene dispensa, buscar el punto destino (cierre)
+            const destinoEncontrado = yield getPuntoDestino(idPunto, '3');
+            if (!destinoEncontrado) {
+                return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+            }
+            puntoDestino = destinoEncontrado;
+        }
+        // 3. Obtener info del punto destino y su evento
+        const punto = yield puntos_ordens_1.default.findOne({
+            where: { id: puntoDestino },
+            attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+        });
+        if (!punto) {
+            return res.status(404).json({ msg: 'Punto destino no encontrado' });
+        }
+        const evento = yield agendas_1.default.findOne({
+            where: { id: punto.id_evento },
+            include: [
+                { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
+                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: 'Evento no encontrado' });
+        }
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === 'Sesión';
+        const tipoEvento = esSesion ? 'sesion' : 'comision';
+        const tipovento = esSesion ? 1 : 2;
+        // 4. Verificar si existe asistencia; si no, crearla
+        const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
+            where: { id_agenda: evento.id },
+            order: [['created_at', 'DESC']],
+            raw: true,
+        });
+        if (asistenciasExistentes.length === 0) {
+            yield crearAsistencias(evento, esSesion);
+        }
+        // 5. Verificar si existe votación del punto; si no, crearla
+        let mensajeRespuesta = 'Punto con votos existentes';
+        const votosExistentes = yield votos_punto_1.default.findOne({ where: { id_punto: puntoDestino } });
+        if (!votosExistentes) {
+            const listadoDiputados = yield obtenerListadoDiputados(evento);
+            const votospunto = listadoDiputados.map((dip) => ({
+                sentido: 0,
+                mensaje: 'PENDIENTE',
+                id_punto: puntoDestino,
+                id_tema_punto_voto: null,
+                id_diputado: dip.id_diputado,
+                id_partido: dip.id_partido,
+                id_comision_dip: dip.comision_dip_id,
+                id_cargo_dip: dip.id_cargo_dip,
+            }));
+            yield votos_punto_1.default.bulkCreate(votospunto);
+            mensajeRespuesta = 'Votacion creada correctamente';
+        }
+        // 6. Obtener y retornar resultados
+        const integrantes = yield obtenerResultadosVotacionOptimizado(null, puntoDestino, tipoEvento);
+        return res.status(200).json({
+            msg: mensajeRespuesta,
+            punto: {
+                id: punto.id,
+                nopunto: punto.nopunto,
+                punto: punto.punto,
+            },
+            evento,
+            integrantes,
+            tipovento,
+            dispensa: tieneDispensa,
+        });
     }
     catch (error) {
         console.error('Error getVotosCierre:', error);
@@ -740,6 +809,104 @@ function obtenerListadoDiputados(evento) {
             });
         }
         return listadoDiputados;
+    });
+}
+function crearAsistencias(evento, esSesion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const listadoDiputados = [];
+        if (esSesion) {
+            const { Op } = require('sequelize');
+            const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
+            if (!fechaEvento) {
+                throw new Error('El evento no tiene fecha válida');
+            }
+            // Para sesiones: todos los diputados de la legislatura actual
+            const legislatura = yield legislaturas_1.default.findOne({
+                order: [["fecha_inicio", "DESC"]],
+            });
+            if (legislatura) {
+                const diputados = yield integrante_legislaturas_1.default.findAll({
+                    where: {
+                        legislatura_id: legislatura.id,
+                        fecha_inicio: {
+                            [Op.lte]: fechaEvento // El diputado ya estaba en la legislatura
+                        },
+                        [Op.or]: [
+                            {
+                                fecha_fin: {
+                                    [Op.gte]: fechaEvento // Aún no había terminado su periodo
+                                }
+                            },
+                            {
+                                fecha_fin: null // O está activo (sin fecha fin)
+                            }
+                        ]
+                    },
+                    include: [
+                        {
+                            model: diputado_1.default,
+                            as: "diputado",
+                            paranoid: false // Incluir diputados eliminados también
+                        }
+                    ],
+                    paranoid: false // Si también quieres incluir diputados eliminados
+                });
+                for (const inteLegis of diputados) {
+                    if (inteLegis.diputado) {
+                        listadoDiputados.push({
+                            id_diputado: inteLegis.diputado.id,
+                            id_partido: inteLegis.partido_id,
+                            comision_dip_id: null,
+                            cargo_dip_id: null,
+                        });
+                    }
+                }
+            }
+        }
+        else {
+            // Para comisiones: solo integrantes de las comisiones anfitrionas
+            const comisiones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+            });
+            if (comisiones.length > 0) {
+                const comisionIds = comisiones.map((c) => c.autor_id);
+                const integrantes = yield integrante_comisions_1.default.findAll({
+                    where: { comision_id: comisionIds },
+                    include: [
+                        {
+                            model: integrante_legislaturas_1.default,
+                            as: "integranteLegislatura",
+                            include: [{ model: diputado_1.default, as: "diputado" }],
+                        },
+                    ],
+                });
+                for (const inte of integrantes) {
+                    if ((_a = inte.integranteLegislatura) === null || _a === void 0 ? void 0 : _a.diputado) {
+                        listadoDiputados.push({
+                            id_diputado: inte.integranteLegislatura.diputado.id,
+                            id_partido: inte.integranteLegislatura.partido_id,
+                            comision_dip_id: inte.comision_id,
+                            cargo_dip_id: inte.tipo_cargo_comision_id
+                        });
+                    }
+                }
+            }
+        }
+        // Crear asistencias en bulk
+        const mensaje = "PENDIENTE";
+        const timestamp = new Date();
+        const asistencias = listadoDiputados.map((diputado) => ({
+            sentido_voto: 0,
+            mensaje,
+            timestamp,
+            id_diputado: diputado.id_diputado,
+            partido_dip: diputado.id_partido,
+            comision_dip_id: diputado.comision_dip_id,
+            id_cargo_dip: diputado.cargo_dip_id, // 👈 Ya se guarda en la tabla
+            id_agenda: evento.id,
+        }));
+        yield asistencia_votos_1.default.bulkCreate(asistencias);
     });
 }
 function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento) {
@@ -928,3 +1095,22 @@ const eliminarAsistenciaYVotacion = (req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.eliminarAsistenciaYVotacion = eliminarAsistenciaYVotacion;
+const getVotosDictamen = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const idPunto = yield getIdPuntoDeIniciativa(id);
+        if (!idPunto) {
+            return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
+        }
+        const puntoDestino = yield getPuntoDestino(idPunto, '2');
+        if (!puntoDestino) {
+            return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
+        }
+        return yield getVotacionPorPunto(puntoDestino, res);
+    }
+    catch (error) {
+        console.error('Error getVotosDictamen:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.getVotosDictamen = getVotosDictamen;
