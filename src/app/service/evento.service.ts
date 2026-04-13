@@ -263,4 +263,9 @@ export class EventoService {
     return this.http.delete(`${this.myAppUrl}${this.myAPIUrl3}/${idEvento}/votacion`);
   }
 
+  eliminarvya(id: String): Observable<string> {
+    return this.http.delete<string>(`${this.myAppUrl}${this.myAPIUrl3}/eliminarvya/${id}`)
+  }
+  
+
 }
