@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVotosCierre = exports.getVotosDictamen = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.eliminarAsistenciaYVotacion = exports.getVotosCierre = exports.getVotosDictamen = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
@@ -869,3 +869,62 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
         }
     });
 }
+const eliminarAsistenciaYVotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        // ── Asistencia ──
+        const totalAsistencia = yield asistencia_votos_1.default.count({
+            where: { id_agenda: id, deletedAt: null },
+        });
+        if (totalAsistencia === 0) {
+            return res.status(404).json({
+                ok: false,
+                msg: 'No hay registros de asistencia para este evento',
+            });
+        }
+        yield asistencia_votos_1.default.destroy({
+            where: { id_agenda: id },
+        });
+        // ── Votación ──
+        let totalVotos = 0;
+        // 1. Votos de temas directos del evento (sin punto)
+        const temasEvento = yield temas_puntos_votos_1.default.findAll({
+            where: { id_evento: id, deletedAt: null },
+        });
+        for (const tema of temasEvento) {
+            totalVotos += yield votos_punto_1.default.destroy({
+                where: { id_tema_punto_voto: tema.id },
+            });
+        }
+        // 2. Puntos del evento
+        const puntos = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id, deletedAt: null },
+        });
+        for (const punto of puntos) {
+            // 2a. Votos directos del punto (sin tema)
+            totalVotos += yield votos_punto_1.default.destroy({
+                where: { id_punto: punto.id },
+            });
+            // 2b. Temas del punto → sus votos
+            const temasPunto = yield temas_puntos_votos_1.default.findAll({
+                where: { id_punto: punto.id, deletedAt: null },
+            });
+            for (const tema of temasPunto) {
+                totalVotos += yield votos_punto_1.default.destroy({
+                    where: { id_tema_punto_voto: tema.id },
+                });
+            }
+        }
+        return res.status(200).json({
+            ok: true,
+            msg: `Se eliminaron ${totalAsistencia} registros de asistencia y ${totalVotos} votos`,
+            eliminados_asistencia: totalAsistencia,
+            votos_eliminados: totalVotos,
+        });
+    }
+    catch (error) {
+        console.error('Error eliminarAsistenciaYVotacion:', error);
+        return res.status(500).json({ ok: false, msg: 'Error al eliminar asistencia y votación' });
+    }
+});
+exports.eliminarAsistenciaYVotacion = eliminarAsistenciaYVotacion;
