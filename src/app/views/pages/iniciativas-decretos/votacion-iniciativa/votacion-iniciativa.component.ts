@@ -74,7 +74,7 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           const integrantes = response.integrantes || response.data || [];
-
+          console.log(response);
           if (!integrantes.length) {
             this.cargando = false;
             clearInterval(this.pollInterval);
@@ -263,5 +263,61 @@ export class VotacionIniciativaComponent implements OnInit, OnDestroy {
 
   cerrarPestana(): void {
     window.close();
+  }
+
+
+  async eliminarVotacion(): Promise<void> {
+    const confirmacion = await Swal.fire({
+      title: '¿Está seguro?',
+      text: 'Esta acción eliminará la votación de forma permanente y no se podrá revertir.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#800048',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Sí, eliminar',
+      cancelButtonText: '<i class="bi bi-x-lg me-1"></i> Cancelar',
+      reverseButtons: true,
+      focusCancel: true,
+      customClass: {
+        confirmButton: 'swal-confirm-btn',
+        cancelButton: 'swal-cancel-btn'
+      }
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    this.isUpdating = true;
+    this.cdr.detectChanges();
+    console.log(this.evento.id);
+    try {
+      await this._eventoService.eliminarvya(this.evento.id)
+        .pipe(takeUntil(this.destroy$))
+        .toPromise();
+
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Eliminada!',
+        text: 'La votación ha sido eliminada correctamente.',
+        confirmButtonColor: '#800048',
+        confirmButtonText: 'Aceptar',
+        timer: 2500,
+        timerProgressBar: true
+      });
+
+      window.location.reload();
+
+    } catch (e: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al eliminar',
+        text: e?.error?.msg || 'Ocurrió un error inesperado. Intente de nuevo.',
+        confirmButtonColor: '#800048',
+        timer: 4000,
+        timerProgressBar: true
+      });
+    } finally {
+      this.isUpdating = false;
+      this.cdr.detectChanges();
+    }
   }
 }

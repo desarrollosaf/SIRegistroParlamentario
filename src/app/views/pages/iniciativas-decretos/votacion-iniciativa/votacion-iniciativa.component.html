@@ -91,7 +91,13 @@
                     </div>
                 </div>
             </div>
-
+            <!-- Botón Eliminar Votación -->
+            <div class="d-flex justify-content-end mb-4 px-1">
+                <button class="btn btn-eliminar-votacion" (click)="eliminarVotacion()" [disabled]="isUpdating">
+                    <i class="bi bi-trash3-fill me-2"></i>
+                    Eliminar Votación
+                </button>
+            </div>
             <div class="mb-4 px-1" *ngIf="evento || punto">
 
                 <!-- Evento -->
