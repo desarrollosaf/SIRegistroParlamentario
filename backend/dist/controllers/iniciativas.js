@@ -646,37 +646,76 @@ const getVotacionPorPunto = (idPunto, res) => __awaiter(void 0, void 0, void 0, 
         tipovento,
     });
 });
-const getPuntoDestino = (idPunto, status) => __awaiter(void 0, void 0, void 0, function* () {
-    // Type 1: búsqueda directa
-    const estudioType1 = yield iniciativas_estudio_1.default.findOne({
-        where: { status, punto_origen_id: idPunto, type: 1 },
-        order: [['createdAt', 'DESC']],
+const getPuntoDestino = (idPunto) => __awaiter(void 0, void 0, void 0, function* () {
+    // Obtener estudios previos (type 1 directo y type 2 por expediente)
+    // igual que getifnini construye fuenteEstudios
+    const estudiosType1 = yield iniciativas_estudio_1.default.findAll({
+        where: { punto_origen_id: idPunto, type: 1 },
+        attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
     });
-    if (estudioType1 === null || estudioType1 === void 0 ? void 0 : estudioType1.punto_destino_id) {
-        return String(estudioType1.punto_destino_id);
-    }
-    // Type 2: búsqueda por expediente
-    const expedientes = yield expedientes_estudio_puntos_1.default.findAll({
+    // Buscar expedientes relacionados al punto origen
+    const expedientesOrigen = yield expedientes_estudio_puntos_1.default.findAll({
         where: { punto_origen_sesion_id: idPunto },
         attributes: ['expediente_id'],
     });
-    const expedienteIds = [
-        ...new Set(expedientes.map((e) => e.expediente_id).filter(Boolean))
+    const expedienteIdsOrigen = [
+        ...new Set(expedientesOrigen.map((e) => e.expediente_id).filter(Boolean))
     ];
-    if (expedienteIds.length === 0)
-        return null;
-    const estudioType2 = yield iniciativas_estudio_1.default.findOne({
+    const estudiosType2 = expedienteIdsOrigen.length > 0
+        ? yield iniciativas_estudio_1.default.findAll({
+            where: {
+                punto_origen_id: { [sequelize_1.Op.in]: expedienteIdsOrigen },
+                type: 2,
+            },
+            attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
+        })
+        : [];
+    // Armar fuenteEstudios igual que getifnini
+    const fuenteEstudios = [
+        ...estudiosType1.map((e) => e.toJSON()),
+        ...estudiosType2.map((e) => e.toJSON()),
+    ].filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
+    // Ahora armar posibles puntos incluyendo los punto_destino_id de estudios previos
+    const posiblesPuntosIds = [
+        idPunto,
+        ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
+    ];
+    const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds.filter(Boolean))];
+    // Buscar expedientes relacionados a TODOS esos puntos
+    const expedientesRelacionados = yield expedientes_estudio_puntos_1.default.findAll({
         where: {
-            status,
-            type: 2,
+            punto_origen_sesion_id: { [sequelize_1.Op.in]: posiblesPuntosUnicos }
+        },
+        attributes: ['expediente_id'],
+    });
+    const expedienteIds = [
+        ...new Set(expedientesRelacionados.map((e) => e.expediente_id).filter(Boolean))
+    ];
+    // Construir OR dinámico
+    const orConditions = [];
+    if (posiblesPuntosUnicos.length > 0) {
+        orConditions.push({
+            punto_origen_id: { [sequelize_1.Op.in]: posiblesPuntosUnicos },
+            type: 1,
+        });
+    }
+    if (expedienteIds.length > 0) {
+        orConditions.push({
             punto_origen_id: { [sequelize_1.Op.in]: expedienteIds },
+            type: 2,
+        });
+    }
+    if (orConditions.length === 0)
+        return null;
+    // Buscar el cierre (status 3)
+    const estudio = yield iniciativas_estudio_1.default.findOne({
+        where: {
+            status: '3',
+            [sequelize_1.Op.or]: orConditions,
         },
         order: [['createdAt', 'DESC']],
     });
-    if (estudioType2 === null || estudioType2 === void 0 ? void 0 : estudioType2.punto_destino_id) {
-        return String(estudioType2.punto_destino_id);
-    }
-    return null;
+    return (estudio === null || estudio === void 0 ? void 0 : estudio.punto_destino_id) ? String(estudio.punto_destino_id) : null;
 });
 const getIdPuntoDeIniciativa = (idIniciativa) => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({
@@ -714,7 +753,9 @@ const getVotosCierre = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         else {
             // Si no tiene dispensa, buscar el punto destino (cierre)
-            const destinoEncontrado = yield getPuntoDestino(idPunto, '3');
+            const destinoEncontrado = yield getPuntoDestino(idPunto);
+            // console.log("holaaaaaaaaaaaa", destinoEncontrado)
+            // return 500;
             if (!destinoEncontrado) {
                 return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
             }

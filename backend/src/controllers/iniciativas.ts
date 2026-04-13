@@ -755,45 +755,94 @@ const getVotacionPorPunto = async (idPunto: string, res: Response): Promise<Resp
  
 const getPuntoDestino = async (
   idPunto: string,
-  status: '2' | '3'
 ): Promise<string | null> => {
- 
-  // Type 1: búsqueda directa
-  const estudioType1 = await IniciativaEstudio.findOne({
-    where: { status, punto_origen_id: idPunto, type: 1 },
-    order: [['createdAt', 'DESC']],
+
+  // Obtener estudios previos (type 1 directo y type 2 por expediente)
+  // igual que getifnini construye fuenteEstudios
+  const estudiosType1 = await IniciativaEstudio.findAll({
+    where: { punto_origen_id: idPunto, type: 1 },
+    attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
   });
- 
-  if (estudioType1?.punto_destino_id) {
-    return String(estudioType1.punto_destino_id);
-  }
- 
-  // Type 2: búsqueda por expediente
-  const expedientes = await ExpedienteEstudiosPuntos.findAll({
+
+  // Buscar expedientes relacionados al punto origen
+  const expedientesOrigen = await ExpedienteEstudiosPuntos.findAll({
     where: { punto_origen_sesion_id: idPunto },
     attributes: ['expediente_id'],
   });
- 
-  const expedienteIds = [
-    ...new Set(expedientes.map((e: any) => e.expediente_id).filter(Boolean))
+
+  const expedienteIdsOrigen = [
+    ...new Set(expedientesOrigen.map((e: any) => e.expediente_id).filter(Boolean))
   ];
- 
-  if (expedienteIds.length === 0) return null;
- 
-  const estudioType2 = await IniciativaEstudio.findOne({
+
+  const estudiosType2 = expedienteIdsOrigen.length > 0
+    ? await IniciativaEstudio.findAll({
+        where: {
+          punto_origen_id: { [Op.in]: expedienteIdsOrigen },
+          type: 2,
+        },
+        attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
+      })
+    : [];
+
+  // Armar fuenteEstudios igual que getifnini
+  const fuenteEstudios = [
+    ...estudiosType1.map((e: any) => e.toJSON()),
+    ...estudiosType2.map((e: any) => e.toJSON()),
+  ].filter(
+    (e: any, index: number, self: any[]) =>
+      index === self.findIndex((x: any) => x.id === e.id)
+  );
+
+  // Ahora armar posibles puntos incluyendo los punto_destino_id de estudios previos
+  const posiblesPuntosIds = [
+    idPunto,
+    ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
+  ];
+  const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds.filter(Boolean))];
+
+  // Buscar expedientes relacionados a TODOS esos puntos
+  const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
     where: {
-      status,
-      type: 2,
+      punto_origen_sesion_id: { [Op.in]: posiblesPuntosUnicos }
+    },
+    attributes: ['expediente_id'],
+  });
+
+  const expedienteIds = [
+    ...new Set(
+      expedientesRelacionados.map((e: any) => e.expediente_id).filter(Boolean)
+    )
+  ];
+
+  // Construir OR dinámico
+  const orConditions: any[] = [];
+
+  if (posiblesPuntosUnicos.length > 0) {
+    orConditions.push({
+      punto_origen_id: { [Op.in]: posiblesPuntosUnicos },
+      type: 1,
+    });
+  }
+
+  if (expedienteIds.length > 0) {
+    orConditions.push({
       punto_origen_id: { [Op.in]: expedienteIds },
+      type: 2,
+    });
+  }
+
+  if (orConditions.length === 0) return null;
+
+  // Buscar el cierre (status 3)
+  const estudio = await IniciativaEstudio.findOne({
+    where: {
+      status: '3',
+      [Op.or]: orConditions,
     },
     order: [['createdAt', 'DESC']],
   });
- 
-  if (estudioType2?.punto_destino_id) {
-    return String(estudioType2.punto_destino_id);
-  }
- 
-  return null;
+
+  return estudio?.punto_destino_id ? String(estudio.punto_destino_id) : null;
 };
  
 const getIdPuntoDeIniciativa = async (idIniciativa: string): Promise<string | null> => {
@@ -839,10 +888,13 @@ export const getVotosCierre = async (req: Request, res: Response): Promise<Respo
       puntoDestino = idPunto;
     } else {
       // Si no tiene dispensa, buscar el punto destino (cierre)
-      const destinoEncontrado = await getPuntoDestino(idPunto, '3');
+      const destinoEncontrado = await getPuntoDestino(idPunto);
+      // console.log("holaaaaaaaaaaaa", destinoEncontrado)
+      // return 500;
       if (!destinoEncontrado) {
         return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
       }
+      
       puntoDestino = destinoEncontrado;
     }
 
