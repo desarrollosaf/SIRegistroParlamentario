@@ -21,6 +21,9 @@ import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import VotosPunto from "../models/votos_punto";
+import TipoCargoComision from "../models/tipo_cargo_comisions";
+import AsistenciaVoto from "../models/asistencia_votos";
+import Sedes from "../models/sedes";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPOS
@@ -1246,4 +1249,401 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
     console.error("Error al generar Excel de integrantes:", error);
     return res.status(500).json({ message:"Error interno del servidor", error: error.message });
   }
+};
+
+export const getVotosCierre = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+
+    // 1. Obtener el punto de la iniciativa
+    const iniciativa = await IniciativaPuntoOrden.findOne({
+      where: { id },
+      attributes: ['id_punto'],
+    });
+
+    if (!iniciativa?.id_punto) {
+      return res.status(404).json({ msg: 'No se encontró el punto de la iniciativa' });
+    }
+
+    const idPunto = String(iniciativa.id_punto);
+
+    // 2. Verificar si tiene dispensa
+    const puntoOrigen = await PuntosOrden.findOne({
+      where: { id: idPunto },
+      attributes: ['id', 'dispensa'],
+    });
+
+    if (!puntoOrigen) {
+      return res.status(404).json({ msg: 'Punto origen no encontrado' });
+    }
+
+    const tieneDispensa = puntoOrigen.dispensa === 1;
+
+    // 3. Determinar el punto de votación
+    let puntoDestino: string;
+
+    if (tieneDispensa) {
+      puntoDestino = idPunto;
+    } else {
+      const destinoEncontrado = await getPuntoDestino(idPunto);
+      if (!destinoEncontrado) {
+        return res.status(404).json({ msg: 'No hay cierre registrado para esta iniciativa' });
+      }
+      puntoDestino = destinoEncontrado;
+    }
+
+    // 4. Obtener info del punto y su evento
+    const punto = await PuntosOrden.findOne({
+      where: { id: puntoDestino },
+      attributes: ['id', 'nopunto', 'punto', 'id_evento'],
+    });
+
+    if (!punto) {
+      return res.status(404).json({ msg: 'Punto destino no encontrado' });
+    }
+
+    const evento = await Agenda.findOne({
+      where: { id: punto.id_evento },
+      include: [
+        { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
+        { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: 'Evento no encontrado' });
+    }
+
+    const esSesion   = evento.tipoevento?.nombre === 'Sesión';
+    const tipoEvento = esSesion ? 'sesion' : 'comision';
+    const tipovento  = esSesion ? 1 : 2;
+
+    // 5. Verificar que exista votación
+    const votosExistentes = await VotosPunto.findOne({ where: { id_punto: puntoDestino } });
+
+    if (!votosExistentes) {
+      return res.status(404).json({ msg: 'No hay votación registrada para este cierre' });
+    }
+
+    // 6. Obtener y retornar resultados
+    const integrantes = await obtenerResultadosVotacionOptimizado(
+      null,
+      puntoDestino,
+      tipoEvento
+    );
+
+    return res.status(200).json({
+      punto: {
+        id:      punto.id,
+        nopunto: punto.nopunto,
+        punto:   punto.punto,
+      },
+      evento,
+      integrantes,
+      tipovento,
+      dispensa: tieneDispensa,
+    });
+
+  } catch (error: any) {
+    console.error('Error getVotosCierre:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+async function obtenerListadoDiputados(evento: any) {
+  const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null }[] = [];
+  
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const diputados = await AsistenciaVoto.findAll({
+      where: {
+        id_agenda: evento.id,
+      }
+    });
+    for (const inteLegis of diputados) {
+            listadoDiputados.push({
+            id_diputado: inteLegis.id_diputado,
+            id_partido: inteLegis.partido_dip,
+            comision_dip_id: inteLegis.comision_dip_id,
+            id_cargo_dip: inteLegis.id_cargo_dip,
+          });
+    }
+  return listadoDiputados;
+}
+
+async function obtenerResultadosVotacionOptimizado(
+  idTemaPuntoVoto: string | null,
+  idPunto: string | null,
+  tipoEvento: 'sesion' | 'comision'
+): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
+    
+    const dipasociados = await TipoCargoComision.findOne({
+      where: { valor: "Diputado Asociado" }
+    });
+
+    const whereConditions: any = {};
+    
+    if (idTemaPuntoVoto) {
+      whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
+    } else if (idPunto) {
+      whereConditions.id_punto = idPunto;
+    } else {
+      return []; // No hay nada que buscar
+    }
+
+    const votosRaw = await VotosPunto.findAll({
+      where: whereConditions,
+      raw: true,
+    });
+    
+    if (votosRaw.length === 0) {
+      return [];
+    }
+
+  const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
+  const diputados = await Diputado.findAll({
+    where: { id: diputadoIds },
+    attributes: ["id", "apaterno", "amaterno", "nombres"],
+    raw: true,
+    paranoid: false,
+  });
+  const diputadosMap = new Map(
+    diputados.map(d => [d.id, d])
+  );
+
+  const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
+  const partidos = await Partidos.findAll({
+    where: { id: partidoIds },
+    attributes: ["id", "siglas"],
+    raw: true,
+  });
+  const partidosMap = new Map(
+    partidos.map(p => [p.id, p])
+  );
+
+  let comisionesMap = new Map();
+  let cargosMap = new Map();
+  
+  if (tipoEvento === 'comision') {
+    const comisionIds = votosRaw
+      .map(v => v.id_comision_dip)
+      .filter(Boolean);
+    
+    if (comisionIds.length > 0) {
+      const comisiones = await Comision.findAll({
+        where: { id: comisionIds },
+        attributes: ["id", "nombre", "importancia"],
+        raw: true,
+      });
+      comisionesMap = new Map(
+        comisiones.map(c => [c.id, c])
+      );
+    }
+
+    const cargoIds = votosRaw  
+      .map(v => v.id_cargo_dip)
+      .filter(Boolean);
+    
+    if (cargoIds.length > 0) {
+      const cargos = await TipoCargoComision.findAll({
+        where: { id: cargoIds },
+        attributes: ["id", "valor", "nivel"],
+        raw: true,
+      });
+      cargosMap = new Map(
+        cargos.map(c => [c.id, c] )
+      );
+    }
+  }
+
+  const resultados: ResultadoVotacion[] = votosRaw.map((voto) => {
+    const diputado = diputadosMap.get(voto.id_diputado);
+    const partido = partidosMap.get(voto.id_partido);
+    const comision = comisionesMap.get(voto.id_comision_dip);
+    const cargo = cargosMap.get(voto.id_cargo_dip);
+    
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    const resultado: ResultadoVotacion = {
+      id: voto.id,
+      sentido: voto.sentido,
+      mensaje: voto.mensaje,
+      id_diputado: voto.id_diputado,
+      id_partido: voto.id_partido,
+      id_comision_dip: voto.id_comision_dip,
+      id_cargo_dip: voto.id_cargo_dip,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+    };
+
+    if (tipoEvento === 'comision') {
+      resultado.comision_nombre = comision?.nombre || null;
+      resultado.comision_importancia = comision?.importancia || null;
+      resultado.cargo = cargo?.valor || null;
+      resultado.nivel_cargo = cargo?.nivel || 999;
+    }
+
+    return resultado;
+  });
+
+
+  if (tipoEvento === 'sesion') {
+   
+    resultados.sort((a, b) => {
+      const nombreA = a.diputado || '';
+      const nombreB = b.diputado || '';
+      return nombreA.localeCompare(nombreB, 'es');
+    });
+    return resultados;
+    
+  } else {
+    resultados.sort((a, b) => {
+      const nivelA = a.nivel_cargo || 999;
+      const nivelB = b.nivel_cargo || 999;
+      return nivelA - nivelB;
+    });
+
+    const agrupados = resultados.reduce((acc, voto) => {
+      const comisionId = voto.id_comision_dip || 'sin_comision';
+      
+      if (!acc[comisionId]) {
+        acc[comisionId] = {
+          comision_id: voto.id_comision_dip,
+          comision_nombre: voto.comision_nombre || null,
+          importancia: voto.comision_importancia || null,
+          integrantes: [],
+        };
+      }
+      
+      acc[comisionId].integrantes.push(voto);
+      return acc;
+    }, {} as Record<string, ComisionAgrupada>);
+
+    const resultado = Object.values(agrupados).sort((a, b) => {
+      const importanciaA = parseInt(a.importancia || '999');
+      const importanciaB = parseInt(b.importancia || '999');
+      return importanciaA - importanciaB;
+    });
+
+    return resultado;
+  }
+}
+
+interface ResultadoVotacion {
+  id: string;
+  sentido: number;
+  mensaje: string;
+  id_diputado: string;
+  id_partido: string;
+  id_comision_dip: string | null;
+  id_cargo_dip: string | null;
+  diputado: string | null;
+  partido: string | null;
+  comision_nombre?: string;
+  comision_importancia?: string;
+  cargo?: string;
+  nivel_cargo?: number;
+}
+
+interface ComisionAgrupada {
+  comision_id: string | null;
+  comision_nombre: string | null;
+  importancia: string | null;
+  integrantes: ResultadoVotacion[];
+}
+
+const getPuntoDestino = async (
+  idPunto: string,
+): Promise<string | null> => {
+
+  // Obtener estudios previos (type 1 directo y type 2 por expediente)
+  // igual que getifnini construye fuenteEstudios
+  const estudiosType1 = await IniciativaEstudio.findAll({
+    where: { punto_origen_id: idPunto, type: 1 },
+    attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
+  });
+
+  // Buscar expedientes relacionados al punto origen
+  const expedientesOrigen = await ExpedienteEstudiosPuntos.findAll({
+    where: { punto_origen_sesion_id: idPunto },
+    attributes: ['expediente_id'],
+  });
+
+  const expedienteIdsOrigen = [
+    ...new Set(expedientesOrigen.map((e: any) => e.expediente_id).filter(Boolean))
+  ];
+
+  const estudiosType2 = expedienteIdsOrigen.length > 0
+    ? await IniciativaEstudio.findAll({
+        where: {
+          punto_origen_id: { [Op.in]: expedienteIdsOrigen },
+          type: 2,
+        },
+        attributes: ['id', 'status', 'punto_origen_id', 'punto_destino_id', 'type'],
+      })
+    : [];
+
+  // Armar fuenteEstudios igual que getifnini
+  const fuenteEstudios = [
+    ...estudiosType1.map((e: any) => e.toJSON()),
+    ...estudiosType2.map((e: any) => e.toJSON()),
+  ].filter(
+    (e: any, index: number, self: any[]) =>
+      index === self.findIndex((x: any) => x.id === e.id)
+  );
+
+  // Ahora armar posibles puntos incluyendo los punto_destino_id de estudios previos
+  const posiblesPuntosIds = [
+    idPunto,
+    ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
+  ];
+  const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds.filter(Boolean))];
+
+  // Buscar expedientes relacionados a TODOS esos puntos
+  const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
+    where: {
+      punto_origen_sesion_id: { [Op.in]: posiblesPuntosUnicos }
+    },
+    attributes: ['expediente_id'],
+  });
+
+  const expedienteIds = [
+    ...new Set(
+      expedientesRelacionados.map((e: any) => e.expediente_id).filter(Boolean)
+    )
+  ];
+
+  // Construir OR dinámico
+  const orConditions: any[] = [];
+
+  if (posiblesPuntosUnicos.length > 0) {
+    orConditions.push({
+      punto_origen_id: { [Op.in]: posiblesPuntosUnicos },
+      type: 1,
+    });
+  }
+
+  if (expedienteIds.length > 0) {
+    orConditions.push({
+      punto_origen_id: { [Op.in]: expedienteIds },
+      type: 2,
+    });
+  }
+
+  if (orConditions.length === 0) return null;
+
+  // Buscar el cierre (status 3)
+  const estudio = await IniciativaEstudio.findOne({
+    where: {
+      status: '3',
+      [Op.or]: orConditions,
+    },
+    order: [['createdAt', 'DESC']],
+  });
+
+  return estudio?.punto_destino_id ? String(estudio.punto_destino_id) : null;
 };
