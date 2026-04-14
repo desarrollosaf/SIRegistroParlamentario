@@ -1647,3 +1647,286 @@ const getPuntoDestino = async (
 
   return estudio?.punto_destino_id ? String(estudio.punto_destino_id) : null;
 };
+
+
+export const geteventos = async (req: Request, res: Response): Promise<Response> => {
+  try {
+ 
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+    const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+    
+    const eventos = await Agenda.findAll({
+      include: [
+        {
+          model: Sedes,
+          as: "sede",
+          attributes: ["id", "sede"]
+        },
+        {
+          model: TipoEventos,
+          as: "tipoevento",
+          attributes: ["id", "nombre"],
+          where: {
+            id: {
+              [Op.in]: [uuidSesion, uuidpermanente]
+            }
+          }
+        }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
+    return res.status(200).json({
+      msg: "listoooo :v ",
+      eventos: eventosConComisiones
+    });
+  } catch (error) {
+    console.error("Error obteniendo eventos:", error);
+    return res.status(500).json({
+      msg: "Ocurrió un error al obtener los eventos",
+      error: (error as Error).message
+    });
+  }
+};
+
+
+export const getasistencia = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [
+        { model: Sedes, as: "sede", attributes: ["id", "sede"] },
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
+      ],
+    });
+
+    if (!evento) {
+      return res.status(404).json({ msg: "Evento no encontrado" });
+    }
+    const esSesion = evento.tipoevento?.nombre === "Sesión";
+
+    const asistenciasExistentes = await AsistenciaVoto.findAll({
+      where: { id_agenda: id },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+
+    let integrantes: any[] = [];
+
+    if (asistenciasExistentes.length > 0) {
+      integrantes = await procesarAsistencias(asistenciasExistentes, esSesion);
+    }
+    return res.status(200).json({
+      msg: asistenciasExistentes.length
+        ? "Evento con asistencias existentes"
+        : "Evento sin asistencias",
+      evento,
+      integrantes,
+    });
+
+  } catch (error) {
+    console.error("Error obteniendo eventos:", error);
+    return res.status(500).json({
+      msg: "Ocurrió un error al obtener los eventos",
+      error: (error as Error).message
+    });
+  }
+};
+
+async function procesarAsistencias(asistencias: any[], esSesion: boolean): Promise<any> {
+  if (esSesion) {
+    // Para sesiones: lista plana sin duplicados
+    return await procesarAsistenciasSesion(asistencias);
+  } else {
+    // Para comisiones: agrupadas y ordenadas por cargo
+    return await procesarAsistenciasComisiones(asistencias);
+  }
+}
+
+/**
+ * Procesa asistencias para SESIONES (lista plana ordenada alfabéticamente)
+ */
+async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
+  // Eliminar duplicados por id_diputado (mantener el más reciente)
+  const asistenciasSinDuplicados = Object.values(
+    asistencias.reduce<Record<string, any>>((acc, curr) => {
+      if (!acc[curr.id_diputado]) acc[curr.id_diputado] = curr;
+      return acc;
+    }, {})
+  );
+
+  const diputadoIds = [...new Set(asistenciasSinDuplicados.map(a => a.id_diputado).filter(Boolean))];
+  const partidoIds = [...new Set(asistenciasSinDuplicados.map(a => a.partido_dip).filter(Boolean))];
+
+  const [diputados, partidos] = await Promise.all([
+    Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true,
+      paranoid: false
+    }),
+    Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true,
+      paranoid: false
+    })
+  ]);
+
+  const diputadosMap = new Map(diputados.map((d: any) => [d.id, d]));
+  const partidosMap = new Map(partidos.map((p: any) => [p.id, p]));
+
+  const resultados = asistenciasSinDuplicados.map(inte => {
+    const diputado = diputadosMap.get(inte.id_diputado);
+    const partido = partidosMap.get(inte.partido_dip);
+
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    return {
+      ...inte,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+    };
+  });
+
+  // Ordenar alfabéticamente por nombre de diputado
+  resultados.sort((a, b) => {
+    const nombreA = a.diputado || '';
+    const nombreB = b.diputado || '';
+    return nombreA.localeCompare(nombreB, 'es');
+  });
+
+  return resultados;
+}
+
+/**
+ * Procesa asistencias para COMISIONES (agrupadas por comisión y ordenadas por cargo)
+ */
+async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]> {
+  const diputadoIds = [...new Set(asistencias.map(a => a.id_diputado).filter(Boolean))];
+  const partidoIds = [...new Set(asistencias.map(a => a.partido_dip).filter(Boolean))];
+  const comisionIds = [...new Set(asistencias.map(a => a.comision_dip_id).filter(Boolean))];
+  const cargoIds = [...new Set(asistencias.map(a => a.id_cargo_dip).filter(Boolean))]; // 👈 NUEVO
+
+  const [diputados, partidos, comisiones, cargos] = await Promise.all([
+    Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      raw: true,
+      paranoid: false
+    }),
+    Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true
+    }),
+    comisionIds.length > 0 ? Comision.findAll({
+      where: { id: comisionIds },
+      attributes: ["id", "nombre", "importancia"],
+      raw: true
+    }) : [],
+    cargoIds.length > 0 ? TipoCargoComision.findAll({ // 👈 NUEVO: Obtener cargos desde TipoCargo
+      where: { id: cargoIds },
+      attributes: ["id", "valor", "nivel"],
+      raw: true
+    }) : []
+  ]);
+
+  // Crear mapas
+  const diputadosMap = new Map(diputados.map((d: any) => [d.id, d]));
+  const partidosMap = new Map(partidos.map((p: any) => [p.id, p]));
+  const comisionesMap = new Map(comisiones.map((c: any) => [c.id, c]));
+  const cargosMap = new Map(cargos.map((c: any) => [c.id, c])); // 👈 NUEVO
+
+  // Mapear asistencias con información completa
+  const resultados = asistencias.map(inte => {
+    const diputado = diputadosMap.get(inte.id_diputado);
+    const partido = partidosMap.get(inte.partido_dip);
+    const comision = inte.comision_dip_id ? comisionesMap.get(inte.comision_dip_id) : null;
+    const cargo = inte.id_cargo_dip ? cargosMap.get(inte.id_cargo_dip) : null; // 👈 NUEVO
+
+    const nombreCompletoDiputado = diputado
+      ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+      : null;
+
+    return {
+      ...inte,
+      diputado: nombreCompletoDiputado,
+      partido: partido?.siglas || null,
+      comision_id: inte.comision_dip_id,
+      comision_nombre: comision?.nombre || 'Sin comisión',
+      comision_importancia: comision?.importancia || 999,
+      cargo: cargo?.valor || null, 
+      nivel_cargo: cargo?.nivel || 999 
+    };
+  });
+
+  // Agrupar por comisión
+  const integrantesAgrupados = resultados.reduce((grupos, integrante) => {
+    const comisionNombre = integrante.comision_nombre;
+    
+    if (!grupos[comisionNombre]) {
+      grupos[comisionNombre] = {
+        comision_id: integrante.comision_id,
+        comision_nombre: comisionNombre,
+        importancia: integrante.comision_importancia,
+        integrantes: []
+      };
+    }
+    
+    grupos[comisionNombre].integrantes.push(integrante);
+    return grupos;
+  }, {} as Record<string, any>);
+
+  // Convertir a array y ordenar por importancia de comisión
+  const comisionesArray = Object.values(integrantesAgrupados).sort((a: any, b: any) => {
+    return a.importancia - b.importancia;
+  });
+
+  // Ordenar integrantes dentro de cada comisión por nivel de cargo
+  comisionesArray.forEach((comision: any) => {
+    comision.integrantes.sort((a: any, b: any) => a.nivel_cargo - b.nivel_cargo);
+  });
+
+  return comisionesArray;
+}

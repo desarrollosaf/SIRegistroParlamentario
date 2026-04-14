@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -1435,3 +1435,236 @@ const getPuntoDestino = (idPunto) => __awaiter(void 0, void 0, void 0, function*
     });
     return (estudio === null || estudio === void 0 ? void 0 : estudio.punto_destino_id) ? String(estudio.punto_destino_id) : null;
 });
+const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+        const eventos = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: sedes_1.default,
+                    as: "sede",
+                    attributes: ["id", "sede"]
+                },
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                    where: {
+                        id: {
+                            [sequelize_1.Op.in]: [uuidSesion, uuidpermanente]
+                        }
+                    }
+                }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+        const eventosConComisiones = [];
+        for (const evento of eventos) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            let titulo = '';
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
+            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
+                titulo }));
+        }
+        return res.status(200).json({
+            msg: "listoooo :v ",
+            eventos: eventosConComisiones
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo eventos:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener los eventos",
+            error: error.message
+        });
+    }
+});
+exports.geteventos = geteventos;
+const getasistencia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: "sede", attributes: ["id", "sede"] },
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: "Evento no encontrado" });
+        }
+        const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
+        const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
+            where: { id_agenda: id },
+            order: [['created_at', 'DESC']],
+            raw: true,
+        });
+        let integrantes = [];
+        if (asistenciasExistentes.length > 0) {
+            integrantes = yield procesarAsistencias(asistenciasExistentes, esSesion);
+        }
+        return res.status(200).json({
+            msg: asistenciasExistentes.length
+                ? "Evento con asistencias existentes"
+                : "Evento sin asistencias",
+            evento,
+            integrantes,
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo eventos:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener los eventos",
+            error: error.message
+        });
+    }
+});
+exports.getasistencia = getasistencia;
+function procesarAsistencias(asistencias, esSesion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (esSesion) {
+            // Para sesiones: lista plana sin duplicados
+            return yield procesarAsistenciasSesion(asistencias);
+        }
+        else {
+            // Para comisiones: agrupadas y ordenadas por cargo
+            return yield procesarAsistenciasComisiones(asistencias);
+        }
+    });
+}
+/**
+ * Procesa asistencias para SESIONES (lista plana ordenada alfabéticamente)
+ */
+function procesarAsistenciasSesion(asistencias) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Eliminar duplicados por id_diputado (mantener el más reciente)
+        const asistenciasSinDuplicados = Object.values(asistencias.reduce((acc, curr) => {
+            if (!acc[curr.id_diputado])
+                acc[curr.id_diputado] = curr;
+            return acc;
+        }, {}));
+        const diputadoIds = [...new Set(asistenciasSinDuplicados.map(a => a.id_diputado).filter(Boolean))];
+        const partidoIds = [...new Set(asistenciasSinDuplicados.map(a => a.partido_dip).filter(Boolean))];
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+                paranoid: false
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+                paranoid: false
+            })
+        ]);
+        const diputadosMap = new Map(diputados.map((d) => [d.id, d]));
+        const partidosMap = new Map(partidos.map((p) => [p.id, p]));
+        const resultados = asistenciasSinDuplicados.map(inte => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(inte.id_diputado);
+            const partido = partidosMap.get(inte.partido_dip);
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : null;
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null });
+        });
+        // Ordenar alfabéticamente por nombre de diputado
+        resultados.sort((a, b) => {
+            const nombreA = a.diputado || '';
+            const nombreB = b.diputado || '';
+            return nombreA.localeCompare(nombreB, 'es');
+        });
+        return resultados;
+    });
+}
+/**
+ * Procesa asistencias para COMISIONES (agrupadas por comisión y ordenadas por cargo)
+ */
+function procesarAsistenciasComisiones(asistencias) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const diputadoIds = [...new Set(asistencias.map(a => a.id_diputado).filter(Boolean))];
+        const partidoIds = [...new Set(asistencias.map(a => a.partido_dip).filter(Boolean))];
+        const comisionIds = [...new Set(asistencias.map(a => a.comision_dip_id).filter(Boolean))];
+        const cargoIds = [...new Set(asistencias.map(a => a.id_cargo_dip).filter(Boolean))]; // 👈 NUEVO
+        const [diputados, partidos, comisiones, cargos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+                paranoid: false
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true
+            }),
+            comisionIds.length > 0 ? comisions_1.default.findAll({
+                where: { id: comisionIds },
+                attributes: ["id", "nombre", "importancia"],
+                raw: true
+            }) : [],
+            cargoIds.length > 0 ? tipo_cargo_comisions_1.default.findAll({
+                where: { id: cargoIds },
+                attributes: ["id", "valor", "nivel"],
+                raw: true
+            }) : []
+        ]);
+        // Crear mapas
+        const diputadosMap = new Map(diputados.map((d) => [d.id, d]));
+        const partidosMap = new Map(partidos.map((p) => [p.id, p]));
+        const comisionesMap = new Map(comisiones.map((c) => [c.id, c]));
+        const cargosMap = new Map(cargos.map((c) => [c.id, c])); // 👈 NUEVO
+        // Mapear asistencias con información completa
+        const resultados = asistencias.map(inte => {
+            var _a, _b, _c;
+            const diputado = diputadosMap.get(inte.id_diputado);
+            const partido = partidosMap.get(inte.partido_dip);
+            const comision = inte.comision_dip_id ? comisionesMap.get(inte.comision_dip_id) : null;
+            const cargo = inte.id_cargo_dip ? cargosMap.get(inte.id_cargo_dip) : null; // 👈 NUEVO
+            const nombreCompletoDiputado = diputado
+                ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                : null;
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null, comision_id: inte.comision_dip_id, comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || 'Sin comisión', comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999 });
+        });
+        // Agrupar por comisión
+        const integrantesAgrupados = resultados.reduce((grupos, integrante) => {
+            const comisionNombre = integrante.comision_nombre;
+            if (!grupos[comisionNombre]) {
+                grupos[comisionNombre] = {
+                    comision_id: integrante.comision_id,
+                    comision_nombre: comisionNombre,
+                    importancia: integrante.comision_importancia,
+                    integrantes: []
+                };
+            }
+            grupos[comisionNombre].integrantes.push(integrante);
+            return grupos;
+        }, {});
+        // Convertir a array y ordenar por importancia de comisión
+        const comisionesArray = Object.values(integrantesAgrupados).sort((a, b) => {
+            return a.importancia - b.importancia;
+        });
+        // Ordenar integrantes dentro de cada comisión por nivel de cargo
+        comisionesArray.forEach((comision) => {
+            comision.integrantes.sort((a, b) => a.nivel_cargo - b.nivel_cargo);
+        });
+        return comisionesArray;
+    });
+}

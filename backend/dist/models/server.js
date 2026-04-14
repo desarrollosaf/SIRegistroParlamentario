@@ -104,7 +104,8 @@ class Server {
                 '/api/estadistico/diputado/iniciativas',
                 '/api/estadistico/comision/iniciativas',
                 '/api/estadistico/getvotospunto/',
-                '/api/estadistico/geteventos/'
+                '/api/estadistico/geteventos/',
+                '/api/estadistico/getasistencia/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
