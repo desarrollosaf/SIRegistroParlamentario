@@ -295,10 +295,91 @@
                             Dispensada
                           </span>
                         </div>
+
+
                         <div class="alert alert-light mb-3" *ngIf="item.punto">
                           <strong class="d-block mb-2"><i class="bi bi-file-text me-1"></i> Punto:</strong>
                           <small class="text-dark">{{ item.punto }}</small>
                         </div>
+                        <!-- Intervenciones — solo si existen -->
+                        <div class="mt-3" *ngIf="item.intervenciones && item.intervenciones.length > 0">
+
+                          <!-- Botón toggle -->
+                          <button class="btn btn-sm w-100 d-flex align-items-center justify-content-between px-3 py-2"
+                            style="background:rgba(128,0,72,0.06); border:1px solid rgba(128,0,72,0.18); border-radius:8px; color:#800048;"
+                            type="button" (click)="toggleIntervenciones(i)">
+                            <div class="d-flex align-items-center gap-2">
+                              <span class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                                style="width:24px;height:24px;background:rgba(128,0,72,0.1);">
+                                <i class="bi bi-mic-fill" style="font-size:0.75rem;"></i>
+                              </span>
+                              <small class="fw-semibold text-uppercase" style="letter-spacing:1px;font-size:0.7rem;">
+                                Intervenciones ({{ item.intervenciones.length }})
+                              </small>
+                            </div>
+                            <i class="bi" [ngClass]="intervencionesCollapsed[i] ? 'bi-chevron-down' : 'bi-chevron-up'"
+                              style="font-size:0.75rem;"></i>
+                          </button>
+
+                          <!-- Contenido colapsable -->
+                          <div [class.show]="!intervencionesCollapsed[i]" class="collapse-content interv-collapse mt-2">
+                            <div class="d-flex flex-column gap-2">
+                              <div *ngFor="let interv of item.intervenciones" class="interv-card"
+                                [class.interv-favor]="interv.tipointerven?.valor === 'A favor'"
+                                [class.interv-contra]="interv.tipointerven?.valor === 'En contra'"
+                                [class.interv-comentario]="interv.tipointerven?.valor === 'Comentario'">
+
+                                <!-- Header -->
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                  <div class="d-flex align-items-center gap-2">
+                                    <span
+                                      class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                      style="width:30px;height:30px;background:rgba(128,0,72,0.1);">
+                                      <i class="bi bi-person-fill" style="color:#800048;font-size:0.85rem;"></i>
+                                    </span>
+                                    <span class="fw-semibold text-dark" style="font-size:0.85rem;">{{ interv.diputado
+                                      }}</span>
+                                  </div>
+                                  <span class="interv-badge"
+                                    [class.badge-favor]="interv.tipointerven?.valor === 'A favor'"
+                                    [class.badge-contra]="interv.tipointerven?.valor === 'En contra'"
+                                    [class.badge-comentario]="interv.tipointerven?.valor === 'Comentario'"
+                                    [class.badge-neutral]="!interv.tipointerven?.valor">
+                                    {{ interv.tipointerven?.valor || 'Sin tipo' }}
+                                  </span>
+                                </div>
+
+                                <!-- Resumen -->
+                                <p class="mb-0 text-dark lh-sm"
+                                  style="font-size:0.82rem; white-space:pre-line; text-align:justify;">
+                                  {{ interv.resumen }}
+                                </p>
+                                <!-- Mensaje — solo si es Comentario y tiene mensaje -->
+                                <div *ngIf="interv.tipointerven?.valor === 'Comentario' && interv.mensaje"
+                                  class="mt-2 pt-2" style="border-top: 1px dashed #e2e8f0;">
+                                  <small class="text-muted text-uppercase fw-semibold d-block mb-1"
+                                    style="font-size:0.68rem; letter-spacing:1px;">
+                                    <i class="bi bi-chat-text me-1"></i>Mensaje
+                                  </small>
+                                  <p class="mb-0 text-dark lh-sm"
+                                    style="font-size:0.82rem; white-space:pre-line; text-align:justify;">
+                                    {{ interv.mensaje }}
+                                  </p>
+                                </div>
+                                <div *ngIf="interv.liga" class="mt-2 pt-2" style="border-top: 1px dashed #e2e8f0;">
+                                  <a [href]="interv.liga" target="_blank" rel="noopener noreferrer" class="btn-liga-yt">
+                                    <i class="bi bi-youtube me-2"></i>Ver
+                                    <i class="bi bi-box-arrow-up-right ms-2 liga-arrow"></i>
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+
+
+
                         <div class="alert alert-info mb-3" *ngIf="item.turnado && item.comisiones_turnado">
                           <div class="d-flex align-items-start">
                             <i class="bi bi-arrow-right-circle-fill me-2 mt-1 flex-shrink-0"></i>
