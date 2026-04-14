@@ -29,6 +29,8 @@ import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import { Sequelize } from "sequelize";
 import Decreto from "../models/decreto";
+import TipoIntervencion from "../models/tipo_intervencions";
+import Intervencion from "../models/intervenciones";
 
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
@@ -930,6 +932,47 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               .join(" ")
           : null;
 
+        console.log("holaaaaaaaaa", data.evento?.id)
+        const intervenci = await Intervencion.findAll({
+          where: {
+            id_evento: data.evento?.id,
+            tipo: 1,
+          },
+          include: [
+            {
+              model: TipoIntervencion,
+              as: "tipointerven",
+              attributes: ["id", "valor"],
+            },
+          ],
+        });
+
+        const resultados = await Promise.all(
+          intervenci.map(async (inte) => {
+            const diputado = await Diputado.findOne({
+              where: { id: inte.id_diputado },
+              attributes: ["apaterno", "amaterno", "nombres"],
+              raw: true,
+            });
+
+            const nombreCompletoDiputado = diputado
+              ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+              : null;
+
+            return {
+              id: inte.id,
+              id_evento: inte.id_evento,
+              id_punto: inte.id_punto,
+              mensaje: inte.mensaje,
+              resumen: inte.resumen,
+              tipo: inte.tipo,
+              destacado: inte.destacado,
+              tipointerven: inte.tipointerven, 
+              liga: inte.liga,
+              diputado: nombreCompletoDiputado,
+            };
+          })
+        );
         const turnadoInfo = await getComisionesTurnado(data.punto?.id);
 
         const estudiosConInfo = await Promise.all(
@@ -1055,8 +1098,10 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             votacionid: data.punto?.id,
             liga: data.evento?.liga,
             tribuna,
+            intervenciones: resultados,
             ...turnadoInfo,
-            ...anfitrionesNacio
+            ...anfitrionesNacio,
+            
           },
           estudio: estudiosConInfo,
           dictamen: dictamenesConInfo,

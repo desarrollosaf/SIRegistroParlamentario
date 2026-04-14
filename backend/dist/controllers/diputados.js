@@ -39,6 +39,8 @@ const diputado_1 = __importDefault(require("../models/diputado"));
 const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedientes_estudio_puntos"));
 const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
 const decreto_1 = __importDefault(require("../models/decreto"));
+const tipo_intervencions_1 = __importDefault(require("../models/tipo_intervencions"));
+const intervenciones_1 = __importDefault(require("../models/intervenciones"));
 const cargoDiputados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('holi');
@@ -729,7 +731,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             presentaString = resultado.presentaString;
         }
         const trazaIniciativas = yield Promise.all(iniciativas.map((iniciativa) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
             const data = iniciativa.toJSON();
             let decretos = (_a = data.decretos) !== null && _a !== void 0 ? _a : [];
             console.log("DATA INICIATIVA:");
@@ -842,7 +844,44 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     .filter(Boolean)
                     .join(" ")
                 : null;
-            const turnadoInfo = yield getComisionesTurnado((_h = data.punto) === null || _h === void 0 ? void 0 : _h.id);
+            console.log("holaaaaaaaaa", (_h = data.evento) === null || _h === void 0 ? void 0 : _h.id);
+            const intervenci = yield intervenciones_1.default.findAll({
+                where: {
+                    id_evento: (_j = data.evento) === null || _j === void 0 ? void 0 : _j.id,
+                    tipo: 1,
+                },
+                include: [
+                    {
+                        model: tipo_intervencions_1.default,
+                        as: "tipointerven",
+                        attributes: ["id", "valor"],
+                    },
+                ],
+            });
+            const resultados = yield Promise.all(intervenci.map((inte) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c;
+                const diputado = yield diputado_1.default.findOne({
+                    where: { id: inte.id_diputado },
+                    attributes: ["apaterno", "amaterno", "nombres"],
+                    raw: true,
+                });
+                const nombreCompletoDiputado = diputado
+                    ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
+                    : null;
+                return {
+                    id: inte.id,
+                    id_evento: inte.id_evento,
+                    id_punto: inte.id_punto,
+                    mensaje: inte.mensaje,
+                    resumen: inte.resumen,
+                    tipo: inte.tipo,
+                    destacado: inte.destacado,
+                    tipointerven: inte.tipointerven,
+                    liga: inte.liga,
+                    diputado: nombreCompletoDiputado,
+                };
+            })));
+            const turnadoInfo = yield getComisionesTurnado((_k = data.punto) === null || _k === void 0 ? void 0 : _k.id);
             const estudiosConInfo = yield Promise.all(estudios.map((e) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e;
                 const eventoEstudio = (_a = e.iniciativa) === null || _a === void 0 ? void 0 : _a.evento;
@@ -909,7 +948,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 };
             })));
             return {
-                nacio: Object.assign(Object.assign({ dispensa: (_j = data.punto) === null || _j === void 0 ? void 0 : _j.dispensa, evento: (_k = data.evento) === null || _k === void 0 ? void 0 : _k.id, tipo_evento: (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.tipoevento) === null || _m === void 0 ? void 0 : _m.nombre, fecha: formatearFecha((_o = data.evento) === null || _o === void 0 ? void 0 : _o.fecha), descripcion_evento: (_p = data.evento) === null || _p === void 0 ? void 0 : _p.descripcion, numpunto: (_q = data.punto) === null || _q === void 0 ? void 0 : _q.nopunto, punto: (_r = data.punto) === null || _r === void 0 ? void 0 : _r.punto, votacionid: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.id, liga: (_t = data.evento) === null || _t === void 0 ? void 0 : _t.liga, tribuna }, turnadoInfo), anfitrionesNacio),
+                nacio: Object.assign(Object.assign({ dispensa: (_l = data.punto) === null || _l === void 0 ? void 0 : _l.dispensa, evento: (_m = data.evento) === null || _m === void 0 ? void 0 : _m.id, tipo_evento: (_p = (_o = data.evento) === null || _o === void 0 ? void 0 : _o.tipoevento) === null || _p === void 0 ? void 0 : _p.nombre, fecha: formatearFecha((_q = data.evento) === null || _q === void 0 ? void 0 : _q.fecha), descripcion_evento: (_r = data.evento) === null || _r === void 0 ? void 0 : _r.descripcion, numpunto: (_s = data.punto) === null || _s === void 0 ? void 0 : _s.nopunto, punto: (_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto, votacionid: (_u = data.punto) === null || _u === void 0 ? void 0 : _u.id, liga: (_v = data.evento) === null || _v === void 0 ? void 0 : _v.liga, tribuna, intervenciones: resultados }, turnadoInfo), anfitrionesNacio),
                 estudio: estudiosConInfo,
                 dictamen: dictamenesConInfo,
                 cierre: cierresConInfo.length > 0 ? cierresConInfo[0] : null,
