@@ -437,7 +437,8 @@ function procesarAsistenciasComisiones(asistencias) {
             diputado_1.default.findAll({
                 where: { id: diputadoIds },
                 attributes: ["id", "apaterno", "amaterno", "nombres"],
-                raw: true
+                raw: true,
+                paranoid: false
             }),
             partidos_1.default.findAll({
                 where: { id: partidoIds },

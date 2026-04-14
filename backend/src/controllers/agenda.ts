@@ -493,7 +493,8 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
     Diputado.findAll({
       where: { id: diputadoIds },
       attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true
+      raw: true,
+      paranoid: false
     }),
     Partidos.findAll({
       where: { id: partidoIds },
