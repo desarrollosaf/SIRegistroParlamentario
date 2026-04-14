@@ -698,7 +698,7 @@ export class ComisionComponent {
   getEventos(tipo: String) {
     this._eventoService.getEventos(tipo).subscribe({
       next: (response: any) => {
-        console.log(response)
+        console.log('hla',response)
         this.originalData.set(response.citas);
         this.temp.set(response.citas);
         this.rows.set(response.citas);
@@ -725,6 +725,7 @@ export class ComisionComponent {
 
     this.ngZone.runOutsideAngular(() => {
       const filtered = this.originalData().filter((row: any) => {
+        const id = (row.id || '').toLowerCase();
         const nombre = (row.descripcion || '').toLowerCase();
         const fecha = (row.fecha || '').toLowerCase();
         const sede = (row.sede.sede || '').toLowerCase();
@@ -732,6 +733,7 @@ export class ComisionComponent {
 
         return (
           nombre.includes(val) ||
+          id.includes(val) ||
           fecha.includes(val) ||
           sede.includes(val) ||
           tipo.includes(val)
