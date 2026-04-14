@@ -38,6 +38,16 @@ interface TimelineItem {
   votacionid?: string;
   dispensa?: boolean;
   decretos?: Array<{ decreto: string; nombre_decreto: string }>;
+intervenciones?: Array<{
+  id: string;
+  diputado: string;
+  resumen: string;
+  mensaje: string;
+  tipo: number;
+  tipointerven: { id: string; valor: string };
+  liga?: string;
+  destacado: boolean;
+}>;
 }
  
 interface GrupoParlamentario {
@@ -166,7 +176,8 @@ export class IniciativasComponent implements OnInit {
         evento: data.nacio.evento,
         liga: data.nacio.liga,
         votacionid: data.nacio.votacionid,
-        decretos: data.decretos || []
+        decretos: data.decretos || [],
+        intervenciones: data.nacio.intervenciones || []
       });
     }
 
@@ -223,6 +234,7 @@ export class IniciativasComponent implements OnInit {
 
     this.timelineData.forEach((_, index) => {
       this.isCollapsed[index] = true;
+      this.intervencionesCollapsed[index] = true; // cerrado por defecto
     });
   }
 
@@ -466,4 +478,16 @@ verDecreto(path: string): void {
   const url = path.startsWith('http') ? path : `${this.enviro}${path}`;
   window.open(url, '_blank');
 }
+
+
+
+intervencionesCollapsed: { [key: number]: boolean } = {};
+
+toggleIntervenciones(index: number): void {
+  this.intervencionesCollapsed[index] = !this.intervencionesCollapsed[index];
+}
+
+
+
+
 }
