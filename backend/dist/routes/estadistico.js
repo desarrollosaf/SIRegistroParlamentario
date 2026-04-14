@@ -7,4 +7,6 @@ router.get("/api/estadistico/iniciativas/resumen", estadistico_1.getResumenTotal
 router.get("/api/estadistico/diputado/iniciativas", estadistico_1.getIniciativasPresentadasPorDiputado);
 router.get("/api/estadistico/comision/iniciativas", estadistico_1.getIniciativasTurnadasPorComision);
 router.get("/api/estadistico/comision/eventos", estadistico_1.getEventosPorComision);
+router.get("/api/estadistico/getvotospunto/:id", estadistico_1.getVotosCierre);
+// router.get('/api/iniciativas/votos-cierre/:id/', getVotosCierre);
 exports.default = router;
