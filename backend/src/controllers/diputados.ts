@@ -588,17 +588,24 @@ export const selectiniciativas = async (req: Request, res: Response): Promise<an
   }
 };
 
-const formatearFecha = (fecha: string): string => {
+const formatearFecha = (fecha: any): string => {
   if (!fecha) return '';
   const meses = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
   ];
-  const date = new Date(fecha);
-  const dia = date.getUTCDate();
-  const mes = meses[date.getUTCMonth()];
-  const anio = date.getUTCFullYear();
-  return `${dia} de ${mes} de ${anio}`;
+
+  // Si ya viene como string tipo "2026-02-25" o "2026-02-25T..."
+  if (typeof fecha === 'string') {
+    const [anio, mes, dia] = fecha.split('T')[0].split('-').map(Number);
+    return `${dia} de ${meses[mes - 1]} de ${anio}`;
+  }
+
+  // Si viene como objeto Date (ya convertido por Sequelize a UTC)
+  // Usar toLocaleString con timezone de México para revertir
+  const fechaStr = fecha.toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' });
+  const [anio, mes, dia] = fechaStr.split(' ')[0].split('-').map(Number);
+  return `${dia} de ${meses[mes - 1]} de ${anio}`;
 };
 
 const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
@@ -896,7 +903,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           ]
         });
 
-        console.log("CIERRES DB:");
+        // console.log("CIERRES DB:", data.evento);
+        // return 500;
         console.log(cierresDB.map((c: any) => c.toJSON()));
 
         // 4. Unir con los que ya venían en fuenteEstudios
@@ -1114,8 +1122,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         };
       })
     );
-    // console.log(trazaIniciativas);
-    // return 500;
+   
     return res.status(200).json({
       inidoc,
       proponentesString,
