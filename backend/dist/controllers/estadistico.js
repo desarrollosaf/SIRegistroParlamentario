@@ -484,6 +484,36 @@ const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0
         const iniciativas = reporte.filter((i) => Number(i.tipo) === 1);
         const puntosAcuerdo = reporte.filter((i) => Number(i.tipo) === 2);
         const minutas = reporte.filter((i) => Number(i.tipo) === 3);
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+        const sesion = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                    where: {
+                        id: {
+                            [sequelize_1.Op.in]: [uuidSesion, uuidpermanente]
+                        }
+                    }
+                }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+        const comision = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                    where: {
+                        id: '0e772516-bbc2-402f-afa0-022489752d33'
+                    }
+                }
+            ],
+            order: [['fecha', 'DESC']]
+        });
         return res.status(200).json({
             ok: true,
             data: {
@@ -502,6 +532,8 @@ const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0
                     minutas: minutas.length,
                     puntos_acuerdo: puntosAcuerdo.length,
                     total_registros: reporte.length,
+                    total_sesiones: sesion.length,
+                    total_comisiones: comision.length
                 },
             },
         });
