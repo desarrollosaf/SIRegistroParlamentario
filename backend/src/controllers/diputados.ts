@@ -29,6 +29,8 @@ import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import { Sequelize } from "sequelize";
 import Decreto from "../models/decreto";
+import TipoIntervencion from "../models/tipo_intervencions";
+import Intervencion from "../models/intervenciones";
 
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
@@ -586,17 +588,24 @@ export const selectiniciativas = async (req: Request, res: Response): Promise<an
   }
 };
 
-const formatearFecha = (fecha: string): string => {
+const formatearFecha = (fecha: any): string => {
   if (!fecha) return '';
   const meses = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
   ];
-  const date = new Date(fecha);
-  const dia = date.getUTCDate();
-  const mes = meses[date.getUTCMonth()];
-  const anio = date.getUTCFullYear();
-  return `${dia} de ${mes} de ${anio}`;
+
+  // Si ya viene como string tipo "2026-02-25" o "2026-02-25T..."
+  if (typeof fecha === 'string') {
+    const [anio, mes, dia] = fecha.split('T')[0].split('-').map(Number);
+    return `${dia} de ${meses[mes - 1]} de ${anio}`;
+  }
+
+  // Si viene como objeto Date (ya convertido por Sequelize a UTC)
+  // Usar toLocaleString con timezone de México para revertir
+  const fechaStr = fecha.toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' });
+  const [anio, mes, dia] = fechaStr.split(' ')[0].split('-').map(Number);
+  return `${dia} de ${meses[mes - 1]} de ${anio}`;
 };
 
 const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
@@ -894,7 +903,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           ]
         });
 
-        console.log("CIERRES DB:");
+        // console.log("CIERRES DB:", data.evento);
+        // return 500;
         console.log(cierresDB.map((c: any) => c.toJSON()));
 
         // 4. Unir con los que ya venían en fuenteEstudios
@@ -930,6 +940,47 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               .join(" ")
           : null;
 
+        console.log("holaaaaaaaaa", data.evento?.id)
+        const intervenci = await Intervencion.findAll({
+          where: {
+            id_evento: data.evento?.id,
+            tipo: 1,
+          },
+          include: [
+            {
+              model: TipoIntervencion,
+              as: "tipointerven",
+              attributes: ["id", "valor"],
+            },
+          ],
+        });
+
+        const resultados = await Promise.all(
+          intervenci.map(async (inte) => {
+            const diputado = await Diputado.findOne({
+              where: { id: inte.id_diputado },
+              attributes: ["apaterno", "amaterno", "nombres"],
+              raw: true,
+            });
+
+            const nombreCompletoDiputado = diputado
+              ? `${diputado.apaterno ?? ""} ${diputado.amaterno ?? ""} ${diputado.nombres ?? ""}`.trim()
+              : null;
+
+            return {
+              id: inte.id,
+              id_evento: inte.id_evento,
+              id_punto: inte.id_punto,
+              mensaje: inte.mensaje,
+              resumen: inte.resumen,
+              tipo: inte.tipo,
+              destacado: inte.destacado,
+              tipointerven: inte.tipointerven, 
+              liga: inte.liga,
+              diputado: nombreCompletoDiputado,
+            };
+          })
+        );
         const turnadoInfo = await getComisionesTurnado(data.punto?.id);
 
         const estudiosConInfo = await Promise.all(
@@ -1055,8 +1106,10 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             votacionid: data.punto?.id,
             liga: data.evento?.liga,
             tribuna,
+            intervenciones: resultados,
             ...turnadoInfo,
-            ...anfitrionesNacio
+            ...anfitrionesNacio,
+            
           },
           estudio: estudiosConInfo,
           dictamen: dictamenesConInfo,
@@ -1069,8 +1122,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         };
       })
     );
-    // console.log(trazaIniciativas);
-    // return 500;
+   
     return res.status(200).json({
       inidoc,
       proponentesString,
