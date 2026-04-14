@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getEventosPorComision, getIniciativasPresentadasPorDiputado, getIniciativasTurnadasPorComision, getResumenTotalesEndpoint, getVotosCierre  } from "../controllers/estadistico";
+import { getasistencia, geteventos, getEventosPorComision, getIniciativasPresentadasPorDiputado, getIniciativasTurnadasPorComision, getResumenTotalesEndpoint, getVotosCierre  } from "../controllers/estadistico";
 const router = Router();
 
 
@@ -9,5 +9,7 @@ router.get("/api/estadistico/comision/iniciativas", getIniciativasTurnadasPorCom
 router.get("/api/estadistico/comision/eventos", getEventosPorComision );
 router.get("/api/estadistico/getvotospunto/:id", getVotosCierre );
 // router.get('/api/iniciativas/votos-cierre/:id/', getVotosCierre);
+router.get("/api/estadistico/geteventos/", geteventos );
+router.get("/api/estadistico/getasistencia/:id", getasistencia );
 
 export default router
