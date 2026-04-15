@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -1700,3 +1700,63 @@ function procesarAsistenciasComisiones(asistencias) {
         return comisionesArray;
     });
 }
+const ultimasesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+        const eventos = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: sedes_1.default,
+                    as: "sede",
+                    attributes: ["id", "sede"]
+                },
+                {
+                    model: tipo_eventos_1.default,
+                    as: "tipoevento",
+                    attributes: ["id", "nombre"],
+                    where: {
+                        id: {
+                            [sequelize_1.Op.in]: [uuidSesion, uuidpermanente]
+                        }
+                    }
+                }
+            ],
+            order: [['fecha', 'DESC']],
+            limit: 1
+        });
+        const eventosConComisiones = [];
+        for (const evento of eventos) {
+            const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: evento.id },
+                attributes: ["autor_id"],
+                raw: true
+            });
+            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+            let comisiones = [];
+            let titulo = '';
+            if (comisionIds.length > 0) {
+                comisiones = yield comisions_1.default.findAll({
+                    where: { id: comisionIds },
+                    attributes: ["id", "nombre"],
+                    raw: true
+                });
+                titulo = comisiones.map(c => c.nombre).join(", ");
+            }
+            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
+                titulo }));
+        }
+        return res.status(200).json({
+            msg: "listoooo :v ",
+            eventos: eventosConComisiones
+        });
+    }
+    catch (error) {
+        console.error("Error obteniendo eventos:", error);
+        return res.status(500).json({
+            msg: "Ocurrió un error al obtener los eventos",
+            error: error.message
+        });
+    }
+});
+exports.ultimasesion = ultimasesion;

@@ -1965,3 +1965,81 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
 
   return comisionesArray;
 }
+
+
+export const ultimasesion = async (req: Request, res: Response): Promise<Response> => {
+  try {
+ 
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+    const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+    
+    const eventos = await Agenda.findAll({
+      include: [
+        {
+          model: Sedes,
+          as: "sede",
+          attributes: ["id", "sede"]
+        },
+        {
+          model: TipoEventos,
+          as: "tipoevento",
+          attributes: ["id", "nombre"],
+          where: {
+            id: {
+              [Op.in]: [uuidSesion, uuidpermanente]
+            }
+          }
+        }
+      ],
+      order: [['fecha', 'DESC']],
+      limit: 1
+    });
+
+
+    const eventosConComisiones = [];
+
+    for (const evento of eventos) {
+      const anfitriones = await AnfitrionAgenda.findAll({
+        where: { agenda_id: evento.id },
+        attributes: ["autor_id"],
+        raw: true
+      });
+
+      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+     let comisiones: any[] = [];
+
+
+      let titulo: string = '';
+
+
+      if (comisionIds.length > 0) {
+        comisiones = await Comision.findAll({
+          where: { id: comisionIds },
+          attributes: ["id", "nombre"],
+          raw: true
+        });
+
+        titulo = comisiones.map(c => c.nombre).join(", ");
+      }
+
+
+      eventosConComisiones.push({
+        ...evento.toJSON(),
+        comisiones,
+        titulo
+      });
+    }
+
+    return res.status(200).json({
+      msg: "listoooo :v ",
+      eventos: eventosConComisiones
+    });
+  } catch (error) {
+    console.error("Error obteniendo eventos:", error);
+    return res.status(500).json({
+      msg: "Ocurrió un error al obtener los eventos",
+      error: (error as Error).message
+    });
+  }
+};
