@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -37,6 +37,9 @@ const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const sedes_1 = __importDefault(require("../models/sedes"));
+const pdfkit_1 = __importDefault(require("pdfkit"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS PUROS (sin I/O)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1760,3 +1763,227 @@ const ultimasesion = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.ultimasesion = ultimasesion;
+// =====================================================
+// GET: Obtener todos los puntos del orden del día
+// =====================================================
+const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
+                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: 'Evento no encontrado' });
+        }
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id },
+            order: [['nopunto', 'ASC']],
+        });
+        return res.status(200).json({
+            msg: 'Puntos del orden del día obtenidos correctamente',
+            evento: {
+                id: evento.id,
+                descripcion: evento.descripcion,
+                fecha: evento.fecha,
+                sede: (_a = evento.sede) === null || _a === void 0 ? void 0 : _a.sede,
+                tipoevento: (_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
+            },
+            total: puntosRaw.length,
+            puntos: puntosRaw,
+        });
+    }
+    catch (error) {
+        console.error('Error getPuntosOrdenDia:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.getPuntosOrdenDia = getPuntosOrdenDia;
+// =====================================================
+// GET: Generar PDF del orden del día
+// =====================================================
+const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const { id } = req.params;
+        const evento = yield agendas_1.default.findOne({
+            where: { id },
+            include: [
+                { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
+                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
+            ],
+        });
+        if (!evento) {
+            return res.status(404).json({ msg: 'Evento no encontrado' });
+        }
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: id },
+            order: [['nopunto', 'ASC']],
+        });
+        if (puntosRaw.length === 0) {
+            return res.status(404).json({ msg: 'No hay puntos registrados para este evento' });
+        }
+        // =========================================================
+        // CREAR PDF
+        // =========================================================
+        const doc = new pdfkit_1.default({
+            size: 'LETTER',
+            margins: { top: 0, bottom: 30, left: 0, right: 0 },
+            bufferPages: true,
+        });
+        const fileName = `orden-del-dia-${id}-${Date.now()}.pdf`;
+        const outputPath = path_1.default.join(__dirname, '../../storage/pdfs', fileName);
+        const dir = path_1.default.dirname(outputPath);
+        if (!fs_1.default.existsSync(dir))
+            fs_1.default.mkdirSync(dir, { recursive: true });
+        const writeStream = fs_1.default.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+        const bgPath = path_1.default.join(__dirname, '../assets/membretesecretariaejecutiva4.jpg');
+        const drawBackground = () => {
+            doc.image(bgPath, 0, 0, { width: doc.page.width, height: doc.page.height });
+            doc.y = 106;
+        };
+        drawBackground();
+        // ——— Bloque vino izquierdo ———
+        const vinoX = 30, vinoY = 106, vinoW = 150, vinoH = 160;
+        doc.rect(vinoX, vinoY, vinoW, vinoH).fill('#96134b');
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
+            .text('ORDEN', vinoX + 10, vinoY + 30, { width: vinoW - 20, align: 'left' });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
+            .text('DEL DÍA', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
+        doc.moveDown(0.5);
+        doc.fontSize(8).font('Helvetica').fillColor('#fff')
+            .text('Legislatura del Estado de México', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
+        // ——— Bloque derecho información del evento ———
+        const rightX = vinoX + vinoW + 20;
+        const rightW = doc.page.width - rightX - 30;
+        let rightY = vinoY;
+        const drawSectionHeader = (label, y) => {
+            doc.rect(rightX, y, rightW, 22).fill('#96134b');
+            doc.fontSize(10).font('Helvetica-Bold').fillColor('#fff')
+                .text(label, rightX + 10, y + 6, { width: rightW - 20 });
+        };
+        drawSectionHeader('INFORMACIÓN DEL EVENTO', rightY);
+        rightY += 22;
+        const fechaStr = evento.fecha
+            ? new Date(evento.fecha).toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' }).split(' ')[0]
+            : 'N/A';
+        const [anio, mes, dia] = fechaStr !== 'N/A' ? fechaStr.split('-').map(Number) : [0, 0, 0];
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const fechaFormateada = fechaStr !== 'N/A' ? `${dia} de ${meses[mes - 1]} de ${anio}` : 'N/A';
+        const infoRows = [
+            { label: 'Tipo', value: ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) || 'N/A' },
+            { label: 'Sede', value: ((_b = evento.sede) === null || _b === void 0 ? void 0 : _b.sede) || 'N/A' },
+            { label: 'Fecha', value: fechaFormateada },
+            {
+                label: 'Descripción',
+                value: (evento.descripcion || 'N/A')
+                    .replace(/[\r\n\t]+/g, ' ')
+                    .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                    .replace(/\s{2,}/g, ' ')
+                    .trim(),
+            },
+            { label: 'Total puntos', value: `${puntosRaw.length} punto${puntosRaw.length !== 1 ? 's' : ''}` },
+        ];
+        infoRows.forEach((row, i) => {
+            const esDescripcion = row.label === 'Descripción';
+            const rowH = esDescripcion
+                ? doc.heightOfString(row.value, { width: rightW - 100, fontSize: 9 }) + 10
+                : 18;
+            doc.rect(rightX, rightY, rightW, rowH).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
+                .text(row.label, rightX + 10, rightY + 5, { width: 70, align: 'right' });
+            doc.fontSize(9).font('Helvetica').fillColor('#000')
+                .text(row.value, rightX + 90, rightY + 5, {
+                width: rightW - 100,
+                align: esDescripcion ? 'justify' : 'left',
+            });
+            rightY += rowH;
+        });
+        doc.y = Math.max(vinoY + vinoH, rightY) + 20;
+        // =========================================================
+        // TABLA DE PUNTOS
+        // =========================================================
+        const tableW = doc.page.width - 60;
+        // Header principal vino
+        const odTitY = doc.y;
+        doc.rect(30, odTitY, tableW, 22).fill('#96134b');
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
+            .text('ORDEN DEL DÍA', 30, odTitY + 5, { width: tableW, align: 'center' });
+        doc.y = odTitY + 22;
+        // Subheader gris
+        const odSubY = doc.y;
+        doc.rect(30, odSubY, tableW, 20).fill('#7a7a7a');
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
+            .text(`PUNTOS A TRATAR — ${puntosRaw.length} PUNTO${puntosRaw.length !== 1 ? 'S' : ''}`, 35, odSubY + 5, { width: tableW - 10, align: 'center' });
+        doc.y = odSubY + 20;
+        // Header de columnas
+        const hY = doc.y;
+        doc.rect(30, hY, tableW, 18).fill('#d4d4d4');
+        doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
+        doc.text('No.', 32, hY + 5, { width: 25 });
+        doc.text('PUNTO', 60, hY + 5, { width: tableW - 32 });
+        doc.y = hY + 18;
+        let currentY = doc.y;
+        puntosRaw.forEach((punto, index) => {
+            var _a;
+            const textoRaw = punto.descripcion || punto.punto || punto.titulo || 'Sin descripción';
+            const texto = textoRaw
+                .replace(/[\r\n\t]+/g, ' ')
+                .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+            const colTextoW = tableW - 38;
+            const alturaTexto = doc.heightOfString(texto, {
+                width: colTextoW,
+                fontSize: 8,
+                lineGap: 1,
+                align: 'justify',
+            });
+            const lineH = alturaTexto + 10;
+            if (currentY + lineH > doc.page.height - 50) {
+                doc.addPage();
+                drawBackground();
+                currentY = 106;
+                doc.rect(30, currentY, tableW, 18).fill('#d4d4d4');
+                doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
+                doc.text('No.', 32, currentY + 5, { width: 25 });
+                doc.text('PUNTO', 60, currentY + 5, { width: colTextoW });
+                currentY += 18;
+            }
+            const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
+            doc.rect(30, currentY, tableW, lineH).fill(bgColor);
+            doc.moveTo(30, currentY + lineH)
+                .lineTo(30 + tableW, currentY + lineH)
+                .stroke('#e0e0e0');
+            doc.fontSize(8).font('Helvetica').fillColor('#000');
+            doc.text(`${(_a = punto.nopunto) !== null && _a !== void 0 ? _a : index + 1}`, 32, currentY + 5, { width: 25 });
+            doc.text(texto, 60, currentY + 5, {
+                width: colTextoW,
+                lineGap: 1,
+                align: 'justify',
+            });
+            currentY += lineH;
+        });
+        doc.y = currentY + 10;
+        doc.end();
+        yield new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+        // Enviar archivo como descarga
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+        const pdfBuffer = fs_1.default.readFileSync(outputPath);
+        return res.status(200).end(pdfBuffer);
+    }
+    catch (error) {
+        console.error('Error generarPdfOrdenDia:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.generarPdfOrdenDia = generarPdfOrdenDia;
