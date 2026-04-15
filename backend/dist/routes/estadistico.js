@@ -11,4 +11,5 @@ router.get("/api/estadistico/getvotospunto/:id", estadistico_1.getVotosCierre);
 // router.get('/api/iniciativas/votos-cierre/:id/', getVotosCierre);
 router.get("/api/estadistico/geteventos/", estadistico_1.geteventos);
 router.get("/api/estadistico/getasistencia/:id", estadistico_1.getasistencia);
+router.get("/api/estadistico/ultimasesion/", estadistico_1.ultimasesion);
 exports.default = router;
