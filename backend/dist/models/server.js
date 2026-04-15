@@ -107,7 +107,7 @@ class Server {
                 '/api/estadistico/geteventos/',
                 '/api/estadistico/getasistencia/',
                 '/api/estadistico/ultimasesion/',
-                '/api/estadistico/getordendia/',
+                '/api/estadistico/getordendia',
                 '/api/estadistico/pdfordendia/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));

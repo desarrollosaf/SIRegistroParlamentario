@@ -1769,9 +1769,9 @@ exports.ultimasesion = ultimasesion;
 const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
-        const { body } = req;
+        // const { body } = req;
         const evento = yield agendas_1.default.findOne({
-            where: { id: body.id },
+            where: { id: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
@@ -1781,7 +1781,7 @@ const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, functi
             return res.status(404).json({ msg: 'Evento no encontrado' });
         }
         const puntosRaw = yield puntos_ordens_1.default.findAll({
-            where: { id_evento: body.id },
+            where: { id_evento: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
             order: [['nopunto', 'ASC']],
         });
         return res.status(200).json({
