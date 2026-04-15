@@ -1769,9 +1769,9 @@ exports.ultimasesion = ultimasesion;
 const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
-        const { id } = req.params;
+        const { body } = req;
         const evento = yield agendas_1.default.findOne({
-            where: { id },
+            where: { id: body.id },
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
@@ -1781,7 +1781,7 @@ const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, functi
             return res.status(404).json({ msg: 'Evento no encontrado' });
         }
         const puntosRaw = yield puntos_ordens_1.default.findAll({
-            where: { id_evento: id },
+            where: { id_evento: body.id },
             order: [['nopunto', 'ASC']],
         });
         return res.status(200).json({
@@ -1817,16 +1817,14 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
             ],
         });
-        if (!evento) {
+        if (!evento)
             return res.status(404).json({ msg: 'Evento no encontrado' });
-        }
         const puntosRaw = yield puntos_ordens_1.default.findAll({
             where: { id_evento: id },
             order: [['nopunto', 'ASC']],
         });
-        if (puntosRaw.length === 0) {
+        if (puntosRaw.length === 0)
             return res.status(404).json({ msg: 'No hay puntos registrados para este evento' });
-        }
         // =========================================================
         // CREAR PDF
         // =========================================================
@@ -1858,12 +1856,20 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
         doc.moveDown(0.5);
         doc.fontSize(8).font('Helvetica').fillColor('#fff')
             .text('Legislatura del Estado de México', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
-        // ——— Bloque derecho información del evento ———
+        // ——— Bloque derecho información ———
         const rightX = vinoX + vinoW + 20;
         const rightW = doc.page.width - rightX - 30;
         let rightY = vinoY;
         const drawSectionHeader = (label, y) => {
             doc.rect(rightX, y, rightW, 22).fill('#96134b');
+            doc.save();
+            doc.translate(rightX - 8, y + 11).rotate(45);
+            doc.rect(-7, -7, 14, 14).fill('#96134b');
+            doc.restore();
+            doc.save();
+            doc.translate(rightX - 8, y + 11).rotate(45);
+            doc.rect(-5, -5, 10, 10).fill('#c0395e');
+            doc.restore();
             doc.fontSize(10).font('Helvetica-Bold').fillColor('#fff')
                 .text(label, rightX + 10, y + 6, { width: rightW - 20 });
         };
@@ -1872,9 +1878,12 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const fechaStr = evento.fecha
             ? new Date(evento.fecha).toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' }).split(' ')[0]
             : 'N/A';
-        const [anio, mes, dia] = fechaStr !== 'N/A' ? fechaStr.split('-').map(Number) : [0, 0, 0];
         const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-        const fechaFormateada = fechaStr !== 'N/A' ? `${dia} de ${meses[mes - 1]} de ${anio}` : 'N/A';
+        let fechaFormateada = 'N/A';
+        if (fechaStr !== 'N/A') {
+            const [anio, mes, dia] = fechaStr.split('-').map(Number);
+            fechaFormateada = `${dia} de ${meses[mes - 1]} de ${anio}`;
+        }
         const infoRows = [
             { label: 'Tipo', value: ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) || 'N/A' },
             { label: 'Sede', value: ((_b = evento.sede) === null || _b === void 0 ? void 0 : _b.sede) || 'N/A' },
@@ -1892,7 +1901,7 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
         infoRows.forEach((row, i) => {
             const esDescripcion = row.label === 'Descripción';
             const rowH = esDescripcion
-                ? doc.heightOfString(row.value, { width: rightW - 100, fontSize: 9 }) + 10
+                ? doc.heightOfString(row.value, { width: rightW - 100, fontSize: 9, align: 'justify' }) + 10
                 : 18;
             doc.rect(rightX, rightY, rightW, rowH).fill(i % 2 === 0 ? '#ffffff' : '#f5f5f5');
             doc.fontSize(9).font('Helvetica-Bold').fillColor('#000')
@@ -1904,24 +1913,30 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
             });
             rightY += rowH;
         });
-        doc.y = Math.max(vinoY + vinoH, rightY) + 20;
+        doc.y = Math.max(vinoY + vinoH, rightY) + 15;
         // =========================================================
-        // TABLA DE PUNTOS
+        // TABLA DE PUNTOS — mismos estilos que enviarWhatsAsistenciaPDF
         // =========================================================
-        const tableW = doc.page.width - 60;
+        if (doc.y > 600) {
+            doc.addPage();
+            drawBackground();
+            doc.y = 106;
+        }
+        doc.y += 10;
         // Header principal vino
         const odTitY = doc.y;
-        doc.rect(30, odTitY, tableW, 22).fill('#96134b');
+        doc.rect(30, odTitY, doc.page.width - 60, 22).fill('#96134b');
         doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff')
-            .text('ORDEN DEL DÍA', 30, odTitY + 5, { width: tableW, align: 'center' });
+            .text('ORDEN DEL DÍA', 30, odTitY + 5, { width: doc.page.width - 60, align: 'center' });
         doc.y = odTitY + 22;
         // Subheader gris
         const odSubY = doc.y;
-        doc.rect(30, odSubY, tableW, 20).fill('#7a7a7a');
+        doc.rect(30, odSubY, doc.page.width - 60, 20).fill('#7a7a7a');
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#fff')
-            .text(`PUNTOS A TRATAR — ${puntosRaw.length} PUNTO${puntosRaw.length !== 1 ? 'S' : ''}`, 35, odSubY + 5, { width: tableW - 10, align: 'center' });
+            .text(`PUNTOS A TRATAR — ${puntosRaw.length} PUNTO${puntosRaw.length !== 1 ? 'S' : ''}`, 35, odSubY + 5, { width: doc.page.width - 70, align: 'center' });
         doc.y = odSubY + 20;
         // Header de columnas
+        const tableW = doc.page.width - 60;
         const hY = doc.y;
         doc.rect(30, hY, tableW, 18).fill('#d4d4d4');
         doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b');
@@ -1975,7 +1990,6 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
             writeStream.on('finish', resolve);
             writeStream.on('error', reject);
         });
-        // Enviar archivo como descarga
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
         const pdfBuffer = fs_1.default.readFileSync(outputPath);
