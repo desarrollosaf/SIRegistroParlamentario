@@ -2053,10 +2053,10 @@ export const ultimasesion = async (req: Request, res: Response): Promise<Respons
 // =====================================================
 export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { body } = req;
+    // const { body } = req;
 
     const evento = await Agenda.findOne({
-      where: { id: body.id },
+      where: { id: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
       include: [
         { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
         { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
@@ -2068,7 +2068,7 @@ export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Re
     }
 
     const puntosRaw = await PuntosOrden.findAll({
-      where: { id_evento: body.id },
+      where: { id_evento: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
       order: [['nopunto', 'ASC']],
     });
 
