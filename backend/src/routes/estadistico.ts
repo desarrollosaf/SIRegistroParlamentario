@@ -12,6 +12,6 @@ router.get("/api/estadistico/getvotospunto/:id", getVotosCierre );
 router.get("/api/estadistico/geteventos/", geteventos );
 router.get("/api/estadistico/getasistencia/:id", getasistencia );
 router.get("/api/estadistico/ultimasesion/", ultimasesion );
-router.get("/api/estadistico/getordendia/:id", getPuntosOrdenDia );
+router.get("/api/estadistico/getordendia/", getPuntosOrdenDia );
 router.get("/api/estadistico/pdfordendia/:id", generarPdfOrdenDia );
 export default router
