@@ -2186,7 +2186,7 @@ export const getintervenciones = async (req: Request, res: Response): Promise<an
             attributes: ["id", "valor"],
           },
         ],
-      });
+    });
 
       const resultados = await Promise.all(
         intervenci.map(async (inte) => {
@@ -3117,19 +3117,19 @@ const enviarWhatsIntervencion = async (intervencion: any) => {
       );
       titulo = `de la ${datos.evento.descripcion} (${fechaFormateada})`;
     }
-
- 
+    //verificacion
     await axios.post(
       "https://api.ultramsg.com/instance144598/messages/chat",
       new URLSearchParams({
         token: "ml56a7d6tn7ha7cc",
-        to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
+        to: "+527222035605,+527224986377,+527151605569,+527222285798,+527226303741,+7351799442,+7222450127",
         body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
         priority: "1",
         referenceId: "",
         msgId: "",
         mentions: ""
       }),
+
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         timeout: 5000 
