@@ -2662,9 +2662,10 @@ const enviarWhatsIntervencion = (intervencion) => __awaiter(void 0, void 0, void
             const fechaFormateada = (0, date_fns_1.format)(new Date(datos.evento.fecha), "d 'de' MMMM 'de' yyyy", { locale: locale_1.es });
             titulo = `de la ${datos.evento.descripcion} (${fechaFormateada})`;
         }
+        //verificacion
         yield axios_1.default.post("https://api.ultramsg.com/instance144598/messages/chat", new URLSearchParams({
             token: "ml56a7d6tn7ha7cc",
-            to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127",
+            to: "+527222035605,+527224986377,+527151605569,+527222285798,+527226303741,+7351799442,+7222450127",
             body: `*Intervención destacada ${titulo}*\n*${nombreCompleto}*: ${datos.mensaje}\n`,
             priority: "1",
             referenceId: "",
