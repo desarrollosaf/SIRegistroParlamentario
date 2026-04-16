@@ -72,7 +72,7 @@ class Server {
        this.app.use(express.json())
        this.app.use(cors({
            origin: function (origin, callback) {
-                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx'];
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx'];
                 if (!origin || allowedOrigins.includes(origin) ) {
                     callback(null, true);
                 } else {

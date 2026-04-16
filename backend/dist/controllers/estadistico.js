@@ -178,7 +178,7 @@ catalogos) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo", "path_doc"],
         include: [
             {
                 model: puntos_ordens_1.default, as: "punto",
@@ -429,6 +429,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             comisiones: normalizarTexto(comisionesTurnado || comisionesAnfitrion),
             expedicion: fechaExpedicion,
             observac: observacion,
+            documento: data.path_doc,
             diputado: diputados.length > 0 ? diputados.join(", ") : "-",
             grupo_parlamentario: gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-",
             diputado_ids: diputadoIds,
