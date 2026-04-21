@@ -2054,10 +2054,10 @@ export const ultimasesion = async (req: Request, res: Response): Promise<Respons
 // =====================================================
 export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // const { body } = req;
+    const { body } = req;
 
     const evento = await Agenda.findOne({
-      where: { id: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
+      where: { id: body.id },
       include: [
         { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
         { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
@@ -2117,9 +2117,7 @@ export const generarPdfOrdenDia = async (req: Request, res: Response): Promise<R
     if (puntosRaw.length === 0)
       return res.status(404).json({ msg: 'No hay puntos registrados para este evento' });
 
-    // =========================================================
     // CREAR PDF
-    // =========================================================
     const doc = new PDFDocument({
       size: 'LETTER',
       margins: { top: 0, bottom: 30, left: 0, right: 0 },
@@ -2220,9 +2218,7 @@ export const generarPdfOrdenDia = async (req: Request, res: Response): Promise<R
 
     doc.y = Math.max(vinoY + vinoH, rightY) + 15;
 
-    // =========================================================
     // TABLA DE PUNTOS — mismos estilos que enviarWhatsAsistenciaPDF
-    // =========================================================
     if (doc.y > 600) {
       doc.addPage();
       drawBackground();
