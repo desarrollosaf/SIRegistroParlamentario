@@ -1826,9 +1826,7 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
         if (puntosRaw.length === 0)
             return res.status(404).json({ msg: 'No hay puntos registrados para este evento' });
-        // =========================================================
         // CREAR PDF
-        // =========================================================
         const doc = new pdfkit_1.default({
             size: 'LETTER',
             margins: { top: 0, bottom: 30, left: 0, right: 0 },
@@ -1915,9 +1913,7 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
             rightY += rowH;
         });
         doc.y = Math.max(vinoY + vinoH, rightY) + 15;
-        // =========================================================
         // TABLA DE PUNTOS — mismos estilos que enviarWhatsAsistenciaPDF
-        // =========================================================
         if (doc.y > 600) {
             doc.addPage();
             drawBackground();
