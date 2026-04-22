@@ -1771,6 +1771,7 @@ const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, functi
     var _a, _b;
     try {
         const { body } = req;
+        //// hola
         const evento = yield agendas_1.default.findOne({
             where: { id: body.id },
             include: [
