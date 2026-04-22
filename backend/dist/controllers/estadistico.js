@@ -1770,10 +1770,10 @@ exports.ultimasesion = ultimasesion;
 const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
-        const { body } = req;
+        const { id } = req.params;
         //// hola
         const evento = yield agendas_1.default.findOne({
-            where: { id: body.id },
+            where: { id: id },
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },

@@ -2054,11 +2054,11 @@ export const ultimasesion = async (req: Request, res: Response): Promise<Respons
 // =====================================================
 export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { body } = req;
+    const { id } = req.params;
 
     //// hola
     const evento = await Agenda.findOne({
-      where: { id: body.id },
+      where: { id: id },
       include: [
         { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
         { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
