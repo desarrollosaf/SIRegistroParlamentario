@@ -1768,12 +1768,12 @@ exports.ultimasesion = ultimasesion;
 // GET: Obtener todos los puntos del orden del día
 // =====================================================
 const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c, _d;
     try {
-        const { body } = req;
+        const id = (_b = (_a = req.params.id) !== null && _a !== void 0 ? _a : req.query.id) !== null && _b !== void 0 ? _b : req.body.id;
         //// hola
         const evento = yield agendas_1.default.findOne({
-            where: { id: body.id },
+            where: { id: id },
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
@@ -1792,8 +1792,8 @@ const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 id: evento.id,
                 descripcion: evento.descripcion,
                 fecha: evento.fecha,
-                sede: (_a = evento.sede) === null || _a === void 0 ? void 0 : _a.sede,
-                tipoevento: (_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
+                sede: (_c = evento.sede) === null || _c === void 0 ? void 0 : _c.sede,
+                tipoevento: (_d = evento.tipoevento) === null || _d === void 0 ? void 0 : _d.nombre,
             },
             total: puntosRaw.length,
             puntos: puntosRaw,
