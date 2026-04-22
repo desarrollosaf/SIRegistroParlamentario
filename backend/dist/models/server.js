@@ -107,7 +107,7 @@ class Server {
                 '/api/estadistico/geteventos/',
                 '/api/estadistico/getasistencia/',
                 '/api/estadistico/ultimasesion/',
-                '/api/estadistico/getordendia/',
+                '/api/estadistico/getordendia',
                 '/api/estadistico/pdfordendia/',
                 '/api/estadistico/comision/eventos/'
             ];
