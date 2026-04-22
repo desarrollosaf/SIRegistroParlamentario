@@ -1783,7 +1783,7 @@ const getPuntosOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, functi
             return res.status(404).json({ msg: 'Evento no encontrado' });
         }
         const puntosRaw = yield puntos_ordens_1.default.findAll({
-            where: { id_evento: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
+            where: { id_evento: evento.id },
             order: [['nopunto', 'ASC']],
         });
         return res.status(200).json({

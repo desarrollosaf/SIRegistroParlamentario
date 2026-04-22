@@ -2070,7 +2070,7 @@ export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Re
     }
 
     const puntosRaw = await PuntosOrden.findAll({
-      where: { id_evento: "ccbe7f41-6572-4ece-9a8a-808718a53f02" },
+      where: { id_evento: evento.id },
       order: [['nopunto', 'ASC']],
     });
 
