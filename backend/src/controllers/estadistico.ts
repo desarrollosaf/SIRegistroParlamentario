@@ -2054,7 +2054,7 @@ export const ultimasesion = async (req: Request, res: Response): Promise<Respons
 // =====================================================
 export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? req.query.id ?? req.body.id;
 
     //// hola
     const evento = await Agenda.findOne({
