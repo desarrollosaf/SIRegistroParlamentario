@@ -2056,6 +2056,7 @@ export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Re
   try {
     const { body } = req;
 
+    //// hola
     const evento = await Agenda.findOne({
       where: { id: body.id },
       include: [
