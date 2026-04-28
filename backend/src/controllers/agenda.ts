@@ -5029,6 +5029,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
       secY = drawInfoRow('Fecha:',       evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX') : 'N/A', fullX, secY, fullW, ri++ % 2 === 0);
       secY = drawInfoRow('Número:',      String(punto.nopunto || 'N/A'),                                        fullX, secY, fullW, ri++ % 2 === 0);
       secY = drawInfoRow('Descripción:', punto.punto || 'N/A',                                                  fullX, secY, fullW, ri++ % 2 === 0);
+      secY = drawInfoRow('Dispensa:',    punto.dispensa == 1 ? 'Sí' : 'No',                                     fullX, secY, fullW, ri++ % 2 === 0);
       if (temaInfo) {
         secY = drawInfoRow('Reserva:',   temaInfo.tema_votacion || 'N/A',                                       fullX, secY, fullW, ri++ % 2 === 0);
       }
@@ -5398,8 +5399,8 @@ export const generarPDFAsistencia = async (req: Request, res: Response): Promise
     // ===== ENCABEZADO =====
     doc.fontSize(12).font('Helvetica-Bold').text('REGISTRO DE ASISTENCIA', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
-    doc.moveDown(1);
+    // doc.fontSize(11).font('Helvetica').text('Legislatura del Estado de México', { align: 'center' });
+    // doc.moveDown(1);
 
     // ===== INFORMACIÓN DEL EVENTO =====
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL EVENTO');
@@ -6100,8 +6101,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
     doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff')
       .text('ASISTENCIA', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
     doc.moveDown(0.5);
-    doc.fontSize(8).font('Helvetica').fillColor('#fff')
-      .text('Legislatura del Estado de México', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
+    // doc.fontSize(8).font('Helvetica').fillColor('#fff')
+    //   .text('Legislatura del Estado de México', vinoX + 10, doc.y, { width: vinoW - 20, align: 'left' });
  
     // ——— Bloque derecho información ———
     const rightX = vinoX + vinoW + 20;
@@ -6352,8 +6353,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
               const filas = [
                 { label: 'Diputado:', texto: cleanText(inte.diputado) },
                 { label: 'Tipo:',     texto: cleanText(inte.tipointerven?.valor) },
-                ...(cleanText(inte.resumen) ? [{ label: 'Resumen:', texto: cleanText(inte.resumen) }] : []),
-                ...(cleanText(inte.mensaje) ? [{ label: 'Mensaje:', texto: cleanText(inte.mensaje) }] : []),
+                ...(cleanText(inte.resumen) ? [{ label: 'Participación:', texto: cleanText(inte.resumen) }] : []),
+                ...(cleanText(inte.mensaje) ? [{ label: 'Resumen:', texto: cleanText(inte.mensaje) }] : []),
               ];
 
               // ── Calcular altura total para decidir si salta ──
@@ -6391,7 +6392,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
 
               // ── Dibujar filas ──
               filas.forEach((fila) => {
-                const isJustify = fila.label === 'Resumen:' || fila.label === 'Mensaje:';
+                const isJustify = fila.label === 'Participación:' || fila.label === 'Resumen:';
 
                 doc.fontSize(8).font('Helvetica-Bold').fillColor('#96134b')
                   .text(fila.label, labelX, textY, { width: labelW, lineBreak: false });
@@ -6537,8 +6538,8 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
  
     const params = {
       token:    'ml56a7d6tn7ha7cc',
-      // to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
-      to:       '+525561081154 ,',
+      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127',
+      // to:       '+525561081154 ,',
       filename: fileName,
       document: base64PDF,
       caption:  mensajeTexto,
