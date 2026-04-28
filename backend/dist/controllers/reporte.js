@@ -233,7 +233,7 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
         include: [
             {
                 model: puntos_ordens_1.default,
@@ -323,13 +323,17 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativas = yield obtenerIniciativasBase();
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
         const data = iniciativa.toJSON();
         const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
             ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
             ...(Array.isArray(data.expedienteturno)
-                ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
+                ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio)
+                    ? exp.estudio
+                    : exp.estudio
+                        ? [exp.estudio]
+                        : [])
                 : [])
         ];
         const fuenteEstudios = deduplicarPorId(todosEstudios);
@@ -440,8 +444,18 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
             : "-";
         const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
-        const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
+        const grupoParlamentario = gruposParlamentarios.length > 0
+            ? gruposParlamentarios.join(", ")
+            : "-";
         const fechaEventoRaw = (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha) !== null && _m !== void 0 ? _m : null;
+        const tipoTexto = (tipo) => {
+            switch (tipo) {
+                case 1: return "Iniciativa";
+                case 2: return "Punto de acuerdo";
+                case 3: return "Minuta";
+                default: return "Desconocido";
+            }
+        };
         return {
             no: index + 1,
             id: normalizarTexto(data.id),
@@ -458,7 +472,9 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             grupo_parlamentario: grupoParlamentario,
             diputado_ids: diputadoIds,
             grupo_parlamentario_ids: grupoParlamentarioIds,
-            periodo: obtenerPeriodo(fechaEventoRaw)
+            periodo: obtenerPeriodo(fechaEventoRaw),
+            // ✅ AQUÍ ESTÁ EL FIX
+            tipo: tipoTexto((_p = data.tipo) !== null && _p !== void 0 ? _p : (_q = data.punto) === null || _q === void 0 ? void 0 : _q.tipo),
         };
     })));
     return reporte;
@@ -553,7 +569,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             { header: "COMISIONES", key: "comisiones", width: 40 },
             { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
             { header: "OBSERVAC.", key: "observac", width: 20 },
-            { header: "PERIODO", key: "periodo", width: 15 }
+            { header: "PERIODO", key: "periodo", width: 15 },
+            { header: "TIPO", key: "tipo", width: 15 }
         ], reporte);
     }
     catch (error) {
