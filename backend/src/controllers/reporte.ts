@@ -39,6 +39,7 @@ type ReporteBaseItem = {
   diputado_ids: string[];
   grupo_parlamentario_ids: string[];
   periodo: string;
+  tipo: string | null;
 };
 
 const deduplicarPorId = (items: any[]) => {
@@ -271,7 +272,7 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida"],
+    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
     include: [
       {
         model: PuntosOrden,
@@ -362,9 +363,12 @@ const obtenerIniciativasBase = async () => {
 const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
   const iniciativas = await obtenerIniciativasBase();
 
+ 
+
   const reporte = await Promise.all(
     iniciativas.map(async (iniciativa, index) => {
       const data: any = iniciativa.toJSON();
+
       const {
         proponentesString,
         presentaString,
@@ -373,12 +377,16 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         gruposParlamentarios,
         grupoParlamentarioIds
       } = await getPresentantesDePunto(data.id);
-          
+
       const todosEstudios = [
         ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
         ...(Array.isArray(data.expedienteturno)
           ? data.expedienteturno.flatMap((exp: any) =>
-              Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
+              Array.isArray(exp.estudio)
+                ? exp.estudio
+                : exp.estudio
+                ? [exp.estudio]
+                : []
             )
           : [])
       ];
@@ -389,6 +397,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
       const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
       const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
+
       const dispensa = String(data.punto?.dispensa) === "1";
       const precluida = String(data.precluida) === "1";
 
@@ -478,14 +487,12 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
 
       let observacion = "En estudio";
-      if(precluida){
+
+      if (precluida) {
         observacion = "Precluida";
-
-      }else if(dispensa) {
+      } else if (dispensa) {
         observacion = "Aprobada";
-        
-      }else{
-
+      } else {
         if (cierrePrincipal) {
           observacion = "Aprobada";
         } else if (rechazosesion.length > 0) {
@@ -497,11 +504,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         } else if (estudios.length > 0) {
           observacion = "En estudio";
         }
-
-
-      }  
-
-      
+      }
 
       const turnadoInfo = await getComisionesTurnado(data.punto?.id);
       const anfitrionesNacio = await getAnfitriones(
@@ -514,9 +517,23 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
           ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
           : "-";
 
-      const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
-      const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
+      const diputado =
+        diputados.length > 0 ? diputados.join(", ") : "-";
+
+      const grupoParlamentario =
+        gruposParlamentarios.length > 0
+          ? gruposParlamentarios.join(", ")
+          : "-";
+
       const fechaEventoRaw = data.evento?.fecha ?? null;
+      const tipoTexto = (tipo?: number) => {
+        switch (tipo) {
+          case 1: return "Iniciativa";
+          case 2: return "Punto de acuerdo";
+          case 3: return "Minuta";
+          default: return "Desconocido";
+        }
+      };
 
       return {
         no: index + 1,
@@ -527,14 +544,19 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         materia: normalizarTexto(data.punto?.punto),
         presentac: formatearFechaCorta(fechaEventoRaw),
         fecha_evento_raw: fechaEventoRaw,
-        comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones),
+        comisiones: normalizarTexto(
+          turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones
+        ),
         expedicion: fechaExpedicion,
         observac: observacion,
         diputado,
         grupo_parlamentario: grupoParlamentario,
         diputado_ids: diputadoIds,
         grupo_parlamentario_ids: grupoParlamentarioIds,
-        periodo: obtenerPeriodo(fechaEventoRaw)
+        periodo: obtenerPeriodo(fechaEventoRaw),
+
+        // ✅ AQUÍ ESTÁ EL FIX
+        tipo: tipoTexto(data.tipo ?? data.punto?.tipo),
       };
     })
   );
@@ -666,7 +688,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         { header: "COMISIONES", key: "comisiones", width: 40 },
         { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
         { header: "OBSERVAC.", key: "observac", width: 20 },
-        { header: "PERIODO", key: "periodo", width: 15 }
+        { header: "PERIODO", key: "periodo", width: 15 },
+        { header: "TIPO", key: "tipo", width: 15 }
       ],
       reporte
     );
