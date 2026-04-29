@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<div class="tablero-container">
+
+  <!-- ENCABEZADO -->
+  <div class="tablero-header">
+    <div class="header-escudo">
+      <img src="https://www.congresoedomex.gob.mx/images/congreso_logo_horizontal-p-2000.png"
+           alt="Congreso Estado de México"
+           class="logo-congreso" />
+    </div>
+
+    <div class="header-titulo">
+      <div class="registro-label">{{ etiquetaHeader }}</div>
+      <div class="titulo-evento" *ngIf="tituloEvento">{{ tituloEvento }}</div>
+      <div class="punto-texto" *ngIf="textoPunto && modo === 'votacion'">{{ textoPunto }}</div>
+    </div>
+
+    <!-- STATS VOTACIÓN -->
+    <div class="header-stats" *ngIf="modo === 'votacion'">
+      <div class="stat-box stat-favor">
+        <span class="stat-num">{{ contarPorTipo(1) }}</span>
+        <span class="stat-label">A Favor</span>
+      </div>
+      <div class="stat-box stat-contra">
+        <span class="stat-num">{{ contarPorTipo(3) }}</span>
+        <span class="stat-label">En Contra</span>
+      </div>
+      <div class="stat-box stat-abs">
+        <span class="stat-num">{{ contarPorTipo(2) }}</span>
+        <span class="stat-label">Abstención</span>
+      </div>
+      <div class="stat-box stat-pendiente">
+        <span class="stat-num">{{ contarPorTipo(0) }}</span>
+        <span class="stat-label">Pendiente</span>
+      </div>
+    </div>
+
+    <!-- STATS ASISTENCIA -->
+    <div class="header-stats" *ngIf="modo === 'asistencia'">
+      <div class="stat-box stat-presente">
+        <span class="stat-num">{{ contarPorTipo(1) }}</span>
+        <span class="stat-label">Presente</span>
+      </div>
+      <div class="stat-box stat-remota">
+        <span class="stat-num">{{ contarPorTipo(2) }}</span>
+        <span class="stat-label">Remota</span>
+      </div>
+      <div class="stat-box stat-justificada">
+        <span class="stat-num">{{ contarPorTipo(3) }}</span>
+        <span class="stat-label">Justificada</span>
+      </div>
+      <div class="stat-box stat-pendiente">
+        <span class="stat-num">{{ contarPorTipo(0) }}</span>
+        <span class="stat-label">Pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARGANDO -->
+  <div class="cargando-overlay" *ngIf="cargando">
+    <div class="spinner-ring"></div>
+    <p>Cargando...</p>
+  </div>
+
+  <!-- MODO SESIÓN SIMPLE -->
+  <ng-container *ngIf="!esComision && !cargando">
+    <div class="tablero-grid" [ngClass]="getEscalaClase()" *ngIf="participantes.length > 0">
+      <div class="columna-votos">
+        <div class="votante-row" *ngFor="let p of columna1">
+          <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+          <span class="nombre-diputado">{{ p.diputado }}</span>
+        </div>
+      </div>
+      <div class="columna-votos">
+        <div class="votante-row" *ngFor="let p of columna2">
+          <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+          <span class="nombre-diputado">{{ p.diputado }}</span>
+        </div>
+      </div>
+      <div class="columna-votos" *ngIf="columna3.length > 0">
+        <div class="votante-row" *ngFor="let p of columna3">
+          <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+          <span class="nombre-diputado">{{ p.diputado }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sin-datos" *ngIf="participantes.length === 0">
+      <i class="bi bi-hourglass-split"></i>
+      <p>Esperando datos...</p>
+    </div>
+  </ng-container>
+
+  <!-- MODO COMISIÓN -->
+  <ng-container *ngIf="esComision && !cargando">
+    <div *ngFor="let comision of listaComisiones" class="comision-seccion">
+      <div class="comision-nombre-header">{{ comision.nombre }}</div>
+      <ng-container *ngIf="distribuirColumnasComision(comision.integrantes) as cols">
+        <div class="tablero-grid" [ngClass]="getEscalaClase()">
+          <div class="columna-votos">
+            <div class="votante-row" *ngFor="let p of cols.col1">
+              <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+              <span class="nombre-diputado">{{ p.diputado }}</span>
+            </div>
+          </div>
+          <div class="columna-votos">
+            <div class="votante-row" *ngFor="let p of cols.col2">
+              <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+              <span class="nombre-diputado">{{ p.diputado }}</span>
+            </div>
+          </div>
+          <div class="columna-votos" *ngIf="cols.col3.length > 0">
+            <div class="votante-row" *ngFor="let p of cols.col3">
+              <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
+              <span class="nombre-diputado">{{ p.diputado }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </ng-container>
+
+  <!-- LEYENDA VOTACIÓN -->
+  <div class="tablero-leyenda" *ngIf="modo === 'votacion'">
+    <span class="leyenda-item"><span class="foco foco-favor"></span> A Favor</span>
+    <span class="leyenda-item"><span class="foco foco-contra"></span> En Contra</span>
+    <span class="leyenda-item"><span class="foco foco-abstencion"></span> Abstención</span>
+    <span class="leyenda-item"><span class="foco foco-pendiente"></span> Pendiente</span>
+    <span class="leyenda-total">Total: {{ totalParticipantes() }}</span>
+  </div>
+
+  <!-- LEYENDA ASISTENCIA -->
+  <div class="tablero-leyenda" *ngIf="modo === 'asistencia'">
+    <span class="leyenda-item"><span class="foco foco-presente"></span> Presente</span>
+    <span class="leyenda-item"><span class="foco foco-remota"></span> Remota</span>
+    <span class="leyenda-item"><span class="foco foco-justificada"></span> Justificada</span>
+    <span class="leyenda-item"><span class="foco foco-pendiente"></span> Pendiente</span>
+    <span class="leyenda-total">Total: {{ totalParticipantes() }}</span>
+  </div>
+
+</div>

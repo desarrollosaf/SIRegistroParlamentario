@@ -2472,6 +2472,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  proyectarVotacion(): void {
+    const params = new URLSearchParams({
+      id: this.idComisionRuta,
+      idPunto: String(this.votacionActual.idPunto ?? ''),
+      idReserva: String(this.votacionActual.idReserva ?? ''),
+      modo: 'votacion'
+    });
+    window.open(`/proyeccion-votacion?${params.toString()}`, '_blank', 'noopener');
+  }
+
+  proyectarAsistencia(): void {
+    const params = new URLSearchParams({
+      id: this.idComisionRuta,
+      modo: 'asistencia'
+    });
+    window.open(`/proyeccion-votacion?${params.toString()}`, '_blank', 'noopener');
+  }
+
   imprimirVotacion(): void {
     this._eventoService.generarPDFVotacion(this.idpto).subscribe({
       next: (blob: Blob) => {
