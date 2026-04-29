@@ -140,6 +140,9 @@
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
+                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarAsistencia()">
+                                                    <i class="bi bi-display me-1"></i> Proyectar
+                                                </button>
                                             </div>
                                         </div>
 
@@ -351,6 +354,9 @@
                                             </button>
                                             <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                 <i class="bi bi-whatsapp me-1"></i> Notificar
+                                            </button>
+                                            <button class="btn btn-info btn-sm text-white" (click)="proyectarAsistencia()">
+                                                <i class="bi bi-display me-1"></i> Proyectar
                                             </button>
                                         </div>
                                         <!-- Iterar sobre cada comisión -->
@@ -1369,6 +1375,9 @@
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(2)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
+                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
+                                                    <i class="bi bi-display me-1"></i> Proyectar
+                                                </button>
                                             </div>
 
                                         </div>
@@ -1603,6 +1612,9 @@
                                                 </button>
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(2)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
+                                                </button>
+                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
+                                                    <i class="bi bi-display me-1"></i> Proyectar
                                                 </button>
                                             </div>
                                         </div>
