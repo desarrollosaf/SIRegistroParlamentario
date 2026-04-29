@@ -196,11 +196,21 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   }
 
   getEscalaClase(): string {
-    const total = this.totalParticipantes();
-    if (total <= 10)  return 'escala-xl';
-    if (total <= 20)  return 'escala-lg';
-    if (total <= 35)  return 'escala-md';
-    if (total <= 55)  return 'escala-sm';
+    let filasEfectivas: number;
+
+    if (this.esComision && this.listaComisiones.length > 0) {
+      // Cada comisión aporta: ceil(integrantes/3) filas + 2 de overhead por encabezado
+      filasEfectivas = this.listaComisiones.reduce((acc, c) => {
+        return acc + Math.ceil(c.integrantes.length / 3) + 2;
+      }, 0);
+    } else {
+      filasEfectivas = Math.ceil(this.totalParticipantes() / 3);
+    }
+
+    if (filasEfectivas <= 5)  return 'escala-xl';
+    if (filasEfectivas <= 10) return 'escala-lg';
+    if (filasEfectivas <= 18) return 'escala-md';
+    if (filasEfectivas <= 28) return 'escala-sm';
     return 'escala-xs';
   }
 

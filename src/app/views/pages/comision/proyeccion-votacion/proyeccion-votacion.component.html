@@ -3,16 +3,10 @@
 
   <!-- ENCABEZADO -->
   <div class="tablero-header">
-    <div class="header-escudo">
-      <img src="https://www.congresoedomex.gob.mx/images/congreso_logo_horizontal-p-2000.png"
-           alt="Congreso Estado de México"
-           class="logo-congreso" />
-    </div>
-
     <div class="header-titulo">
       <div class="registro-label">{{ etiquetaHeader }}</div>
       <div class="titulo-evento" *ngIf="tituloEvento">{{ tituloEvento }}</div>
-      <div class="punto-texto" *ngIf="textoPunto && modo === 'votacion'">{{ textoPunto }}</div>
+      <div class="punto-texto" *ngIf="textoPunto && modo === 'votacion'">{{ textoPunto.length > 250 ? (textoPunto | slice:0:250) + '…' : textoPunto }}</div>
     </div>
 
     <!-- STATS VOTACIÓN -->
@@ -92,11 +86,11 @@
   </ng-container>
 
   <!-- MODO COMISIÓN -->
-  <ng-container *ngIf="esComision && !cargando">
+  <div class="comisiones-wrapper" *ngIf="esComision && !cargando" [ngClass]="getEscalaClase()">
     <div *ngFor="let comision of listaComisiones" class="comision-seccion">
       <div class="comision-nombre-header">{{ comision.nombre }}</div>
       <ng-container *ngIf="distribuirColumnasComision(comision.integrantes) as cols">
-        <div class="tablero-grid" [ngClass]="getEscalaClase()">
+        <div class="tablero-grid">
           <div class="columna-votos">
             <div class="votante-row" *ngFor="let p of cols.col1">
               <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
@@ -118,7 +112,7 @@
         </div>
       </ng-container>
     </div>
-  </ng-container>
+  </div>
 
   <!-- LEYENDA VOTACIÓN -->
   <div class="tablero-leyenda" *ngIf="modo === 'votacion'">
