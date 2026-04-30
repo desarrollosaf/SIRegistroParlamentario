@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SocketService } from '../../../../core/services/socket.service';
 
 @Component({
   selector: 'app-proyeccion-votacion',
@@ -13,9 +14,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   private _eventoService = inject(EventoService);
+  private _socketService = inject(SocketService);
   private cdr = inject(ChangeDetectorRef);
   private aRouter = inject(ActivatedRoute);
   private pollInterval: any = null;
+
+  terminado: boolean = false;
 
   idComision: string = '';
   idPunto: string = '';
@@ -49,12 +53,48 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       if (this.idComision) {
         this.cargarDatos();
         this.iniciarPolling();
+        this.conectarSocket();
       }
     });
   }
 
   ngOnDestroy(): void {
     this.detenerPolling();
+    this._socketService.offVotacionTerminada();
+    this._socketService.offAsistenciaTerminada();
+    this._socketService.offProyeccionIniciada();
+    this._socketService.disconnect();
+  }
+
+  private conectarSocket(): void {
+    this._socketService.conectarYUnirse(this.idComision);
+
+    this._socketService.onVotacionTerminada(() => {
+      this.detenerPolling();
+      this.terminado = true;
+      this.cdr.detectChanges();
+    });
+
+    this._socketService.onAsistenciaTerminada(() => {
+      this.detenerPolling();
+      this.terminado = true;
+      this.cdr.detectChanges();
+    });
+
+    this._socketService.onProyeccionIniciada((params) => {
+      this.detenerPolling();
+      this.terminado = false;
+      this.idPunto   = params['idPunto']  || '';
+      this.idReserva = params['idReserva'] || '';
+      this.modo      = params['modo'] === 'asistencia' ? 'asistencia' : 'votacion';
+      this.participantes = [];
+      this.listaComisiones = [];
+      this.textoPunto = '';
+      this.cargando = true;
+      this.cargarDatos();
+      this.iniciarPolling();
+      this.cdr.detectChanges();
+    });
   }
 
   private decodificarParams(token: string): Record<string, string> {

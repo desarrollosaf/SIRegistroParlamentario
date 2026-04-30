@@ -27,7 +27,7 @@ class Server {
         this.httpServer = http.createServer(this.app);
         this.io = new SocketIOServer(this.httpServer, {
         cors: {
-            origin: ['http://localhost:4200'],
+            origin: ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200'],
             credentials: true
         }
         });
@@ -44,6 +44,22 @@ class Server {
         this.io.on('connection', (socket) => {
         console.log('Socket conectado:', socket.id);
 
+        socket.on('unirse-sesion', (idComision: string) => {
+            socket.join(`proyeccion-${idComision}`);
+        });
+
+        socket.on('terminar-votacion', (data: { idComision: string }) => {
+            this.io.to(`proyeccion-${data.idComision}`).emit('votacion-terminada');
+        });
+
+        socket.on('terminar-asistencia', (data: { idComision: string }) => {
+            this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-terminada');
+        });
+
+        socket.on('iniciar-proyeccion', (data: { idComision: string, params: any }) => {
+            this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
+        });
+
         socket.on('disconnect', () => {
             console.log('Socket desconectado:', socket.id);
         });
@@ -52,8 +68,8 @@ class Server {
     }
 
     listen(){
-        this.app.listen(this.port, () => {
-            console.log("La aplicación se esta corriendo exitosamente en el puerto => "+ this.port)           
+        this.httpServer.listen(this.port, () => {
+            console.log("La aplicación se esta corriendo exitosamente en el puerto => "+ this.port)
         })
     }
 
@@ -72,7 +88,7 @@ class Server {
        this.app.use(express.json())
        this.app.use(cors({
            origin: function (origin, callback) {
-                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx'];
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx','http://localhost:4200'];
                 if (!origin || allowedOrigins.includes(origin) ) {
                     callback(null, true);
                 } else {
@@ -88,9 +104,6 @@ class Server {
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/getevento/',
-                '/api/eventos/getpuntos/',
-                '/api/eventos/getvotospunto/',
                 '/api/eventos/gettipos/',
                 '/api/diputados/cargo/',
                 '/api/eventos/savereserva/',
@@ -115,7 +128,10 @@ class Server {
                 '/api/estadistico/ultimasesion/',
                 '/api/estadistico/getordendia',
                 '/api/estadistico/pdfordendia/',
-                '/api/estadistico/comision/eventos/'
+                '/api/estadistico/comision/eventos/',
+                '/api/eventos/getevento/',
+                '/api/eventos/getpuntos/',
+                '/api/eventos/getvotospunto/'
 
             ];
 
