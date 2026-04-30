@@ -73,6 +73,10 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'proyeccion-votacion',
+    loadComponent: () => import('./views/pages/comision/proyeccion-votacion/proyeccion-votacion.component').then(c => c.ProyeccionVotacionComponent)
+  },
+  {
     path: 'error',
     loadComponent: () => import('./views/pages/error/error.component').then(c => c.ErrorComponent),
   },

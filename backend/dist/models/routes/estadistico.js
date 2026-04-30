@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const estadistico_1 = require("../controllers/estadistico");
+const router = (0, express_1.Router)();
+router.get("/api/estadistico/iniciativas/resumen", estadistico_1.getResumenTotalesEndpoint);
+router.get("/api/estadistico/diputado/iniciativas", estadistico_1.getIniciativasPresentadasPorDiputado);
+router.get("/api/estadistico/comision/iniciativas", estadistico_1.getIniciativasTurnadasPorComision);
+router.get("/api/estadistico/comision/eventos", estadistico_1.getEventosPorComision);
+router.get("/api/estadistico/getvotospunto/:id", estadistico_1.getVotosCierre);
+// router.get('/api/iniciativas/votos-cierre/:id/', getVotosCierre);
+router.get("/api/estadistico/geteventos/", estadistico_1.geteventos);
+router.get("/api/estadistico/getasistencia/:id", estadistico_1.getasistencia);
+router.get("/api/estadistico/ultimasesion/", estadistico_1.ultimasesion);
+router.get("/api/estadistico/getordendia", estadistico_1.getPuntosOrdenDia);
+router.get("/api/estadistico/pdfordendia/:id", estadistico_1.generarPdfOrdenDia);
+exports.default = router;

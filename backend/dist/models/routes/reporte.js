@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const reporte_1 = require("../controllers/reporte");
+const router = (0, express_1.Router)();
+router.get("/api/reporte/iniciativas/general", reporte_1.getifnini);
+router.get("/api/reporte/iniciativas/en-estudio", reporte_1.getIniciativasEnEstudio);
+router.get("/api/reporte/iniciativas/aprobadas", reporte_1.getIniciativasAprobadas);
+router.get("/api/reporte/iniciativas/grupo-diputado", reporte_1.getIniciativasPorGrupoYDiputado);
+router.get("/api/reporte/iniciativas/totales-periodo", reporte_1.getTotalesPorPeriodo);
+router.post("/api/reporte/iniciativas/integrantes", reporte_1.getReporteIniciativasIntegrantes);
+exports.default = router;
