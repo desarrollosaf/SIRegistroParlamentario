@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generarPdfOrdenDia, getasistencia, geteventos, getEventosPorComision, getIniciativasPresentadasPorDiputado, getIniciativasTurnadasPorComision, getPuntosOrdenDia, getResumenTotalesEndpoint, getVotosCierre, ultimasesion  } from "../controllers/estadistico";
+import { generarPdfOrdenDia, getasistencia, geteventos, getEventosPorComision, getIniciativasPresentadasPorDiputado, getIniciativasTurnadasPorComision, getOrdenesDia, getPuntosOrdenDia, getResumenTotalesEndpoint, getVotosCierre, ultimasesion  } from "../controllers/estadistico";
 const router = Router();
 
 
@@ -14,4 +14,5 @@ router.get("/api/estadistico/getasistencia/:id", getasistencia );
 router.get("/api/estadistico/ultimasesion/", ultimasesion );
 router.get("/api/estadistico/getordendia", getPuntosOrdenDia );
 router.get("/api/estadistico/pdfordendia/:id", generarPdfOrdenDia );
+router.get("/api/estadistico/getordenes", getOrdenesDia );
 export default router

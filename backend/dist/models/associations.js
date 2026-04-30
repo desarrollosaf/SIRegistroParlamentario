@@ -13,6 +13,7 @@ const expedientes_estudio_puntos_1 = __importDefault(require("./expedientes_estu
 const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
 const diputado_1 = __importDefault(require("./diputado"));
 const decreto_1 = __importDefault(require("./decreto"));
+const agendas_1 = __importDefault(require("./agendas"));
 // Desde Proponentes al catálogo
 proponentes_1.default.belongsToMany(tipo_categoria_iniciativas_1.default, {
     through: ProponentesTipoCategoriaDetalle_1.default,
@@ -89,6 +90,10 @@ decreto_1.default.belongsTo(inciativas_puntos_ordens_1.default, {
 inciativas_puntos_ordens_1.default.hasMany(decreto_1.default, {
     foreignKey: "id_iniciativa",
     as: "decretos",
+});
+agendas_1.default.hasMany(puntos_ordens_1.default, {
+    foreignKey: 'id_evento',
+    as: 'puntosorden'
 });
 exports.default = {
     PuntosOrden: puntos_ordens_1.default,
