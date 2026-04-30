@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.getOrdenesDia = exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -1999,3 +1999,46 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.generarPdfOrdenDia = generarPdfOrdenDia;
+const getOrdenesDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const eventos = yield agendas_1.default.findAll({
+            where: {
+                tipo_evento_id: {
+                    [sequelize_1.Op.in]: [
+                        'd5687f72-a328-4be1-a23c-4c3575092163',
+                        'a413e44b-550b-47ab-b004-a6f28c73a750'
+                    ]
+                }
+            },
+            include: [
+                { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
+                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
+                { model: puntos_ordens_1.default, as: 'puntosorden', order: [['nopunto', 'ASC']] },
+            ],
+            order: [['fecha', 'ASC']],
+        });
+        if (!eventos || eventos.length === 0) {
+            return res.status(404).json({ msg: 'No se encontraron eventos' });
+        }
+        return res.status(200).json({
+            msg: 'Órdenes del día obtenidas correctamente',
+            total: eventos.length,
+            eventos: eventos.map(evento => {
+                var _a, _b;
+                return ({
+                    id: evento.id,
+                    descripcion: evento.descripcion,
+                    fecha: evento.fecha,
+                    sede: (_a = evento.sede) === null || _a === void 0 ? void 0 : _a.sede,
+                    tipoevento: (_b = evento.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre,
+                    puntos: evento.puntosorden,
+                });
+            }),
+        });
+    }
+    catch (error) {
+        console.error('Error getOrdenesDia:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.getOrdenesDia = getOrdenesDia;
