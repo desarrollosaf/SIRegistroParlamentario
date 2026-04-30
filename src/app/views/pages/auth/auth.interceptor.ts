@@ -9,10 +9,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authReq = req.clone({
     withCredentials: true
   });
- 
+
   return next(authReq).pipe(
     catchError(err => {
-      if (err.status === 401) {
+      if (err.status === 401 && !router.url.startsWith('/proyeccion-votacion')) {
         router.navigate(['/auth/login']);
       }
       return throwError(() => err);

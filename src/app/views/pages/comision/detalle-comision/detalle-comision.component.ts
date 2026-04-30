@@ -2472,22 +2472,27 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  private codificarParams(params: Record<string, string>): string {
+    const qs = new URLSearchParams(params).toString();
+    return btoa(qs);
+  }
+
   proyectarVotacion(): void {
-    const params = new URLSearchParams({
+    const token = this.codificarParams({
       id: this.idComisionRuta,
       idPunto: String(this.votacionActual.idPunto ?? ''),
       idReserva: String(this.votacionActual.idReserva ?? ''),
       modo: 'votacion'
     });
-    window.open(`/proyeccion-votacion?${params.toString()}`, '_blank', 'noopener');
+    window.open(`/proyeccion-votacion?t=${token}`, '_blank', 'noopener');
   }
 
   proyectarAsistencia(): void {
-    const params = new URLSearchParams({
+    const token = this.codificarParams({
       id: this.idComisionRuta,
       modo: 'asistencia'
     });
-    window.open(`/proyeccion-votacion?${params.toString()}`, '_blank', 'noopener');
+    window.open(`/proyeccion-votacion?t=${token}`, '_blank', 'noopener');
   }
 
   imprimirVotacion(): void {

@@ -39,10 +39,12 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.aRouter.queryParams.subscribe(params => {
-      this.idComision = params['id'] || '';
-      this.idPunto = params['idPunto'] || '';
-      this.idReserva = params['idReserva'] || '';
-      this.modo = params['modo'] === 'asistencia' ? 'asistencia' : 'votacion';
+      const decoded = this.decodificarParams(params['t'] || '');
+
+      this.idComision = decoded['id'] || '';
+      this.idPunto    = decoded['idPunto'] || '';
+      this.idReserva  = decoded['idReserva'] || '';
+      this.modo       = decoded['modo'] === 'asistencia' ? 'asistencia' : 'votacion';
 
       if (this.idComision) {
         this.cargarDatos();
@@ -53,6 +55,17 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerPolling();
+  }
+
+  private decodificarParams(token: string): Record<string, string> {
+    try {
+      const qs = atob(token);
+      const result: Record<string, string> = {};
+      new URLSearchParams(qs).forEach((value, key) => result[key] = value);
+      return result;
+    } catch {
+      return {};
+    }
   }
 
   private iniciarPolling(): void {
