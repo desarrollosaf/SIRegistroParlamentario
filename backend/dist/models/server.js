@@ -85,9 +85,6 @@ class Server {
         this.app.use((req, res, next) => {
             const publicPaths = [
                 '/api/user/login',
-                '/api/eventos/getevento/',
-                '/api/eventos/getpuntos/',
-                '/api/eventos/getvotospunto/',
                 '/api/eventos/gettipos/',
                 '/api/diputados/cargo/',
                 '/api/eventos/savereserva/',
@@ -112,7 +109,8 @@ class Server {
                 '/api/estadistico/ultimasesion/',
                 '/api/estadistico/getordendia',
                 '/api/estadistico/pdfordendia/',
-                '/api/estadistico/comision/eventos/'
+                '/api/estadistico/comision/eventos/',
+                '/api/estadistico/getordenes'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
