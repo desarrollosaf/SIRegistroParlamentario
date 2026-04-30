@@ -2322,3 +2322,44 @@ export const generarPdfOrdenDia = async (req: Request, res: Response): Promise<R
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
+
+export const getOrdenesDia = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const eventos = await Agenda.findAll({
+      where: {
+        tipo_evento_id: {
+          [Op.in]: [
+            'd5687f72-a328-4be1-a23c-4c3575092163',
+            'a413e44b-550b-47ab-b004-a6f28c73a750'
+          ]
+        }
+      },
+      include: [
+        { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
+        { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
+        { model: PuntosOrden, as: 'puntosorden', order: [['nopunto', 'ASC']] },
+      ],
+      order: [['fecha', 'ASC']],
+    });
+
+    if (!eventos || eventos.length === 0) {
+      return res.status(404).json({ msg: 'No se encontraron eventos' });
+    }
+
+    return res.status(200).json({
+      msg: 'Órdenes del día obtenidas correctamente',
+      total: eventos.length,
+      eventos: eventos.map(evento => ({
+        id:          evento.id,
+        descripcion: evento.descripcion,
+        fecha:       evento.fecha,
+        sede:        evento.sede?.sede,
+        tipoevento:  evento.tipoevento?.nombre,
+        puntos:      evento.puntosorden,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error getOrdenesDia:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};

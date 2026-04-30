@@ -8,6 +8,8 @@ import ExpedienteEstudiosPuntos from './expedientes_estudio_puntos';
 import IntegranteLegislatura from './integrante_legislaturas';
 import Diputado from './diputado';
 import Decreto from './decreto';
+import Agenda from './agendas';
+import AnfitrionAgenda from './anfitrion_agendas';
 
 
 
@@ -109,6 +111,11 @@ Decreto.belongsTo(IniciativaPuntoOrden, {
 IniciativaPuntoOrden.hasMany(Decreto, {
   foreignKey: "id_iniciativa",
   as: "decretos",
+});
+
+Agenda.hasMany(PuntosOrden, {
+   foreignKey: 'id_evento', 
+   as: 'puntosorden'
 });
 
 
