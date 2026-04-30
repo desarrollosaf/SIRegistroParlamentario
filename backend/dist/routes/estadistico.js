@@ -14,4 +14,5 @@ router.get("/api/estadistico/getasistencia/:id", estadistico_1.getasistencia);
 router.get("/api/estadistico/ultimasesion/", estadistico_1.ultimasesion);
 router.get("/api/estadistico/getordendia", estadistico_1.getPuntosOrdenDia);
 router.get("/api/estadistico/pdfordendia/:id", estadistico_1.generarPdfOrdenDia);
+router.get("/api/estadistico/getordenes", estadistico_1.getOrdenesDia);
 exports.default = router;
