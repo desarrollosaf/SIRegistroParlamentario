@@ -85,6 +85,9 @@ class Server {
         this.app.use((req, res, next) => {
             const publicPaths = [
                 '/api/user/login',
+                '/api/eventos/getevento/',
+                '/api/eventos/getpuntos/',
+                '/api/eventos/getvotospunto/',
                 '/api/eventos/gettipos/',
                 '/api/diputados/cargo/',
                 '/api/eventos/savereserva/',

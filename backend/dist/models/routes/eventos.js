@@ -1,0 +1,55 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const agenda_1 = require("../controllers/agenda");
+const multer_1 = __importDefault(require("../controllers/multer"));
+const uploadAgenda_1 = __importDefault(require("../controllers/uploadAgenda"));
+const router = (0, express_1.Router)();
+router.get("/api/eventos/geteventos/:id", agenda_1.geteventos);
+router.get("/api/eventos/getevento/:id", agenda_1.getevento);
+router.post("/api/eventos/actasistencia/", agenda_1.actualizar);
+router.get("/api/eventos/catalogos/", agenda_1.catalogos);
+router.post("/api/eventos/gettipos/", agenda_1.getTiposPuntos);
+router.post("/api/eventos/savepunto/:id", multer_1.default.single("documento"), agenda_1.guardarpunto);
+router.get("/api/eventos/getpuntos/:id", agenda_1.getpuntos);
+router.post("/api/eventos/savereserva/", agenda_1.crearreserva);
+router.get("/api/eventos/eliminarreserva/:id", agenda_1.eliminarreserva);
+router.get("/api/eventos/getreservas/:id", agenda_1.getreservas);
+router.post("/api/eventos/actualizarPunto/:id", multer_1.default.single("documento"), agenda_1.actualizarPunto);
+router.get("/api/eventos/eliminarpunto/:id/:sesion", agenda_1.eliminarpunto);
+router.post("/api/eventos/saveintervencion/", agenda_1.saveintervencion);
+router.post("/api/eventos/getintervenciones/", agenda_1.getintervenciones);
+router.get("/api/eventos/eliminarinter/:id", agenda_1.eliminarinter);
+router.post("/api/eventos/getvotospunto/", agenda_1.getvotacionpunto);
+router.post("/api/eventos/actvoto/", agenda_1.actualizarvoto);
+router.post("/api/eventos/reiniciavoto/", agenda_1.reiniciarvoto);
+router.get("/api/eventos/catalogossave/", agenda_1.catalogossave);
+router.post("/api/eventos/saveagenda/", uploadAgenda_1.default.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+]), agenda_1.saveagenda);
+// router.post("/api/eventos/saveagenda/", saveagenda );
+router.get("/api/eventos/getagenda/:id", agenda_1.getAgenda);
+// router.post("/api/eventos/editagenda/:id", updateAgenda  jsjsjsjsjs);
+router.post("/api/eventos/editagenda/:id", uploadAgenda_1.default.fields([
+    { name: "version_estenografica", maxCount: 1 },
+    { name: "orden_dia", maxCount: 1 }
+]), agenda_1.updateAgenda);
+router.post("/api/eventos/notificarpunto/:id", agenda_1.enviarWhatsPunto);
+router.get("/api/eventos/votacionpunto/:id", agenda_1.generarPDFVotacion);
+router.get("/api/eventos/gestionintegrantes/:id", agenda_1.gestionIntegrantes);
+router.post("/api/eventos/agregardipasistencia/", agenda_1.addDipLista);
+router.get("/api/eventos/deleteintlista/:id", agenda_1.Eliminarlista);
+router.get("/api/eventos/deletedipasociado/:id", agenda_1.EliminardipAsociado);
+router.post("/api/eventos/enviarvotacionpunto", agenda_1.enviarWhatsVotacionPDF);
+router.get('/api/eventos/asintenciapdf/:id', agenda_1.generarPDFAsistencia);
+router.get('/api/eventos/notasintenciapdf/:id', agenda_1.enviarWhatsAsistenciaPDF);
+router.get('/api/eventos/notinicioeven/:id', agenda_1.enviarNotInicioEvento);
+router.get("/api/eventos/exportevento", agenda_1.exportdatos);
+router.get("/api/eventos/getagendaHoy/:fecha", agenda_1.getAgendaHoy);
+router.post("/api/eventos/savecomentarios/", agenda_1.saveComentarioEvento);
+router.get("/api/eventos/deletecomentario/:id", agenda_1.deleteComentarioEvento);
+exports.default = router;

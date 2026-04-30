@@ -39,10 +39,12 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.aRouter.queryParams.subscribe(params => {
-      this.idComision = params['id'] || '';
-      this.idPunto = params['idPunto'] || '';
-      this.idReserva = params['idReserva'] || '';
-      this.modo = params['modo'] === 'asistencia' ? 'asistencia' : 'votacion';
+      const decoded = this.decodificarParams(params['t'] || '');
+
+      this.idComision = decoded['id'] || '';
+      this.idPunto    = decoded['idPunto'] || '';
+      this.idReserva  = decoded['idReserva'] || '';
+      this.modo       = decoded['modo'] === 'asistencia' ? 'asistencia' : 'votacion';
 
       if (this.idComision) {
         this.cargarDatos();
@@ -53,6 +55,17 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerPolling();
+  }
+
+  private decodificarParams(token: string): Record<string, string> {
+    try {
+      const qs = atob(token);
+      const result: Record<string, string> = {};
+      new URLSearchParams(qs).forEach((value, key) => result[key] = value);
+      return result;
+    } catch {
+      return {};
+    }
   }
 
   private iniciarPolling(): void {
@@ -196,11 +209,21 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   }
 
   getEscalaClase(): string {
-    const total = this.totalParticipantes();
-    if (total <= 10)  return 'escala-xl';
-    if (total <= 20)  return 'escala-lg';
-    if (total <= 35)  return 'escala-md';
-    if (total <= 55)  return 'escala-sm';
+    let filasEfectivas: number;
+
+    if (this.esComision && this.listaComisiones.length > 0) {
+      // Cada comisión aporta: ceil(integrantes/3) filas + 2 de overhead por encabezado
+      filasEfectivas = this.listaComisiones.reduce((acc, c) => {
+        return acc + Math.ceil(c.integrantes.length / 3) + 2;
+      }, 0);
+    } else {
+      filasEfectivas = Math.ceil(this.totalParticipantes() / 3);
+    }
+
+    if (filasEfectivas <= 5)  return 'escala-xl';
+    if (filasEfectivas <= 10) return 'escala-lg';
+    if (filasEfectivas <= 18) return 'escala-md';
+    if (filasEfectivas <= 28) return 'escala-sm';
     return 'escala-xs';
   }
 
