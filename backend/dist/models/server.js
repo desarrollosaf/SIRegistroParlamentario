@@ -124,7 +124,7 @@ class Server {
                 '/api/estadistico/comision/eventos/',
                 '/api/eventos/getevento/',
                 '/api/eventos/getpuntos/',
-                '/api/eventos/getvotospunto/'
+                '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
