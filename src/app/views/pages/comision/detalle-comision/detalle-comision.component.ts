@@ -6,6 +6,7 @@ import { NgbAccordionModule, NgbModal, NgbModalRef, } from '@ng-bootstrap/ng-boo
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SocketService } from '../../../../core/services/socket.service';
 import { enviroment } from '../../../../../enviroments/enviroment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
@@ -116,6 +117,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   puntoSeleccionado: any = null;
   listaIntervenciones: any;
   agendaPunto: '';
+  proyeccionWindow: Window | null = null;
   isUpdatingAsistencia: boolean = false;
   isUpdatingVotacion: boolean = false;
   tituloC: '';
@@ -172,7 +174,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     private router: Router,
     private sanitizer: DomSanitizer,
     private modalService: NgbModal,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private _socketService: SocketService
   ) {
 
     this.idComisionRuta = String(aRouter.snapshot.paramMap.get('id'));
@@ -231,6 +234,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   ngOnInit(): void {
+    this._socketService.conectar();
     this.cargarDatosIniciales();
     this.cargarCatalogosBase();
 
@@ -298,6 +302,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     console.log('Limpiando');
     this.detenerSegPlano();
+    this._socketService.disconnect();
   }
 
 
@@ -2371,6 +2376,23 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+  terminarAsistencia(): void {
+    Swal.fire({
+      title: '¿Terminar asistencia?',
+      text: 'Se cerrará la proyección de asistencia',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, terminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._socketService.emitTerminarAsistencia(this.idComisionRuta);
+      }
+    });
+  }
+
   terminarVotacion(): void {
     Swal.fire({
       title: '¿Terminar votación?',
@@ -2402,6 +2424,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   private finalizarVotacion(): void {
+    this._socketService.emitTerminarVotacion(this.idComisionRuta);
     this.puntoSeleccionadoVotacion = null;
     this.reservaPuntoSeleccionadoVotacion = null;
     this.votacionIniciada = false;
@@ -2478,21 +2501,31 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   proyectarVotacion(): void {
-    const token = this.codificarParams({
+    const params = {
       id: this.idComisionRuta,
       idPunto: String(this.votacionActual.idPunto ?? ''),
       idReserva: String(this.votacionActual.idReserva ?? ''),
       modo: 'votacion'
-    });
-    window.open(`/proyeccion-votacion?t=${token}`, '_blank', 'noopener');
+    };
+    this._socketService.emitIniciarProyeccion(this.idComisionRuta, params);
+    if (!this.proyeccionWindow || this.proyeccionWindow.closed) {
+      const token = this.codificarParams(params);
+      this.proyeccionWindow = window.open(`/proyeccion-votacion?t=${token}`, `proyeccion-${this.idComisionRuta}`);
+    }
   }
 
   proyectarAsistencia(): void {
-    const token = this.codificarParams({
+    const params = {
       id: this.idComisionRuta,
-      modo: 'asistencia'
-    });
-    window.open(`/proyeccion-votacion?t=${token}`, '_blank', 'noopener');
+      modo: 'asistencia',
+      idPunto: '',
+      idReserva: ''
+    };
+    this._socketService.emitIniciarProyeccion(this.idComisionRuta, params);
+    if (!this.proyeccionWindow || this.proyeccionWindow.closed) {
+      const token = this.codificarParams(params);
+      this.proyeccionWindow = window.open(`/proyeccion-votacion?t=${token}`, `proyeccion-${this.idComisionRuta}`);
+    }
   }
 
   imprimirVotacion(): void {

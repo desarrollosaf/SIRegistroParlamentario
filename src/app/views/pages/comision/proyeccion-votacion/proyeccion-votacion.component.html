@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <div class="tablero-container">
 
+  <!-- PANTALLA IDLE (se muestra cuando termina votación o asistencia) -->
+  <div class="pantalla-idle" *ngIf="terminado">
+    <img src="https://www.congresoedomex.gob.mx/images/congreso_logo_horizontal-p-2000.png" alt="Congreso" class="idle-logo" />
+    <div class="idle-titulo" *ngIf="tituloEvento">{{ tituloEvento }}</div>
+    <div class="idle-mensaje">{{ modo === 'asistencia' ? 'Asistencia finalizada' : 'Votación finalizada' }}</div>
+  </div>
+
+  <!-- CONTENIDO NORMAL -->
+  <ng-container *ngIf="!terminado">
+
   <!-- ENCABEZADO -->
   <div class="tablero-header">
     <div class="header-titulo">
@@ -131,5 +141,7 @@
     <span class="leyenda-item"><span class="foco foco-pendiente"></span> Pendiente</span>
     <span class="leyenda-total">Total: {{ totalParticipantes() }}</span>
   </div>
+
+  </ng-container>
 
 </div>

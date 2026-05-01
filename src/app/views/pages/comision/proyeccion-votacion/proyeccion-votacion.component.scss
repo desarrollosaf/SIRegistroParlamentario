@@ -6,6 +6,41 @@
   overflow: hidden;
 }
 
+/* ── PANTALLA IDLE ── */
+.pantalla-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background: #000000;
+  gap: 2rem;
+
+  .idle-logo {
+    max-width: 480px;
+    width: 60%;
+    background: #ffffff;
+    padding: 2rem 3rem;
+    border-radius: 8px;
+  }
+
+  .idle-titulo {
+    color: #cccccc;
+    font-size: 1.6rem;
+    font-weight: 600;
+    text-align: center;
+    max-width: 80%;
+  }
+
+  .idle-mensaje {
+    color: #555555;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+}
+
 .tablero-container {
   display: flex;
   flex-direction: column;
