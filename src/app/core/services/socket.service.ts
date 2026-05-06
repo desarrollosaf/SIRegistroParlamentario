@@ -9,9 +9,12 @@ export class SocketService {
   private ensureConnected(): Socket {
     if (!this.socket) {
       const url = enviroment.endpoint.replace(/\/$/, '');
-      this.socket = io(url, {
+      const parsed = new URL(url);
+      const socketPath = parsed.pathname.replace(/\/$/, '') + '/socket.io';
+      this.socket = io(parsed.origin, {
         withCredentials: true,
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        path: socketPath
       });
     }
     return this.socket;
