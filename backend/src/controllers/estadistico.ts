@@ -2339,7 +2339,8 @@ export const getOrdenesDia = async (req: Request, res: Response): Promise<Respon
         { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
         { model: PuntosOrden, as: 'puntosorden', order: [['nopunto', 'ASC']] },
       ],
-      order: [['fecha', 'ASC']],
+      order: [['fecha', 'DESC']],
+
     });
 
     if (!eventos || eventos.length === 0) {
