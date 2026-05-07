@@ -57,6 +57,7 @@ const diputados_asociados_1 = __importDefault(require("../models/diputados_asoci
 const reservas_presenta_1 = __importDefault(require("../models/reservas_presenta"));
 const comentario_evento_1 = __importDefault(require("../models/comentario_evento"));
 const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
         console.log(id);
@@ -91,27 +92,42 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             ],
             order: [['fecha', 'DESC']]
         });
-        const eventosConComisiones = [];
-        for (const evento of eventos) {
-            const anfitriones = yield anfitrion_agendas_1.default.findAll({
-                where: { agenda_id: evento.id },
-                attributes: ["autor_id"],
+        const eventoIds = eventos.map(e => e.id);
+        // Traer todos los anfitriones de todos los eventos en una sola query
+        const todosAnfitriones = eventoIds.length > 0
+            ? yield anfitrion_agendas_1.default.findAll({
+                where: { agenda_id: eventoIds },
+                attributes: ["agenda_id", "autor_id"],
                 raw: true
-            });
-            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-            let comisiones = [];
-            let titulo = '';
-            if (comisionIds.length > 0) {
-                comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["id", "nombre"],
-                    raw: true
-                });
-                titulo = comisiones.map(c => c.nombre).join(", ");
-            }
-            eventosConComisiones.push(Object.assign(Object.assign({}, evento.toJSON()), { comisiones,
-                titulo }));
+            })
+            : [];
+        // Agrupar anfitriones por agenda_id
+        const anfitrionesMap = new Map();
+        for (const a of todosAnfitriones) {
+            const lista = (_a = anfitrionesMap.get(a.agenda_id)) !== null && _a !== void 0 ? _a : [];
+            lista.push(a.autor_id);
+            anfitrionesMap.set(a.agenda_id, lista);
         }
+        // Traer todas las comisiones necesarias en una sola query a la DB externa
+        const todosComisionIds = [...new Set(todosAnfitriones.map(a => a.autor_id).filter(Boolean))];
+        const todasComisiones = todosComisionIds.length > 0
+            ? yield comisions_1.default.findAll({
+                where: { id: todosComisionIds },
+                attributes: ["id", "nombre"],
+                raw: true
+            })
+            : [];
+        const comisionesMap = new Map(todasComisiones.map(c => [c.id, c.nombre]));
+        // Armar la respuesta en memoria sin más queries
+        const eventosConComisiones = eventos.map(evento => {
+            var _a;
+            const comisionIds = (_a = anfitrionesMap.get(evento.id)) !== null && _a !== void 0 ? _a : [];
+            const comisiones = comisionIds
+                .filter(id => comisionesMap.has(id))
+                .map(id => ({ id, nombre: comisionesMap.get(id) }));
+            const titulo = comisiones.map(c => c.nombre).join(", ");
+            return Object.assign(Object.assign({}, evento.toJSON()), { comisiones, titulo });
+        });
         return res.status(200).json({
             msg: "listoooo :v ",
             citas: eventosConComisiones
