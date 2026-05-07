@@ -86,45 +86,50 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
             where: whereTipoEvento
           }
         ],
-        order: [['fecha', 'DESC']]  
+        order: [['fecha', 'DESC']]
       }
     );
 
+    const eventoIds = eventos.map(e => e.id);
 
-    const eventosConComisiones = [];
+    // Traer todos los anfitriones de todos los eventos en una sola query
+    const todosAnfitriones = eventoIds.length > 0
+      ? await AnfitrionAgenda.findAll({
+          where: { agenda_id: eventoIds },
+          attributes: ["agenda_id", "autor_id"],
+          raw: true
+        })
+      : [];
 
-    for (const evento of eventos) {
-      const anfitriones = await AnfitrionAgenda.findAll({
-        where: { agenda_id: evento.id },
-        attributes: ["autor_id"],
-        raw: true
-      });
+    // Agrupar anfitriones por agenda_id
+    const anfitrionesMap = new Map<string, string[]>();
+    for (const a of todosAnfitriones) {
+      const lista = anfitrionesMap.get(a.agenda_id) ?? [];
+      lista.push(a.autor_id);
+      anfitrionesMap.set(a.agenda_id, lista);
+    }
 
-      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-
-     let comisiones: any[] = [];
-
-
-      let titulo: string = '';
-
-
-      if (comisionIds.length > 0) {
-        comisiones = await Comision.findAll({
-          where: { id: comisionIds },
+    // Traer todas las comisiones necesarias en una sola query a la DB externa
+    const todosComisionIds = [...new Set(todosAnfitriones.map(a => a.autor_id).filter(Boolean))];
+    const todasComisiones = todosComisionIds.length > 0
+      ? await Comision.findAll({
+          where: { id: todosComisionIds },
           attributes: ["id", "nombre"],
           raw: true
-        });
+        })
+      : [];
 
-        titulo = comisiones.map(c => c.nombre).join(", ");
-      }
+    const comisionesMap = new Map<string, string>(todasComisiones.map(c => [c.id, c.nombre]));
 
-
-      eventosConComisiones.push({
-        ...evento.toJSON(),
-        comisiones,
-        titulo
-      });
-    }
+    // Armar la respuesta en memoria sin más queries
+    const eventosConComisiones = eventos.map(evento => {
+      const comisionIds = anfitrionesMap.get(evento.id) ?? [];
+      const comisiones = comisionIds
+        .filter(id => comisionesMap.has(id))
+        .map(id => ({ id, nombre: comisionesMap.get(id) }));
+      const titulo = comisiones.map(c => c.nombre).join(", ");
+      return { ...evento.toJSON(), comisiones, titulo };
+    });
 
     return res.status(200).json({
       msg: "listoooo :v ",
