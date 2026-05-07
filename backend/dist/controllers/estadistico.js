@@ -2015,7 +2015,7 @@ const getOrdenesDia = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
                 { model: puntos_ordens_1.default, as: 'puntosorden', order: [['nopunto', 'ASC']] },
             ],
-            order: [['fecha', 'ASC']],
+            order: [['fecha', 'DESC']],
         });
         if (!eventos || eventos.length === 0) {
             return res.status(404).json({ msg: 'No se encontraron eventos' });
