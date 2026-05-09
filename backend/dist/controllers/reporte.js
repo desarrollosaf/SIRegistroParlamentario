@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getIniciativasTurnadasComision = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -238,7 +238,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
             {
                 model: puntos_ordens_1.default,
                 as: "punto",
-                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
+                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "se_turna_comision"],
                 include: [
                     {
                         model: iniciativas_estudio_1.default,
@@ -323,7 +323,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativas = yield obtenerIniciativasBase();
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
         const data = iniciativa.toJSON();
         const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
@@ -475,6 +475,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             periodo: obtenerPeriodo(fechaEventoRaw),
             // ✅ AQUÍ ESTÁ EL FIX
             tipo: tipoTexto((_p = data.tipo) !== null && _p !== void 0 ? _p : (_q = data.punto) === null || _q === void 0 ? void 0 : _q.tipo),
+            se_turna_comision: String((_r = data.punto) === null || _r === void 0 ? void 0 : _r.se_turna_comision) === "1" || ((_s = data.punto) === null || _s === void 0 ? void 0 : _s.se_turna_comision) === true,
         };
     })));
     return reporte;
@@ -1154,3 +1155,28 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
     }
 });
 exports.getReporteIniciativasIntegrantes = getReporteIniciativasIntegrantes;
+const getIniciativasTurnadasComision = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const reporte = yield construirReporteBase();
+        const filtrado = reporte.filter((item) => item.se_turna_comision);
+        const rows = filtrado.map((item) => ({
+            comisiones: item.comisiones !== "-" ? item.comisiones.replace(/, /g, " / ") : "-",
+            iniciativa: item.iniciativa,
+            info: `${item.presentac} / ${item.autor_detalle} / ${item.observac}`
+        }));
+        return yield generarExcelSimple(res, "Turnadas a Comisión", "reporte_turnadas_comision.xlsx", [
+            { header: "NO.", key: "no", width: 8 },
+            { header: "COMISIÓN(ES)", key: "comisiones", width: 55 },
+            { header: "INICIATIVA", key: "iniciativa", width: 60 },
+            { header: "INFO INICIATIVA", key: "info", width: 55 }
+        ], rows);
+    }
+    catch (error) {
+        console.error("Error al generar Excel de iniciativas turnadas a comisión:", error);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+            error: error.message
+        });
+    }
+});
+exports.getIniciativasTurnadasComision = getIniciativasTurnadasComision;

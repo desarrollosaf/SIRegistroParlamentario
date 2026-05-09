@@ -40,6 +40,7 @@ type ReporteBaseItem = {
   grupo_parlamentario_ids: string[];
   periodo: string;
   tipo: string | null;
+  se_turna_comision: boolean;
 };
 
 const deduplicarPorId = (items: any[]) => {
@@ -277,7 +278,7 @@ const obtenerIniciativasBase = async () => {
       {
         model: PuntosOrden,
         as: "punto",
-        attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
+        attributes: ["id", "punto", "nopunto", "tribuna", "dispensa", "se_turna_comision"],
         include: [
           {
             model: IniciativaEstudio,
@@ -557,6 +558,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
 
         // ✅ AQUÍ ESTÁ EL FIX
         tipo: tipoTexto(data.tipo ?? data.punto?.tipo),
+        se_turna_comision: String(data.punto?.se_turna_comision) === "1" || data.punto?.se_turna_comision === true,
       };
     })
   );
@@ -1390,6 +1392,38 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
 
   } catch (error: any) {
     console.error("Error al generar Excel de integrantes:", error);
+    return res.status(500).json({
+      message: "Error interno del servidor",
+      error: error.message
+    });
+  }
+};
+
+export const getIniciativasTurnadasComision = async (_req: Request, res: Response): Promise<any> => {
+  try {
+    const reporte = await construirReporteBase();
+    const filtrado = reporte.filter((item) => item.se_turna_comision);
+
+    const rows = filtrado.map((item) => ({
+      comisiones: item.comisiones !== "-" ? item.comisiones.replace(/, /g, " / ") : "-",
+      iniciativa: item.iniciativa,
+      info: `${item.presentac} / ${item.autor_detalle} / ${item.observac}`
+    }));
+
+    return await generarExcelSimple(
+      res,
+      "Turnadas a Comisión",
+      "reporte_turnadas_comision.xlsx",
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "COMISIÓN(ES)", key: "comisiones", width: 55 },
+        { header: "INICIATIVA", key: "iniciativa", width: 60 },
+        { header: "INFO INICIATIVA", key: "info", width: 55 }
+      ],
+      rows
+    );
+  } catch (error: any) {
+    console.error("Error al generar Excel de iniciativas turnadas a comisión:", error);
     return res.status(500).json({
       message: "Error interno del servidor",
       error: error.message
