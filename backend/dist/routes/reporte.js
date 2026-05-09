@@ -9,4 +9,5 @@ router.get("/api/reporte/iniciativas/aprobadas", reporte_1.getIniciativasAprobad
 router.get("/api/reporte/iniciativas/grupo-diputado", reporte_1.getIniciativasPorGrupoYDiputado);
 router.get("/api/reporte/iniciativas/totales-periodo", reporte_1.getTotalesPorPeriodo);
 router.post("/api/reporte/iniciativas/integrantes", reporte_1.getReporteIniciativasIntegrantes);
+router.get("/api/reporte/iniciativas/inicomisions", reporte_1.getIniciativasTurnadasComision);
 exports.default = router;
