@@ -1402,7 +1402,7 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
 export const getIniciativasTurnadasComision = async (_req: Request, res: Response): Promise<any> => {
   try {
     const reporte = await construirReporteBase();
-    const filtrado = reporte.filter((item) => item.se_turna_comision);
+    const filtrado = reporte.filter((item) => item.se_turna_comision && item.comisiones && item.comisiones !== "-");
 
     const rows = filtrado.map((item) => ({
       comisiones: item.comisiones !== "-" ? item.comisiones.replace(/, /g, " / ") : "-",

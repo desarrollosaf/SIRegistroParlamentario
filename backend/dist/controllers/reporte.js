@@ -1158,7 +1158,7 @@ exports.getReporteIniciativasIntegrantes = getReporteIniciativasIntegrantes;
 const getIniciativasTurnadasComision = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();
-        const filtrado = reporte.filter((item) => item.se_turna_comision);
+        const filtrado = reporte.filter((item) => item.se_turna_comision && item.comisiones && item.comisiones !== "-");
         const rows = filtrado.map((item) => ({
             comisiones: item.comisiones !== "-" ? item.comisiones.replace(/, /g, " / ") : "-",
             iniciativa: item.iniciativa,
