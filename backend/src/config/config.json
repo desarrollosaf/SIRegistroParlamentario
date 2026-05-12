@@ -3,14 +3,14 @@
     "username": "usr_siregistro",
     "password": "T64X4ZOuiHRCnVWqHVEL",
     "database": "adminplem_siregistroparlamentario",
-    "host": "192.168.36.53",
+    "host": "192.168.36.58",
     "dialect": "mysql"
   },
   "development": {
     "username": "usr_siregistro",
     "password": "T64X4ZOuiHRCnVWqHVEL",
     "database": "adminplem_siregistroparlamentario",
-    "host": "192.168.36.53",
+    "host": "192.168.36.58",
     "dialect": "mysql"
   }
 }
