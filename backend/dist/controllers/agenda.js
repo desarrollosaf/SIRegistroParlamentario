@@ -1315,12 +1315,18 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 const { proponentesString, presentaString } = ((_a = ini.presentan) === null || _a === void 0 ? void 0 : _a.length)
                     ? yield procesarPresentan(ini.presentan)
                     : { proponentesString: '', presentaString: '' };
+                const presentanRaw = (ini.presentan || []).map((p) => ({
+                    id: `${p.id_tipo_presenta}/${p.id_presenta}`,
+                    id_proponente: p.id_tipo_presenta,
+                    id_presenta: p.id_presenta,
+                }));
                 return {
                     id: ini.id,
                     iniciativa: ini.iniciativa,
                     proponente: proponentesString,
                     presenta: presentaString,
                     tipo: ini.tipo,
+                    presentan: presentanRaw,
                 };
             })));
             // 👇 Procesar Reservas con sus presentan

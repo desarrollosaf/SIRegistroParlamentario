@@ -145,6 +145,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   mostrarSelectIniciativaPrecargada = false;
   iniciativaPrecargadaSeleccionada: any = null;
 
+  mostrarformEdicionIniciativa = false;
+  formEdicionIniciativa!: FormGroup;
+  iniciativaEnEdicion: any = null;
+  slcPresentaEdicion: any[] = [];
+
   tiposIniciativa = [
     { id: 1, label: 'Iniciativa' },
     { id: 2, label: 'Punto de acuerdo' },
@@ -223,9 +228,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       tipo: ['', Validators.required],
       id_proponente: [[]],
       id_presenta: [[]],
-
     });
 
+    this.formEdicionIniciativa = this.fb.group({
+      descripcion: ['', Validators.required],
+      tipo: ['', Validators.required],
+      id_proponente: [[]],
+      id_presenta: [[]],
+    });
 
   }
 
@@ -919,17 +929,32 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             ...punto,
             reservas: punto.reservas || [],
             // iniciativas: punto.iniciativas || [],
-            iniciativas: (punto.iniciativas || []).map((ini: any) => ({
-              ...ini,
-              iniciativa: ini.iniciativa || ini.descripcion || '—',
-              tipo: ini.tipo || null,
-              proponente: ini.proponente
-                ? (typeof ini.proponente === 'string' ? ini.proponente : ini.proponente?.valor || '—')
-                : (ini.proponentes ? ini.proponentes.map((p: any) => p.valor || p.nombre || p).join(', ') : '—'),
-              presenta: ini.presenta
-                ? (typeof ini.presenta === 'string' ? ini.presenta : ini.presenta?.valor || '—')
-                : (ini.presentan ? ini.presentan.map((p: any) => p.valor || p.nombre || p).join(', ') : '—')
-            })),
+            iniciativas: (punto.iniciativas || []).map((ini: any) => {
+              let iniProponentesIds: number[] = [];
+              let iniPresentanIds: string[] = [];
+              if (ini.presentan && Array.isArray(ini.presentan) && ini.presentan.length > 0) {
+                const rawIds = ini.presentan
+                  .map((p: any) => p.id_proponente)
+                  .filter((id: any) => id !== null && id !== undefined);
+                iniProponentesIds = [...new Set(rawIds)].map((id: any) => Number(id)).filter((id: number) => !isNaN(id));
+                iniPresentanIds = ini.presentan
+                  .map((p: any) => p.id !== null && p.id !== undefined ? String(p.id) : null)
+                  .filter((id: string | null) => id !== null && id !== '');
+              }
+              return {
+                ...ini,
+                iniciativa: ini.iniciativa || ini.descripcion || '—',
+                tipo: ini.tipo || null,
+                proponente: ini.proponente
+                  ? (typeof ini.proponente === 'string' ? ini.proponente : ini.proponente?.valor || '—')
+                  : (ini.proponentes ? ini.proponentes.map((p: any) => p.valor || p.nombre || p).join(', ') : '—'),
+                presenta: ini.presenta
+                  ? (typeof ini.presenta === 'string' ? ini.presenta : ini.presenta?.valor || '—')
+                  : (ini.presentan ? ini.presentan.map((p: any) => p.valor || p.nombre || p).join(', ') : '—'),
+                _proponentesIds: iniProponentesIds,
+                _presentanIds: iniPresentanIds,
+              };
+            }),
             puntosTurnadosSeleccionados: Array.isArray(punto.puntosestudiado) && punto.puntosestudiado.length > 0
               ? punto.puntosestudiado.map((ps: any) => ({ id: ps.id, punto: ps.punto }))
               : (punto.turnocomision || []).map((tc: any) => {
@@ -989,6 +1014,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   toggleSelectIniciativaPrecargada() {
     this.mostrarSelectIniciativaPrecargada = !this.mostrarSelectIniciativaPrecargada;
+    if (this.mostrarSelectIniciativaPrecargada) {
+      this.cancelarEdicionIniciativa();
+    }
     if (!this.mostrarSelectIniciativaPrecargada) {
       this.iniciativaPrecargadaSeleccionada = null;
       this.formIniciativa.get('id_proponente')?.setValue([]);
@@ -1116,7 +1144,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   toggleformIniciativa() {
     this.mostrarformIniciativa = !this.mostrarformIniciativa;
-    if (!this.mostrarformIniciativa) {
+    if (this.mostrarformIniciativa) {
+      this.cancelarEdicionIniciativa();
+    } else {
       this.formIniciativa.reset();
     }
   }
@@ -1298,7 +1328,161 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   cerrarModalIniciativa() {
+    this.cancelarEdicionIniciativa();
     this.modalRefI.close();
+  }
+
+  abrirEdicionIniciativa(iniciativa: any) {
+    this.mostrarformIniciativa = false;
+    this.mostrarSelectIniciativaPrecargada = false;
+    this.iniciativaEnEdicion = iniciativa;
+    this.mostrarformEdicionIniciativa = true;
+    this.slcPresentaEdicion = [];
+
+    const proponentesIds: number[] = iniciativa._proponentesIds || [];
+    const presentanIds: string[] = iniciativa._presentanIds || [];
+
+    this.formEdicionIniciativa.patchValue({
+      descripcion: iniciativa.iniciativa || iniciativa.descripcion || '',
+      tipo: iniciativa.tipo || '',
+      id_proponente: proponentesIds,
+      id_presenta: [],
+    });
+
+    if (proponentesIds.length > 0) {
+      const proponentesObjs = (this.slctProponentes || []).filter((p: any) =>
+        proponentesIds.map(Number).includes(Number(p.id))
+      );
+      this._eventoService.getTipo(proponentesObjs).subscribe({
+        next: (response: any) => {
+          this.slcPresentaEdicion = (response.dtSlct || []).map((item: any) => ({
+            ...item,
+            id: String(item.id)
+          }));
+          this.formEdicionIniciativa.patchValue({ id_presenta: presentanIds });
+        },
+        error: (e: HttpErrorResponse) => {
+          console.error('Error cargando presenta para edición:', e);
+        }
+      });
+    }
+  }
+
+  cancelarEdicionIniciativa() {
+    this.mostrarformEdicionIniciativa = false;
+    this.iniciativaEnEdicion = null;
+    this.slcPresentaEdicion = [];
+    this.formEdicionIniciativa.reset();
+  }
+
+  getTipoPEdicion(event: any): void {
+    this.formEdicionIniciativa.get('id_presenta')?.setValue([]);
+    this.slcPresentaEdicion = [];
+    if (!event || (Array.isArray(event) && event.length === 0)) return;
+    this._eventoService.getTipo(event).subscribe({
+      next: (response: any) => {
+        this.slcPresentaEdicion = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error cargando presenta para edición:', e);
+      }
+    });
+  }
+
+  guardarEdicionIniciativa() {
+    if (this.formEdicionIniciativa.invalid) {
+      Swal.fire({
+        position: 'center', icon: 'warning', title: '¡Atención!',
+        text: 'Debe escribir la descripción y seleccionar el tipo.',
+        showConfirmButton: false, timer: 2000
+      });
+      return;
+    }
+
+    const idsPresenta: any[] = this.formEdicionIniciativa.value.id_presenta || [];
+    const idsProponente: any[] = this.formEdicionIniciativa.value.id_proponente || [];
+
+    const getNombreProponente = () =>
+      this.slctProponentes
+        ?.filter((p: any) => idsProponente.map(Number).includes(Number(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || this.iniciativaEnEdicion?.proponente || '—';
+
+    const getNombrePresenta = () =>
+      this.slcPresentaEdicion
+        ?.filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
+        .map((p: any) => p.valor)
+        .join(', ') || this.iniciativaEnEdicion?.presenta || '—';
+
+    if (!this.iniciativaEnEdicion?.id || typeof this.iniciativaEnEdicion.id === 'number') {
+      const index = this.listaIniciativas.findIndex(i => i.id === this.iniciativaEnEdicion.id);
+      if (index !== -1) {
+        this.listaIniciativas[index] = {
+          ...this.listaIniciativas[index],
+          iniciativa: this.formEdicionIniciativa.value.descripcion,
+          descripcion: this.formEdicionIniciativa.value.descripcion,
+          tipo: Number(this.formEdicionIniciativa.value.tipo),
+          proponente: idsProponente.length > 0 ? getNombreProponente() : this.listaIniciativas[index].proponente,
+          presenta: idsPresenta.length > 0 ? getNombrePresenta() : this.listaIniciativas[index].presenta,
+        };
+      }
+      this.cancelarEdicionIniciativa();
+      return;
+    }
+
+    const datos = {
+      descripcion: this.formEdicionIniciativa.value.descripcion,
+      tipo: Number(this.formEdicionIniciativa.value.tipo),
+      id_presenta: idsPresenta,
+    };
+
+    this._eventoService.actualizarIniciativaDetalle(this.iniciativaEnEdicion.id, datos).subscribe({
+      next: () => {
+        const index = this.listaIniciativas.findIndex(i => i.id === this.iniciativaEnEdicion.id);
+        if (index !== -1) {
+          const newProponentesIds = idsProponente.length > 0
+            ? idsProponente.map(Number)
+            : (this.listaIniciativas[index]._proponentesIds || []);
+          const newPresentanIds = idsPresenta.length > 0
+            ? idsPresenta.map(String)
+            : (this.listaIniciativas[index]._presentanIds || []);
+          this.listaIniciativas[index] = {
+            ...this.listaIniciativas[index],
+            iniciativa: datos.descripcion,
+            descripcion: datos.descripcion,
+            tipo: datos.tipo,
+            proponente: idsProponente.length > 0 ? getNombreProponente() : this.listaIniciativas[index].proponente,
+            presenta: idsPresenta.length > 0 ? getNombrePresenta() : this.listaIniciativas[index].presenta,
+            _proponentesIds: newProponentesIds,
+            _presentanIds: newPresentanIds,
+          };
+
+          if (this.puntoSeleccionadoIniciativa) {
+            const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoIniciativa.id);
+            if (puntoIndex !== -1) {
+              this.listaPuntos[puntoIndex].iniciativas = [...this.listaIniciativas];
+            }
+            if (this.puntoSeleccionadoIniciativa.iniciativas) {
+              const ini = this.puntoSeleccionadoIniciativa.iniciativas.findIndex((r: any) => r.id === this.iniciativaEnEdicion.id);
+              if (ini !== -1) {
+                this.puntoSeleccionadoIniciativa.iniciativas[ini] = { ...this.listaIniciativas[index] };
+              }
+            }
+          }
+        }
+
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+        Toast.fire({ icon: 'success', title: 'Iniciativa actualizada correctamente.' });
+        this.cancelarEdicionIniciativa();
+        this.cdr.detectChanges();
+      },
+      error: (e: HttpErrorResponse) => {
+        Swal.fire({ icon: 'error', title: 'Error', text: e.error?.message || 'Error al actualizar', timer: 3000 });
+      }
+    });
   }
 
   agregarDictamen(): void {

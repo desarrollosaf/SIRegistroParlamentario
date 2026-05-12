@@ -1475,12 +1475,19 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
             ? await procesarPresentan(ini.presentan)
             : { proponentesString: '', presentaString: '' };
 
+          const presentanRaw = (ini.presentan || []).map((p: any) => ({
+            id: `${p.id_tipo_presenta}/${p.id_presenta}`,
+            id_proponente: p.id_tipo_presenta,
+            id_presenta: p.id_presenta,
+          }));
+
           return {
             id: ini.id,
             iniciativa: ini.iniciativa,
             proponente: proponentesString,
             presenta: presentaString,
             tipo: ini.tipo,
+            presentan: presentanRaw,
           };
         })
       );
