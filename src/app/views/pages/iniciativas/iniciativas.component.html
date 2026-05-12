@@ -91,6 +91,18 @@
                     </span>
                   </button>
 
+                  <!-- Año legislativo → abre modal de periodos -->
+                  <button class="export-menu-item" (click)="abrirModalPeriodo()">
+                    <span class="export-item-icon icon-amber">
+                      <i class="bi bi-calendar3-range"></i>
+                    </span>
+                    <span class="export-item-text">
+                      <span class="export-item-label">Año legislativo</span>
+                      <span class="export-item-sub">Seleccionar periodo</span>
+                    </span>
+                    <i class="bi bi-sliders ms-auto export-item-ext"></i>
+                  </button>
+
                   <div class="export-divider"></div>
 
 
@@ -639,6 +651,173 @@
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════════
+     MODAL PERIODO LEGISLATIVO
+══════════════════════════════════════════════ -->
+<div class="modal-backdrop-custom" *ngIf="modalPeriodoOpen" (click)="cerrarModalPeriodo()"></div>
+
+<div class="modal-custom" *ngIf="modalPeriodoOpen">
+  <div class="modal-custom-dialog" style="max-width: 560px;" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-custom-header">
+      <div class="modal-custom-title">
+        <span class="modal-title-icon">
+          <i class="bi bi-calendar3-range"></i>
+        </span>
+        <div>
+          <h6 class="mb-0 fw-semibold">Año legislativo</h6>
+          <small class="text-muted" style="font-size:0.72rem;">Gestiona y selecciona el periodo para el reporte</small>
+        </div>
+      </div>
+      <button class="modal-close-btn" (click)="cerrarModalPeriodo()" title="Cerrar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="d-flex border-bottom px-3 pt-2">
+      <button class="btn btn-sm me-2 fw-semibold pb-2"
+        [style.color]="vistaPeriodo === 'lista' ? '#800048' : '#6c757d'"
+        [style.border-bottom]="vistaPeriodo === 'lista' ? '2px solid #800048' : '2px solid transparent'"
+        style="border-radius:0; background:transparent; border-top:none; border-left:none; border-right:none;"
+        (click)="vistaPeriodo = 'lista'">
+        <i class="bi bi-list-ul me-1"></i>Periodos
+      </button>
+      <button class="btn btn-sm fw-semibold pb-2"
+        [style.color]="vistaPeriodo === 'nuevo' ? '#800048' : '#6c757d'"
+        [style.border-bottom]="vistaPeriodo === 'nuevo' ? '2px solid #800048' : '2px solid transparent'"
+        style="border-radius:0; background:transparent; border-top:none; border-left:none; border-right:none;"
+        (click)="vistaPeriodo = 'nuevo'">
+        <i class="bi bi-plus-circle me-1"></i>Agregar periodo
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-custom-body">
+
+      <!-- ── Vista: Lista de periodos ── -->
+      <ng-container *ngIf="vistaPeriodo === 'lista'">
+
+        <div class="text-center py-3" *ngIf="cargandoPeriodos">
+          <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+          <p class="text-muted small mt-2 mb-0">Cargando periodos...</p>
+        </div>
+
+        <div *ngIf="!cargandoPeriodos && listaPeriodos.length === 0" class="text-center py-4">
+          <i class="bi bi-calendar-x text-muted" style="font-size:2.2rem;"></i>
+          <p class="text-muted mt-2 mb-0">No hay periodos registrados.</p>
+          <button class="btn btn-sm mt-3 fw-semibold"
+            style="background:rgba(128,0,72,0.1);color:#800048;border:1px solid rgba(128,0,72,0.3);border-radius:8px;"
+            (click)="vistaPeriodo = 'nuevo'">
+            <i class="bi bi-plus-circle me-1"></i>Agregar primero
+          </button>
+        </div>
+
+        <div *ngIf="!cargandoPeriodos && listaPeriodos.length > 0">
+          <select class="form-select form-select-sm" [(ngModel)]="periodoSeleccionado">
+            <option [ngValue]="null">— Selecciona un periodo —</option>
+            <option *ngFor="let p of listaPeriodos" [ngValue]="p">
+              {{ p.nombre }} · {{ p.tipo === 1 ? 'Ordinario' : 'Extraordinario' }}
+              <ng-container *ngIf="p.anio_legislativo"> · {{ p.anio_legislativo }}</ng-container>
+              · {{ p.fecha_inicio | date:'dd/MM/yyyy' }} — {{ p.fecha_termino | date:'dd/MM/yyyy' }}
+            </option>
+          </select>
+        </div>
+
+      </ng-container>
+
+      <!-- ── Vista: Nuevo periodo ── -->
+      <ng-container *ngIf="vistaPeriodo === 'nuevo'">
+
+        <div class="modal-info-note mb-3">
+          <i class="bi bi-info-circle-fill flex-shrink-0"></i>
+          <span>Registra un periodo legislativo con sus fechas y tipo (ordinario o extraordinario).</span>
+        </div>
+
+        <!-- Nombre -->
+        <div class="modal-field">
+          <label class="modal-field-label">
+            <i class="bi bi-tag me-1"></i>Nombre del periodo <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="nuevoPeriodo.nombre"
+            placeholder="Ej. Primer Período Ordinario 2024">
+        </div>
+
+        <!-- Año legislativo -->
+        <div class="modal-field">
+          <label class="modal-field-label">
+            <i class="bi bi-building me-1"></i>Año legislativo
+          </label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="nuevoPeriodo.anio_legislativo"
+            placeholder="Ej. LX Legislatura 2024-2027">
+        </div>
+
+        <!-- Fechas -->
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="modal-field">
+              <label class="modal-field-label">
+                <i class="bi bi-calendar-check me-1"></i>Fecha inicio <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="nuevoPeriodo.fecha_inicio">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="modal-field">
+              <label class="modal-field-label">
+                <i class="bi bi-calendar-x me-1"></i>Fecha término <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="nuevoPeriodo.fecha_termino">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tipo -->
+        <div class="modal-field">
+          <label class="modal-field-label">
+            <i class="bi bi-toggles me-1"></i>Tipo de periodo <span class="text-danger">*</span>
+          </label>
+          <select class="form-select form-select-sm mt-1" [(ngModel)]="nuevoPeriodo.tipo">
+            <option [ngValue]="1">Ordinario</option>
+            <option [ngValue]="2">Extraordinario</option>
+          </select>
+        </div>
+
+      </ng-container>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-custom-footer">
+      <button class="btn-modal-cancel" (click)="cerrarModalPeriodo()">Cancelar</button>
+
+      <!-- Footer Lista: Generar reporte -->
+      <ng-container *ngIf="vistaPeriodo === 'lista'">
+        <button class="btn-modal-generate"
+          [disabled]="generandoReportePeriodo || !periodoSeleccionado"
+          (click)="generarReportePeriodo()">
+          <span *ngIf="generandoReportePeriodo" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <i class="bi bi-file-earmark-excel-fill me-2" *ngIf="!generandoReportePeriodo"></i>
+          {{ generandoReportePeriodo ? 'Generando...' : 'Generar reporte' }}
+        </button>
+      </ng-container>
+
+      <!-- Footer Nuevo: Guardar -->
+      <ng-container *ngIf="vistaPeriodo === 'nuevo'">
+        <button class="btn-modal-generate"
+          [disabled]="guardandoPeriodo"
+          (click)="guardarPeriodoLegislativo()">
+          <span *ngIf="guardandoPeriodo" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <i class="bi bi-save me-2" *ngIf="!guardandoPeriodo"></i>
+          {{ guardandoPeriodo ? 'Guardando...' : 'Guardar periodo' }}
+        </button>
+      </ng-container>
+    </div>
+
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════
      MODAL GRUPO / DIPUTADO

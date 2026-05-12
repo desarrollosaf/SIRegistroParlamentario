@@ -12,8 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIniciativasTurnadasComision = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
+const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
@@ -1155,6 +1156,94 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
     }
 });
 exports.getReporteIniciativasIntegrantes = getReporteIniciativasIntegrantes;
+const getPeriodosLegislativos = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const periodos = yield periodo_legislativo_1.default.findAll({
+            order: [["fecha_inicio", "DESC"]],
+            raw: true
+        });
+        return res.json({ data: periodos });
+    }
+    catch (error) {
+        console.error("Error al obtener periodos legislativos:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getPeriodosLegislativos = getPeriodosLegislativos;
+const crearPeriodoLegislativo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { nombre, anio_legislativo, fecha_inicio, fecha_termino, tipo } = req.body;
+        if (!nombre || !fecha_inicio || !fecha_termino || !tipo) {
+            return res.status(400).json({ message: "Faltan campos requeridos: nombre, fecha_inicio, fecha_termino, tipo" });
+        }
+        if (![1, 2].includes(Number(tipo))) {
+            return res.status(400).json({ message: "tipo debe ser 1 (ordinario) o 2 (extraordinario)" });
+        }
+        if (new Date(fecha_inicio) > new Date(fecha_termino)) {
+            return res.status(400).json({ message: "fecha_inicio no puede ser mayor que fecha_termino" });
+        }
+        const periodo = yield periodo_legislativo_1.default.create({
+            nombre,
+            anio_legislativo: anio_legislativo || null,
+            fecha_inicio,
+            fecha_termino,
+            tipo
+        });
+        return res.status(201).json({ data: periodo });
+    }
+    catch (error) {
+        console.error("Error al crear periodo legislativo:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.crearPeriodoLegislativo = crearPeriodoLegislativo;
+const getReportePorPeriodoLegislativo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { periodo_id } = req.body;
+        if (!periodo_id) {
+            return res.status(400).json({ message: "periodo_id es requerido" });
+        }
+        const periodo = yield periodo_legislativo_1.default.findOne({
+            where: { id: periodo_id },
+            raw: true
+        });
+        if (!periodo) {
+            return res.status(404).json({ message: "Periodo legislativo no encontrado" });
+        }
+        const reporte = yield construirReporteBase();
+        const fechaInicio = new Date(periodo.fecha_inicio + "T00:00:00Z");
+        const fechaTermino = new Date(periodo.fecha_termino + "T23:59:59Z");
+        const filtrado = reporte.filter((item) => {
+            if (!item.fecha_evento_raw)
+                return false;
+            const fechaEvento = new Date(item.fecha_evento_raw);
+            return fechaEvento >= fechaInicio && fechaEvento <= fechaTermino;
+        });
+        const tipoPeriodo = periodo.tipo === 1 ? "Ordinario" : "Extraordinario";
+        const nombreSeguro = periodo.nombre.replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, "").trim();
+        const nombreArchivo = `reporte_${tipoPeriodo.toLowerCase()}_${nombreSeguro.replace(/\s+/g, "_")}.xlsx`;
+        return yield generarExcelSimple(res, `${tipoPeriodo} - ${periodo.nombre}`, nombreArchivo, [
+            { header: "NO.", key: "no", width: 8 },
+            { header: "ID", key: "id", width: 40 },
+            { header: "AUTOR", key: "autor", width: 28 },
+            { header: "PRESENTA", key: "autor_detalle", width: 35 },
+            { header: "DIPUTADO", key: "diputado", width: 30 },
+            { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+            { header: "INICIATIVA", key: "iniciativa", width: 55 },
+            { header: "MATERIA", key: "materia", width: 45 },
+            { header: "PRESENTAC.", key: "presentac", width: 15 },
+            { header: "COMISIONES", key: "comisiones", width: 40 },
+            { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
+            { header: "OBSERVAC.", key: "observac", width: 20 },
+            { header: "TIPO", key: "tipo", width: 15 }
+        ], filtrado);
+    }
+    catch (error) {
+        console.error("Error al generar reporte por periodo legislativo:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getReportePorPeriodoLegislativo = getReportePorPeriodoLegislativo;
 const getIniciativasTurnadasComision = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const reporte = yield construirReporteBase();

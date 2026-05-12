@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
+import PeriodoLegislativo from "../models/periodo_legislativo";
 const ExcelJS = require("exceljs");
 
 import Agenda from "../models/agendas";
@@ -1396,6 +1397,109 @@ export const getReporteIniciativasIntegrantes = async (req: Request, res: Respon
       message: "Error interno del servidor",
       error: error.message
     });
+  }
+};
+
+export const getPeriodosLegislativos = async (_req: Request, res: Response): Promise<any> => {
+  try {
+    const periodos = await PeriodoLegislativo.findAll({
+      order: [["fecha_inicio", "DESC"]],
+      raw: true
+    });
+    return res.json({ data: periodos });
+  } catch (error: any) {
+    console.error("Error al obtener periodos legislativos:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+  }
+};
+
+export const crearPeriodoLegislativo = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { nombre, anio_legislativo, fecha_inicio, fecha_termino, tipo } = req.body;
+
+    if (!nombre || !fecha_inicio || !fecha_termino || !tipo) {
+      return res.status(400).json({ message: "Faltan campos requeridos: nombre, fecha_inicio, fecha_termino, tipo" });
+    }
+
+    if (![1, 2].includes(Number(tipo))) {
+      return res.status(400).json({ message: "tipo debe ser 1 (ordinario) o 2 (extraordinario)" });
+    }
+
+    if (new Date(fecha_inicio) > new Date(fecha_termino)) {
+      return res.status(400).json({ message: "fecha_inicio no puede ser mayor que fecha_termino" });
+    }
+
+    const periodo = await PeriodoLegislativo.create({
+      nombre,
+      anio_legislativo: anio_legislativo || null,
+      fecha_inicio,
+      fecha_termino,
+      tipo
+    });
+
+    return res.status(201).json({ data: periodo });
+  } catch (error: any) {
+    console.error("Error al crear periodo legislativo:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+  }
+};
+
+export const getReportePorPeriodoLegislativo = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { periodo_id } = req.body;
+
+    if (!periodo_id) {
+      return res.status(400).json({ message: "periodo_id es requerido" });
+    }
+
+    const periodo = await PeriodoLegislativo.findOne({
+      where: { id: periodo_id },
+      raw: true
+    }) as any;
+
+    if (!periodo) {
+      return res.status(404).json({ message: "Periodo legislativo no encontrado" });
+    }
+
+    const reporte = await construirReporteBase();
+
+    const fechaInicio = new Date(periodo.fecha_inicio + "T00:00:00Z");
+    const fechaTermino = new Date(periodo.fecha_termino + "T23:59:59Z");
+
+    const filtrado = reporte.filter((item) => {
+      if (!item.fecha_evento_raw) return false;
+      const fechaEvento = new Date(item.fecha_evento_raw);
+      return fechaEvento >= fechaInicio && fechaEvento <= fechaTermino;
+    });
+
+    const tipoPeriodo = periodo.tipo === 1 ? "Ordinario" : "Extraordinario";
+    const nombreSeguro = periodo.nombre.replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, "").trim();
+    const nombreArchivo = `reporte_${tipoPeriodo.toLowerCase()}_${nombreSeguro.replace(/\s+/g, "_")}.xlsx`;
+
+    return await generarExcelSimple(
+      res,
+      `${tipoPeriodo} - ${periodo.nombre}`,
+      nombreArchivo,
+      [
+        { header: "NO.", key: "no", width: 8 },
+        { header: "ID", key: "id", width: 40 },
+        { header: "AUTOR", key: "autor", width: 28 },
+        { header: "PRESENTA", key: "autor_detalle", width: 35 },
+        { header: "DIPUTADO", key: "diputado", width: 30 },
+        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+        { header: "INICIATIVA", key: "iniciativa", width: 55 },
+        { header: "MATERIA", key: "materia", width: 45 },
+        { header: "PRESENTAC.", key: "presentac", width: 15 },
+        { header: "COMISIONES", key: "comisiones", width: 40 },
+        { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
+        { header: "OBSERVAC.", key: "observac", width: 20 },
+        { header: "TIPO", key: "tipo", width: 15 }
+      ],
+      filtrado
+    );
+  } catch (error: any) {
+    console.error("Error al generar reporte por periodo legislativo:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
   }
 };
 

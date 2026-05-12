@@ -255,6 +255,10 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl3}/votos-cierre/${idIniciativa}`)
   }
 
+  actualizarIniciativaDetalle(id: string, data: any): Observable<any> {
+    return this.http.put<any>(`${this.myAppUrl}${this.myAPIUrl1}/actualizariniciativa/${id}`, data);
+  }
+
   eliminarAsistencia(idAgenda: string): Observable<any> {
     return this.http.delete(`${this.myAppUrl}${this.myAPIUrl3}/${idAgenda}/asistencia`);
   }
@@ -266,6 +270,19 @@ export class EventoService {
   eliminarvya(id: String): Observable<string> {
     return this.http.delete<string>(`${this.myAppUrl}${this.myAPIUrl3}/eliminarvya/${id}`)
   }
-  
+
+  getPeriodosLegislativos(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl2}/periodos-legislativos/`);
+  }
+
+  crearPeriodoLegislativo(data: any): Observable<any> {
+    return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl2}/periodos-legislativos/`, data);
+  }
+
+  generarReportePorPeriodo(data: { periodo_id: string }): Observable<Blob> {
+    return this.http.post(`${this.myAppUrl}${this.myAPIUrl2}/por-periodo/`, data, {
+      responseType: 'blob'
+    });
+  }
 
 }

@@ -337,10 +337,48 @@ export const eliminariniciativa = async (req: Request, res: Response): Promise<a
     });  
   } catch (error: any) {
     console.error("Error al eliminar la iniciativa:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: "Error interno del servidor",
-      error: error.message 
+      error: error.message
     });
+  }
+};
+
+export const actualizarIniciativaDetalle = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { descripcion, tipo, id_presenta } = req.body;
+
+    const iniciativa = await IniciativaPuntoOrden.findOne({ where: { id } });
+    if (!iniciativa) {
+      return res.status(404).json({ message: 'Iniciativa no encontrada' });
+    }
+
+    await iniciativa.update({ iniciativa: descripcion, tipo });
+
+    if (Array.isArray(id_presenta) && id_presenta.length > 0) {
+      await IniciativasPresenta.destroy({ where: { id_iniciativa: id } });
+      const presentaArray = id_presenta
+        .map((item: string) => String(item).trim())
+        .filter((item: string) => item.length > 0)
+        .map((item: string) => {
+          const [proponenteId, autorId] = item.split('/');
+          return { proponenteId: parseInt(proponenteId), autorId };
+        });
+
+      for (const item of presentaArray) {
+        await IniciativasPresenta.create({
+          id_iniciativa: id,
+          id_tipo_presenta: item.proponenteId,
+          id_presenta: item.autorId,
+        });
+      }
+    }
+
+    return res.status(200).json({ message: 'Iniciativa actualizada correctamente' });
+  } catch (error: any) {
+    console.error('Error al actualizar iniciativa:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
 
