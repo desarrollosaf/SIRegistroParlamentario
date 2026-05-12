@@ -465,7 +465,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             materia: normalizarTexto((_o = data.punto) === null || _o === void 0 ? void 0 : _o.punto),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
-            comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones),
+            comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || ''),
             expedicion: fechaExpedicion,
             observac: observacion,
             diputado,

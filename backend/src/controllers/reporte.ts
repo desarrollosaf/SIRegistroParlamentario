@@ -546,7 +546,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         presentac: formatearFechaCorta(fechaEventoRaw),
         fecha_evento_raw: fechaEventoRaw,
         comisiones: normalizarTexto(
-          turnadoInfo.comisiones_turnado || anfitrionesNacio.comisiones
+          turnadoInfo.comisiones_turnado || ''
         ),
         expedicion: fechaExpedicion,
         observac: observacion,
