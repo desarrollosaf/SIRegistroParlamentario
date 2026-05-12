@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exporpuntos = exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.exporpuntos = exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.actualizarIniciativaDetalle = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
@@ -315,6 +315,40 @@ const eliminariniciativa = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.eliminariniciativa = eliminariniciativa;
+const actualizarIniciativaDetalle = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { descripcion, tipo, id_presenta } = req.body;
+        const iniciativa = yield inciativas_puntos_ordens_1.default.findOne({ where: { id } });
+        if (!iniciativa) {
+            return res.status(404).json({ message: 'Iniciativa no encontrada' });
+        }
+        yield iniciativa.update({ iniciativa: descripcion, tipo });
+        if (Array.isArray(id_presenta) && id_presenta.length > 0) {
+            yield iniciativaspresenta_1.default.destroy({ where: { id_iniciativa: id } });
+            const presentaArray = id_presenta
+                .map((item) => String(item).trim())
+                .filter((item) => item.length > 0)
+                .map((item) => {
+                const [proponenteId, autorId] = item.split('/');
+                return { proponenteId: parseInt(proponenteId), autorId };
+            });
+            for (const item of presentaArray) {
+                yield iniciativaspresenta_1.default.create({
+                    id_iniciativa: id,
+                    id_tipo_presenta: item.proponenteId,
+                    id_presenta: item.autorId,
+                });
+            }
+        }
+        return res.status(200).json({ message: 'Iniciativa actualizada correctamente' });
+    }
+    catch (error) {
+        console.error('Error al actualizar iniciativa:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.actualizarIniciativaDetalle = actualizarIniciativaDetalle;
 const procesarPresentan = (presentan) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     const proponentesUnicos = new Map();

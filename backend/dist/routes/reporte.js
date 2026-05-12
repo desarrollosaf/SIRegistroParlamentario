@@ -10,4 +10,8 @@ router.get("/api/reporte/iniciativas/grupo-diputado", reporte_1.getIniciativasPo
 router.get("/api/reporte/iniciativas/totales-periodo", reporte_1.getTotalesPorPeriodo);
 router.post("/api/reporte/iniciativas/integrantes", reporte_1.getReporteIniciativasIntegrantes);
 router.get("/api/reporte/iniciativas/inicomisions", reporte_1.getIniciativasTurnadasComision);
+// Periodos legislativos
+router.get("/api/reporte/iniciativas/periodos-legislativos", reporte_1.getPeriodosLegislativos);
+router.post("/api/reporte/iniciativas/periodos-legislativos", reporte_1.crearPeriodoLegislativo);
+router.post("/api/reporte/iniciativas/por-periodo", reporte_1.getReportePorPeriodoLegislativo);
 exports.default = router;

@@ -60,6 +60,15 @@ interface Diputado {
   nombre: string;
 }
 
+interface PeriodoLegislativo {
+  id: string;
+  nombre: string;
+  anio_legislativo: string | null;
+  fecha_inicio: string;
+  fecha_termino: string;
+  tipo: number; // 1=ordinario, 2=extraordinario
+}
+
 @Component({
   selector: 'app-iniciativas',
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, RouterLink],
@@ -81,6 +90,22 @@ export class IniciativasComponent implements OnInit {
   enviro = enviroment.endpoint;
   // Dropdown exportar
   exportMenuOpen: boolean = false;
+
+  // Modal periodos legislativos
+  modalPeriodoOpen: boolean = false;
+  vistaPeriodo: 'lista' | 'nuevo' = 'lista';
+  listaPeriodos: PeriodoLegislativo[] = [];
+  periodoSeleccionado: PeriodoLegislativo | null = null;
+  cargandoPeriodos: boolean = false;
+  generandoReportePeriodo: boolean = false;
+  guardandoPeriodo: boolean = false;
+  nuevoPeriodo = {
+    nombre: '',
+    anio_legislativo: '',
+    fecha_inicio: '',
+    fecha_termino: '',
+    tipo: 1
+  };
 
   // Modal con filtros (pendiente de nombre definitivo)
   modalFiltrosOpen: boolean = false;
@@ -385,6 +410,89 @@ export class IniciativasComponent implements OnInit {
       },
       error: (e: HttpErrorResponse) => {
         this.generandoReporte = false;
+        this.mostrarErrorDescarga(e);
+      }
+    });
+  }
+
+  // ─── Modal periodos legislativos ─────────────────────────────────────────────
+
+  abrirModalPeriodo(): void {
+    this.closeExportMenu();
+    this.periodoSeleccionado = null;
+    this.vistaPeriodo = 'lista';
+    this.resetNuevoPeriodo();
+    this.modalPeriodoOpen = true;
+    this.cargarPeriodosLegislativos();
+  }
+
+  cerrarModalPeriodo(): void {
+    this.modalPeriodoOpen = false;
+    this.periodoSeleccionado = null;
+    this.resetNuevoPeriodo();
+  }
+
+  private resetNuevoPeriodo(): void {
+    this.nuevoPeriodo = { nombre: '', anio_legislativo: '', fecha_inicio: '', fecha_termino: '', tipo: 1 };
+  }
+
+  cargarPeriodosLegislativos(): void {
+    this.cargandoPeriodos = true;
+    this._eventoService.getPeriodosLegislativos().subscribe({
+      next: (response: any) => {
+        this.listaPeriodos = response.data || [];
+        this.cargandoPeriodos = false;
+      },
+      error: () => { this.cargandoPeriodos = false; }
+    });
+  }
+
+  guardarPeriodoLegislativo(): void {
+    const { nombre, fecha_inicio, fecha_termino, tipo } = this.nuevoPeriodo;
+
+    if (!nombre.trim() || !fecha_inicio || !fecha_termino || !tipo) {
+      Swal.fire({ icon: 'warning', title: 'Campos requeridos', text: 'Completa nombre, fechas y tipo del periodo.', confirmButtonText: 'Aceptar', confirmButtonColor: '#800048' });
+      return;
+    }
+
+    if (new Date(fecha_inicio) > new Date(fecha_termino)) {
+      Swal.fire({ icon: 'warning', title: 'Fechas inválidas', text: 'La fecha de inicio no puede ser mayor a la fecha de término.', confirmButtonText: 'Aceptar', confirmButtonColor: '#800048' });
+      return;
+    }
+
+    this.guardandoPeriodo = true;
+    this._eventoService.crearPeriodoLegislativo(this.nuevoPeriodo).subscribe({
+      next: () => {
+        this.guardandoPeriodo = false;
+        this.resetNuevoPeriodo();
+        this.vistaPeriodo = 'lista';
+        this.cargarPeriodosLegislativos();
+        Swal.fire({ icon: 'success', title: 'Periodo guardado', text: 'El periodo legislativo fue registrado correctamente.', confirmButtonText: 'Aceptar', confirmButtonColor: '#800048', timer: 2500, showConfirmButton: false });
+      },
+      error: (e) => {
+        this.guardandoPeriodo = false;
+        this.mostrarErrorDescarga(e);
+      }
+    });
+  }
+
+  generarReportePeriodo(): void {
+    if (!this.periodoSeleccionado) return;
+
+    this.generandoReportePeriodo = true;
+    this._eventoService.generarReportePorPeriodo({ periodo_id: this.periodoSeleccionado.id }).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_${this.periodoSeleccionado!.tipo}_${this.periodoSeleccionado!.nombre.replace(/\s+/g, '_')}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.generandoReportePeriodo = false;
+        this.cerrarModalPeriodo();
+      },
+      error: (e) => {
+        this.generandoReportePeriodo = false;
         this.mostrarErrorDescarga(e);
       }
     });
