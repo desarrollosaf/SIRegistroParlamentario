@@ -20,6 +20,11 @@ IniciativaPuntoOrden.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
+    id_sap: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+    },
     id_evento: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,

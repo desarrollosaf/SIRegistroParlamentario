@@ -81,7 +81,7 @@ const getAnfitriones = (eventoId, tipoEventoNombre) => __awaiter(void 0, void 0,
         raw: true
     });
     return {
-        comisiones: comisiones.map((c) => c.nombre).join(", ")
+        comisiones: comisiones.map((c) => c.nombre).join(" - ")
     };
 });
 const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -115,7 +115,7 @@ const getComisionesTurnado = (puntoId) => __awaiter(void 0, void 0, void 0, func
     });
     return {
         turnado: true,
-        comisiones_turnado: comisiones.map((c) => c.nombre).join(", ")
+        comisiones_turnado: comisiones.map((c) => c.nombre).join(" - ")
     };
 });
 const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -162,7 +162,7 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
                 ]
             });
             if (dip) {
-                valor = `${(_b = dip.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.amaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = dip.nombres) !== null && _d !== void 0 ? _d : ""}`.trim();
+                valor = `${(_b = dip.nombres) !== null && _b !== void 0 ? _b : ""} ${(_c = dip.apaterno) !== null && _c !== void 0 ? _c : ""} ${(_d = dip.amaterno) !== null && _d !== void 0 ? _d : ""}`.trim();
                 if (valor)
                     diputados.push(valor);
                 if (p.id_presenta)
@@ -223,8 +223,8 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
             });
         }
     }
-    proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-    presentaString = presentanData.map((p) => p.valor).join(", ");
+    proponentesString = Array.from(proponentesUnicos.keys()).join(" - ");
+    presentaString = presentanData.map((p) => p.valor).join(" - ");
     return {
         proponentesString,
         presentaString,
@@ -236,7 +236,7 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
+        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo", "id_sap"],
         include: [
             {
                 model: puntos_ordens_1.default,
@@ -462,6 +462,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         return {
             no: index + 1,
             id: normalizarTexto(data.id),
+            id_sap: normalizarTexto(data.id_sap),
             autor: normalizarTexto(proponentesString),
             autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
@@ -563,6 +564,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return yield generarExcelSimple(res, "Reporte Iniciativas", "reporte_iniciativas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
+            { header: "ID_SAP", key: "id_sap", width: 40 },
             { header: "AUTOR", key: "autor", width: 28 },
             { header: "PRESENTA", key: "autor_detalle", width: 35 },
             { header: "DIPUTADO", key: "diputado", width: 30 },

@@ -28,6 +28,7 @@ import AsistenciaVoto from "../models/asistencia_votos";
 type ReporteBaseItem = {
   no: number;
   id: string;
+  id_sap: number;
   autor: string;
   autor_detalle: string;
   iniciativa: string;
@@ -103,7 +104,7 @@ const getAnfitriones = async (eventoId: string, tipoEventoNombre: string) => {
   });
 
   return {
-    comisiones: comisiones.map((c: any) => c.nombre).join(", ")
+    comisiones: comisiones.map((c: any) => c.nombre).join(" - ")
   };
 };
 
@@ -146,7 +147,7 @@ const getComisionesTurnado = async (puntoId: string) => {
 
   return {
     turnado: true,
-    comisiones_turnado: comisiones.map((c: any) => c.nombre).join(", ")
+    comisiones_turnado: comisiones.map((c: any) => c.nombre).join(" - ")
   };
 };
 
@@ -202,7 +203,7 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
       });
 
       if (dip) {
-        valor = `${dip.apaterno ?? ""} ${dip.amaterno ?? ""} ${dip.nombres ?? ""}`.trim();
+        valor = `${dip.nombres ?? ""} ${dip.apaterno ?? ""} ${dip.amaterno ?? ""}`.trim();
 
         if (valor) diputados.push(valor);
         if (p.id_presenta) diputadoIds.push(String(p.id_presenta));
@@ -261,8 +262,8 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
     }
   }
 
-  proponentesString = Array.from(proponentesUnicos.keys()).join(", ");
-  presentaString = presentanData.map((p) => p.valor).join(", ");
+  proponentesString = Array.from(proponentesUnicos.keys()).join(" - ");
+  presentaString = presentanData.map((p) => p.valor).join(" - ");
 
   return {
     proponentesString,
@@ -276,7 +277,7 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo"],
+    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo", "id_sap"],
     include: [
       {
         model: PuntosOrden,
@@ -542,6 +543,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       return {
         no: index + 1,
         id: normalizarTexto(data.id),
+        id_sap: normalizarTexto(data.id_sap),
         autor: normalizarTexto(proponentesString),
         autor_detalle: normalizarTexto(presentaString),
         iniciativa: normalizarTexto(data.iniciativa),
@@ -683,6 +685,7 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
       [
         { header: "NO.", key: "no", width: 8 },
         { header: "ID", key: "id", width: 40 },
+        { header: "ID_SAP", key: "id_sap", width: 40 },
         { header: "AUTOR", key: "autor", width: 28 },
         { header: "PRESENTA", key: "autor_detalle", width: 35 },
         { header: "DIPUTADO", key: "diputado", width: 30 },
