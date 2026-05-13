@@ -50,6 +50,11 @@ IniciativaPuntoOrden.init(
       type: DataTypes.CHAR(36),
       allowNull: true,
     },
+    id_sap: {                                
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
     id_evento: {
       type: DataTypes.CHAR(36),
       allowNull: false,
