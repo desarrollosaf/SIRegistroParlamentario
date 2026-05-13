@@ -61,10 +61,14 @@ export const MENU: MenuItem[] = [
           {
             label: 'Iniciativas',
             link: '/iniciativas'
+          },
+          {
+            label: 'Asistencia por Diputado',
+            link: '/asistencia-diputado'
           }
         ]
       },
-      
+
     ]
   },
    {

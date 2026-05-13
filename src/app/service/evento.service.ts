@@ -208,6 +208,12 @@ export class EventoService {
     });
   }
 
+   generarReporteTotalesComision(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/inicomisions/`, {
+      responseType: 'blob'
+    });
+  }
+
   generarReporteIntegrantes(data: any): Observable<Blob> {
     return this.http.post(`${this.myAppUrl}${this.myAPIUrl2}/integrantes/`, data, {
       responseType: 'blob'
@@ -279,10 +285,30 @@ export class EventoService {
     return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl2}/periodos-legislativos/`, data);
   }
 
-  generarReportePorPeriodo(data: { periodo_id: string }): Observable<Blob> {
+  generarReportePorPeriodo(data: { periodo_ids: string[] }): Observable<Blob> {
     return this.http.post(`${this.myAppUrl}${this.myAPIUrl2}/por-periodo/`, data, {
       responseType: 'blob'
     });
+  }
+
+  // ─── Asistencia por diputado ────────────────────────────────────────────────
+
+  getDiputadosAsistencia(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}api/reporte/asistencia/diputados/`);
+  }
+
+  getComisionesDiputadoAsistencia(diputadoId: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}api/reporte/asistencia/comisiones/${diputadoId}/`);
+  }
+
+  generarReporteAsistenciaDiputado(data: { diputado_id: string }): Observable<Blob> {
+    return this.http.post(`${this.myAppUrl}api/reporte/asistencia/por-diputado/`, data, {
+      responseType: 'blob'
+    });
+  }
+
+  getDatosAsistenciaDiputado(data: { diputado_id: string }): Observable<any> {
+    return this.http.post<any>(`${this.myAppUrl}api/reporte/asistencia/datos-diputado/`, data);
   }
 
 }

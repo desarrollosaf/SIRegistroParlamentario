@@ -70,6 +70,10 @@ export const routes: Routes = [
        path: 'iniciativas-decretos',
        loadChildren: () => import('./views/pages/iniciativas-decretos/iniciativas-decretos.route')
       },
+      {
+       path: 'asistencia-diputado',
+       loadChildren: () => import('./views/pages/asistencia-diputado/asistencia-diputado.route')
+      },
     ]
   },
   {
