@@ -543,7 +543,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       return {
         no: index + 1,
         id: normalizarTexto(data.id),
-        id_sap: normalizarTexto(data.id_sap),
+        id_sap: data.id_sap,
         autor: normalizarTexto(proponentesString),
         autor_detalle: normalizarTexto(presentaString),
         iniciativa: normalizarTexto(data.iniciativa),
