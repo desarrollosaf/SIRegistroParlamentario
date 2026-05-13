@@ -22,6 +22,8 @@ import Diputado from "../models/diputado";
 import IniciativasPresenta from "../models/iniciativaspresenta";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
+import IntegranteComision from "../models/integrante_comisions";
+import AsistenciaVoto from "../models/asistencia_votos";
 
 type ReporteBaseItem = {
   no: number;
@@ -1446,57 +1448,81 @@ export const crearPeriodoLegislativo = async (req: Request, res: Response): Prom
 
 export const getReportePorPeriodoLegislativo = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { periodo_id } = req.body;
+    const { periodo_ids } = req.body;
 
-    if (!periodo_id) {
-      return res.status(400).json({ message: "periodo_id es requerido" });
+    const ids: string[] = Array.isArray(periodo_ids) ? periodo_ids : (periodo_ids ? [periodo_ids] : []);
+
+    if (ids.length === 0) {
+      return res.status(400).json({ message: "periodo_ids es requerido" });
     }
 
-    const periodo = await PeriodoLegislativo.findOne({
-      where: { id: periodo_id },
+    const periodos = await PeriodoLegislativo.findAll({
+      where: { id: { [Op.in]: ids } },
+      order: [["fecha_inicio", "ASC"]],
       raw: true
-    }) as any;
+    }) as any[];
 
-    if (!periodo) {
-      return res.status(404).json({ message: "Periodo legislativo no encontrado" });
+    if (!periodos.length) {
+      return res.status(404).json({ message: "Periodos legislativos no encontrados" });
     }
 
     const reporte = await construirReporteBase();
 
-    const fechaInicio = new Date(periodo.fecha_inicio + "T00:00:00Z");
-    const fechaTermino = new Date(periodo.fecha_termino + "T23:59:59Z");
+    const columnas = [
+      { header: "NO.", key: "no", width: 8 },
+      { header: "ID", key: "id", width: 40 },
+      { header: "AUTOR", key: "autor", width: 28 },
+      { header: "PRESENTA", key: "autor_detalle", width: 35 },
+      { header: "DIPUTADO", key: "diputado", width: 30 },
+      { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
+      { header: "INICIATIVA", key: "iniciativa", width: 55 },
+      { header: "MATERIA", key: "materia", width: 45 },
+      { header: "PRESENTAC.", key: "presentac", width: 15 },
+      { header: "COMISIONES", key: "comisiones", width: 40 },
+      { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
+      { header: "OBSERVAC.", key: "observac", width: 20 },
+      { header: "TIPO", key: "tipo", width: 15 }
+    ];
 
-    const filtrado = reporte.filter((item) => {
-      if (!item.fecha_evento_raw) return false;
-      const fechaEvento = new Date(item.fecha_evento_raw);
-      return fechaEvento >= fechaInicio && fechaEvento <= fechaTermino;
-    });
+    if (periodos.length === 1) {
+      const periodo = periodos[0];
+      const fechaInicio = new Date(periodo.fecha_inicio + "T00:00:00Z");
+      const fechaTermino = new Date(periodo.fecha_termino + "T23:59:59Z");
+      const filtrado = reporte.filter((item) => {
+        if (!item.fecha_evento_raw) return false;
+        const fechaEvento = new Date(item.fecha_evento_raw);
+        return fechaEvento >= fechaInicio && fechaEvento <= fechaTermino;
+      });
+      const tipoPeriodo = periodo.tipo === 1 ? "Ordinario" : "Extraordinario";
+      const nombreSeguro = periodo.nombre.replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, "").trim();
+      const nombreArchivo = `reporte_${tipoPeriodo.toLowerCase()}_${nombreSeguro.replace(/\s+/g, "_")}.xlsx`;
+      return await generarExcelSimple(res, `${tipoPeriodo} - ${periodo.nombre}`, nombreArchivo, columnas, filtrado);
+    }
 
-    const tipoPeriodo = periodo.tipo === 1 ? "Ordinario" : "Extraordinario";
-    const nombreSeguro = periodo.nombre.replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, "").trim();
-    const nombreArchivo = `reporte_${tipoPeriodo.toLowerCase()}_${nombreSeguro.replace(/\s+/g, "_")}.xlsx`;
+    // Múltiples periodos: una hoja por periodo dentro del mismo workbook
+    const workbook = new ExcelJS.Workbook();
+    for (const periodo of periodos) {
+      const fechaInicio = new Date(periodo.fecha_inicio + "T00:00:00Z");
+      const fechaTermino = new Date(periodo.fecha_termino + "T23:59:59Z");
+      const filtrado = reporte.filter((item) => {
+        if (!item.fecha_evento_raw) return false;
+        const fechaEvento = new Date(item.fecha_evento_raw);
+        return fechaEvento >= fechaInicio && fechaEvento <= fechaTermino;
+      });
+      const tipoPeriodo = periodo.tipo === 1 ? "Ord." : "Ext.";
+      const nombreHoja = `${tipoPeriodo} ${periodo.nombre}`.substring(0, 31);
+      const worksheet = workbook.addWorksheet(nombreHoja);
+      worksheet.columns = columnas;
+      filtrado.forEach((item: any, index: number) => {
+        worksheet.addRow({ ...item, no: index + 1 });
+      });
+      aplicarEstiloHoja(worksheet);
+      const ultimaColumna = String.fromCharCode(64 + columnas.length);
+      worksheet.autoFilter = { from: "A1", to: `${ultimaColumna}1` };
+      worksheet.getColumn("A").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    }
 
-    return await generarExcelSimple(
-      res,
-      `${tipoPeriodo} - ${periodo.nombre}`,
-      nombreArchivo,
-      [
-        { header: "NO.", key: "no", width: 8 },
-        { header: "ID", key: "id", width: 40 },
-        { header: "AUTOR", key: "autor", width: 28 },
-        { header: "PRESENTA", key: "autor_detalle", width: 35 },
-        { header: "DIPUTADO", key: "diputado", width: 30 },
-        { header: "GRUPO PARLAMENTARIO", key: "grupo_parlamentario", width: 25 },
-        { header: "INICIATIVA", key: "iniciativa", width: 55 },
-        { header: "MATERIA", key: "materia", width: 45 },
-        { header: "PRESENTAC.", key: "presentac", width: 15 },
-        { header: "COMISIONES", key: "comisiones", width: 40 },
-        { header: "EXPEDICIÓN", key: "expedicion", width: 15 },
-        { header: "OBSERVAC.", key: "observac", width: 20 },
-        { header: "TIPO", key: "tipo", width: 15 }
-      ],
-      filtrado
-    );
+    return await enviarWorkbook(res, workbook, "reporte_periodos_multiples.xlsx");
   } catch (error: any) {
     console.error("Error al generar reporte por periodo legislativo:", error);
     return res.status(500).json({ message: "Error interno del servidor", error: error.message });
@@ -1532,5 +1558,333 @@ export const getIniciativasTurnadasComision = async (_req: Request, res: Respons
       message: "Error interno del servidor",
       error: error.message
     });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  REPORTE DE ASISTENCIA POR DIPUTADO
+// ─────────────────────────────────────────────────────────────────────────────
+
+const labelSentido = (sentido: number | null | undefined): string => {
+  switch (sentido) {
+    case 1:  return "ASISTENCIA";
+    case 2:  return "ASISTENCIA ZOOM";
+    case 3:  return "ASISTENCIA JUSTIFICADA";
+    case 0:  return "PENDIENTE";
+    default: return "SIN REGISTRO";
+  }
+};
+
+export const getDiputadosAsistencia = async (_req: Request, res: Response): Promise<any> => {
+  try {
+    const diputados = await Diputado.findAll({
+      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      order: [["apaterno", "ASC"], ["nombres", "ASC"]],
+      raw: true
+    });
+    return res.status(200).json({ data: diputados });
+  } catch (error: any) {
+    return res.status(500).json({ message: "Error al obtener diputados", error: error.message });
+  }
+};
+
+export const getComisionesDiputadoAsistencia = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { diputado_id } = req.params;
+
+    const integrante = await IntegranteLegislatura.findOne({
+      where: { diputado_id },
+      order: [["fecha_inicio", "DESC"]],
+      raw: true
+    }) as any;
+
+    if (!integrante) {
+      return res.status(404).json({ message: "No se encontró integrante legislatura para el diputado" });
+    }
+
+    const integrantesComision = await IntegranteComision.findAll({
+      where: { integrante_legislatura_id: integrante.id },
+      include: [{ model: Comision, as: "comision", attributes: ["id", "nombre"] }]
+    }) as any[];
+
+    const comisiones = integrantesComision.map(ic => ic.comision).filter(Boolean);
+    return res.status(200).json({ data: comisiones });
+  } catch (error: any) {
+    return res.status(500).json({ message: "Error al obtener comisiones", error: error.message });
+  }
+};
+
+export const getReporteAsistenciaDiputado = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { diputado_id } = req.body;
+    if (!diputado_id) return res.status(400).json({ message: "diputado_id es requerido" });
+
+    // 1. Diputado
+    const diputado = await Diputado.findOne({ where: { id: diputado_id }, raw: true }) as any;
+    if (!diputado) return res.status(404).json({ message: "Diputado no encontrado" });
+    const nombreDiputado = `${diputado.apaterno} ${diputado.amaterno} ${diputado.nombres}`.trim();
+
+    // 2. Integrante legislatura (más reciente)
+    const integrante = await IntegranteLegislatura.findOne({
+      where: { diputado_id },
+      order: [["fecha_inicio", "DESC"]],
+      raw: true
+    }) as any;
+    if (!integrante) return res.status(404).json({ message: "No se encontró integrante legislatura" });
+
+    // 3. Comisiones del diputado
+    const integrantesComision = await IntegranteComision.findAll({
+      where: { integrante_legislatura_id: integrante.id },
+      include: [{ model: Comision, as: "comision", attributes: ["id", "nombre"] }]
+    }) as any[];
+
+    if (!integrantesComision.length) {
+      return res.status(404).json({ message: "El diputado no tiene comisiones asignadas" });
+    }
+
+    const comisionIds = integrantesComision.map(ic => ic.comision_id);
+    const comisionNombreMap = new Map<string, string>(
+      integrantesComision.map(ic => [ic.comision_id, ic.comision?.nombre || "-"])
+    );
+
+    // 4. Agendas donde esas comisiones son anfitrión
+    const anfitriones = await AnfitrionAgenda.findAll({
+      where: { autor_id: { [Op.in]: comisionIds } },
+      raw: true
+    }) as any[];
+
+    if (!anfitriones.length) {
+      return res.status(404).json({ message: "No se encontraron eventos para las comisiones del diputado" });
+    }
+
+    const agendaComisionMap = new Map<string, string>();
+    for (const anf of anfitriones) {
+      if (!agendaComisionMap.has(anf.agenda_id)) {
+        agendaComisionMap.set(anf.agenda_id, anf.autor_id);
+      }
+    }
+    const agendaIds = Array.from(agendaComisionMap.keys());
+
+    // 5. Detalle de agendas con tipo de evento
+    const agendas = await Agenda.findAll({
+      where: { id: { [Op.in]: agendaIds } },
+      include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }],
+      order: [["fecha", "ASC"]]
+    }) as any[];
+
+    // 6. Asistencias del diputado en esos eventos
+    const asistencias = await AsistenciaVoto.findAll({
+      where: { id_diputado: diputado_id, id_agenda: { [Op.in]: agendaIds } },
+      raw: true
+    }) as any[];
+
+    const asistenciaMap = new Map<string, any>(asistencias.map(a => [a.id_agenda, a]));
+
+    // 7. Construir filas
+    const rows = agendas.map((agenda: any) => {
+      const asistencia   = asistenciaMap.get(agenda.id);
+      const comisionId   = agendaComisionMap.get(agenda.id);
+      const comision     = comisionNombreMap.get(comisionId || "") || "-";
+      const sentido      = asistencia?.sentido_voto ?? null;
+      return {
+        fecha:       agenda.fecha ? new Date(agenda.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-",
+        comision,
+        tipo_evento: agenda.tipoevento?.nombre || "-",
+        descripcion: agenda.descripcion || "-",
+        asistencia:  labelSentido(sentido),
+        sentido_raw: sentido
+      };
+    });
+
+    // 8. Totales
+    const totales = {
+      presencial:   rows.filter(r => r.sentido_raw === 1).length,
+      zoom:         rows.filter(r => r.sentido_raw === 2).length,
+      justificada:  rows.filter(r => r.sentido_raw === 3).length,
+      pendiente:    rows.filter(r => r.sentido_raw === 0).length,
+      sin_registro: rows.filter(r => r.sentido_raw === null).length,
+      total:        rows.length
+    };
+
+    // 9. Generar Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(nombreDiputado.substring(0, 31));
+
+    worksheet.columns = [
+      { header: "NO.",            key: "no",          width: 6  },
+      { header: "FECHA",          key: "fecha",        width: 15 },
+      { header: "COMISIÓN",       key: "comision",     width: 40 },
+      { header: "TIPO DE EVENTO", key: "tipo_evento",  width: 25 },
+      { header: "DESCRIPCIÓN",    key: "descripcion",  width: 45 },
+      { header: "ASISTENCIA",     key: "asistencia",   width: 25 },
+    ];
+
+    rows.forEach((row, index) => {
+      const excelRow = worksheet.addRow({
+        no: index + 1,
+        fecha:       row.fecha,
+        comision:    row.comision,
+        tipo_evento: row.tipo_evento,
+        descripcion: row.descripcion,
+        asistencia:  row.asistencia
+      });
+
+      // Color por tipo de asistencia
+      const colorMap: Record<number, string> = {
+        1: "FFD1FAE5", // verde suave
+        2: "FFDBEAFE", // azul suave
+        3: "FFFEF9C3", // amarillo suave
+        0: "FFF3F4F6", // gris suave
+      };
+      const color = row.sentido_raw !== null ? colorMap[row.sentido_raw] : "FFFFF7ED";
+      if (color) {
+        excelRow.getCell("asistencia").fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+      }
+    });
+
+    aplicarEstiloHoja(worksheet);
+    worksheet.autoFilter = { from: "A1", to: "F1" };
+    worksheet.getColumn("A").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+
+    // Sección de resumen
+    worksheet.addRow([]);
+    const headerRow = worksheet.addRow(["", "", "", "", "RESUMEN DE ASISTENCIA", ""]);
+    headerRow.getCell(5).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.getCell(5).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF800048" } };
+
+    const resumen = [
+      ["ASISTENCIA PRESENCIAL",   totales.presencial,   "FFD1FAE5"],
+      ["ASISTENCIA ZOOM",         totales.zoom,         "FFDBEAFE"],
+      ["ASISTENCIA JUSTIFICADA",  totales.justificada,  "FFFEF9C3"],
+      ["PENDIENTE",               totales.pendiente,    "FFF3F4F6"],
+      ["SIN REGISTRO",            totales.sin_registro, "FFFFF7ED"],
+      ["TOTAL EVENTOS",           totales.total,        "FFE9D5FF"],
+    ] as [string, number, string][];
+
+    resumen.forEach(([label, value, argb]) => {
+      const r = worksheet.addRow(["", "", "", "", label, value]);
+      r.getCell(5).font = { bold: true };
+      r.getCell(6).font = { bold: true };
+      r.getCell(5).fill = { type: "pattern", pattern: "solid", fgColor: { argb } };
+      r.getCell(6).fill = { type: "pattern", pattern: "solid", fgColor: { argb } };
+    });
+
+    const nombreArchivo = `reporte_asistencia_${nombreDiputado.replace(/\s+/g, "_").substring(0, 30)}.xlsx`;
+    return await enviarWorkbook(res, workbook, nombreArchivo);
+  } catch (error: any) {
+    console.error("Error al generar reporte de asistencia por diputado:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+  }
+};
+
+// ─── Endpoint JSON para vista visual de asistencia ────────────────────────────
+export const getDatosAsistenciaDiputado = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { diputado_id } = req.body;
+    if (!diputado_id) return res.status(400).json({ message: "diputado_id es requerido" });
+
+    const diputado = await Diputado.findOne({ where: { id: diputado_id }, raw: true }) as any;
+    if (!diputado) return res.status(404).json({ message: "Diputado no encontrado" });
+    const nombreDiputado = `${diputado.apaterno} ${diputado.amaterno}`.trim() + `, ${diputado.nombres}`;
+
+    const integrante = await IntegranteLegislatura.findOne({
+      where: { diputado_id },
+      order: [["fecha_inicio", "DESC"]],
+      raw: true
+    }) as any;
+    if (!integrante) return res.status(404).json({ message: "No se encontró integrante legislatura" });
+
+    const integrantesComision = await IntegranteComision.findAll({
+      where: { integrante_legislatura_id: integrante.id },
+      include: [{ model: Comision, as: "comision", attributes: ["id", "nombre"] }]
+    }) as any[];
+
+    if (!integrantesComision.length) {
+      return res.status(200).json({ diputado: { id: diputado.id, nombre: nombreDiputado }, comisiones: [] });
+    }
+
+    const comisionIds = integrantesComision.map(ic => ic.comision_id);
+    const comisionNombreMap = new Map<string, string>(
+      integrantesComision.map(ic => [ic.comision_id, ic.comision?.nombre || "-"])
+    );
+
+    // Agendas donde esas comisiones son anfitrión
+    const anfitriones = await AnfitrionAgenda.findAll({
+      where: { autor_id: { [Op.in]: comisionIds } },
+      raw: true
+    }) as any[];
+
+    // Mapas de relaciones
+    const comisionAgendaMap = new Map<string, Set<string>>();
+    const agendaToComisionesMap = new Map<string, string[]>();
+    for (const anf of anfitriones) {
+      if (!comisionAgendaMap.has(anf.autor_id)) comisionAgendaMap.set(anf.autor_id, new Set());
+      comisionAgendaMap.get(anf.autor_id)!.add(anf.agenda_id);
+      if (!agendaToComisionesMap.has(anf.agenda_id)) agendaToComisionesMap.set(anf.agenda_id, []);
+      agendaToComisionesMap.get(anf.agenda_id)!.push(anf.autor_id);
+    }
+
+    const agendaIds = [...new Set(anfitriones.map(a => a.agenda_id))];
+
+    const agendas = await Agenda.findAll({
+      where: { id: { [Op.in]: agendaIds } },
+      include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }],
+      order: [["fecha", "ASC"]]
+    }) as any[];
+    const agendaDetailMap = new Map<string, any>(agendas.map(a => [a.id, a]));
+
+    const asistencias = await AsistenciaVoto.findAll({
+      where: { id_diputado: diputado_id, id_agenda: { [Op.in]: agendaIds } },
+      raw: true
+    }) as any[];
+    const asistenciaMap = new Map<string, any>(asistencias.map(a => [a.id_agenda, a]));
+
+    const comisiones = integrantesComision.map(ic => {
+      const agendaSet = comisionAgendaMap.get(ic.comision_id) || new Set<string>();
+      const eventos = Array.from(agendaSet)
+        .map(agendaId => {
+          const agenda = agendaDetailMap.get(agendaId);
+          if (!agenda) return null;
+          const asistencia = asistenciaMap.get(agendaId);
+          const sentido = asistencia?.sentido_voto ?? null;
+          const comisionesEvento = agendaToComisionesMap.get(agendaId) || [];
+          const otrasComisiones = comisionesEvento
+            .filter(c => c !== ic.comision_id && comisionIds.includes(c))
+            .map(c => comisionNombreMap.get(c) || c);
+          return {
+            id: agenda.id,
+            fecha: agenda.fecha,
+            fecha_display: agenda.fecha
+              ? new Date(agenda.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })
+              : "-",
+            descripcion: agenda.descripcion || "-",
+            tipo_evento: agenda.tipoevento?.nombre || "-",
+            asistencia: labelSentido(sentido),
+            sentido_voto: sentido,
+            es_evento_unido: otrasComisiones.length > 0,
+            otras_comisiones: otrasComisiones
+          };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) =>
+          a.fecha && b.fecha ? new Date(a.fecha).getTime() - new Date(b.fecha).getTime() : 0
+        );
+
+      const totales = {
+        presencial:   eventos.filter((e: any) => e?.sentido_voto === 1).length,
+        zoom:         eventos.filter((e: any) => e?.sentido_voto === 2).length,
+        justificada:  eventos.filter((e: any) => e?.sentido_voto === 3).length,
+        pendiente:    eventos.filter((e: any) => e?.sentido_voto === 0).length,
+        sin_registro: eventos.filter((e: any) => e?.sentido_voto === null).length,
+        total:        eventos.length
+      };
+
+      return { id: ic.comision_id, nombre: ic.comision?.nombre || "-", eventos, totales };
+    });
+
+    return res.status(200).json({ diputado: { id: diputado.id, nombre: nombreDiputado }, comisiones });
+  } catch (error: any) {
+    console.error("Error al obtener datos de asistencia:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
   }
 };

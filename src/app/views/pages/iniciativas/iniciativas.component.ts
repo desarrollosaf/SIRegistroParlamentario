@@ -95,7 +95,7 @@ export class IniciativasComponent implements OnInit {
   modalPeriodoOpen: boolean = false;
   vistaPeriodo: 'lista' | 'nuevo' = 'lista';
   listaPeriodos: PeriodoLegislativo[] = [];
-  periodoSeleccionado: PeriodoLegislativo | null = null;
+  periodosSeleccionados: PeriodoLegislativo[] = [];
   cargandoPeriodos: boolean = false;
   generandoReportePeriodo: boolean = false;
   guardandoPeriodo: boolean = false;
@@ -301,7 +301,7 @@ export class IniciativasComponent implements OnInit {
 
   // ─── Reportes directos (sin modal) ──────────────────────────────────────────
 
-  descargarReporte(tipo: 'general' | 'estudio' | 'aprobadas' | 'grupo-diputado' | 'totales-periodo'): void {
+  descargarReporte(tipo: 'general' | 'estudio' | 'aprobadas' | 'grupo-diputado' | 'totales-periodo' | 'totales-comision'): void {
     this.closeExportMenu();
     this.descargandoReporte = true;
 
@@ -312,6 +312,7 @@ export class IniciativasComponent implements OnInit {
         case 'aprobadas': return this._eventoService.generarReporteAprobadas();
         case 'grupo-diputado': return this._eventoService.generarReporteGrupoDiputado();
         case 'totales-periodo': return this._eventoService.generarReporteTotalesPeriodo();
+        case 'totales-comision': return this._eventoService.generarReporteTotalesComision();
       }
     })();
 
@@ -419,7 +420,7 @@ export class IniciativasComponent implements OnInit {
 
   abrirModalPeriodo(): void {
     this.closeExportMenu();
-    this.periodoSeleccionado = null;
+    this.periodosSeleccionados = [];
     this.vistaPeriodo = 'lista';
     this.resetNuevoPeriodo();
     this.modalPeriodoOpen = true;
@@ -428,8 +429,21 @@ export class IniciativasComponent implements OnInit {
 
   cerrarModalPeriodo(): void {
     this.modalPeriodoOpen = false;
-    this.periodoSeleccionado = null;
+    this.periodosSeleccionados = [];
     this.resetNuevoPeriodo();
+  }
+
+  togglePeriodo(periodo: PeriodoLegislativo): void {
+    const idx = this.periodosSeleccionados.findIndex(p => p.id === periodo.id);
+    if (idx >= 0) {
+      this.periodosSeleccionados.splice(idx, 1);
+    } else {
+      this.periodosSeleccionados.push(periodo);
+    }
+  }
+
+  isPeriodoSeleccionado(periodo: PeriodoLegislativo): boolean {
+    return this.periodosSeleccionados.some(p => p.id === periodo.id);
   }
 
   private resetNuevoPeriodo(): void {
@@ -477,15 +491,20 @@ export class IniciativasComponent implements OnInit {
   }
 
   generarReportePeriodo(): void {
-    if (!this.periodoSeleccionado) return;
+    if (!this.periodosSeleccionados.length) return;
 
     this.generandoReportePeriodo = true;
-    this._eventoService.generarReportePorPeriodo({ periodo_id: this.periodoSeleccionado.id }).subscribe({
+    const ids = this.periodosSeleccionados.map(p => p.id);
+    const nombreArchivo = this.periodosSeleccionados.length === 1
+      ? `reporte_periodo_${this.periodosSeleccionados[0].nombre.replace(/\s+/g, '_')}.xlsx`
+      : `reporte_periodos_multiples.xlsx`;
+
+    this._eventoService.generarReportePorPeriodo({ periodo_ids: ids }).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `reporte_${this.periodoSeleccionado!.tipo}_${this.periodoSeleccionado!.nombre.replace(/\s+/g, '_')}.xlsx`;
+        a.download = nombreArchivo;
         a.click();
         window.URL.revokeObjectURL(url);
         this.generandoReportePeriodo = false;

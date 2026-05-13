@@ -495,6 +495,11 @@
     background: rgba(186, 117, 23, 0.1);
     color: #BA7517;
   }
+
+  &.icon-teal {
+    background: rgba(13, 148, 136, 0.1);
+    color: #0d9488;
+  }
 }
 
 .export-item-text {
@@ -751,6 +756,22 @@
     cursor: not-allowed;
     transform: none;
   }
+}
+
+// ─── Lista de periodos ─────────────────────────
+.periodo-item {
+  border-color: #e9ecef;
+  background: #f8f9fa;
+
+  &:hover {
+    border-color: rgba(128, 0, 72, 0.35) !important;
+    background: rgba(128, 0, 72, 0.04);
+  }
+}
+
+.periodo-item-selected {
+  border-color: rgba(128, 0, 72, 0.6) !important;
+  background: rgba(128, 0, 72, 0.06) !important;
 }
 
 // ─── Animaciones ───────────────────────────────

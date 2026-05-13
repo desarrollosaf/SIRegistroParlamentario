@@ -1,0 +1,243 @@
+<div class="asistencia-page">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+  <div class="asistencia-header">
+    <div class="asistencia-header-title">
+      <span class="asistencia-header-icon">
+        <i class="bi bi-person-check-fill"></i>
+      </span>
+      <div>
+        <h5 class="mb-0">Asistencia por Diputado</h5>
+        <small>Consulta el historial de asistencia a eventos por comisión</small>
+      </div>
+    </div>
+
+    <!-- Botón Excel -->
+    <button class="btn-excel"
+      *ngIf="diputadoActual && comisiones.length > 0"
+      [disabled]="generandoExcel"
+      (click)="descargarExcel()">
+      <span *ngIf="generandoExcel" class="spinner-border spinner-border-sm me-2"></span>
+      <i class="bi bi-file-earmark-excel-fill me-2" *ngIf="!generandoExcel"></i>
+      {{ generandoExcel ? 'Generando...' : 'Exportar Excel' }}
+    </button>
+  </div>
+
+  <!-- ══ SELECTOR DE DIPUTADO ════════════════════════════════════════════════ -->
+  <div class="selector-card">
+    <label class="selector-label">
+      <i class="bi bi-search me-2"></i>Selecciona un diputado
+    </label>
+    <div class="selector-wrapper">
+      <div *ngIf="cargandoDiputados" class="selector-loading">
+        <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
+        <span class="text-muted small">Cargando diputados...</span>
+      </div>
+      <select *ngIf="!cargandoDiputados"
+        class="selector-select"
+        [(ngModel)]="diputadoSeleccionado"
+        (ngModelChange)="onDiputadoChange()">
+        <option [ngValue]="null">— Selecciona un diputado —</option>
+        <option *ngFor="let d of listaDiputados" [ngValue]="d">
+          {{ d.apaterno }} {{ d.amaterno }}, {{ d.nombres }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ══ CARGANDO DATOS ══════════════════════════════════════════════════════ -->
+  <div class="loading-state" *ngIf="cargandoDatos">
+    <div class="spinner-border text-secondary mb-3" role="status"></div>
+    <p class="text-muted">Consultando comisiones y eventos...</p>
+  </div>
+
+  <!-- ══ ESTADO VACÍO ════════════════════════════════════════════════════════ -->
+  <div class="empty-state" *ngIf="!cargandoDatos && !diputadoSeleccionado">
+    <i class="bi bi-person-circle"></i>
+    <p>Selecciona un diputado para ver su historial de asistencia</p>
+  </div>
+
+  <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════════════ -->
+  <ng-container *ngIf="!cargandoDatos && diputadoActual">
+
+    <!-- Nombre del diputado -->
+    <div class="diputado-nombre-banner">
+      <i class="bi bi-person-badge-fill me-2"></i>
+      {{ diputadoActual.nombre }}
+    </div>
+
+    <!-- ── RESUMEN GLOBAL ─────────────────────────────────────────────────── -->
+    <div class="resumen-global" *ngIf="totalesGlobales.total > 0">
+      <div class="resumen-card rc-total">
+        <span class="rc-valor">{{ totalesGlobales.total }}</span>
+        <span class="rc-label">Total eventos</span>
+        <i class="bi bi-calendar3 rc-icon"></i>
+      </div>
+      <div class="resumen-card rc-presencial">
+        <span class="rc-valor">{{ totalesGlobales.presencial }}</span>
+        <span class="rc-label">Presencial</span>
+        <span class="rc-pct">{{ porcentaje(totalesGlobales.presencial, totalesGlobales.total) }}%</span>
+        <i class="bi bi-check-circle-fill rc-icon"></i>
+      </div>
+      <div class="resumen-card rc-zoom">
+        <span class="rc-valor">{{ totalesGlobales.zoom }}</span>
+        <span class="rc-label">Zoom</span>
+        <span class="rc-pct">{{ porcentaje(totalesGlobales.zoom, totalesGlobales.total) }}%</span>
+        <i class="bi bi-camera-video-fill rc-icon"></i>
+      </div>
+      <div class="resumen-card rc-justificada">
+        <span class="rc-valor">{{ totalesGlobales.justificada }}</span>
+        <span class="rc-label">Justificada</span>
+        <span class="rc-pct">{{ porcentaje(totalesGlobales.justificada, totalesGlobales.total) }}%</span>
+        <i class="bi bi-patch-check-fill rc-icon"></i>
+      </div>
+      <div class="resumen-card rc-pendiente">
+        <span class="rc-valor">{{ totalesGlobales.pendiente }}</span>
+        <span class="rc-label">Pendiente</span>
+        <i class="bi bi-clock-fill rc-icon"></i>
+      </div>
+      <div class="resumen-card rc-sin-reg" *ngIf="totalesGlobales.sin_registro > 0">
+        <span class="rc-valor">{{ totalesGlobales.sin_registro }}</span>
+        <span class="rc-label">Sin registro</span>
+        <i class="bi bi-dash-circle rc-icon"></i>
+      </div>
+    </div>
+
+    <!-- Sin comisiones -->
+    <div class="empty-state" *ngIf="comisiones.length === 0">
+      <i class="bi bi-building-x"></i>
+      <p>Este diputado no tiene comisiones asignadas o no hay eventos registrados.</p>
+    </div>
+
+    <!-- ── CONTROLES ──────────────────────────────────────────────────────── -->
+    <div class="comisiones-controls" *ngIf="comisiones.length > 1">
+      <span class="text-muted small">{{ comisiones.length }} comisiones</span>
+      <div>
+        <button class="btn-control" (click)="abrirTodas()">
+          <i class="bi bi-chevron-bar-down me-1"></i>Expandir todas
+        </button>
+        <button class="btn-control" (click)="cerrarTodas()">
+          <i class="bi bi-chevron-bar-up me-1"></i>Colapsar todas
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TARJETAS DE COMISIONES ─────────────────────────────────────────── -->
+    <div class="comisiones-lista">
+      <div class="comision-card" *ngFor="let c of comisiones">
+
+        <!-- Header de la comisión -->
+        <div class="comision-header" (click)="toggleComision(c)">
+          <div class="comision-header-left">
+            <span class="comision-toggle-icon" [class.abierta]="c.abierta">
+              <i class="bi bi-chevron-right"></i>
+            </span>
+            <div>
+              <span class="comision-nombre">{{ c.nombre }}</span>
+              <span class="comision-total-badge">{{ c.totales.total }} evento{{ c.totales.total !== 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+          <div class="comision-header-badges">
+            <span class="mini-badge mb-pres" *ngIf="c.totales.presencial > 0" title="Presencial">
+              <i class="bi bi-check-circle-fill"></i> {{ c.totales.presencial }}
+            </span>
+            <span class="mini-badge mb-zoom" *ngIf="c.totales.zoom > 0" title="Zoom">
+              <i class="bi bi-camera-video-fill"></i> {{ c.totales.zoom }}
+            </span>
+            <span class="mini-badge mb-just" *ngIf="c.totales.justificada > 0" title="Justificada">
+              <i class="bi bi-patch-check-fill"></i> {{ c.totales.justificada }}
+            </span>
+            <span class="mini-badge mb-pend" *ngIf="c.totales.pendiente > 0" title="Pendiente">
+              <i class="bi bi-clock-fill"></i> {{ c.totales.pendiente }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Barra de progreso de asistencia -->
+        <div class="progreso-bar" *ngIf="c.abierta && c.totales.total > 0">
+          <div class="progreso-seg seg-pres"
+            [style.width.%]="porcentaje(c.totales.presencial, c.totales.total)"
+            title="Presencial {{ porcentaje(c.totales.presencial, c.totales.total) }}%">
+          </div>
+          <div class="progreso-seg seg-zoom"
+            [style.width.%]="porcentaje(c.totales.zoom, c.totales.total)"
+            title="Zoom {{ porcentaje(c.totales.zoom, c.totales.total) }}%">
+          </div>
+          <div class="progreso-seg seg-just"
+            [style.width.%]="porcentaje(c.totales.justificada, c.totales.total)"
+            title="Justificada {{ porcentaje(c.totales.justificada, c.totales.total) }}%">
+          </div>
+          <div class="progreso-seg seg-pend"
+            [style.width.%]="porcentaje(c.totales.pendiente + c.totales.sin_registro, c.totales.total)"
+            title="Pendiente/Sin registro">
+          </div>
+        </div>
+
+        <!-- Lista de eventos -->
+        <div class="eventos-lista" *ngIf="c.abierta">
+
+          <div class="eventos-vacio" *ngIf="c.eventos.length === 0">
+            <i class="bi bi-calendar-x me-2"></i>Sin eventos registrados
+          </div>
+
+          <div class="evento-row" *ngFor="let e of c.eventos; let last = last"
+            [class.ultimo]="last"
+            [class.evento-unido]="e.es_evento_unido">
+
+            <!-- Línea de tiempo -->
+            <div class="evento-timeline">
+              <div class="timeline-dot" [ngClass]="claseAsistencia(e.sentido_voto)"></div>
+              <div class="timeline-line" *ngIf="!last"></div>
+            </div>
+
+            <!-- Contenido del evento -->
+            <div class="evento-content">
+              <div class="evento-meta">
+                <!-- Fecha -->
+                <span class="evento-fecha">
+                  <i class="bi bi-calendar3 me-1"></i>{{ e.fecha_display }}
+                </span>
+
+                <!-- Tipo de evento -->
+                <span class="evento-tipo" *ngIf="e.tipo_evento !== '-'">
+                  {{ e.tipo_evento }}
+                </span>
+
+                <!-- Badge evento unido -->
+                <span class="badge-unido" *ngIf="e.es_evento_unido"
+                  [title]="'Evento unido con: ' + e.otras_comisiones.join(', ')">
+                  <i class="bi bi-link-45deg me-1"></i>Unido
+                </span>
+              </div>
+
+              <!-- Descripción -->
+              <p class="evento-descripcion" *ngIf="e.descripcion !== '-'">
+                {{ e.descripcion }}
+              </p>
+
+              <!-- Otras comisiones en evento unido -->
+              <div class="otras-comisiones" *ngIf="e.es_evento_unido && e.otras_comisiones.length > 0">
+                <i class="bi bi-diagram-3 me-1"></i>
+                <span *ngFor="let oc of e.otras_comisiones; let last = last">
+                  {{ oc }}<span *ngIf="!last"> · </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Badge de asistencia -->
+            <div class="evento-asistencia">
+              <span class="asistencia-badge" [ngClass]="claseAsistencia(e.sentido_voto)">
+                <i class="bi me-1" [ngClass]="iconoAsistencia(e.sentido_voto)"></i>
+                {{ e.asistencia }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
