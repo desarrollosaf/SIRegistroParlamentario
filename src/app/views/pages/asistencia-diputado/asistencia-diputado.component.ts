@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import Swal from 'sweetalert2';
 
@@ -36,7 +37,7 @@ interface ComisionAsistencia {
 @Component({
   selector: 'app-asistencia-diputado',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgSelectModule],
   templateUrl: './asistencia-diputado.component.html',
   styleUrls: ['./asistencia-diputado.component.scss']
 })
@@ -54,6 +55,11 @@ export class AsistenciaDiputadoComponent implements OnInit {
 
   totalesGlobales: TotalesAsistencia = {
     presencial: 0, zoom: 0, justificada: 0, pendiente: 0, sin_registro: 0, total: 0
+  };
+
+  buscarDiputado = (term: string, item: any): boolean => {
+    const texto = `${item.apaterno} ${item.amaterno} ${item.nombres}`.toLowerCase();
+    return texto.includes(term.toLowerCase());
   };
 
   constructor(private _eventoService: EventoService) {}
