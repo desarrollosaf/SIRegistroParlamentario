@@ -33,15 +33,22 @@
         <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
         <span class="text-muted small">Cargando diputados...</span>
       </div>
-      <select *ngIf="!cargandoDiputados"
+      <ng-select *ngIf="!cargandoDiputados"
         class="selector-select"
+        [items]="listaDiputados"
+        placeholder="— Selecciona un diputado —"
+        [searchable]="true"
+        [clearable]="true"
+        [searchFn]="buscarDiputado"
         [(ngModel)]="diputadoSeleccionado"
         (ngModelChange)="onDiputadoChange()">
-        <option [ngValue]="null">— Selecciona un diputado —</option>
-        <option *ngFor="let d of listaDiputados" [ngValue]="d">
-          {{ d.apaterno }} {{ d.amaterno }}, {{ d.nombres }}
-        </option>
-      </select>
+        <ng-template ng-label-tmp let-item="item">
+          {{ item.apaterno }} {{ item.amaterno }}, {{ item.nombres }}
+        </ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          {{ item.apaterno }} {{ item.amaterno }}, {{ item.nombres }}
+        </ng-template>
+      </ng-select>
     </div>
   </div>
 

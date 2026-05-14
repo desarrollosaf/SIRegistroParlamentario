@@ -1288,25 +1288,25 @@ const procesarPresentan = async (presentan: any[]) => {
     let valor = '';
 
     if (tipoValor === 'Diputadas y Diputados') {
-      const dip = await Diputado.findOne({ where: { id: p.id_presenta } });
+      const dip = await Diputado.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
     } else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
-      const comi = await Comision.findOne({ where: { id: p.id_presenta } });
+      const comi = await Comision.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = comi?.nombre ?? '';
     } else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
-      const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta } });
+      const muni = await MunicipiosAg.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = muni?.nombre ?? '';
     } else if (tipoValor === 'Grupo Parlamentario') {
-      const partido = await Partidos.findOne({ where: { id: p.id_presenta } });
+      const partido = await Partidos.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = partido?.nombre ?? '';
     } else if (tipoValor === 'Legislatura') {
-      const leg = await Legislatura.findOne({ where: { id: p.id_presenta } });
+      const leg = await Legislatura.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = leg?.numero ?? '';
     } else if (tipoValor === 'Secretarías del GEM') {
-      const sec = await Secretarias.findOne({ where: { id: p.id_presenta } });
+      const sec = await Secretarias.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`;
     } else {
-      const cat = await CatFunDep.findOne({ where: { id: p.id_presenta } });
+      const cat = await CatFunDep.findOne({ where: { id: p.id_presenta }, paranoid: false });
       valor = cat?.nombre_titular ?? '';
     }
 
