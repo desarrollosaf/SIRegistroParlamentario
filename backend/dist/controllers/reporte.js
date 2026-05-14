@@ -154,10 +154,12 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
             const dip = yield diputado_1.default.findOne({
                 where: { id: p.id_presenta },
                 raw: true,
+                paranoid: false,
                 include: [
                     {
                         model: integrante_legislaturas_1.default,
                         as: "integrante",
+                        paranoid: false,
                     }
                 ]
             });
@@ -171,7 +173,8 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
                     const partido = yield partidos_1.default.findOne({
                         where: { id: dip.integrante.partido_id },
                         attributes: ["id", "nombre"],
-                        raw: true
+                        raw: true,
+                        paranoid: false
                     });
                     if (partido === null || partido === void 0 ? void 0 : partido.nombre)
                         gruposParlamentarios.push(partido.nombre);
@@ -181,18 +184,19 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
             }
         }
         else if (["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)) {
-            const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
             valor = (_e = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _e !== void 0 ? _e : "";
         }
         else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
-            const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
             valor = (_f = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _f !== void 0 ? _f : "";
         }
         else if (tipoValor === "Grupo Parlamentario") {
             const partido = yield partidos_1.default.findOne({
                 where: { id: p.id_presenta },
                 attributes: ["id", "nombre"],
-                raw: true
+                raw: true,
+                paranoid: false
             });
             valor = (_g = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _g !== void 0 ? _g : "";
             if (valor)
@@ -201,15 +205,15 @@ const getPresentantesDePunto = (id) => __awaiter(void 0, void 0, void 0, functio
                 grupoParlamentarioIds.push(String(partido.id));
         }
         else if (tipoValor === "Legislatura") {
-            const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
             valor = (_h = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _h !== void 0 ? _h : "";
         }
         else if (tipoValor === "Secretarías del GEM") {
-            const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const sec = yield secretarias_1.default.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
             valor = `${(_j = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _j !== void 0 ? _j : ""} / ${(_k = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _k !== void 0 ? _k : ""}`.trim();
         }
         else {
-            const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta }, raw: true });
+            const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
             valor = (_l = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _l !== void 0 ? _l : "";
         }
         if (tipoValor && !proponentesUnicos.has(tipoValor)) {
@@ -1320,6 +1324,20 @@ const getDiputadosAsistencia = (_req, res) => __awaiter(void 0, void 0, void 0, 
         const diputados = yield diputado_1.default.findAll({
             attributes: ["id", "apaterno", "amaterno", "nombres"],
             order: [["apaterno", "ASC"], ["nombres", "ASC"]],
+            include: [
+                {
+                    model: integrante_legislaturas_1.default,
+                    as: "integrante",
+                    attributes: [],
+                    where: {
+                        [sequelize_1.Op.or]: [
+                            { fecha_fin: null },
+                            { fecha_fin: "" }
+                        ]
+                    },
+                    required: true,
+                }
+            ],
             raw: true
         });
         return res.status(200).json({ data: diputados });

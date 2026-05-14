@@ -1151,31 +1151,31 @@ const procesarPresentan = (presentan) => __awaiter(void 0, void 0, void 0, funct
         const tipoValor = (_b = (_a = p.tipo_presenta) === null || _a === void 0 ? void 0 : _a.valor) !== null && _b !== void 0 ? _b : '';
         let valor = '';
         if (tipoValor === 'Diputadas y Diputados') {
-            const dip = yield diputado_1.default.findOne({ where: { id: p.id_presenta } });
+            const dip = yield diputado_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = `${(_c = dip === null || dip === void 0 ? void 0 : dip.apaterno) !== null && _c !== void 0 ? _c : ''} ${(_d = dip === null || dip === void 0 ? void 0 : dip.amaterno) !== null && _d !== void 0 ? _d : ''} ${(_e = dip === null || dip === void 0 ? void 0 : dip.nombres) !== null && _e !== void 0 ? _e : ''}`.trim();
         }
         else if (['Mesa Directiva en turno', 'Junta de Coordinación Politica', 'Comisiones Legislativas', 'Diputación Permanente'].includes(tipoValor)) {
-            const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta } });
+            const comi = yield comisions_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = (_f = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _f !== void 0 ? _f : '';
         }
         else if (['Ayuntamientos', 'Municipios'].includes(tipoValor)) {
-            const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta } });
+            const muni = yield municipiosag_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = (_g = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _g !== void 0 ? _g : '';
         }
         else if (tipoValor === 'Grupo Parlamentario') {
-            const partido = yield partidos_1.default.findOne({ where: { id: p.id_presenta } });
+            const partido = yield partidos_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = (_h = partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _h !== void 0 ? _h : '';
         }
         else if (tipoValor === 'Legislatura') {
-            const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta } });
+            const leg = yield legislaturas_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = (_j = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _j !== void 0 ? _j : '';
         }
         else if (tipoValor === 'Secretarías del GEM') {
-            const sec = yield secretarias_1.Secretarias.findOne({ where: { id: p.id_presenta } });
+            const sec = yield secretarias_1.Secretarias.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = `${(_k = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _k !== void 0 ? _k : ''} / ${(_l = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _l !== void 0 ? _l : ''}`;
         }
         else {
-            const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta } });
+            const cat = yield cat_fun_dep_1.default.findOne({ where: { id: p.id_presenta }, paranoid: false });
             valor = (_m = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _m !== void 0 ? _m : '';
         }
         if (!proponentesUnicos.has(tipoValor)) {

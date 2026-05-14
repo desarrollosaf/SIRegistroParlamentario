@@ -194,10 +194,12 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
       const dip: any = await Diputado.findOne({
         where: { id: p.id_presenta },
         raw: true,
+        paranoid: false,          
         include: [
           {
             model: IntegranteLegislatura,
             as: "integrante",
+            paranoid: false,      
           }
         ]
       });
@@ -212,7 +214,8 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
           const partido: any = await Partidos.findOne({
             where: { id: dip.integrante.partido_id },
             attributes: ["id", "nombre"],
-            raw: true
+            raw: true,
+            paranoid: false
           });
 
           if (partido?.nombre) gruposParlamentarios.push(partido.nombre);
@@ -222,16 +225,17 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
     } else if (
       ["Mesa Directiva en turno", "Junta de Coordinación Politica", "Comisiones Legislativas", "Diputación Permanente"].includes(tipoValor)
     ) {
-      const comi: any = await Comision.findOne({ where: { id: p.id_presenta }, raw: true });
+      const comi: any = await Comision.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
       valor = comi?.nombre ?? "";
     } else if (["Ayuntamientos", "Municipios", "AYTO"].includes(tipoValor)) {
-      const muni: any = await MunicipiosAg.findOne({ where: { id: p.id_presenta }, raw: true });
+      const muni: any = await MunicipiosAg.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
       valor = muni?.nombre ?? "";
     } else if (tipoValor === "Grupo Parlamentario") {
       const partido: any = await Partidos.findOne({
         where: { id: p.id_presenta },
         attributes: ["id", "nombre"],
-        raw: true
+        raw: true,
+        paranoid: false
       });
 
       valor = partido?.nombre ?? "";
@@ -239,13 +243,13 @@ const getPresentantesDePunto = async (id: string | null | undefined) => {
       if (valor) gruposParlamentarios.push(valor);
       if (partido?.id) grupoParlamentarioIds.push(String(partido.id));
     } else if (tipoValor === "Legislatura") {
-      const leg: any = await Legislatura.findOne({ where: { id: p.id_presenta }, raw: true });
+      const leg: any = await Legislatura.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
       valor = leg?.numero ?? "";
     } else if (tipoValor === "Secretarías del GEM") {
-      const sec: any = await Secretarias.findOne({ where: { id: p.id_presenta }, raw: true });
+      const sec: any = await Secretarias.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
       valor = `${sec?.nombre ?? ""} / ${sec?.titular ?? ""}`.trim();
     } else {
-      const cat: any = await CatFunDep.findOne({ where: { id: p.id_presenta }, raw: true });
+      const cat: any = await CatFunDep.findOne({ where: { id: p.id_presenta }, raw: true, paranoid: false });
       valor = cat?.nombre_titular ?? "";
     }
 
@@ -1583,6 +1587,20 @@ export const getDiputadosAsistencia = async (_req: Request, res: Response): Prom
     const diputados = await Diputado.findAll({
       attributes: ["id", "apaterno", "amaterno", "nombres"],
       order: [["apaterno", "ASC"], ["nombres", "ASC"]],
+      include: [
+        {
+          model: IntegranteLegislatura,
+          as: "integrante",
+          attributes: [],
+          where: {
+            [Op.or]: [
+              { fecha_fin: null },
+              { fecha_fin: "" }
+            ]
+          },
+          required: true,
+        }
+      ],
       raw: true
     });
     return res.status(200).json({ data: diputados });
