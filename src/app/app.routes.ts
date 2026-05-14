@@ -74,6 +74,10 @@ export const routes: Routes = [
        path: 'asistencia-diputado',
        loadChildren: () => import('./views/pages/asistencia-diputado/asistencia-diputado.route')
       },
+      {
+       path: 'reporte-iniciativas',
+       loadChildren: () => import('./views/pages/reporte-iniciativas/reporte-iniciativas.route')
+      },
     ]
   },
   {
