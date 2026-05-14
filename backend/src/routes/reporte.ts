@@ -13,7 +13,8 @@ import {
   getDiputadosAsistencia,
   getComisionesDiputadoAsistencia,
   getReporteAsistenciaDiputado,
-  getDatosAsistenciaDiputado
+  getDatosAsistenciaDiputado,
+  getEstadisticasIniciativas
 } from "../controllers/reporte";
 
 const router = Router();
@@ -30,6 +31,9 @@ router.get("/api/reporte/iniciativas/inicomisions", getIniciativasTurnadasComisi
 router.get("/api/reporte/iniciativas/periodos-legislativos", getPeriodosLegislativos);
 router.post("/api/reporte/iniciativas/periodos-legislativos", crearPeriodoLegislativo);
 router.post("/api/reporte/iniciativas/por-periodo", getReportePorPeriodoLegislativo);
+
+// Estadísticas generales de iniciativas
+router.get("/api/reporte/iniciativas/estadisticas", getEstadisticasIniciativas);
 
 // Asistencia por diputado
 router.get("/api/reporte/asistencia/diputados", getDiputadosAsistencia);

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
@@ -36,6 +36,7 @@ const expedientes_estudio_puntos_1 = __importDefault(require("../models/expedien
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
+const gender_1 = __importDefault(require("../models/gender"));
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
 };
@@ -1617,3 +1618,244 @@ const getDatosAsistenciaDiputado = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getDatosAsistenciaDiputado = getDatosAsistenciaDiputado;
+const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    try {
+        // 1. Cargar todas las IniciativaPuntoOrden con presentan y evento
+        const iniciativasRaw = yield inciativas_puntos_ordens_1.default.findAll({
+            attributes: ["id", "id_punto", "tipo", "precluida"],
+            include: [
+                { model: agendas_1.default, as: "evento", attributes: ["id", "fecha"], paranoid: false },
+                {
+                    model: iniciativaspresenta_1.default,
+                    as: "presentan",
+                    include: [{ model: proponentes_1.default, as: "tipo_presenta", attributes: ["id", "valor"] }]
+                }
+            ],
+            paranoid: false
+        });
+        const iniciativas = iniciativasRaw.map((i) => i.toJSON());
+        // 2. PuntosOrden para campo dispensa
+        const puntoIds = [...new Set(iniciativas.map((i) => i.id_punto).filter(Boolean))];
+        const puntosOrdenRaw = puntoIds.length > 0
+            ? yield puntos_ordens_1.default.findAll({ where: { id: { [sequelize_1.Op.in]: puntoIds } }, attributes: ["id", "dispensa"], paranoid: false, raw: true })
+            : [];
+        const puntosMap = new Map(puntosOrdenRaw.map(p => [p.id, p]));
+        // 3. IniciativaEstudio para estatus
+        const estudiosRaw = puntoIds.length > 0
+            ? yield iniciativas_estudio_1.default.findAll({ where: { punto_origen_id: { [sequelize_1.Op.in]: puntoIds } }, attributes: ["punto_origen_id", "status"], paranoid: false, raw: true })
+            : [];
+        const estudiosMap = new Map();
+        for (const e of estudiosRaw) {
+            if (!estudiosMap.has(e.punto_origen_id))
+                estudiosMap.set(e.punto_origen_id, []);
+            estudiosMap.get(e.punto_origen_id).push(e.status);
+        }
+        // 4. Recolectar IDs de diputados y grupos parlamentarios
+        const dipIdsSet = new Set();
+        const grupoPIdsSet = new Set();
+        for (const ini of iniciativas) {
+            for (const p of ini.presentan || []) {
+                if (((_a = p.tipo_presenta) === null || _a === void 0 ? void 0 : _a.valor) === "Diputadas y Diputados" && p.id_presenta)
+                    dipIdsSet.add(p.id_presenta);
+                else if (((_b = p.tipo_presenta) === null || _b === void 0 ? void 0 : _b.valor) === "Grupo Parlamentario" && p.id_presenta)
+                    grupoPIdsSet.add(p.id_presenta);
+            }
+        }
+        // 5. Géneros (tabla pequeña, cargar todo)
+        const generosRaw = yield gender_1.default.findAll({ attributes: ["id", "genero"], paranoid: false, raw: true });
+        const generosMap = new Map(generosRaw.map(g => [g.id, g.genero]));
+        // 6. Diputados con IntegranteLegislatura
+        const dipIds = [...dipIdsSet];
+        const diputadosRaw = dipIds.length > 0
+            ? yield diputado_1.default.findAll({
+                where: { id: { [sequelize_1.Op.in]: dipIds } },
+                attributes: ["id", "gender_id"],
+                include: [{ model: integrante_legislaturas_1.default, as: "integrante", attributes: ["partido_id"], paranoid: false }],
+                paranoid: false
+            })
+            : [];
+        const diputadosData = diputadosRaw.map(d => d.toJSON());
+        const dipMap = new Map(diputadosData.map(d => [d.id, d]));
+        // 7. Partidos (de diputados + tipo "Grupo Parlamentario")
+        const partidoIdsSet = new Set();
+        for (const d of diputadosData) {
+            if ((_c = d.integrante) === null || _c === void 0 ? void 0 : _c.partido_id)
+                partidoIdsSet.add(d.integrante.partido_id);
+        }
+        for (const gid of grupoPIdsSet)
+            partidoIdsSet.add(gid);
+        const partidoIds = [...partidoIdsSet];
+        const partidosRaw = partidoIds.length > 0
+            ? yield partidos_1.default.findAll({ where: { id: { [sequelize_1.Op.in]: partidoIds } }, attributes: ["id", "nombre"], paranoid: false, raw: true })
+            : [];
+        const partidosMap = new Map(partidosRaw.map(p => [p.id, p.nombre]));
+        // 8. PuntosComisiones para estadísticas de comisión
+        const puntosComisionesRaw = puntoIds.length > 0
+            ? yield puntos_comisiones_1.default.findAll({ where: { id_punto: { [sequelize_1.Op.in]: puntoIds } }, attributes: ["id_punto", "id_comision"], raw: true })
+            : [];
+        const comisionIdsSet = new Set();
+        for (const pc of puntosComisionesRaw) {
+            if (!pc.id_comision)
+                continue;
+            const cleaned = String(pc.id_comision).replace(/[\[\]"' ]/g, "");
+            for (const cid of cleaned.split(",").filter(Boolean))
+                comisionIdsSet.add(cid);
+        }
+        const comisionIds = [...comisionIdsSet];
+        const comisionesRaw = comisionIds.length > 0
+            ? yield comisions_1.default.findAll({ where: { id: { [sequelize_1.Op.in]: comisionIds } }, attributes: ["id", "nombre"], paranoid: false, raw: true })
+            : [];
+        const comisionesMap = new Map(comisionesRaw.map(c => [c.id, c.nombre]));
+        // ── Calcular estadísticas ──────────────────────────────────────────────────
+        const determinarEstatus = (ini) => {
+            if (String(ini.precluida) === "1")
+                return "Precluida";
+            const punto = puntosMap.get(ini.id_punto);
+            if (String(punto === null || punto === void 0 ? void 0 : punto.dispensa) === "1")
+                return "Aprobada";
+            const statusList = estudiosMap.get(ini.id_punto) || [];
+            if (statusList.includes("3"))
+                return "Aprobada";
+            if (statusList.includes("5"))
+                return "Rechazada en sesión";
+            if (statusList.includes("4"))
+                return "Rechazada en comisión";
+            if (statusList.includes("1") || statusList.includes("2"))
+                return "En estudio";
+            return "Pendiente";
+        };
+        const tipoLabel = (t) => {
+            switch (t) {
+                case 1: return "Iniciativa";
+                case 2: return "Punto de acuerdo";
+                case 3: return "Minuta";
+                default: return "Sin clasificar";
+            }
+        };
+        // Por tipo
+        const conteoTipo = {};
+        for (const ini of iniciativas) {
+            const lbl = tipoLabel(ini.tipo);
+            conteoTipo[lbl] = (conteoTipo[lbl] || 0) + 1;
+        }
+        // Por estatus
+        const conteoEstatus = {};
+        for (const ini of iniciativas) {
+            const est = determinarEstatus(ini);
+            conteoEstatus[est] = (conteoEstatus[est] || 0) + 1;
+        }
+        // Por género (iniciativas únicas por género del presentador)
+        const porGeneroSets = { Mujeres: new Set(), Hombres: new Set(), Institucional: new Set() };
+        for (const ini of iniciativas) {
+            let tieneDip = false;
+            for (const p of ini.presentan || []) {
+                if (((_d = p.tipo_presenta) === null || _d === void 0 ? void 0 : _d.valor) === "Diputadas y Diputados" && p.id_presenta) {
+                    tieneDip = true;
+                    const dip = dipMap.get(p.id_presenta);
+                    const generoVal = dip ? ((_e = generosMap.get(dip.gender_id)) !== null && _e !== void 0 ? _e : "") : "";
+                    const lc = generoVal.toLowerCase();
+                    if (lc.includes("femen") || lc.includes("mujer"))
+                        porGeneroSets["Mujeres"].add(ini.id);
+                    else if (lc.includes("mascul") || lc.includes("hombre"))
+                        porGeneroSets["Hombres"].add(ini.id);
+                }
+            }
+            if (!tieneDip)
+                porGeneroSets["Institucional"].add(ini.id);
+        }
+        const porGenero = Object.entries(porGeneroSets)
+            .filter(([, s]) => s.size > 0)
+            .map(([genero, s]) => ({ genero, total: s.size }));
+        // Por grupo parlamentario
+        const grupoCounts = {};
+        for (const ini of iniciativas) {
+            const gruposEnIni = new Set();
+            for (const p of ini.presentan || []) {
+                let nombre = null;
+                if (((_f = p.tipo_presenta) === null || _f === void 0 ? void 0 : _f.valor) === "Diputadas y Diputados" && p.id_presenta) {
+                    const dip = dipMap.get(p.id_presenta);
+                    if ((_g = dip === null || dip === void 0 ? void 0 : dip.integrante) === null || _g === void 0 ? void 0 : _g.partido_id)
+                        nombre = (_h = partidosMap.get(dip.integrante.partido_id)) !== null && _h !== void 0 ? _h : null;
+                }
+                else if (((_j = p.tipo_presenta) === null || _j === void 0 ? void 0 : _j.valor) === "Grupo Parlamentario" && p.id_presenta) {
+                    nombre = (_k = partidosMap.get(p.id_presenta)) !== null && _k !== void 0 ? _k : null;
+                }
+                if (nombre && !gruposEnIni.has(nombre)) {
+                    gruposEnIni.add(nombre);
+                    grupoCounts[nombre] = (grupoCounts[nombre] || 0) + 1;
+                }
+            }
+        }
+        const porGrupo = Object.entries(grupoCounts)
+            .sort((a, b) => b[1] - a[1]).slice(0, 10)
+            .map(([nombre, total]) => ({ nombre, total }));
+        // Por mes
+        const mesCounts = {};
+        for (const ini of iniciativas) {
+            const fecha = (_l = ini.evento) === null || _l === void 0 ? void 0 : _l.fecha;
+            if (fecha) {
+                const d = new Date(fecha);
+                const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+                mesCounts[key] = (mesCounts[key] || 0) + 1;
+            }
+        }
+        const porMes = Object.entries(mesCounts)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([mes, total]) => ({ mes, total }));
+        // Por tipo de proponente
+        const proponenteCounts = {};
+        for (const ini of iniciativas) {
+            const vistos = new Set();
+            for (const p of ini.presentan || []) {
+                const tipo = (_m = p.tipo_presenta) === null || _m === void 0 ? void 0 : _m.valor;
+                if (tipo && !vistos.has(tipo)) {
+                    vistos.add(tipo);
+                    proponenteCounts[tipo] = (proponenteCounts[tipo] || 0) + 1;
+                }
+            }
+        }
+        const porProponente = Object.entries(proponenteCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([tipo, total]) => ({ tipo, total }));
+        // Por comisión (turnado)
+        const puntoToIni = new Map();
+        for (const ini of iniciativas) {
+            if (ini.id_punto)
+                puntoToIni.set(ini.id_punto, ini.id);
+        }
+        const comisionIniSets = {};
+        for (const pc of puntosComisionesRaw) {
+            const iniId = puntoToIni.get(pc.id_punto);
+            if (!iniId || !pc.id_comision)
+                continue;
+            const cleaned = String(pc.id_comision).replace(/[\[\]"' ]/g, "");
+            for (const cid of cleaned.split(",").filter(Boolean)) {
+                const nombre = comisionesMap.get(cid);
+                if (nombre) {
+                    if (!comisionIniSets[nombre])
+                        comisionIniSets[nombre] = new Set();
+                    comisionIniSets[nombre].add(iniId);
+                }
+            }
+        }
+        const porComision = Object.entries(comisionIniSets)
+            .map(([nombre, s]) => ({ nombre, total: s.size }))
+            .sort((a, b) => b.total - a.total).slice(0, 10);
+        return res.status(200).json({
+            total: iniciativas.length,
+            porTipo: Object.entries(conteoTipo).map(([tipo, total]) => ({ tipo, total })),
+            porEstatus: Object.entries(conteoEstatus).map(([estatus, total]) => ({ estatus, total })),
+            porGenero,
+            porGrupo,
+            porMes,
+            porProponente,
+            porComision
+        });
+    }
+    catch (error) {
+        console.error("Error al obtener estadísticas de iniciativas:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getEstadisticasIniciativas = getEstadisticasIniciativas;

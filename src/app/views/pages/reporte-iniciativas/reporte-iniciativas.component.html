@@ -1,0 +1,224 @@
+<div class="ri-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="ri-header">
+    <div class="ri-header-left">
+      <div class="ri-header-icon"><i class="bi bi-bar-chart-fill"></i></div>
+      <div>
+        <h5>Estadísticas de Iniciativas</h5>
+        <small>Reporte general · Iniciativas, Puntos de Acuerdo y Minutas</small>
+      </div>
+    </div>
+    <button class="btn-reload" (click)="cargarEstadisticas()" [disabled]="cargando" title="Actualizar">
+      <i class="bi" [class.bi-arrow-clockwise]="!cargando" [class.bi-hourglass-split]="cargando"></i>
+    </button>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────────────────────── -->
+  <div class="ri-loading" *ngIf="cargando">
+    <div class="spinner-border" style="color:#800048; width:2.2rem; height:2.2rem;"></div>
+    <p>Calculando estadísticas&hellip;</p>
+  </div>
+
+  <!-- ── Contenido ──────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!cargando && datos">
+
+    <!-- Summary cards -->
+    <div class="summary-grid">
+      <div class="sc sc-total">
+        <i class="bi bi-collection-fill sc-icon"></i>
+        <div class="sc-valor">{{ datos.total }}</div>
+        <div class="sc-label">Total</div>
+      </div>
+      <div class="sc sc-aprobada">
+        <i class="bi bi-check-circle-fill sc-icon"></i>
+        <div class="sc-valor">{{ aprobadas }}</div>
+        <div class="sc-label">Aprobadas</div>
+        <div class="sc-pct">{{ pct(aprobadas, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-estudio">
+        <i class="bi bi-hourglass-split sc-icon"></i>
+        <div class="sc-valor">{{ enEstudio }}</div>
+        <div class="sc-label">En Estudio</div>
+        <div class="sc-pct">{{ pct(enEstudio, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-rechazada">
+        <i class="bi bi-x-circle-fill sc-icon"></i>
+        <div class="sc-valor">{{ rechazadas }}</div>
+        <div class="sc-label">Rechazadas</div>
+        <div class="sc-pct">{{ pct(rechazadas, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-precluida">
+        <i class="bi bi-slash-circle-fill sc-icon"></i>
+        <div class="sc-valor">{{ precluidas }}</div>
+        <div class="sc-label">Precluidas</div>
+        <div class="sc-pct">{{ pct(precluidas, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-pendiente">
+        <i class="bi bi-clock-fill sc-icon"></i>
+        <div class="sc-valor">{{ pendientes }}</div>
+        <div class="sc-label">Pendientes</div>
+        <div class="sc-pct">{{ pct(pendientes, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-mujer">
+        <i class="bi bi-gender-female sc-icon"></i>
+        <div class="sc-valor">{{ mujeres }}</div>
+        <div class="sc-label">Por Mujeres</div>
+        <div class="sc-pct">{{ pct(mujeres, datos.total) }}%</div>
+      </div>
+      <div class="sc sc-hombre">
+        <i class="bi bi-gender-male sc-icon"></i>
+        <div class="sc-valor">{{ hombres }}</div>
+        <div class="sc-label">Por Hombres</div>
+        <div class="sc-pct">{{ pct(hombres, datos.total) }}%</div>
+      </div>
+    </div>
+
+    <!-- Fila 1: tres donuts -->
+    <div class="charts-row-3">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <i class="bi bi-gender-ambiguous"></i>
+          <span>Presentación por Género</span>
+        </div>
+        <apx-chart
+          [series]="generoChart.series"
+          [chart]="generoChart.chart"
+          [labels]="generoChart.labels"
+          [colors]="generoChart.colors"
+          [legend]="generoChart.legend"
+          [plotOptions]="generoChart.plotOptions"
+          [dataLabels]="generoChart.dataLabels"
+          [stroke]="generoChart.stroke"
+          [tooltip]="generoChart.tooltip"
+          [responsive]="generoChart.responsive"
+        ></apx-chart>
+        <div class="gender-legend">
+          <span class="gl-item gl-mujer"><i class="bi bi-circle-fill"></i> Mujeres · {{ mujeres }} ({{ pct(mujeres, datos.total) }}%)</span>
+          <span class="gl-item gl-hombre"><i class="bi bi-circle-fill"></i> Hombres · {{ hombres }} ({{ pct(hombres, datos.total) }}%)</span>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <i class="bi bi-pie-chart-fill"></i>
+          <span>Estado de las Iniciativas</span>
+        </div>
+        <apx-chart
+          [series]="estatusChart.series"
+          [chart]="estatusChart.chart"
+          [labels]="estatusChart.labels"
+          [colors]="estatusChart.colors"
+          [legend]="estatusChart.legend"
+          [plotOptions]="estatusChart.plotOptions"
+          [dataLabels]="estatusChart.dataLabels"
+          [stroke]="estatusChart.stroke"
+          [tooltip]="estatusChart.tooltip"
+          [responsive]="estatusChart.responsive"
+        ></apx-chart>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <i class="bi bi-diagram-3-fill"></i>
+          <span>Tipo de Iniciativa</span>
+        </div>
+        <apx-chart
+          [series]="tipoChart.series"
+          [chart]="tipoChart.chart"
+          [labels]="tipoChart.labels"
+          [colors]="tipoChart.colors"
+          [legend]="tipoChart.legend"
+          [plotOptions]="tipoChart.plotOptions"
+          [dataLabels]="tipoChart.dataLabels"
+          [stroke]="tipoChart.stroke"
+          [tooltip]="tipoChart.tooltip"
+          [responsive]="tipoChart.responsive"
+        ></apx-chart>
+      </div>
+    </div>
+
+    <!-- Tendencia mensual -->
+    <div class="chart-card chart-full" *ngIf="datos.porMes.length > 0">
+      <div class="chart-card-header">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span>Tendencia Mensual de Presentación</span>
+        <span class="chart-badge">{{ datos.porMes.length }} periodos</span>
+      </div>
+      <apx-chart
+        [series]="tendenciaChart.series"
+        [chart]="tendenciaChart.chart"
+        [xaxis]="tendenciaChart.xaxis"
+        [yaxis]="tendenciaChart.yaxis"
+        [colors]="tendenciaChart.colors"
+        [fill]="tendenciaChart.fill"
+        [stroke]="tendenciaChart.stroke"
+        [dataLabels]="tendenciaChart.dataLabels"
+        [grid]="tendenciaChart.grid"
+        [markers]="tendenciaChart.markers"
+        [tooltip]="tendenciaChart.tooltip"
+      ></apx-chart>
+    </div>
+
+    <!-- Fila 2: grupos y comisiones -->
+    <div class="charts-row-2">
+      <div class="chart-card" *ngIf="datos.porGrupo.length > 0">
+        <div class="chart-card-header">
+          <i class="bi bi-people-fill"></i>
+          <span>Por Grupo Parlamentario</span>
+          <span class="chart-badge">Top {{ datos.porGrupo.length }}</span>
+        </div>
+        <apx-chart
+          [series]="grupoChart.series"
+          [chart]="grupoChart.chart"
+          [xaxis]="grupoChart.xaxis"
+          [yaxis]="grupoChart.yaxis"
+          [colors]="grupoChart.colors"
+          [plotOptions]="grupoChart.plotOptions"
+          [dataLabels]="grupoChart.dataLabels"
+          [grid]="grupoChart.grid"
+          [tooltip]="grupoChart.tooltip"
+        ></apx-chart>
+      </div>
+
+      <div class="chart-card" *ngIf="datos.porComision.length > 0">
+        <div class="chart-card-header">
+          <i class="bi bi-building-fill"></i>
+          <span>Por Comisión Legislativa</span>
+          <span class="chart-badge">Top {{ datos.porComision.length }}</span>
+        </div>
+        <apx-chart
+          [series]="comisionChart.series"
+          [chart]="comisionChart.chart"
+          [xaxis]="comisionChart.xaxis"
+          [yaxis]="comisionChart.yaxis"
+          [colors]="comisionChart.colors"
+          [plotOptions]="comisionChart.plotOptions"
+          [dataLabels]="comisionChart.dataLabels"
+          [grid]="comisionChart.grid"
+          [tooltip]="comisionChart.tooltip"
+        ></apx-chart>
+      </div>
+    </div>
+
+    <!-- Por tipo de proponente -->
+    <div class="chart-card chart-full" *ngIf="datos.porProponente.length > 0">
+      <div class="chart-card-header">
+        <i class="bi bi-person-badge-fill"></i>
+        <span>Por Tipo de Proponente</span>
+      </div>
+      <apx-chart
+        [series]="proponenteChart.series"
+        [chart]="proponenteChart.chart"
+        [xaxis]="proponenteChart.xaxis"
+        [yaxis]="proponenteChart.yaxis"
+        [colors]="proponenteChart.colors"
+        [plotOptions]="proponenteChart.plotOptions"
+        [dataLabels]="proponenteChart.dataLabels"
+        [grid]="proponenteChart.grid"
+        [tooltip]="proponenteChart.tooltip"
+      ></apx-chart>
+    </div>
+
+  </ng-container>
+</div>
