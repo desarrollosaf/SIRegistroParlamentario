@@ -8,7 +8,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label: 'Agenda',
-    icon: 'mail',
+    icon: 'calendar',
     subMenus: [
       {
         subMenuItems: [
@@ -26,12 +26,11 @@ export const MENU: MenuItem[] = [
           }
         ]
       },
-      
     ]
   },
   {
     label: 'Catalogos',
-    icon: 'mail',
+    icon: 'book',
     subMenus: [
       {
         subMenuItems: [
@@ -45,12 +44,11 @@ export const MENU: MenuItem[] = [
           }
         ]
       },
-      
     ]
   },
-    {
+  {
     label: 'Reportes',
-    icon: 'mail',
+    icon: 'bar-chart-2',
     subMenus: [
       {
         subMenuItems: [
@@ -59,21 +57,24 @@ export const MENU: MenuItem[] = [
             isTitle: true,
           },
           {
-            label: 'Iniciativas',
+            label: 'Seguimiento de iniciativas',
             link: '/iniciativas'
           },
           {
             label: 'Asistencia por Diputado',
             link: '/asistencia-diputado'
+          },
+          {
+            label: 'Métricas ',
+            link: '/reporte-iniciativas'
           }
         ]
       },
-
     ]
   },
-   {
+  {
     label: 'Iniciativas',
-    icon: 'mail',
+    icon: 'file-text',
     subMenus: [
       {
         subMenuItems: [
@@ -83,8 +84,6 @@ export const MENU: MenuItem[] = [
           }
         ]
       },
-      
     ]
   },
-  
 ];

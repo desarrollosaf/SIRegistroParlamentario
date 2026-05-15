@@ -311,4 +311,8 @@ export class EventoService {
     return this.http.post<any>(`${this.myAppUrl}api/reporte/asistencia/datos-diputado/`, data);
   }
 
+  getEstadisticasIniciativas(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/`);
+  }
+
 }

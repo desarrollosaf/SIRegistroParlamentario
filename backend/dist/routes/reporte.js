@@ -14,6 +14,8 @@ router.get("/api/reporte/iniciativas/inicomisions", reporte_1.getIniciativasTurn
 router.get("/api/reporte/iniciativas/periodos-legislativos", reporte_1.getPeriodosLegislativos);
 router.post("/api/reporte/iniciativas/periodos-legislativos", reporte_1.crearPeriodoLegislativo);
 router.post("/api/reporte/iniciativas/por-periodo", reporte_1.getReportePorPeriodoLegislativo);
+// Estadísticas generales de iniciativas
+router.get("/api/reporte/iniciativas/estadisticas", reporte_1.getEstadisticasIniciativas);
 // Asistencia por diputado
 router.get("/api/reporte/asistencia/diputados", reporte_1.getDiputadosAsistencia);
 router.get("/api/reporte/asistencia/comisiones/:diputado_id", reporte_1.getComisionesDiputadoAsistencia);
