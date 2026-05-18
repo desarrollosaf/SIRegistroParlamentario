@@ -24,8 +24,9 @@ import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import IntegranteComision from "../models/integrante_comisions";
 import AsistenciaVoto from "../models/asistencia_votos";
-import Generos from "../models/generos";
 import Gender from "../models/gender";
+import TemasPuntosVotos from "../models/temas_puntos_votos";
+import VotosPunto from "../models/votos_punto";
 
 type ReporteBaseItem = {
   no: number;
@@ -1914,221 +1915,234 @@ export const getDatosAsistenciaDiputado = async (req: Request, res: Response): P
 
 export const getEstadisticasIniciativas = async (_req: Request, res: Response): Promise<any> => {
   try {
-    // 1. Cargar todas las IniciativaPuntoOrden con presentan y evento
-    const iniciativasRaw = await IniciativaPuntoOrden.findAll({
-      attributes: ["id", "id_punto", "tipo", "precluida"],
-      include: [
-        { model: Agenda, as: "evento", attributes: ["id", "fecha"], paranoid: false },
-        {
-          model: IniciativasPresenta,
-          as: "presentan",
-          include: [{ model: Proponentes, as: "tipo_presenta", attributes: ["id", "valor"] }]
-        }
-      ],
-      paranoid: false
-    });
-    const iniciativas = iniciativasRaw.map((i: any) => i.toJSON());
+    // ── 1. construirReporteBase: source of truth for observac/tipo/comisiones ─
+    const reporte = await construirReporteBase();
+    const iniIds = reporte.map(r => r.id).filter(Boolean);
 
-    // 2. PuntosOrden para campo dispensa
-    const puntoIds = [...new Set(iniciativas.map((i: any) => i.id_punto).filter(Boolean))];
-    const puntosOrdenRaw = puntoIds.length > 0
-      ? await PuntosOrden.findAll({ where: { id: { [Op.in]: puntoIds } }, attributes: ["id", "dispensa"], paranoid: false, raw: true })
-      : [];
-    const puntosMap = new Map<string, any>((puntosOrdenRaw as any[]).map(p => [p.id, p]));
-
-    // 3. IniciativaEstudio para estatus
-    const estudiosRaw = puntoIds.length > 0
-      ? await IniciativaEstudio.findAll({ where: { punto_origen_id: { [Op.in]: puntoIds } }, attributes: ["punto_origen_id", "status"], paranoid: false, raw: true })
-      : [];
-    const estudiosMap = new Map<string, string[]>();
-    for (const e of estudiosRaw as any[]) {
-      if (!estudiosMap.has(e.punto_origen_id)) estudiosMap.set(e.punto_origen_id, []);
-      estudiosMap.get(e.punto_origen_id)!.push(e.status);
-    }
-
-    // 4. Recolectar IDs de diputados y grupos parlamentarios
-    const dipIdsSet = new Set<string>();
-    const grupoPIdsSet = new Set<string>();
-    for (const ini of iniciativas) {
-      for (const p of ini.presentan || []) {
-        if (p.tipo_presenta?.valor === "Diputadas y Diputados" && p.id_presenta) dipIdsSet.add(p.id_presenta);
-        else if (p.tipo_presenta?.valor === "Grupo Parlamentario" && p.id_presenta) grupoPIdsSet.add(p.id_presenta);
-      }
-    }
-
-    // 5. Géneros (tabla pequeña, cargar todo)
-    const generosRaw = await Gender.findAll({ attributes: ["id", "genero"], paranoid: false, raw: true });
-    const generosMap = new Map<string, string>((generosRaw as any[]).map(g => [g.id, g.genero]));
-
-    // 6. Diputados con IntegranteLegislatura
-    const dipIds = [...dipIdsSet];
-    const diputadosRaw = dipIds.length > 0
-      ? await Diputado.findAll({
-          where: { id: { [Op.in]: dipIds } },
-          attributes: ["id", "gender_id"],
-          include: [{ model: IntegranteLegislatura, as: "integrante", attributes: ["partido_id"], paranoid: false }],
-          paranoid: false
-        })
-      : [];
-    const diputadosData = (diputadosRaw as any[]).map(d => d.toJSON());
-    const dipMap = new Map<string, any>(diputadosData.map(d => [d.id, d]));
-
-    // 7. Partidos (de diputados + tipo "Grupo Parlamentario")
-    const partidoIdsSet = new Set<string>();
-    for (const d of diputadosData) { if (d.integrante?.partido_id) partidoIdsSet.add(d.integrante.partido_id); }
-    for (const gid of grupoPIdsSet) partidoIdsSet.add(gid);
-    const partidoIds = [...partidoIdsSet];
-    const partidosRaw = partidoIds.length > 0
-      ? await Partidos.findAll({ where: { id: { [Op.in]: partidoIds } }, attributes: ["id", "nombre"], paranoid: false, raw: true })
-      : [];
-    const partidosMap = new Map<string, string>((partidosRaw as any[]).map(p => [p.id, p.nombre]));
-
-    // 8. PuntosComisiones para estadísticas de comisión
-    const puntosComisionesRaw = puntoIds.length > 0
-      ? await PuntosComisiones.findAll({ where: { id_punto: { [Op.in]: puntoIds } }, attributes: ["id_punto", "id_comision"], raw: true })
-      : [];
-    const comisionIdsSet = new Set<string>();
-    for (const pc of puntosComisionesRaw as any[]) {
-      if (!pc.id_comision) continue;
-      const cleaned = String(pc.id_comision).replace(/[\[\]"' ]/g, "");
-      for (const cid of cleaned.split(",").filter(Boolean)) comisionIdsSet.add(cid);
-    }
-    const comisionIds = [...comisionIdsSet];
-    const comisionesRaw = comisionIds.length > 0
-      ? await Comision.findAll({ where: { id: { [Op.in]: comisionIds } }, attributes: ["id", "nombre"], paranoid: false, raw: true })
-      : [];
-    const comisionesMap = new Map<string, string>((comisionesRaw as any[]).map(c => [c.id, c.nombre]));
-
-    // ── Calcular estadísticas ──────────────────────────────────────────────────
-
-    const determinarEstatus = (ini: any): string => {
-      if (String(ini.precluida) === "1") return "Precluida";
-      const punto = puntosMap.get(ini.id_punto);
-      if (String(punto?.dispensa) === "1") return "Aprobada";
-      const statusList = estudiosMap.get(ini.id_punto) || [];
-      if (statusList.includes("3")) return "Aprobada";
-      if (statusList.includes("5")) return "Rechazada en sesión";
-      if (statusList.includes("4")) return "Rechazada en comisión";
-      if (statusList.includes("1") || statusList.includes("2")) return "En estudio";
-      return "Pendiente";
-    };
-
-    const tipoLabel = (t: number | null): string => {
-      switch (t) { case 1: return "Iniciativa"; case 2: return "Punto de acuerdo"; case 3: return "Minuta"; default: return "Sin clasificar"; }
-    };
-
-    // Por tipo
-    const conteoTipo: Record<string, number> = {};
-    for (const ini of iniciativas) {
-      const lbl = tipoLabel(ini.tipo);
-      conteoTipo[lbl] = (conteoTipo[lbl] || 0) + 1;
-    }
-
-    // Por estatus
+    // ── 2. Simple aggregations from reporte fields ────────────────────────────
     const conteoEstatus: Record<string, number> = {};
-    for (const ini of iniciativas) {
-      const est = determinarEstatus(ini);
-      conteoEstatus[est] = (conteoEstatus[est] || 0) + 1;
-    }
-
-    // Por género (iniciativas únicas por género del presentador)
-    const porGeneroSets: Record<string, Set<string>> = { Mujeres: new Set(), Hombres: new Set(), Institucional: new Set() };
-    for (const ini of iniciativas) {
-      let tieneDip = false;
-      for (const p of ini.presentan || []) {
-        if (p.tipo_presenta?.valor === "Diputadas y Diputados" && p.id_presenta) {
-          tieneDip = true;
-          const dip = dipMap.get(p.id_presenta);
-          const generoVal = dip ? (generosMap.get(dip.gender_id) ?? "") : "";
-          const lc = generoVal.toLowerCase();
-          if (lc.includes("femen") || lc.includes("mujer")) porGeneroSets["Mujeres"].add(ini.id);
-          else if (lc.includes("mascul") || lc.includes("hombre")) porGeneroSets["Hombres"].add(ini.id);
-        }
-      }
-      if (!tieneDip) porGeneroSets["Institucional"].add(ini.id);
-    }
-    const porGenero = Object.entries(porGeneroSets)
-      .filter(([, s]) => s.size > 0)
-      .map(([genero, s]) => ({ genero, total: s.size }));
-
-    // Por grupo parlamentario
-    const grupoCounts: Record<string, number> = {};
-    for (const ini of iniciativas) {
-      const gruposEnIni = new Set<string>();
-      for (const p of ini.presentan || []) {
-        let nombre: string | null = null;
-        if (p.tipo_presenta?.valor === "Diputadas y Diputados" && p.id_presenta) {
-          const dip = dipMap.get(p.id_presenta);
-          if (dip?.integrante?.partido_id) nombre = partidosMap.get(dip.integrante.partido_id) ?? null;
-        } else if (p.tipo_presenta?.valor === "Grupo Parlamentario" && p.id_presenta) {
-          nombre = partidosMap.get(p.id_presenta) ?? null;
-        }
-        if (nombre && !gruposEnIni.has(nombre)) {
-          gruposEnIni.add(nombre);
-          grupoCounts[nombre] = (grupoCounts[nombre] || 0) + 1;
-        }
-      }
-    }
-    const porGrupo = Object.entries(grupoCounts)
-      .sort((a, b) => b[1] - a[1]).slice(0, 10)
-      .map(([nombre, total]) => ({ nombre, total }));
-
-    // Por mes
+    const conteoTipo: Record<string, number> = {};
     const mesCounts: Record<string, number> = {};
-    for (const ini of iniciativas) {
-      const fecha = ini.evento?.fecha;
-      if (fecha) {
-        const d = new Date(fecha);
-        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-        mesCounts[key] = (mesCounts[key] || 0) + 1;
-      }
-    }
-    const porMes = Object.entries(mesCounts)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([mes, total]) => ({ mes, total }));
+    const comisionCounts: Record<string, number> = {};
+    const allDipIdsSet = new Set<string>();
 
-    // Por tipo de proponente
-    const proponenteCounts: Record<string, number> = {};
-    for (const ini of iniciativas) {
-      const vistos = new Set<string>();
-      for (const p of ini.presentan || []) {
-        const tipo = p.tipo_presenta?.valor;
-        if (tipo && !vistos.has(tipo)) { vistos.add(tipo); proponenteCounts[tipo] = (proponenteCounts[tipo] || 0) + 1; }
-      }
-    }
-    const porProponente = Object.entries(proponenteCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([tipo, total]) => ({ tipo, total }));
-
-    // Por comisión (turnado)
-    const puntoToIni = new Map<string, string>();
-    for (const ini of iniciativas) { if (ini.id_punto) puntoToIni.set(ini.id_punto, ini.id); }
-    const comisionIniSets: Record<string, Set<string>> = {};
-    for (const pc of puntosComisionesRaw as any[]) {
-      const iniId = puntoToIni.get(pc.id_punto);
-      if (!iniId || !pc.id_comision) continue;
-      const cleaned = String(pc.id_comision).replace(/[\[\]"' ]/g, "");
-      for (const cid of cleaned.split(",").filter(Boolean)) {
-        const nombre = comisionesMap.get(cid);
-        if (nombre) {
-          if (!comisionIniSets[nombre]) comisionIniSets[nombre] = new Set();
-          comisionIniSets[nombre].add(iniId);
+    for (const item of reporte) {
+      conteoEstatus[item.observac] = (conteoEstatus[item.observac] || 0) + 1;
+      if (item.tipo) conteoTipo[item.tipo] = (conteoTipo[item.tipo] || 0) + 1;
+      if (item.periodo && item.periodo !== '-') mesCounts[item.periodo] = (mesCounts[item.periodo] || 0) + 1;
+      if (item.comisiones && item.comisiones !== '-') {
+        for (const c of item.comisiones.split(' - ').filter(Boolean)) {
+          comisionCounts[c] = (comisionCounts[c] || 0) + 1;
         }
       }
+      for (const dipId of item.diputado_ids) allDipIdsSet.add(dipId);
     }
-    const porComision = Object.entries(comisionIniSets)
-      .map(([nombre, s]) => ({ nombre, total: s.size }))
+
+    const allDipIds = [...allDipIdsSet];
+
+    // ── 3. Batch: presentantes + género + partido ─────────────────────────────
+    const [presentanRaw, proponentesAllRaw, diputadosRaw, integrantesRaw, generosRaw] = await Promise.all([
+      iniIds.length > 0
+        ? IniciativasPresenta.findAll({
+            where: { id_iniciativa: { [Op.in]: iniIds } },
+            attributes: ["id_iniciativa", "id_tipo_presenta", "id_presenta"],
+            paranoid: false, raw: true
+          })
+        : Promise.resolve([]),
+      Proponentes.findAll({ attributes: ["id", "valor"], raw: true }),
+      allDipIds.length > 0
+        ? Diputado.findAll({ where: { id: { [Op.in]: allDipIds } }, attributes: ["id", "gender_id"], paranoid: false, raw: true })
+        : Promise.resolve([]),
+      allDipIds.length > 0
+        ? IntegranteLegislatura.findAll({ where: { diputado_id: { [Op.in]: allDipIds } }, attributes: ["diputado_id", "partido_id"], paranoid: false, raw: true })
+        : Promise.resolve([]),
+      Gender.findAll({ attributes: ["id", "genero"], paranoid: false, raw: true })
+    ]);
+
+    const proponentesMap = new Map<string, string>((proponentesAllRaw as any[]).map((p: any) => [p.id, p.valor]));
+    const generosMap = new Map<string, string>((generosRaw as any[]).map((g: any) => [g.id, g.genero]));
+    const dipGenderMap = new Map<string, string>();
+    for (const d of diputadosRaw as any[]) {
+      dipGenderMap.set(d.id, d.gender_id ? (generosMap.get(d.gender_id) ?? "") : "");
+    }
+    const dipPartidoIdMap = new Map<string, string>();
+    for (const i of integrantesRaw as any[]) {
+      if (i.diputado_id && i.partido_id && !dipPartidoIdMap.has(i.diputado_id)) dipPartidoIdMap.set(i.diputado_id, i.partido_id);
+    }
+
+    const allPartidoIds = new Set<string>([...dipPartidoIdMap.values()]);
+    const presentanPorIni = new Map<string, any[]>();
+    for (const p of presentanRaw as any[]) {
+      if (!presentanPorIni.has(p.id_iniciativa)) presentanPorIni.set(p.id_iniciativa, []);
+      presentanPorIni.get(p.id_iniciativa)!.push(p);
+      const tipo = proponentesMap.get(p.id_tipo_presenta);
+      if (tipo === "Grupo Parlamentario" && p.id_presenta) allPartidoIds.add(p.id_presenta);
+    }
+
+    const partidosRaw = allPartidoIds.size > 0
+      ? await Partidos.findAll({ where: { id: { [Op.in]: [...allPartidoIds] } }, attributes: ["id", "nombre"], paranoid: false, raw: true })
+      : [];
+    const partidosMap = new Map<string, string>((partidosRaw as any[]).map((p: any) => [p.id, p.nombre]));
+
+    // ── 4. Aggregations: género + partido + grupoStack + proponente ───────────
+    const porGeneroSets: Record<string, Set<string>> = { Mujeres: new Set(), Hombres: new Set(), "S/G": new Set(), Institucional: new Set() };
+    const grupoIntegrantes: Record<string, number> = {};
+    const grupoDirecto: Record<string, number> = {};
+    const partidoMiembrosCounts: Record<string, number> = {};
+    const proponenteCounts: Record<string, number> = {};
+
+    for (const item of reporte) {
+      const presentan = presentanPorIni.get(item.id) || [];
+      const tiposEnIni = new Set<string>();
+      const dipIdsEnIni = new Set<string>(item.diputado_ids);
+      const partidosIntEnIni = new Set<string>();
+      const partidosDirEnIni = new Set<string>();
+
+      for (const p of presentan) {
+        const tPres = proponentesMap.get(p.id_tipo_presenta);
+        if (!tPres) continue;
+        if (!tiposEnIni.has(tPres)) { tiposEnIni.add(tPres); proponenteCounts[tPres] = (proponenteCounts[tPres] || 0) + 1; }
+        if (tPres === "Grupo Parlamentario" && p.id_presenta) {
+          const nombre = partidosMap.get(p.id_presenta);
+          if (nombre) partidosDirEnIni.add(nombre);
+        }
+      }
+
+      if (dipIdsEnIni.size === 0) {
+        porGeneroSets["Institucional"].add(item.id);
+      } else {
+        for (const dipId of dipIdsEnIni) {
+          const lc = (dipGenderMap.get(dipId) ?? "").toLowerCase();
+          if (lc.includes("femen") || lc.includes("mujer")) porGeneroSets["Mujeres"].add(item.id);
+          else if (lc.includes("mascul") || lc.includes("hombre")) porGeneroSets["Hombres"].add(item.id);
+          else porGeneroSets["S/G"].add(item.id);
+          const partidoId = dipPartidoIdMap.get(dipId);
+          if (partidoId) { const n = partidosMap.get(partidoId); if (n) partidosIntEnIni.add(n); }
+        }
+      }
+
+      for (const n of partidosIntEnIni) {
+        grupoIntegrantes[n] = (grupoIntegrantes[n] || 0) + 1;
+        partidoMiembrosCounts[n] = (partidoMiembrosCounts[n] || 0) + 1;
+      }
+      for (const n of partidosDirEnIni) {
+        grupoDirecto[n] = (grupoDirecto[n] || 0) + 1;
+      }
+    }
+
+    const porGenero = Object.entries(porGeneroSets).filter(([, s]) => s.size > 0).map(([genero, s]) => ({ genero, total: s.size }));
+    const porPartido = Object.entries(partidoMiembrosCounts).sort((a, b) => b[1] - a[1]).map(([nombre, total]) => ({ nombre, total }));
+    const allGrupoNombres = new Set([...Object.keys(grupoIntegrantes), ...Object.keys(grupoDirecto)]);
+    const porGrupoStack = [...allGrupoNombres]
+      .map(nombre => ({ nombre, integrantes: grupoIntegrantes[nombre] || 0, directo: grupoDirecto[nombre] || 0, total: (grupoIntegrantes[nombre] || 0) + (grupoDirecto[nombre] || 0) }))
       .sort((a, b) => b.total - a.total).slice(0, 10);
 
+    // ── 5. Votación (para aprobadas) ──────────────────────────────────────────
+    const aprobadosIds = reporte.filter(r => r.observac === "Aprobada").map(r => r.id);
+    let porVotacion: { tipo: string; total: number }[] = [];
+    let porPorcentajeAprobacion: { rango: string; total: number }[] = [];
+
+    if (aprobadosIds.length > 0) {
+      const aprobadosData = await IniciativaPuntoOrden.findAll({
+        where: { id: { [Op.in]: aprobadosIds } },
+        attributes: ["id", "id_punto"],
+        include: [{ model: PuntosOrden, as: "punto", attributes: ["id", "dispensa"], paranoid: false }],
+        paranoid: false
+      });
+      const aprobadosJson = aprobadosData.map((a: any) => a.toJSON());
+
+      const aprobadoPuntoIds = [...new Set(aprobadosJson.map((a: any) => a.id_punto).filter(Boolean))];
+      const estudiosCierreRaw = aprobadoPuntoIds.length > 0
+        ? await IniciativaEstudio.findAll({
+            where: { punto_origen_id: { [Op.in]: aprobadoPuntoIds }, status: "3" },
+            attributes: ["punto_origen_id", "punto_destino_id"], paranoid: false, raw: true
+          })
+        : [];
+      const estudiosDestinoMap3 = new Map<string, string[]>();
+      for (const e of estudiosCierreRaw as any[]) {
+        if (!e.punto_destino_id) continue;
+        if (!estudiosDestinoMap3.has(e.punto_origen_id)) estudiosDestinoMap3.set(e.punto_origen_id, []);
+        estudiosDestinoMap3.get(e.punto_origen_id)!.push(e.punto_destino_id);
+      }
+
+      const votingPuntoToIni = new Map<string, string>();
+      for (const a of aprobadosJson) {
+        if (!a.id_punto) continue;
+        if (String(a.punto?.dispensa) === "1") {
+          votingPuntoToIni.set(a.id_punto, a.id);
+        } else {
+          const directDestinos = estudiosDestinoMap3.get(a.id_punto) || [];
+          if (directDestinos.length > 0) {
+            for (const d of directDestinos) votingPuntoToIni.set(d, a.id);
+          } else {
+            votingPuntoToIni.set(a.id_punto, a.id);
+          }
+        }
+      }
+
+      const votingPuntoIds = [...votingPuntoToIni.keys()];
+      const temasRaw = votingPuntoIds.length > 0
+        ? await TemasPuntosVotos.findAll({ where: { id_punto: { [Op.in]: votingPuntoIds } }, attributes: ["id", "id_punto"], paranoid: false, raw: true })
+        : [];
+      const temaIds = (temasRaw as any[]).map((t: any) => t.id);
+      const temaToPunto = new Map<string, string>((temasRaw as any[]).map((t: any) => [t.id, t.id_punto]));
+      const votosRaw = temaIds.length > 0
+        ? await VotosPunto.findAll({ where: { id_tema_punto_voto: { [Op.in]: temaIds } }, attributes: ["id_tema_punto_voto", "sentido"], paranoid: false, raw: true })
+        : [];
+      const votosPorPunto = new Map<string, { favor: number; contra: number; abstencion: number }>();
+      for (const voto of votosRaw as any[]) {
+        const pid = temaToPunto.get(voto.id_tema_punto_voto);
+        if (!pid) continue;
+        if (!votosPorPunto.has(pid)) votosPorPunto.set(pid, { favor: 0, contra: 0, abstencion: 0 });
+        const e = votosPorPunto.get(pid)!;
+        if (voto.sentido === 1) e.favor++;
+        else if (voto.sentido === 2) e.abstencion++;
+        else if (voto.sentido === 3) e.contra++;
+      }
+
+      const votacionCats: Record<string, number> = { "Unanimidad (100%)": 0, "90% o más": 0, "80% o más": 0, "Mayoría (50%+1)": 0, "Sin datos de votación": 0 };
+      const pctRangoCats: Record<string, number> = { "100%": 0, "90% – 99%": 0, "80% – 89%": 0, "70% – 79%": 0, "60% – 69%": 0, "50% – 59%": 0, "Sin datos": 0 };
+      const iniYaContada = new Set<string>();
+      for (const [pid, iniId] of votingPuntoToIni) {
+        if (iniYaContada.has(iniId)) continue;
+        iniYaContada.add(iniId);
+        const votos = votosPorPunto.get(pid);
+        if (!votos) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
+        const validos = votos.favor + votos.contra + votos.abstencion;
+        if (validos === 0) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
+        const pct = votos.favor / validos;
+        if (pct >= 1)                        votacionCats["Unanimidad (100%)"]++;
+        else if (pct >= 0.9)                 votacionCats["90% o más"]++;
+        else if (pct >= 0.8)                 votacionCats["80% o más"]++;
+        else if (votos.favor > validos / 2)  votacionCats["Mayoría (50%+1)"]++;
+        else                                 votacionCats["Sin datos de votación"]++;
+        if      (pct >= 1.0)                 pctRangoCats["100%"]++;
+        else if (pct >= 0.9)                 pctRangoCats["90% – 99%"]++;
+        else if (pct >= 0.8)                 pctRangoCats["80% – 89%"]++;
+        else if (pct >= 0.7)                 pctRangoCats["70% – 79%"]++;
+        else if (pct >= 0.6)                 pctRangoCats["60% – 69%"]++;
+        else if (votos.favor > validos / 2)  pctRangoCats["50% – 59%"]++;
+        else                                 pctRangoCats["Sin datos"]++;
+      }
+      const sinIden = aprobadosIds.filter(id => !iniYaContada.has(id)).length;
+      votacionCats["Sin datos de votación"] += sinIden;
+      pctRangoCats["Sin datos"] += sinIden;
+      porVotacion = Object.entries(votacionCats).filter(([, v]) => v > 0).map(([tipo, total]) => ({ tipo, total }));
+      porPorcentajeAprobacion = Object.entries(pctRangoCats).filter(([, v]) => v > 0).map(([rango, total]) => ({ rango, total }));
+    }
+
     return res.status(200).json({
-      total: iniciativas.length,
+      total: reporte.length,
       porTipo: Object.entries(conteoTipo).map(([tipo, total]) => ({ tipo, total })),
       porEstatus: Object.entries(conteoEstatus).map(([estatus, total]) => ({ estatus, total })),
       porGenero,
-      porGrupo,
-      porMes,
-      porProponente,
-      porComision
+      porGrupoStack,
+      porMes: Object.entries(mesCounts).sort((a, b) => a[0].localeCompare(b[0])).map(([mes, total]) => ({ mes, total })),
+      porProponente: Object.entries(proponenteCounts).sort((a, b) => b[1] - a[1]).map(([tipo, total]) => ({ tipo, total })),
+      porComision: Object.entries(comisionCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([nombre, total]) => ({ nombre, total })),
+      porPartido,
+      porVotacion,
+      porPorcentajeAprobacion
     });
   } catch (error: any) {
     console.error("Error al obtener estadísticas de iniciativas:", error);

@@ -8,10 +8,13 @@ interface EstadisticasIniciativas {
   porTipo: { tipo: string; total: number }[];
   porEstatus: { estatus: string; total: number }[];
   porGenero: { genero: string; total: number }[];
-  porGrupo: { nombre: string; total: number }[];
+  porGrupoStack: { nombre: string; integrantes: number; directo: number; total: number }[];
   porMes: { mes: string; total: number }[];
   porProponente: { tipo: string; total: number }[];
   porComision: { nombre: string; total: number }[];
+  porPartido: { nombre: string; total: number }[];
+  porVotacion: { tipo: string; total: number }[];
+  porPorcentajeAprobacion: { rango: string; total: number }[];
 }
 
 @Component({
@@ -32,6 +35,9 @@ export class ReporteIniciativasComponent implements OnInit {
   grupoChart: any = {};
   comisionChart: any = {};
   proponenteChart: any = {};
+  partidoChart: any = {};
+  votacionChart: any = {};
+  porcentajeAprobacionChart: any = {};
 
   constructor(private _eventoService: EventoService) {}
 
@@ -60,11 +66,20 @@ export class ReporteIniciativasComponent implements OnInit {
     this.buildGrupo();
     this.buildComision();
     this.buildProponente();
+    this.buildPartido();
+    this.buildVotacion();
+    this.buildPorcentajeAprobacion();
   }
 
   private buildGenero(): void {
     const d = this.datos!;
-    const orden = ['Mujeres', 'Hombres', 'Institucional'];
+    const orden = ['Mujeres', 'Hombres', 'S/G', 'Institucional'];
+    const coloresGenero: Record<string, string> = {
+      'Mujeres':      '#ec4899',
+      'Hombres':      '#3b82f6',
+      'S/G':          '#f59e0b',
+      'Institucional':'#94a3b8'
+    };
     const sorted = orden
       .map(g => d.porGenero.find(x => x.genero === g))
       .filter(Boolean) as { genero: string; total: number }[];
@@ -75,7 +90,7 @@ export class ReporteIniciativasComponent implements OnInit {
       series: all.map(g => g.total),
       chart: { type: 'donut', height: 290, fontFamily: 'inherit' },
       labels: all.map(g => g.genero),
-      colors: ['#ec4899', '#3b82f6', '#94a3b8'],
+      colors: all.map(g => coloresGenero[g.genero] ?? '#64748b'),
       legend: { position: 'bottom', fontSize: '13px' },
       plotOptions: { pie: { donut: { size: '68%', labels: {
         show: true,
@@ -164,19 +179,24 @@ export class ReporteIniciativasComponent implements OnInit {
 
   private buildGrupo(): void {
     const d = this.datos!;
-    const rev = [...d.porGrupo].reverse();
-    const height = Math.max(260, rev.length * 38 + 60);
+    if (!d.porGrupoStack?.length) return;
+    const rev = [...d.porGrupoStack].reverse();
+    const height = Math.max(260, rev.length * 42 + 80);
 
     this.grupoChart = {
-      series: [{ name: 'Iniciativas', data: rev.map(g => g.total) }],
-      chart: { type: 'bar', height, fontFamily: 'inherit', toolbar: { show: false } },
-      plotOptions: { bar: { horizontal: true, borderRadius: 4, dataLabels: { position: 'top' }, barHeight: '60%' } },
+      series: [
+        { name: 'Por Integrantes', data: rev.map(g => g.integrantes) },
+        { name: 'Directo del Grupo', data: rev.map(g => g.directo) }
+      ],
+      chart: { type: 'bar', height, fontFamily: 'inherit', toolbar: { show: false }, stacked: true },
+      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%' } },
       xaxis: { categories: rev.map(g => g.nombre), labels: { style: { fontSize: '11px', colors: '#64748b' } } },
-      yaxis: { labels: { style: { fontSize: '11px', colors: '#374151' }, maxWidth: 170 } },
-      colors: ['#800048'],
-      dataLabels: { enabled: true, offsetX: 8, style: { fontSize: '11px', colors: ['#374151'], fontWeight: 600 } },
+      yaxis: { labels: { style: { fontSize: '11px', colors: '#374151' }, maxWidth: 180 } },
+      colors: ['#800048', '#6366f1'],
+      dataLabels: { enabled: false },
+      legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
       grid: { borderColor: '#f1f5f9', xaxis: { lines: { show: true } } },
-      tooltip: { y: { formatter: (v: number) => `${v} iniciativas` } }
+      tooltip: { y: { formatter: (v: number) => `${v} iniciativas` }, shared: true, intersect: false }
     };
   }
 
@@ -214,7 +234,109 @@ export class ReporteIniciativasComponent implements OnInit {
     };
   }
 
+  private buildVotacion(): void {
+    const d = this.datos!;
+    if (!d.porVotacion?.length) return;
+
+    const orden = ['Unanimidad (100%)', '90% o más', '80% o más', 'Mayoría (50%+1)', 'Sin datos de votación'];
+    const sorted = orden
+      .map(k => d.porVotacion.find(x => x.tipo === k))
+      .filter(Boolean) as { tipo: string; total: number }[];
+    const otros = d.porVotacion.filter(x => !orden.includes(x.tipo));
+    const all = [...sorted, ...otros];
+
+    const colores: Record<string, string> = {
+      'Unanimidad (100%)':    '#10b981',
+      '90% o más':            '#3b82f6',
+      '80% o más':            '#f59e0b',
+      'Mayoría (50%+1)':      '#8b5cf6',
+      'Sin datos de votación':'#94a3b8'
+    };
+
+    this.votacionChart = {
+      series: all.map(v => v.total),
+      chart: { type: 'donut', height: 290, fontFamily: 'inherit' },
+      labels: all.map(v => v.tipo),
+      colors: all.map(v => colores[v.tipo] ?? '#64748b'),
+      legend: { position: 'bottom', fontSize: '12px' },
+      plotOptions: { pie: { donut: { size: '68%', labels: {
+        show: true,
+        total: {
+          show: true, label: 'Aprobadas', color: '#374151', fontSize: '12px', fontWeight: 700,
+          formatter: () => String(all.filter(v => v.tipo !== 'Sin datos de votación').reduce((s, v) => s + v.total, 0))
+        }
+      } } } },
+      dataLabels: { enabled: true, formatter: (val: number) => `${Math.round(val)}%`,
+        style: { fontSize: '11px', fontWeight: 600 }, dropShadow: { enabled: false } },
+      stroke: { width: 0 },
+      tooltip: { y: { formatter: (v: number) => `${v} iniciativas` } },
+      responsive: [{ breakpoint: 480, options: { chart: { height: 250 } } }]
+    };
+  }
+
+  private buildPartido(): void {
+    const d = this.datos!;
+    if (!d.porPartido?.length) return;
+    const rev = [...d.porPartido].reverse();
+    const height = Math.max(260, rev.length * 38 + 60);
+    this.partidoChart = {
+      series: [{ name: 'Iniciativas', data: rev.map(p => p.total) }],
+      chart: { type: 'bar', height, fontFamily: 'inherit', toolbar: { show: false } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%', dataLabels: { position: 'top' } } },
+      xaxis: { categories: rev.map(p => p.nombre), labels: { style: { fontSize: '11px', colors: '#64748b' } } },
+      yaxis: { labels: { style: { fontSize: '11px', colors: '#374151' }, maxWidth: 180 } },
+      colors: ['#6366f1'],
+      dataLabels: { enabled: true, offsetX: 8, style: { fontSize: '11px', colors: ['#374151'], fontWeight: 600 } },
+      grid: { borderColor: '#f1f5f9', xaxis: { lines: { show: true } } },
+      tooltip: { y: { formatter: (v: number) => `${v} iniciativas` } }
+    };
+  }
+
+  private buildPorcentajeAprobacion(): void {
+    const d = this.datos!;
+    if (!d.porPorcentajeAprobacion?.length) return;
+
+    const ORDEN = ['100%', '90% – 99%', '80% – 89%', '70% – 79%', '60% – 69%', '50% – 59%', 'Sin datos'];
+    const COLORES: Record<string, string> = {
+      '100%':       '#10b981',
+      '90% – 99%':  '#34d399',
+      '80% – 89%':  '#fbbf24',
+      '70% – 79%':  '#f97316',
+      '60% – 69%':  '#ef4444',
+      '50% – 59%':  '#dc2626',
+      'Sin datos':  '#94a3b8'
+    };
+
+    const sorted = ORDEN
+      .map(r => d.porPorcentajeAprobacion.find(x => x.rango === r))
+      .filter(Boolean) as { rango: string; total: number }[];
+    const otros = d.porPorcentajeAprobacion.filter(x => !ORDEN.includes(x.rango));
+    const all = [...sorted, ...otros];
+
+    this.porcentajeAprobacionChart = {
+      series: [{ name: 'Iniciativas aprobadas', data: all.map(x => x.total) }],
+      chart: { type: 'bar', height: 300, fontFamily: 'inherit', toolbar: { show: false } },
+      plotOptions: { bar: { borderRadius: 5, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } },
+      xaxis: {
+        categories: all.map(x => x.rango),
+        labels: { style: { fontSize: '11px', colors: '#64748b' } }
+      },
+      yaxis: { labels: { formatter: (v: number) => String(Math.round(v)), style: { colors: '#64748b' } } },
+      colors: all.map(x => COLORES[x.rango] ?? '#64748b'),
+      dataLabels: {
+        enabled: true, offsetY: -18,
+        style: { fontSize: '12px', colors: ['#374151'], fontWeight: 700 },
+        formatter: (v: number) => v > 0 ? String(v) : ''
+      },
+      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+      tooltip: { y: { formatter: (v: number) => `${v} iniciativas` } }
+    };
+  }
+
   get aprobadas(): number { return this.datos?.porEstatus.find(e => e.estatus === 'Aprobada')?.total ?? 0; }
+  get conDatosVotacion(): number {
+    return this.datos?.porVotacion?.filter(v => v.tipo !== 'Sin datos de votación').reduce((s, v) => s + v.total, 0) ?? 0;
+  }
   get enEstudio(): number { return this.datos?.porEstatus.find(e => e.estatus === 'En estudio')?.total ?? 0; }
   get rechazadas(): number {
     return (this.datos?.porEstatus.find(e => e.estatus === 'Rechazada en sesión')?.total ?? 0)
@@ -224,8 +346,13 @@ export class ReporteIniciativasComponent implements OnInit {
   get pendientes(): number { return this.datos?.porEstatus.find(e => e.estatus === 'Pendiente')?.total ?? 0; }
   get mujeres(): number { return this.datos?.porGenero.find(g => g.genero === 'Mujeres')?.total ?? 0; }
   get hombres(): number { return this.datos?.porGenero.find(g => g.genero === 'Hombres')?.total ?? 0; }
+  get sg(): number { return this.datos?.porGenero.find(g => g.genero === 'S/G')?.total ?? 0; }
 
   pct(val: number, total: number): number {
     return total === 0 ? 0 : Math.round((val / total) * 100);
+  }
+
+  dotClass(tipo: string): string {
+    return 'vl-dot-' + tipo.replace(/[^a-z]/gi, '').toLowerCase().slice(0, 4);
   }
 }
