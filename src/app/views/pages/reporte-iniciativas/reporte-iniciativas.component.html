@@ -74,8 +74,8 @@
       </div>
     </div>
 
-    <!-- Fila 1: tres donuts -->
-    <div class="charts-row-3">
+    <!-- Fila 1: cuatro donuts -->
+    <div class="charts-row-4">
       <div class="chart-card">
         <div class="chart-card-header">
           <i class="bi bi-gender-ambiguous"></i>
@@ -96,6 +96,7 @@
         <div class="gender-legend">
           <span class="gl-item gl-mujer"><i class="bi bi-circle-fill"></i> Mujeres · {{ mujeres }} ({{ pct(mujeres, datos.total) }}%)</span>
           <span class="gl-item gl-hombre"><i class="bi bi-circle-fill"></i> Hombres · {{ hombres }} ({{ pct(hombres, datos.total) }}%)</span>
+          <span class="gl-item gl-sg" *ngIf="sg > 0"><i class="bi bi-circle-fill"></i> S/G · {{ sg }} ({{ pct(sg, datos.total) }}%)</span>
         </div>
       </div>
 
@@ -136,6 +137,35 @@
           [responsive]="tipoChart.responsive"
         ></apx-chart>
       </div>
+
+      <!-- Votación: solo si hay aprobadas -->
+      <div class="chart-card" *ngIf="aprobadas > 0">
+        <div class="chart-card-header">
+          <i class="bi bi-bar-chart-steps"></i>
+          <span>Tipo de Aprobación</span>
+          <span class="chart-badge">{{ conDatosVotacion }} con votos</span>
+        </div>
+        <apx-chart
+          [series]="votacionChart.series"
+          [chart]="votacionChart.chart"
+          [labels]="votacionChart.labels"
+          [colors]="votacionChart.colors"
+          [legend]="votacionChart.legend"
+          [plotOptions]="votacionChart.plotOptions"
+          [dataLabels]="votacionChart.dataLabels"
+          [stroke]="votacionChart.stroke"
+          [tooltip]="votacionChart.tooltip"
+          [responsive]="votacionChart.responsive"
+        ></apx-chart>
+        <div class="votacion-legend">
+          <div class="vl-row" *ngFor="let v of datos.porVotacion">
+            <span class="vl-dot" [class]="dotClass(v.tipo)"></span>
+            <span class="vl-label">{{ v.tipo }}</span>
+            <span class="vl-count">{{ v.total }}</span>
+            <span class="vl-pct">{{ pct(v.total, aprobadas) }}%</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Tendencia mensual -->
@@ -160,13 +190,52 @@
       ></apx-chart>
     </div>
 
-    <!-- Fila 2: grupos y comisiones -->
+    <!-- Votaciones aprobadas por porcentaje -->
+    <div class="chart-card chart-full" *ngIf="datos.porPorcentajeAprobacion.length">
+      <div class="chart-card-header">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Votaciones Aprobadas por Porcentaje</span>
+        <span class="chart-badge">{{ aprobadas }} aprobadas</span>
+      </div>
+      <apx-chart
+        [series]="porcentajeAprobacionChart.series"
+        [chart]="porcentajeAprobacionChart.chart"
+        [xaxis]="porcentajeAprobacionChart.xaxis"
+        [yaxis]="porcentajeAprobacionChart.yaxis"
+        [colors]="porcentajeAprobacionChart.colors"
+        [plotOptions]="porcentajeAprobacionChart.plotOptions"
+        [dataLabels]="porcentajeAprobacionChart.dataLabels"
+        [grid]="porcentajeAprobacionChart.grid"
+        [tooltip]="porcentajeAprobacionChart.tooltip"
+      ></apx-chart>
+    </div>
+
+    <!-- Fila 2: partido + comisiones -->
     <div class="charts-row-2">
-      <div class="chart-card" *ngIf="datos.porGrupo.length > 0">
+      <div class="chart-card" *ngIf="datos.porPartido.length > 0">
+        <div class="chart-card-header">
+          <i class="bi bi-flag-fill"></i>
+          <span>Iniciativas por Partido</span>
+          <span class="chart-badge">Por integrante</span>
+        </div>
+        <apx-chart
+          [series]="partidoChart.series"
+          [chart]="partidoChart.chart"
+          [xaxis]="partidoChart.xaxis"
+          [yaxis]="partidoChart.yaxis"
+          [colors]="partidoChart.colors"
+          [plotOptions]="partidoChart.plotOptions"
+          [dataLabels]="partidoChart.dataLabels"
+          [grid]="partidoChart.grid"
+          [tooltip]="partidoChart.tooltip"
+        ></apx-chart>
+      </div>
+
+      <div class="chart-card" *ngIf="datos.porGrupoStack.length > 0">
         <div class="chart-card-header">
           <i class="bi bi-people-fill"></i>
           <span>Por Grupo Parlamentario</span>
-          <span class="chart-badge">Top {{ datos.porGrupo.length }}</span>
+          <span class="chart-badge">Top {{ datos.porGrupoStack.length }}</span>
         </div>
         <apx-chart
           [series]="grupoChart.series"
@@ -184,7 +253,7 @@
       <div class="chart-card" *ngIf="datos.porComision.length > 0">
         <div class="chart-card-header">
           <i class="bi bi-building-fill"></i>
-          <span>Por Comisión Legislativa</span>
+          <span>Iniciativas Turnadas a Comisiones</span>
           <span class="chart-badge">Top {{ datos.porComision.length }}</span>
         </div>
         <apx-chart
