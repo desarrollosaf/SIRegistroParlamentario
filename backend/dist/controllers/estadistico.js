@@ -530,7 +530,10 @@ const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0
                     aprobadas: contarPorObservacion(minutas, "Aprobada"),
                     total: minutas.length,
                 },
-                puntos_acuerdo: { total: puntosAcuerdo.length },
+                puntos_acuerdo: {
+                    total: puntosAcuerdo.length,
+                    aprobadas: contarPorObservacion(puntosAcuerdo, "Aprobada"),
+                },
                 totales_generales: {
                     iniciativas: iniciativas.length,
                     minutas: minutas.length,

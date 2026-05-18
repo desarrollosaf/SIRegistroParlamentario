@@ -596,7 +596,10 @@ export const getResumenTotalesEndpoint = async (req: Request, res: Response): Pr
           aprobadas: contarPorObservacion(minutas, "Aprobada"),
           total:     minutas.length,
         },
-        puntos_acuerdo: { total: puntosAcuerdo.length },
+        puntos_acuerdo: { 
+          total: puntosAcuerdo.length,
+          aprobadas: contarPorObservacion(puntosAcuerdo, "Aprobada"),
+        },
         totales_generales: {
           iniciativas:    iniciativas.length,
           minutas:        minutas.length,
