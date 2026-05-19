@@ -18,4 +18,6 @@ router.delete('/api/iniciativas/:id/votacion', iniciativas_1.eliminarVotacion);
 router.delete('/api/iniciativas/eliminarvya/:id/', iniciativas_1.eliminarAsistenciaYVotacion);
 router.get('/api/iniciativas/votos-dictamen/:id', iniciativas_1.getVotosDictamen);
 router.get('/api/iniciativas/votos-cierre/:id/', iniciativas_1.getVotosCierre);
+router.get('/api/iniciativas/edicion/:id', iniciativas_1.getEdicionIniciativa);
+router.put('/api/iniciativas/edicion/:id', iniciativas_1.updateEdicionIniciativa);
 exports.default = router;

@@ -2038,6 +2038,9 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
       .sort((a, b) => b.total - a.total).slice(0, 10);
 
     // ── 5. Votación (para aprobadas) ──────────────────────────────────────────
+    // TemasPuntosVotos.id_punto almacena PuntosOrden.id (INTEGER), igual que en getifnini.
+    // Para dispensa: punto de votación = PuntosOrden.id del punto original.
+    // Para cierre: punto de votación = PuntosOrden.id del cierre destino (c.iniciativa?.id).
     const aprobadosIds = reporte.filter(r => r.observac === "Aprobada").map(r => r.id);
     let porVotacion: { tipo: string; total: number }[] = [];
     let porPorcentajeAprobacion: { rango: string; total: number }[] = [];
@@ -2051,50 +2054,60 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
       });
       const aprobadosJson = aprobadosData.map((a: any) => a.toJSON());
 
-      const aprobadoPuntoIds = [...new Set(aprobadosJson.map((a: any) => a.id_punto).filter(Boolean))];
-      const estudiosCierreRaw = aprobadoPuntoIds.length > 0
-        ? await IniciativaEstudio.findAll({
-            where: { punto_origen_id: { [Op.in]: aprobadoPuntoIds }, status: "3" },
-            attributes: ["punto_origen_id", "punto_destino_id"], paranoid: false, raw: true
-          })
-        : [];
-      const estudiosDestinoMap3 = new Map<string, string[]>();
-      for (const e of estudiosCierreRaw as any[]) {
-        if (!e.punto_destino_id) continue;
-        if (!estudiosDestinoMap3.has(e.punto_origen_id)) estudiosDestinoMap3.set(e.punto_origen_id, []);
-        estudiosDestinoMap3.get(e.punto_origen_id)!.push(e.punto_destino_id);
+      // Separate dispensa vs cierre
+      const dispensaInis: any[] = [];
+      const noDispensaInis: any[] = [];
+      for (const a of aprobadosJson) {
+        if (String(a.punto?.dispensa) === "1") dispensaInis.push(a);
+        else noDispensaInis.push(a);
       }
 
-      const votingPuntoToIni = new Map<string, string>();
-      for (const a of aprobadosJson) {
-        if (!a.id_punto) continue;
-        if (String(a.punto?.dispensa) === "1") {
-          votingPuntoToIni.set(a.id_punto, a.id);
-        } else {
-          const directDestinos = estudiosDestinoMap3.get(a.id_punto) || [];
-          if (directDestinos.length > 0) {
-            for (const d of directDestinos) votingPuntoToIni.set(d, a.id);
-          } else {
-            votingPuntoToIni.set(a.id_punto, a.id);
-          }
+      // Map: PuntosOrden.id (INTEGER) → iniciativa UUID
+      const votingIntPuntoToIni = new Map<number, string>();
+
+      // Dispensa: voting punto = PuntosOrden.id del punto original
+      for (const a of dispensaInis) {
+        if (a.punto?.id != null) votingIntPuntoToIni.set(a.punto.id, a.id);
+      }
+
+      // Cierre: fetch cierres con include as "iniciativa" → c.iniciativa.id = PuntosOrden.id (INTEGER) del destino
+      const noDispensaPuntoUUIDs = noDispensaInis.map((a: any) => a.id_punto).filter(Boolean);
+      if (noDispensaPuntoUUIDs.length > 0) {
+        const cierresRaw = await IniciativaEstudio.findAll({
+          where: { punto_origen_id: { [Op.in]: noDispensaPuntoUUIDs }, status: "3" },
+          attributes: ["punto_origen_id", "punto_destino_id"],
+          include: [{ model: PuntosOrden, as: "iniciativa", attributes: ["id"], paranoid: false }],
+          paranoid: false
+        });
+        // punto_origen_id (CHAR(36)) → destino PuntosOrden.id (INTEGER)
+        const cierreOrigenToDestInt = new Map<string, number>();
+        for (const c of cierresRaw) {
+          const cj = (c as any).toJSON();
+          if (cj.iniciativa?.id != null) cierreOrigenToDestInt.set(cj.punto_origen_id, cj.iniciativa.id);
+        }
+        for (const a of noDispensaInis) {
+          const destInt = cierreOrigenToDestInt.get(a.id_punto);
+          if (destInt != null) votingIntPuntoToIni.set(destInt, a.id);
+          else if (a.punto?.id != null) votingIntPuntoToIni.set(a.punto.id, a.id); // fallback
         }
       }
 
-      const votingPuntoIds = [...votingPuntoToIni.keys()];
-      const temasRaw = votingPuntoIds.length > 0
-        ? await TemasPuntosVotos.findAll({ where: { id_punto: { [Op.in]: votingPuntoIds } }, attributes: ["id", "id_punto"], paranoid: false, raw: true })
+      // TemasPuntosVotos WHERE id_punto IN [INTEGER ids] — MySQL coerce CHAR→INT
+      const votingIntIds = [...votingIntPuntoToIni.keys()];
+      const temasRaw = votingIntIds.length > 0
+        ? await TemasPuntosVotos.findAll({ where: { id_punto: { [Op.in]: votingIntIds } }, attributes: ["id", "id_punto"], paranoid: false, raw: true })
         : [];
       const temaIds = (temasRaw as any[]).map((t: any) => t.id);
-      const temaToPunto = new Map<string, string>((temasRaw as any[]).map((t: any) => [t.id, t.id_punto]));
+      const temaToPuntoInt = new Map<string, number>((temasRaw as any[]).map((t: any) => [t.id, Number(t.id_punto)]));
       const votosRaw = temaIds.length > 0
         ? await VotosPunto.findAll({ where: { id_tema_punto_voto: { [Op.in]: temaIds } }, attributes: ["id_tema_punto_voto", "sentido"], paranoid: false, raw: true })
         : [];
-      const votosPorPunto = new Map<string, { favor: number; contra: number; abstencion: number }>();
+      const votosPorPuntoInt = new Map<number, { favor: number; contra: number; abstencion: number }>();
       for (const voto of votosRaw as any[]) {
-        const pid = temaToPunto.get(voto.id_tema_punto_voto);
-        if (!pid) continue;
-        if (!votosPorPunto.has(pid)) votosPorPunto.set(pid, { favor: 0, contra: 0, abstencion: 0 });
-        const e = votosPorPunto.get(pid)!;
+        const pid = temaToPuntoInt.get(voto.id_tema_punto_voto);
+        if (pid == null) continue;
+        if (!votosPorPuntoInt.has(pid)) votosPorPuntoInt.set(pid, { favor: 0, contra: 0, abstencion: 0 });
+        const e = votosPorPuntoInt.get(pid)!;
         if (voto.sentido === 1) e.favor++;
         else if (voto.sentido === 2) e.abstencion++;
         else if (voto.sentido === 3) e.contra++;
@@ -2103,10 +2116,10 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
       const votacionCats: Record<string, number> = { "Unanimidad (100%)": 0, "90% o más": 0, "80% o más": 0, "Mayoría (50%+1)": 0, "Sin datos de votación": 0 };
       const pctRangoCats: Record<string, number> = { "100%": 0, "90% – 99%": 0, "80% – 89%": 0, "70% – 79%": 0, "60% – 69%": 0, "50% – 59%": 0, "Sin datos": 0 };
       const iniYaContada = new Set<string>();
-      for (const [pid, iniId] of votingPuntoToIni) {
+      for (const [puntoInt, iniId] of votingIntPuntoToIni) {
         if (iniYaContada.has(iniId)) continue;
         iniYaContada.add(iniId);
-        const votos = votosPorPunto.get(pid);
+        const votos = votosPorPuntoInt.get(puntoInt);
         if (!votos) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
         const validos = votos.favor + votos.contra + votos.abstencion;
         if (validos === 0) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
