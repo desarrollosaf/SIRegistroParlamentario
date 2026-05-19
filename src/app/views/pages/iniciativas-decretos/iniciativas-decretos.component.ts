@@ -60,6 +60,13 @@ export interface ArchivoExistente {
   id_iniciativa: string;
 }
 
+export interface EditPresentante {
+  id_tipo_presenta: number | null;
+  tipo_nombre: string;
+  id_presenta: string | null;
+  presenta_nombre?: string;
+}
+
 @Component({
   selector: 'app-iniciativas-decretos',
   standalone: true,
@@ -93,7 +100,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   readonly tipoMap = TIPO_MAP;
   readonly tiposDisponibles = [1, 2, 3] as const;
 
-  // --- Modal ---
+  // --- Modal carga ---
   modalVisible = false;
   iniciativaSeleccionada: Iniciativa | null = null;
   descripcionInput = '';
@@ -105,6 +112,19 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
 
   // Archivos nuevos subidos en esta sesión (antes de guardar en backend)
   archivosNuevos: { descripcion: string; archivo: File; urlPreview: string }[] = [];
+
+  // --- Modal edición ---
+  editModalVisible = false;
+  editCargando = false;
+  editGuardando = false;
+  editIniciativaId: string | null = null;
+  editIniciativaNombre = '';
+  editSeTurna = false;
+  editTurnoComisionIds: string[] = [];
+  editPresentantes: EditPresentante[] = [];
+  editCatalogos: { proponentes: any[]; diputados: any[]; partidos: any[]; comisiones: any[]; municipios: any[]; legislaturas: any[]; secretarias: any[]; catfundep: Record<string, any[]> } = {
+    proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {}
+  };
 
   // --- AG Grid ---
   private gridApi!: GridApi<Iniciativa>;
@@ -168,23 +188,33 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     },
     {
       headerName: 'Acción',
-      width: 280, // aumenta un poco el ancho
+      width: 370,
       pinned: 'right',
       sortable: false,
       filter: false,
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0 8px' },
+      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '0 6px' },
       cellRenderer: (params: any) => {
         const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'display:flex;gap:6px;align-items:center;width:100%;';
+        wrapper.style.cssText = 'display:flex;gap:5px;align-items:center;width:100%;';
+
+        const btnStyle = (border: string, bg: string, color: string) =>
+          `padding:5px 8px;border-radius:6px;border:1px solid ${border};background:${bg};color:${color};font-size:11px;cursor:pointer;white-space:nowrap;font-weight:500;flex:1;`;
+
+        // Botón Editar
+        const btnEditar = document.createElement('button');
+        btnEditar.innerText = '✏ Editar';
+        btnEditar.style.cssText = btnStyle('#fde68a', '#fefce8', '#a16207');
+        btnEditar.addEventListener('mouseenter', () => { btnEditar.style.background = '#fef9c3'; });
+        btnEditar.addEventListener('mouseleave', () => { btnEditar.style.background = '#fefce8'; });
+        btnEditar.addEventListener('click', () => {
+          this.abrirModalEditar(params.data);
+          this.cdr.detectChanges();
+        });
 
         // Botón Cargar
         const btnCargar = document.createElement('button');
         btnCargar.innerText = '+ Cargar';
-        btnCargar.style.cssText = `
-          padding:6px 10px;border-radius:6px;border:1px solid #bfdbfe;
-          background:#eff6ff;color:#1d4ed8;font-size:12px;
-          cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
-        `;
+        btnCargar.style.cssText = btnStyle('#bfdbfe', '#eff6ff', '#1d4ed8');
         btnCargar.addEventListener('mouseenter', () => { btnCargar.style.background = '#dbeafe'; });
         btnCargar.addEventListener('mouseleave', () => { btnCargar.style.background = '#eff6ff'; });
         btnCargar.addEventListener('click', () => {
@@ -192,33 +222,26 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
 
-
+        // Botón Votación
         const btnVotacion = document.createElement('button');
-          btnVotacion.innerText = '🗳 Votación';
-          btnVotacion.style.cssText = `
-            padding:6px 10px;border-radius:6px;border:1px solid #c4b5fd;
-            background:#f5f3ff;color:#6d28d9;font-size:12px;
-            cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
-          `;
-          btnVotacion.addEventListener('mouseenter', () => { btnVotacion.style.background = '#ede9fe'; });
-          btnVotacion.addEventListener('mouseleave', () => { btnVotacion.style.background = '#f5f3ff'; });
-          btnVotacion.addEventListener('click', () => {
-            this.abrirVotacion(params.data);
-            this.cdr.detectChanges();
+        btnVotacion.innerText = '🗳 Voto';
+        btnVotacion.style.cssText = btnStyle('#c4b5fd', '#f5f3ff', '#6d28d9');
+        btnVotacion.addEventListener('mouseenter', () => { btnVotacion.style.background = '#ede9fe'; });
+        btnVotacion.addEventListener('mouseleave', () => { btnVotacion.style.background = '#f5f3ff'; });
+        btnVotacion.addEventListener('click', () => {
+          this.abrirVotacion(params.data);
+          this.cdr.detectChanges();
         });
-
 
         // Botón Publicar/Despublicar
         const esPublico = params.data.publico === 1;
         const btnPublico = document.createElement('button');
-        btnPublico.innerText = esPublico ? '👁 Público' : '🚫 Privado';
-        btnPublico.style.cssText = `
-          padding:6px 10px;border-radius:6px;font-size:12px;
-          cursor:pointer;white-space:nowrap;font-weight:500;flex:1;
-          border:1px solid ${esPublico ? '#bbf7d0' : '#fecaca'};
-          background:${esPublico ? '#f0fdf4' : '#fff1f2'};
-          color:${esPublico ? '#15803d' : '#dc2626'};
-        `;
+        btnPublico.innerText = esPublico ? '👁 Público' : '🚫 Priv.';
+        btnPublico.style.cssText = btnStyle(
+          esPublico ? '#bbf7d0' : '#fecaca',
+          esPublico ? '#f0fdf4' : '#fff1f2',
+          esPublico ? '#15803d' : '#dc2626'
+        );
         btnPublico.addEventListener('mouseenter', () => {
           btnPublico.style.background = esPublico ? '#dcfce7' : '#ffe4e6';
         });
@@ -230,6 +253,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
 
+        wrapper.appendChild(btnEditar);
         wrapper.appendChild(btnCargar);
         wrapper.appendChild(btnPublico);
         wrapper.appendChild(btnVotacion);
@@ -509,6 +533,116 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     });
   }
 
+
+  // ─── Modal edición ───────────────────────────────────────────────────────────
+
+  abrirModalEditar(iniciativa: Iniciativa): void {
+    this.editIniciativaId = iniciativa.id;
+    this.editIniciativaNombre = iniciativa.iniciativa;
+    this.editModalVisible = true;
+    this.editCargando = true;
+    this.editPresentantes = [];
+    this.editTurnoComisionIds = [];
+    this.editSeTurna = false;
+    this.editCatalogos = { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {} };
+    this.cdr.detectChanges();
+
+    this._eventoService.getEdicionIniciativa(iniciativa.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: any) => {
+          this.editCatalogos = data.catalogos ?? { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {} };
+          this.editPresentantes = (data.presentantes ?? []).map((p: any) => ({
+            id_tipo_presenta: p.id_tipo_presenta,
+            tipo_nombre: p.tipo_nombre,
+            id_presenta: p.id_presenta,
+            presenta_nombre: p.presenta_nombre
+          }));
+          this.editSeTurna = !!data.seTurna;
+          this.editTurnoComisionIds = (data.turnoComisiones ?? []).map((c: any) => c.id);
+          this.editCargando = false;
+          this.cdr.detectChanges();
+        },
+        error: (e: HttpErrorResponse) => {
+          console.error('Error al cargar edición:', e);
+          this.editCargando = false;
+          Swal.fire('Error', 'No se pudo cargar la información.', 'error');
+          this.cerrarModalEditar();
+        }
+      });
+  }
+
+  cerrarModalEditar(): void {
+    this.editModalVisible = false;
+    this.editIniciativaId = null;
+    this.editPresentantes = [];
+    this.editTurnoComisionIds = [];
+    this.cdr.detectChanges();
+  }
+
+  guardarEdicion(): void {
+    this.editGuardando = true;
+    const body = {
+      presentantes: this.editPresentantes.map(p => ({
+        id_tipo_presenta: p.id_tipo_presenta,
+        id_presenta: p.id_presenta
+      })),
+      seTurna: this.editSeTurna,
+      turnoComisionIds: this.editSeTurna ? this.editTurnoComisionIds : []
+    };
+    this._eventoService.updateEdicionIniciativa(this.editIniciativaId!, body)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.editGuardando = false;
+          Swal.fire({ icon: 'success', title: 'Cambios guardados', timer: 1600, showConfirmButton: false });
+          this.cerrarModalEditar();
+        },
+        error: (e: HttpErrorResponse) => {
+          this.editGuardando = false;
+          console.error('Error al guardar edición:', e);
+          Swal.fire('Error', 'No se pudo guardar los cambios.', 'error');
+        }
+      });
+  }
+
+  agregarPresentante(): void {
+    this.editPresentantes = [...this.editPresentantes, { id_tipo_presenta: null, tipo_nombre: '', id_presenta: null }];
+    this.cdr.detectChanges();
+  }
+
+  eliminarPresentante(i: number): void {
+    this.editPresentantes = this.editPresentantes.filter((_, idx) => idx !== i);
+    this.cdr.detectChanges();
+  }
+
+  onTipoPresentaChange(i: number): void {
+    const selectedId = this.editPresentantes[i].id_tipo_presenta;
+    const proponente = this.editCatalogos.proponentes.find((p: any) => p.id === selectedId);
+    this.editPresentantes[i].tipo_nombre = proponente?.valor ?? '';
+    this.editPresentantes[i].id_presenta = null;
+    this.cdr.detectChanges();
+  }
+
+  getEntidadesPorTipo(tipoNombre: string, proponenteId: number | null): any[] {
+    switch (tipoNombre) {
+      case 'Diputadas y Diputados': return this.editCatalogos.diputados;
+      case 'Grupo Parlamentario':   return this.editCatalogos.partidos;
+      case 'Comisiones Legislativas':
+      case 'Mesa Directiva en turno':
+      case 'Junta de Coordinación Politica':
+      case 'Diputación Permanente': return this.editCatalogos.comisiones;
+      case 'Ayuntamientos':
+      case 'Municipios':
+      case 'AYTO':                  return this.editCatalogos.municipios;
+      case 'Legislatura':           return this.editCatalogos.legislaturas;
+      case 'Secretarías del GEM':   return this.editCatalogos.secretarias;
+      default:
+        return proponenteId != null
+          ? (this.editCatalogos.catfundep[String(proponenteId)] ?? [])
+          : [];
+    }
+  }
 
 abrirVotacion(iniciativa: Iniciativa): void {
   console.log(iniciativa);

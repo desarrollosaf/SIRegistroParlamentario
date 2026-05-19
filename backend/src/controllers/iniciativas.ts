@@ -23,6 +23,7 @@ import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 import AsistenciaVoto from "../models/asistencia_votos";
 import TipoCargoComision from "../models/tipo_cargo_comisions";
+import TipoComisions from "../models/tipo_comisions";
 import Sedes from "../models/sedes";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
@@ -1381,11 +1382,230 @@ export const getVotosDictamen = async (req: Request, res: Response): Promise<Res
     if (!puntoDestino) {
       return res.status(404).json({ msg: 'No hay dictamen registrado para esta iniciativa' });
     }
- 
+
     return await getVotacionPorPunto(puntoDestino, res);
- 
+
   } catch (error: any) {
     console.error('Error getVotosDictamen:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+// ─── Edición: proponentes/presenta + turno ───────────────────────────────────
+
+// id_presenta puede venir en formato "proponente_id/entity_uuid" (del modal original)
+// o como UUID simple (del nuevo modal de edición). Se normaliza extrayendo la parte real del ID.
+const extraerEntityId = (id_presenta: string): string =>
+  id_presenta.includes('/') ? id_presenta.split('/').pop()! : id_presenta;
+
+const resolverNombrePresentante = async (tipoValor: string, id_presenta: string | null): Promise<string> => {
+  if (!id_presenta) return '';
+  const entityId = extraerEntityId(id_presenta);
+  if (!entityId) return '';
+
+  if (tipoValor === 'Diputadas y Diputados') {
+    const dip: any = await Diputado.findOne({ where: { id: entityId }, paranoid: false });
+    return `${dip?.apaterno ?? ''} ${dip?.amaterno ?? ''} ${dip?.nombres ?? ''}`.trim();
+  }
+
+  if (tipoValor === 'Mesa Directiva en turno') {
+    const tipoMesa: any = await TipoComisions.findOne({ where: { valor: 'Mesa Directiva' } });
+    if (tipoMesa) {
+      const mesa: any = await Comision.findOne({ where: { tipo_comision_id: tipoMesa.id }, order: [['created_at', 'DESC']] });
+      return mesa?.nombre ?? '';
+    }
+    return '';
+  }
+
+  if (tipoValor === 'Junta de Coordinación Politica') {
+    const tipoComis: any = await TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } });
+    if (tipoComis) {
+      const jucopo: any = await Comision.findOne({
+        where: { tipo_comision_id: tipoComis.id, nombre: { [Op.like]: '%jucopo%' } },
+        order: [['created_at', 'DESC']]
+      });
+      return jucopo?.nombre ?? '';
+    }
+    return '';
+  }
+
+  if (tipoValor === 'Comisiones Legislativas') {
+    const comi: any = await Comision.findOne({ where: { id: entityId }, paranoid: false });
+    return comi?.nombre ?? '';
+  }
+
+  if (tipoValor === 'Diputación Permanente') {
+    const tipoDip: any = await TipoComisions.findOne({ where: { valor: 'Diputación Permanente' } });
+    if (tipoDip) {
+      const dipPerm: any = await Comision.findOne({ where: { tipo_comision_id: tipoDip.id }, order: [['created_at', 'DESC']] });
+      return dipPerm?.nombre ?? '';
+    }
+    return '';
+  }
+
+  if (['Ayuntamientos', 'Municipios', 'AYTO'].includes(tipoValor)) {
+    const muni: any = await MunicipiosAg.findOne({ where: { id: entityId }, paranoid: false });
+    return muni?.nombre ?? '';
+  }
+
+  if (tipoValor === 'Grupo Parlamentario') {
+    const partido: any = await Partidos.findOne({ where: { id: entityId }, paranoid: false });
+    return partido?.siglas ?? partido?.nombre ?? '';
+  }
+
+  if (tipoValor === 'Legislatura') {
+    const leg: any = await Legislatura.findOne({ where: { id: entityId }, paranoid: false });
+    return leg?.numero ?? '';
+  }
+
+  if (tipoValor === 'Secretarías del GEM') {
+    const sec: any = await Secretarias.findOne({ where: { id: entityId }, paranoid: false });
+    return `${sec?.nombre ?? ''} / ${sec?.titular ?? ''}`.trim();
+  }
+
+  // Gobernadora, Cámara de Diputados, Poder Ejecutivo, etc. → CatFunDep0;
+  const cat: any = await CatFunDep.findOne({ where: { tipo: entityId }, paranoid: false });
+  return cat?.nombre_titular ?? '';
+};
+
+export const getEdicionIniciativa = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+
+    const iniRaw = await IniciativaPuntoOrden.findOne({
+      where: { id },
+      attributes: ['id', 'iniciativa', 'tipo', 'id_punto'],
+      include: [{ model: PuntosOrden, as: 'punto', attributes: ['id', 'se_turna_comision'], paranoid: false }],
+      paranoid: false
+    });
+    if (!iniRaw) return res.status(404).json({ message: 'Iniciativa no encontrada' });
+
+    const ini: any = iniRaw.toJSON();
+    const id_punto_int: number | null = ini.punto?.id ?? null;
+    const seTurna = ini.punto?.se_turna_comision === true || String(ini.punto?.se_turna_comision) === '1';
+
+    // Presentantes con nombres resueltos
+    const presentanRaw = await IniciativasPresenta.findAll({
+      where: { id_iniciativa: id },
+      include: [{ model: Proponentes, as: 'tipo_presenta', attributes: ['id', 'valor'] }],
+      paranoid: false
+    });
+    const presentantes = await Promise.all(
+      presentanRaw.map(async (p: any) => {
+        const pj = p.toJSON();
+        const tipoValor = pj.tipo_presenta?.valor ?? '';
+        // Normalizar: extraer UUID real por si viene en formato "proponente_id/entity_uuid"
+        const id_presenta_normalizado = pj.id_presenta ? extraerEntityId(pj.id_presenta) : null;
+        return {
+          id: pj.id,
+          id_tipo_presenta: pj.id_tipo_presenta,
+          tipo_nombre: tipoValor,
+          id_presenta: id_presenta_normalizado,
+          presenta_nombre: await resolverNombrePresentante(tipoValor, pj.id_presenta)
+        };
+      })
+    );
+
+    // Turno comisiones actuales
+    let turnoComisiones: { id: string; nombre: string }[] = [];
+    if (id_punto_int) {
+      const pcRows: any[] = await PuntosComisiones.findAll({ where: { id_punto: id_punto_int }, attributes: ['id_comision'], raw: true }) as any[];
+      const comIds = [...new Set(
+        pcRows.flatMap((pc: any) =>
+          pc.id_comision ? String(pc.id_comision).replace(/[\[\]"' ]/g, '').split(',').filter(Boolean) : []
+        )
+      )];
+      if (comIds.length > 0) {
+        const coms: any[] = await Comision.findAll({ where: { id: { [Op.in]: comIds } }, attributes: ['id', 'nombre'], paranoid: false, raw: true }) as any[];
+        turnoComisiones = coms.map((c: any) => ({ id: c.id, nombre: c.nombre }));
+      }
+    }
+
+    // Catálogos
+    const [proponentesCat, diputadosCat, partidosCat, comisionesCat, municipiosCat, legislaturasCat, secretariasCat, catFunDepRaw] = await Promise.all([
+      Proponentes.findAll({ attributes: ['id', 'valor'], raw: true }),
+      Diputado.findAll({ attributes: ['id', 'nombres', 'apaterno', 'amaterno'], paranoid: false, raw: true, order: [['apaterno', 'ASC']] }),
+      Partidos.findAll({ attributes: ['id', 'nombre', 'siglas'], paranoid: false, raw: true, order: [['nombre', 'ASC']] }),
+      Comision.findAll({ attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['nombre', 'ASC']] }),
+      MunicipiosAg.findAll({ attributes: ['id', 'nombre'], raw: true, order: [['nombre', 'ASC']] }),
+      Legislatura.findAll({ attributes: ['id', 'numero'], raw: true, order: [['numero', 'ASC']] }),
+      Secretarias.findAll({ attributes: ['id', 'nombre', 'titular'], raw: true, order: [['nombre', 'ASC']] }),
+      CatFunDep.findAll({ attributes: ['id', 'nombre_titular', 'tipo'], raw: true, order: [['nombre_titular', 'ASC']] })
+      
+    ]);
+
+    // Agrupar CatFunDep por tipo (tipo = proponente.id)
+    const catFunDepPorTipo: Record<string, { id: string; nombre: string }[]> = {};
+    for (const c of catFunDepRaw as any[]) {
+      const key = String(c.tipo);
+      if (!catFunDepPorTipo[key]) catFunDepPorTipo[key] = [];
+      catFunDepPorTipo[key].push({ id: c.id, nombre: c.nombre_titular });
+    }
+
+    return res.status(200).json({
+      id: ini.id,
+      iniciativa: ini.iniciativa,
+      tipo: ini.tipo,
+      id_punto_int,
+      seTurna,
+      presentantes,
+      turnoComisiones,
+      catalogos: {
+        proponentes: proponentesCat,
+        diputados: (diputadosCat as any[]).map((d: any) => ({ id: d.id, nombre: `${d.apaterno ?? ''} ${d.amaterno ?? ''} ${d.nombres ?? ''}`.trim() })),
+        partidos: (partidosCat as any[]).map((p: any) => ({ id: p.id, nombre: p.siglas ?? p.nombre })),
+        comisiones: comisionesCat,
+        municipios: municipiosCat,
+        legislaturas: (legislaturasCat as any[]).map((l: any) => ({ id: l.id, nombre: `Legislatura ${l.numero}` })),
+        secretarias: (secretariasCat as any[]).map((s: any) => ({ id: s.id, nombre: s.titular ? `${s.nombre} / ${s.titular}` : s.nombre })),
+        catfundep: catFunDepPorTipo
+      }
+    });
+  } catch (error: any) {
+    console.error('Error getEdicionIniciativa:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+export const updateEdicionIniciativa = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { presentantes, seTurna, turnoComisionIds } = req.body;
+
+    const iniRaw = await IniciativaPuntoOrden.findOne({
+      where: { id },
+      attributes: ['id', 'id_punto'],
+      include: [{ model: PuntosOrden, as: 'punto', attributes: ['id'], paranoid: false }],
+      paranoid: false
+    });
+    if (!iniRaw) return res.status(404).json({ message: 'Iniciativa no encontrada' });
+
+    const ini: any = iniRaw.toJSON();
+    const id_punto_int: number | null = ini.punto?.id ?? null;
+
+    // Reemplazar presentantes (hard delete + bulk create)
+    await IniciativasPresenta.destroy({ where: { id_iniciativa: id }, force: true } as any);
+    if (Array.isArray(presentantes) && presentantes.length > 0) {
+      await IniciativasPresenta.bulkCreate(
+        presentantes.map((p: any) => ({ id_iniciativa: id, id_tipo_presenta: p.id_tipo_presenta, id_presenta: p.id_presenta }))
+      );
+    }
+
+    // Actualizar turno del punto
+    if (id_punto_int) {
+      await PuntosOrden.update({ se_turna_comision: seTurna ? 1 : 0 } as any, { where: { id: id_punto_int } });
+      await PuntosComisiones.destroy({ where: { id_punto: id_punto_int } });
+      if (seTurna && Array.isArray(turnoComisionIds) && turnoComisionIds.length > 0) {
+        await PuntosComisiones.create({
+          id_punto: id_punto_int,
+          id_comision: `[${turnoComisionIds.join(',')}]`
+        } as any);
+      }
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error: any) {
+    console.error('Error updateEdicionIniciativa:', error);
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };

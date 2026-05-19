@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizarIniciativa, eliminarAsistencia, eliminarAsistenciaYVotacion, eliminardecreto, eliminarVotacion, getdecretos, getiniciativas, getVotosCierre, getVotosDictamen, guardardecreto, publicarAgenda } from "../controllers/iniciativas";
+import { actualizarIniciativa, eliminarAsistencia, eliminarAsistenciaYVotacion, eliminardecreto, eliminarVotacion, getdecretos, getEdicionIniciativa, getiniciativas, getVotosCierre, getVotosDictamen, guardardecreto, publicarAgenda, updateEdicionIniciativa } from "../controllers/iniciativas";
 const router = Router();
 import  decretos  from "../controllers/filedecretos";
 
@@ -14,4 +14,6 @@ router.delete('/api/iniciativas/:id/votacion',   eliminarVotacion);
 router.delete('/api/iniciativas/eliminarvya/:id/',eliminarAsistenciaYVotacion);
 router.get('/api/iniciativas/votos-dictamen/:id', getVotosDictamen);
 router.get('/api/iniciativas/votos-cierre/:id/', getVotosCierre);
+router.get('/api/iniciativas/edicion/:id', getEdicionIniciativa);
+router.put('/api/iniciativas/edicion/:id', updateEdicionIniciativa);
 export default router

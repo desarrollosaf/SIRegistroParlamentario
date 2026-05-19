@@ -315,4 +315,12 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/`);
   }
 
+  getEdicionIniciativa(id: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/edicion/${id}`);
+  }
+
+  updateEdicionIniciativa(id: string, data: any): Observable<any> {
+    return this.http.put<any>(`${this.myAppUrl}${this.myAPIUrl3}/edicion/${id}`, data);
+  }
+
 }
