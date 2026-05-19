@@ -12,8 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVotosDictamen = exports.eliminarAsistenciaYVotacion = exports.getVotosCierre = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
+exports.updateEdicionIniciativa = exports.getEdicionIniciativa = exports.getVotosDictamen = exports.eliminarAsistenciaYVotacion = exports.getVotosCierre = exports.eliminarVotacion = exports.eliminarAsistencia = exports.publicarAgenda = exports.actualizarIniciativa = exports.eliminardecreto = exports.getdecretos = exports.guardardecreto = exports.getiniciativas = void 0;
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
+const iniciativaspresenta_1 = __importDefault(require("../models/iniciativaspresenta"));
+const proponentes_1 = __importDefault(require("../models/proponentes"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const comisions_1 = __importDefault(require("../models/comisions"));
 const municipiosag_1 = __importDefault(require("../models/municipiosag"));
@@ -35,6 +37,7 @@ const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_vot
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
+const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
@@ -1155,3 +1158,198 @@ const getVotosDictamen = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getVotosDictamen = getVotosDictamen;
+// ─── Edición: proponentes/presenta + turno ───────────────────────────────────
+// id_presenta puede venir en formato "proponente_id/entity_uuid" (del modal original)
+// o como UUID simple (del nuevo modal de edición). Se normaliza extrayendo la parte real del ID.
+const extraerEntityId = (id_presenta) => id_presenta.includes('/') ? id_presenta.split('/').pop() : id_presenta;
+const resolverNombrePresentante = (tipoValor, id_presenta) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+    if (!id_presenta)
+        return '';
+    const entityId = extraerEntityId(id_presenta);
+    if (!entityId)
+        return '';
+    if (tipoValor === 'Diputadas y Diputados') {
+        const dip = yield diputado_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return `${(_a = dip === null || dip === void 0 ? void 0 : dip.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = dip === null || dip === void 0 ? void 0 : dip.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = dip === null || dip === void 0 ? void 0 : dip.nombres) !== null && _c !== void 0 ? _c : ''}`.trim();
+    }
+    if (tipoValor === 'Mesa Directiva en turno') {
+        const tipoMesa = yield tipo_comisions_1.default.findOne({ where: { valor: 'Mesa Directiva' } });
+        if (tipoMesa) {
+            const mesa = yield comisions_1.default.findOne({ where: { tipo_comision_id: tipoMesa.id }, order: [['created_at', 'DESC']] });
+            return (_d = mesa === null || mesa === void 0 ? void 0 : mesa.nombre) !== null && _d !== void 0 ? _d : '';
+        }
+        return '';
+    }
+    if (tipoValor === 'Junta de Coordinación Politica') {
+        const tipoComis = yield tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } });
+        if (tipoComis) {
+            const jucopo = yield comisions_1.default.findOne({
+                where: { tipo_comision_id: tipoComis.id, nombre: { [sequelize_1.Op.like]: '%jucopo%' } },
+                order: [['created_at', 'DESC']]
+            });
+            return (_e = jucopo === null || jucopo === void 0 ? void 0 : jucopo.nombre) !== null && _e !== void 0 ? _e : '';
+        }
+        return '';
+    }
+    if (tipoValor === 'Comisiones Legislativas') {
+        const comi = yield comisions_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return (_f = comi === null || comi === void 0 ? void 0 : comi.nombre) !== null && _f !== void 0 ? _f : '';
+    }
+    if (tipoValor === 'Diputación Permanente') {
+        const tipoDip = yield tipo_comisions_1.default.findOne({ where: { valor: 'Diputación Permanente' } });
+        if (tipoDip) {
+            const dipPerm = yield comisions_1.default.findOne({ where: { tipo_comision_id: tipoDip.id }, order: [['created_at', 'DESC']] });
+            return (_g = dipPerm === null || dipPerm === void 0 ? void 0 : dipPerm.nombre) !== null && _g !== void 0 ? _g : '';
+        }
+        return '';
+    }
+    if (['Ayuntamientos', 'Municipios', 'AYTO'].includes(tipoValor)) {
+        const muni = yield municipiosag_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return (_h = muni === null || muni === void 0 ? void 0 : muni.nombre) !== null && _h !== void 0 ? _h : '';
+    }
+    if (tipoValor === 'Grupo Parlamentario') {
+        const partido = yield partidos_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return (_k = (_j = partido === null || partido === void 0 ? void 0 : partido.siglas) !== null && _j !== void 0 ? _j : partido === null || partido === void 0 ? void 0 : partido.nombre) !== null && _k !== void 0 ? _k : '';
+    }
+    if (tipoValor === 'Legislatura') {
+        const leg = yield legislaturas_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return (_l = leg === null || leg === void 0 ? void 0 : leg.numero) !== null && _l !== void 0 ? _l : '';
+    }
+    if (tipoValor === 'Secretarías del GEM') {
+        const sec = yield secretarias_1.default.findOne({ where: { id: entityId }, paranoid: false });
+        return `${(_m = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _m !== void 0 ? _m : ''} / ${(_o = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _o !== void 0 ? _o : ''}`.trim();
+    }
+    // Gobernadora, Cámara de Diputados, Poder Ejecutivo, etc. → CatFunDep0;
+    const cat = yield cat_fun_dep_1.default.findOne({ where: { tipo: entityId }, paranoid: false });
+    return (_p = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _p !== void 0 ? _p : '';
+});
+const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    try {
+        const { id } = req.params;
+        const iniRaw = yield inciativas_puntos_ordens_1.default.findOne({
+            where: { id },
+            attributes: ['id', 'iniciativa', 'tipo', 'id_punto'],
+            include: [{ model: puntos_ordens_1.default, as: 'punto', attributes: ['id', 'se_turna_comision'], paranoid: false }],
+            paranoid: false
+        });
+        if (!iniRaw)
+            return res.status(404).json({ message: 'Iniciativa no encontrada' });
+        const ini = iniRaw.toJSON();
+        const id_punto_int = (_b = (_a = ini.punto) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : null;
+        const seTurna = ((_c = ini.punto) === null || _c === void 0 ? void 0 : _c.se_turna_comision) === true || String((_d = ini.punto) === null || _d === void 0 ? void 0 : _d.se_turna_comision) === '1';
+        // Presentantes con nombres resueltos
+        const presentanRaw = yield iniciativaspresenta_1.default.findAll({
+            where: { id_iniciativa: id },
+            include: [{ model: proponentes_1.default, as: 'tipo_presenta', attributes: ['id', 'valor'] }],
+            paranoid: false
+        });
+        const presentantes = yield Promise.all(presentanRaw.map((p) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b;
+            const pj = p.toJSON();
+            const tipoValor = (_b = (_a = pj.tipo_presenta) === null || _a === void 0 ? void 0 : _a.valor) !== null && _b !== void 0 ? _b : '';
+            // Normalizar: extraer UUID real por si viene en formato "proponente_id/entity_uuid"
+            const id_presenta_normalizado = pj.id_presenta ? extraerEntityId(pj.id_presenta) : null;
+            return {
+                id: pj.id,
+                id_tipo_presenta: pj.id_tipo_presenta,
+                tipo_nombre: tipoValor,
+                id_presenta: id_presenta_normalizado,
+                presenta_nombre: yield resolverNombrePresentante(tipoValor, pj.id_presenta)
+            };
+        })));
+        // Turno comisiones actuales
+        let turnoComisiones = [];
+        if (id_punto_int) {
+            const pcRows = yield puntos_comisiones_1.default.findAll({ where: { id_punto: id_punto_int }, attributes: ['id_comision'], raw: true });
+            const comIds = [...new Set(pcRows.flatMap((pc) => pc.id_comision ? String(pc.id_comision).replace(/[\[\]"' ]/g, '').split(',').filter(Boolean) : []))];
+            if (comIds.length > 0) {
+                const coms = yield comisions_1.default.findAll({ where: { id: { [sequelize_1.Op.in]: comIds } }, attributes: ['id', 'nombre'], paranoid: false, raw: true });
+                turnoComisiones = coms.map((c) => ({ id: c.id, nombre: c.nombre }));
+            }
+        }
+        // Catálogos
+        const [proponentesCat, diputadosCat, partidosCat, comisionesCat, municipiosCat, legislaturasCat, secretariasCat, catFunDepRaw] = yield Promise.all([
+            proponentes_1.default.findAll({ attributes: ['id', 'valor'], raw: true }),
+            diputado_1.default.findAll({ attributes: ['id', 'nombres', 'apaterno', 'amaterno'], paranoid: false, raw: true, order: [['apaterno', 'ASC']] }),
+            partidos_1.default.findAll({ attributes: ['id', 'nombre', 'siglas'], paranoid: false, raw: true, order: [['nombre', 'ASC']] }),
+            comisions_1.default.findAll({ attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['nombre', 'ASC']] }),
+            municipiosag_1.default.findAll({ attributes: ['id', 'nombre'], raw: true, order: [['nombre', 'ASC']] }),
+            legislaturas_1.default.findAll({ attributes: ['id', 'numero'], raw: true, order: [['numero', 'ASC']] }),
+            secretarias_1.default.findAll({ attributes: ['id', 'nombre', 'titular'], raw: true, order: [['nombre', 'ASC']] }),
+            cat_fun_dep_1.default.findAll({ attributes: ['id', 'nombre_titular', 'tipo'], raw: true, order: [['nombre_titular', 'ASC']] })
+        ]);
+        // Agrupar CatFunDep por tipo (tipo = proponente.id)
+        const catFunDepPorTipo = {};
+        for (const c of catFunDepRaw) {
+            const key = String(c.tipo);
+            if (!catFunDepPorTipo[key])
+                catFunDepPorTipo[key] = [];
+            catFunDepPorTipo[key].push({ id: c.id, nombre: c.nombre_titular });
+        }
+        return res.status(200).json({
+            id: ini.id,
+            iniciativa: ini.iniciativa,
+            tipo: ini.tipo,
+            id_punto_int,
+            seTurna,
+            presentantes,
+            turnoComisiones,
+            catalogos: {
+                proponentes: proponentesCat,
+                diputados: diputadosCat.map((d) => { var _a, _b, _c; return ({ id: d.id, nombre: `${(_a = d.apaterno) !== null && _a !== void 0 ? _a : ''} ${(_b = d.amaterno) !== null && _b !== void 0 ? _b : ''} ${(_c = d.nombres) !== null && _c !== void 0 ? _c : ''}`.trim() }); }),
+                partidos: partidosCat.map((p) => { var _a; return ({ id: p.id, nombre: (_a = p.siglas) !== null && _a !== void 0 ? _a : p.nombre }); }),
+                comisiones: comisionesCat,
+                municipios: municipiosCat,
+                legislaturas: legislaturasCat.map((l) => ({ id: l.id, nombre: `Legislatura ${l.numero}` })),
+                secretarias: secretariasCat.map((s) => ({ id: s.id, nombre: s.titular ? `${s.nombre} / ${s.titular}` : s.nombre })),
+                catfundep: catFunDepPorTipo
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error getEdicionIniciativa:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.getEdicionIniciativa = getEdicionIniciativa;
+const updateEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const { id } = req.params;
+        const { presentantes, seTurna, turnoComisionIds } = req.body;
+        const iniRaw = yield inciativas_puntos_ordens_1.default.findOne({
+            where: { id },
+            attributes: ['id', 'id_punto'],
+            include: [{ model: puntos_ordens_1.default, as: 'punto', attributes: ['id'], paranoid: false }],
+            paranoid: false
+        });
+        if (!iniRaw)
+            return res.status(404).json({ message: 'Iniciativa no encontrada' });
+        const ini = iniRaw.toJSON();
+        const id_punto_int = (_b = (_a = ini.punto) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : null;
+        // Reemplazar presentantes (hard delete + bulk create)
+        yield iniciativaspresenta_1.default.destroy({ where: { id_iniciativa: id }, force: true });
+        if (Array.isArray(presentantes) && presentantes.length > 0) {
+            yield iniciativaspresenta_1.default.bulkCreate(presentantes.map((p) => ({ id_iniciativa: id, id_tipo_presenta: p.id_tipo_presenta, id_presenta: p.id_presenta })));
+        }
+        // Actualizar turno del punto
+        if (id_punto_int) {
+            yield puntos_ordens_1.default.update({ se_turna_comision: seTurna ? 1 : 0 }, { where: { id: id_punto_int } });
+            yield puntos_comisiones_1.default.destroy({ where: { id_punto: id_punto_int } });
+            if (seTurna && Array.isArray(turnoComisionIds) && turnoComisionIds.length > 0) {
+                yield puntos_comisiones_1.default.create({
+                    id_punto: id_punto_int,
+                    id_comision: `[${turnoComisionIds.join(',')}]`
+                });
+            }
+        }
+        return res.status(200).json({ ok: true });
+    }
+    catch (error) {
+        console.error('Error updateEdicionIniciativa:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.updateEdicionIniciativa = updateEdicionIniciativa;
