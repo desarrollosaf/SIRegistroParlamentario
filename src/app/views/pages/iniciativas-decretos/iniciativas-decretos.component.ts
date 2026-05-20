@@ -616,6 +616,12 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  searchComision(term: string, item: any): boolean {
+    const normalize = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return normalize(item.nombre ?? '').includes(normalize(term));
+  }
+
   onTipoPresentaChange(i: number): void {
     const selectedId = this.editPresentantes[i].id_tipo_presenta;
     const proponente = this.editCatalogos.proponentes.find((p: any) => p.id === selectedId);
