@@ -27,6 +27,7 @@ import Sedes from "../models/sedes";
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import Decreto from '../models/decreto';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPOS
@@ -478,6 +479,8 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       comisiones:             normalizarTexto(comisionesTurnado || comisionesAnfitrion),
       expedicion:             fechaExpedicion,
       observac:               observacion,
+      dispensada:             dispensa,
+      aprobada:               observacion === "Aprobada",
       documento:              data.path_doc,
       diputado:               diputados.length > 0 ? diputados.join(", ") : "-",
       grupo_parlamentario:    gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-",
@@ -2328,27 +2331,54 @@ export const generarPdfOrdenDia = async (req: Request, res: Response): Promise<R
 
 export const getOrdenesDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const eventos = await Agenda.findAll({
-      where: {
-        tipo_evento_id: {
-          [Op.in]: [
-            'd5687f72-a328-4be1-a23c-4c3575092163',
-            'a413e44b-550b-47ab-b004-a6f28c73a750'
-          ]
-        }
-      },
-      include: [
-        { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
-        { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
-        { model: PuntosOrden, as: 'puntosorden', order: [['nopunto', 'ASC']] },
-      ],
-      order: [['fecha', 'DESC']],
+    const [eventos, reporte] = await Promise.all([
+      Agenda.findAll({
+        where: {
+          tipo_evento_id: {
+            [Op.in]: [
+              'd5687f72-a328-4be1-a23c-4c3575092163',
+              'a413e44b-550b-47ab-b004-a6f28c73a750'
+            ]
+          }
+        },
+        include: [
+          { model: Sedes,       as: 'sede',       attributes: ['id', 'sede'] },
+          { model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] },
+          { model: PuntosOrden, as: 'puntosorden', order: [['nopunto', 'ASC']] },
+        ],
+        order: [['fecha', 'DESC']],
+      }),
+      construirReporteBase(),
+    ]);
 
-    });
+    // Decretos/acuerdos en batch
+    const iniIds = reporte.map(r => r.id).filter(id => id && id !== '-');
+    const decretosRaw = iniIds.length > 0
+      ? await Decreto.findAll({
+          where: { id_iniciativa: { [Op.in]: iniIds } },
+          attributes: ['id', 'id_iniciativa', 'num_decreto', 'fecha_decreto', 'nombre_decreto', 'decreto'],
+          raw: true,
+          paranoid: false
+        })
+      : [];
 
-    if (!eventos || eventos.length === 0) {
-      return res.status(404).json({ msg: 'No se encontraron eventos' });
+    const decretosMap = new Map<string, any>();
+    for (const d of decretosRaw as any[]) {
+      if (!decretosMap.has(String(d.id_iniciativa))) {
+        decretosMap.set(String(d.id_iniciativa), d);
+      }
     }
+
+    const mapearConDoc = (item: any) => {
+      const tipo = Number(item.tipo);
+      const doc = decretosMap.get(String(item.id)) ?? null;
+      const docKey = tipo === 1 ? 'decreto' : 'acuerdo';
+      return { ...item, [docKey]: doc };
+    };
+
+    const iniciativas   = reporte.filter(i => Number(i.tipo) === 1).map(mapearConDoc);
+    const puntosAcuerdo = reporte.filter(i => Number(i.tipo) === 2).map(mapearConDoc);
+    const minutas       = reporte.filter(i => Number(i.tipo) === 3).map(mapearConDoc);
 
     return res.status(200).json({
       msg: 'Órdenes del día obtenidas correctamente',
@@ -2361,9 +2391,13 @@ export const getOrdenesDia = async (req: Request, res: Response): Promise<Respon
         tipoevento:  evento.tipoevento?.nombre,
         puntos:      evento.puntosorden,
       })),
+      iniciativas,
+      puntosAcuerdo,
+      minutas,
     });
   } catch (error: any) {
     console.error('Error getOrdenesDia:', error);
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
+
