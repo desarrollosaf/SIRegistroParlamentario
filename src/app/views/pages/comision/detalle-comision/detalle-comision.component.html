@@ -2332,6 +2332,18 @@
                                 [closeOnSelect]="false" formControlName="id_presenta"
                                 placeholder="Selecciona quien(es) presenta(n)">
                             </ng-select>
+                            <!-- Input libre para Ciudadanas y ciudadanos del Estado -->
+                            <div *ngIf="tieneCiudadanasEdicion" class="input-group mt-2">
+                                <input type="text" class="form-control form-control-sm"
+                                    placeholder="Nombre del ciudadano/a…"
+                                    [(ngModel)]="ciudadanaNombreEdicion"
+                                    [ngModelOptions]="{standalone: true}"
+                                    (keydown.enter)="agregarCiudadanaEdicion()" />
+                                <button class="btn btn-outline-secondary btn-sm" type="button"
+                                    (click)="agregarCiudadanaEdicion()">
+                                    <i class="bi bi-plus-lg"></i> Agregar
+                                </button>
+                            </div>
                         </div>
 
                         <div class="col-md-6">
