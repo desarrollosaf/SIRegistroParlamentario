@@ -1464,7 +1464,7 @@ const resolverNombrePresentante = async (tipoValor: string, id_presenta: string 
   }
 
   // Gobernadora, Cámara de Diputados, Poder Ejecutivo, etc. → CatFunDep0;
-  const cat: any = await CatFunDep.findOne({ where: { tipo: entityId }, paranoid: false });
+  const cat: any = await CatFunDep.findOne({ where: { id: entityId }, paranoid: false });
   return cat?.nombre_titular ?? '';
 };
 
@@ -1546,12 +1546,18 @@ export const getEdicionIniciativa = async (req: Request, res: Response): Promise
       tipoPermanenteRow ? Comision.findOne({ where: { tipo_comision_id: (tipoPermanenteRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
     ]);
 
-    // Agrupar CatFunDep por tipo (tipo = proponente.id)
+    // Agrupar CatFunDep por nombre del proponente (valor).
+    // Se usa String(c.tipo) como id de cada entry porque resolverNombrePresentante
+    // busca por { tipo: entityId }, por lo que id_presenta debe almacenar c.tipo.
     const catFunDepPorTipo: Record<string, { id: string; nombre: string }[]> = {};
     for (const c of catFunDepRaw as any[]) {
-      const key = String(c.tipo);
+      const proponente = (proponentesCat as any[]).find(
+        (p: any) => Number(p.id) === Number(c.tipo)
+      );
+      if (!proponente) continue;
+      const key = proponente.valor as string;
       if (!catFunDepPorTipo[key]) catFunDepPorTipo[key] = [];
-      catFunDepPorTipo[key].push({ id: c.id, nombre: c.nombre_titular });
+      catFunDepPorTipo[key].push({ id: String(c.id), nombre: c.nombre_titular });
     }
 
     return res.status(200).json({

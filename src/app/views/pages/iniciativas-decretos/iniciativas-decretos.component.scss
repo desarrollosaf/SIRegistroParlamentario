@@ -664,6 +664,36 @@ $danger-light:  #fef2f2;
   text-overflow: ellipsis;
 }
 
+.ciudadano-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  color: $text-main;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder { color: $text-hint; }
+
+  &:focus {
+    outline: none;
+    border-color: $primary-mid;
+    box-shadow: 0 0 0 3px rgba($primary, 0.08);
+  }
+}
+
+// Scrollbar del panel desplegable de ng-select
+::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items {
+  &::-webkit-scrollbar        { width: 6px; }
+  &::-webkit-scrollbar-track  { background: transparent; }
+  &::-webkit-scrollbar-thumb  {
+    background: $border;
+    border-radius: 3px;
+    &:hover { background: #cbd5e1; }
+  }
+}
+
 // ── Turno toggle ──────────────────────────────────────────────────────────────
 .turno-body {
   padding: 12px 14px;

@@ -111,7 +111,7 @@
     <div class="modal-body" *ngIf="!editCargando">
 
       <!-- área scrolleable: solo presentantes -->
-      <div class="modal-scroll-area">
+      <div class="modal-scroll-area" (scroll)="closeAllDropdowns()">
 
         <!-- ── Sección presentantes ── -->
         <div class="edit-section">
@@ -147,18 +147,32 @@
                 ></ng-select>
               </div>
               <div class="pres-col pres-col--entidad">
+                <!-- Texto libre para ciudadanas/ciudadanos -->
+                <input
+                  *ngIf="esTipoCiudadano(p.tipo_nombre)"
+                  type="text"
+                  class="ciudadano-input"
+                  placeholder="Nombre del ciudadano/a…"
+                  [(ngModel)]="p.id_presenta"
+                  [name]="'ciudadano_' + i"
+                />
+                <!-- Select con catálogo -->
                 <ng-select
-                  *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length > 0"
-                  [items]="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta)"
+                  *ngIf="!esTipoCiudadano(p.tipo_nombre) && p.entidades.length > 0"
+                  [items]="p.entidades"
                   bindLabel="nombre"
                   bindValue="id"
                   placeholder="Seleccionar…"
                   [(ngModel)]="p.id_presenta"
                   [name]="'entidad_' + i"
                   appendTo="body"
+                  [virtualScroll]="true"
+                  [searchFn]="searchEntidad.bind(this)"
+                  [searchable]="true"
                 ></ng-select>
+                <!-- Sin catálogo para este tipo -->
                 <span
-                  *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length === 0 && p.tipo_nombre"
+                  *ngIf="!esTipoCiudadano(p.tipo_nombre) && p.entidades.length === 0 && p.tipo_nombre"
                   class="pres-no-entity"
                 >{{ p.presenta_nombre || '—' }}</span>
               </div>

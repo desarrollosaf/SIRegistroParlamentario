@@ -4,11 +4,13 @@ import {
   inject,
   OnInit,
   OnDestroy,
+  ViewChildren,
+  QueryList,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgSelectModule } from '@ng-select/ng-select';
+import { NgSelectModule, NgSelectComponent } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import Swal from 'sweetalert2';
@@ -65,6 +67,7 @@ export interface EditPresentante {
   tipo_nombre: string;
   id_presenta: string | null;
   presenta_nombre?: string;
+  entidades: any[];
 }
 
 @Component({
@@ -127,6 +130,8 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   };
 
   // --- AG Grid ---
+  @ViewChildren(NgSelectComponent) private ngSelectInstances!: QueryList<NgSelectComponent>;
+
   private gridApi!: GridApi<Iniciativa>;
 
   theme = themeQuartz;
@@ -556,7 +561,8 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
             id_tipo_presenta: p.id_tipo_presenta,
             tipo_nombre: p.tipo_nombre,
             id_presenta: p.id_presenta,
-            presenta_nombre: p.presenta_nombre
+            presenta_nombre: p.presenta_nombre,
+            entidades: this.getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta)
           }));
           this.editTurnoComisionIds = (data.turnoComisiones ?? []).map((c: any) => c.id);
           this.editSeTurna = !!data.seTurna || this.editTurnoComisionIds.length > 0;
@@ -607,7 +613,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   }
 
   agregarPresentante(): void {
-    this.editPresentantes = [...this.editPresentantes, { id_tipo_presenta: null, tipo_nombre: '', id_presenta: null }];
+    this.editPresentantes = [...this.editPresentantes, { id_tipo_presenta: null, tipo_nombre: '', id_presenta: null, entidades: [] }];
     this.cdr.detectChanges();
   }
 
@@ -616,21 +622,37 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  closeAllDropdowns(): void {
+    this.ngSelectInstances?.forEach(s => s.close());
+  }
+
+  esTipoCiudadano(tipoNombre: string): boolean {
+    return tipoNombre.toLowerCase().includes('ciudadan');
+  }
+
+  private normalizeStr(s: string): string {
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
   searchComision(term: string, item: any): boolean {
-    const normalize = (s: string) =>
-      s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return normalize(item.nombre ?? '').includes(normalize(term));
+    return this.normalizeStr(item.nombre ?? '').includes(this.normalizeStr(term));
+  }
+
+  searchEntidad(term: string, item: any): boolean {
+    return this.normalizeStr(item.nombre ?? '').includes(this.normalizeStr(term));
   }
 
   onTipoPresentaChange(i: number): void {
     const selectedId = this.editPresentantes[i].id_tipo_presenta;
     const proponente = this.editCatalogos.proponentes.find((p: any) => p.id === selectedId);
-    this.editPresentantes[i].tipo_nombre = proponente?.valor ?? '';
+    const tipoNombre = proponente?.valor ?? '';
+    this.editPresentantes[i].tipo_nombre = tipoNombre;
     this.editPresentantes[i].id_presenta = null;
+    this.editPresentantes[i].entidades = this.getEntidadesPorTipo(tipoNombre, selectedId);
     this.cdr.detectChanges();
   }
 
-  getEntidadesPorTipo(tipoNombre: string, proponenteId: number | null): any[] {
+  getEntidadesPorTipo(tipoNombre: string, _proponenteId?: number | null): any[] {
     switch (tipoNombre) {
       case 'Diputadas y Diputados': return this.editCatalogos.diputados;
       case 'Grupo Parlamentario':   return this.editCatalogos.partidos;
@@ -644,9 +666,7 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
       case 'Legislatura':           return this.editCatalogos.legislaturas;
       case 'Secretarías del GEM':   return this.editCatalogos.secretarias;
       default:
-        return proponenteId != null
-          ? (this.editCatalogos.catfundep[String(proponenteId)] ?? [])
-          : [];
+        return this.editCatalogos.catfundep[tipoNombre] ?? [];
     }
   }
 
