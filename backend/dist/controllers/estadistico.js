@@ -40,6 +40,7 @@ const sedes_1 = __importDefault(require("../models/sedes"));
 const pdfkit_1 = __importDefault(require("pdfkit"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const decreto_1 = __importDefault(require("../models/decreto"));
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS PUROS (sin I/O)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -429,6 +430,8 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             comisiones: normalizarTexto(comisionesTurnado || comisionesAnfitrion),
             expedicion: fechaExpedicion,
             observac: observacion,
+            dispensada: dispensa,
+            aprobada: observacion === "Aprobada",
             documento: data.path_doc,
             diputado: diputados.length > 0 ? diputados.join(", ") : "-",
             grupo_parlamentario: gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-",
@@ -2004,25 +2007,51 @@ const generarPdfOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.generarPdfOrdenDia = generarPdfOrdenDia;
 const getOrdenesDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const eventos = yield agendas_1.default.findAll({
-            where: {
-                tipo_evento_id: {
-                    [sequelize_1.Op.in]: [
-                        'd5687f72-a328-4be1-a23c-4c3575092163',
-                        'a413e44b-550b-47ab-b004-a6f28c73a750'
-                    ]
-                }
-            },
-            include: [
-                { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
-                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
-                { model: puntos_ordens_1.default, as: 'puntosorden', order: [['nopunto', 'ASC']] },
-            ],
-            order: [['fecha', 'DESC']],
-        });
-        if (!eventos || eventos.length === 0) {
-            return res.status(404).json({ msg: 'No se encontraron eventos' });
+        const [eventos, reporte] = yield Promise.all([
+            agendas_1.default.findAll({
+                where: {
+                    tipo_evento_id: {
+                        [sequelize_1.Op.in]: [
+                            'd5687f72-a328-4be1-a23c-4c3575092163',
+                            'a413e44b-550b-47ab-b004-a6f28c73a750'
+                        ]
+                    }
+                },
+                include: [
+                    { model: sedes_1.default, as: 'sede', attributes: ['id', 'sede'] },
+                    { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['id', 'nombre'] },
+                    { model: puntos_ordens_1.default, as: 'puntosorden', order: [['nopunto', 'ASC']] },
+                ],
+                order: [['fecha', 'DESC']],
+            }),
+            construirReporteBase(),
+        ]);
+        // Decretos/acuerdos en batch
+        const iniIds = reporte.map(r => r.id).filter(id => id && id !== '-');
+        const decretosRaw = iniIds.length > 0
+            ? yield decreto_1.default.findAll({
+                where: { id_iniciativa: { [sequelize_1.Op.in]: iniIds } },
+                attributes: ['id', 'id_iniciativa', 'num_decreto', 'fecha_decreto', 'nombre_decreto', 'decreto'],
+                raw: true,
+                paranoid: false
+            })
+            : [];
+        const decretosMap = new Map();
+        for (const d of decretosRaw) {
+            if (!decretosMap.has(String(d.id_iniciativa))) {
+                decretosMap.set(String(d.id_iniciativa), d);
+            }
         }
+        const mapearConDoc = (item) => {
+            var _a;
+            const tipo = Number(item.tipo);
+            const doc = (_a = decretosMap.get(String(item.id))) !== null && _a !== void 0 ? _a : null;
+            const docKey = tipo === 1 ? 'decreto' : 'acuerdo';
+            return Object.assign(Object.assign({}, item), { [docKey]: doc });
+        };
+        const iniciativas = reporte.filter(i => Number(i.tipo) === 1).map(mapearConDoc);
+        const puntosAcuerdo = reporte.filter(i => Number(i.tipo) === 2).map(mapearConDoc);
+        const minutas = reporte.filter(i => Number(i.tipo) === 3).map(mapearConDoc);
         return res.status(200).json({
             msg: 'Órdenes del día obtenidas correctamente',
             total: eventos.length,
@@ -2037,6 +2066,9 @@ const getOrdenesDia = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     puntos: evento.puntosorden,
                 });
             }),
+            iniciativas,
+            puntosAcuerdo,
+            minutas,
         });
     }
     catch (error) {

@@ -1280,6 +1280,17 @@ const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, fun
             secretarias_1.default.findAll({ attributes: ['id', 'nombre', 'titular'], raw: true, order: [['nombre', 'ASC']] }),
             cat_fun_dep_1.default.findAll({ attributes: ['id', 'nombre_titular', 'tipo'], raw: true, order: [['nombre_titular', 'ASC']] })
         ]);
+        // Catálogos especiales: igual que resolverNombrePresentante — primero el tipo, luego la comisión
+        const [tipoMesaRow, tipoJucopoRow, tipoPermanenteRow] = yield Promise.all([
+            tipo_comisions_1.default.findOne({ where: { valor: 'Mesa Directiva' } }),
+            tipo_comisions_1.default.findOne({ where: { valor: 'Comisiones Legislativas' } }),
+            tipo_comisions_1.default.findOne({ where: { valor: 'Diputación Permanente' } })
+        ]);
+        const [mesaDirectivaCat, jucopotCat, dipPermCat] = yield Promise.all([
+            tipoMesaRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoMesaRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
+            tipoJucopoRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoJucopoRow.id, nombre: { [sequelize_1.Op.like]: '%jucopo%' } }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
+            tipoPermanenteRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoPermanenteRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
+        ]);
         // Agrupar CatFunDep por tipo (tipo = proponente.id)
         const catFunDepPorTipo = {};
         for (const c of catFunDepRaw) {
@@ -1304,7 +1315,10 @@ const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 municipios: municipiosCat,
                 legislaturas: legislaturasCat.map((l) => ({ id: l.id, nombre: `Legislatura ${l.numero}` })),
                 secretarias: secretariasCat.map((s) => ({ id: s.id, nombre: s.titular ? `${s.nombre} / ${s.titular}` : s.nombre })),
-                catfundep: catFunDepPorTipo
+                catfundep: catFunDepPorTipo,
+                mesaDirectiva: mesaDirectivaCat,
+                jucopo: jucopotCat,
+                dipPermanente: dipPermCat
             }
         });
     }

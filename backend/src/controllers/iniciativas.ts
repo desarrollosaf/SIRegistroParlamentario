@@ -1531,7 +1531,19 @@ export const getEdicionIniciativa = async (req: Request, res: Response): Promise
       Legislatura.findAll({ attributes: ['id', 'numero'], raw: true, order: [['numero', 'ASC']] }),
       Secretarias.findAll({ attributes: ['id', 'nombre', 'titular'], raw: true, order: [['nombre', 'ASC']] }),
       CatFunDep.findAll({ attributes: ['id', 'nombre_titular', 'tipo'], raw: true, order: [['nombre_titular', 'ASC']] })
-      
+    ]);
+
+    // Catálogos especiales: igual que resolverNombrePresentante — primero el tipo, luego la comisión
+    const [tipoMesaRow, tipoJucopoRow, tipoPermanenteRow] = await Promise.all([
+      TipoComisions.findOne({ where: { valor: 'Mesa Directiva' } }),
+      TipoComisions.findOne({ where: { valor: 'Comisiones Legislativas' } }),
+      TipoComisions.findOne({ where: { valor: 'Diputación Permanente' } })
+    ]);
+
+    const [mesaDirectivaCat, jucopotCat, dipPermCat] = await Promise.all([
+      tipoMesaRow ? Comision.findOne({ where: { tipo_comision_id: (tipoMesaRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
+      tipoJucopoRow ? Comision.findOne({ where: { tipo_comision_id: (tipoJucopoRow as any).id, nombre: { [Op.like]: '%jucopo%' } }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
+      tipoPermanenteRow ? Comision.findOne({ where: { tipo_comision_id: (tipoPermanenteRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
     ]);
 
     // Agrupar CatFunDep por tipo (tipo = proponente.id)
@@ -1558,7 +1570,10 @@ export const getEdicionIniciativa = async (req: Request, res: Response): Promise
         municipios: municipiosCat,
         legislaturas: (legislaturasCat as any[]).map((l: any) => ({ id: l.id, nombre: `Legislatura ${l.numero}` })),
         secretarias: (secretariasCat as any[]).map((s: any) => ({ id: s.id, nombre: s.titular ? `${s.nombre} / ${s.titular}` : s.nombre })),
-        catfundep: catFunDepPorTipo
+        catfundep: catFunDepPorTipo,
+        mesaDirectiva: mesaDirectivaCat,
+        jucopo: jucopotCat,
+        dipPermanente: dipPermCat
       }
     });
   } catch (error: any) {
