@@ -1543,7 +1543,7 @@ export const getEdicionIniciativa = async (req: Request, res: Response): Promise
     const [mesaDirectivaCat, jucopotCat, dipPermCat] = await Promise.all([
       tipoMesaRow ? Comision.findOne({ where: { tipo_comision_id: (tipoMesaRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
       tipoJucopoRow ? Comision.findOne({ where: { tipo_comision_id: (tipoJucopoRow as any).id, nombre: { [Op.like]: '%jucopo%' } }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
-      tipoPermanenteRow ? Comision.findOne({ where: { tipo_comision_id: (tipoPermanenteRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
+      tipoPermanenteRow ? Comision.findAll({ where: { tipo_comision_id: (tipoPermanenteRow as any).id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : Promise.resolve([])
     ]);
 
     // Agrupar CatFunDep por nombre del proponente (valor).
