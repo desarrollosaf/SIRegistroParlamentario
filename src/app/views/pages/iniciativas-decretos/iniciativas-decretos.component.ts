@@ -558,8 +558,8 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
             id_presenta: p.id_presenta,
             presenta_nombre: p.presenta_nombre
           }));
-          this.editSeTurna = !!data.seTurna;
           this.editTurnoComisionIds = (data.turnoComisiones ?? []).map((c: any) => c.id);
+          this.editSeTurna = !!data.seTurna || this.editTurnoComisionIds.length > 0;
           this.editCargando = false;
           this.cdr.detectChanges();
         },
