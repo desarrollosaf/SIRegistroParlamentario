@@ -110,95 +110,105 @@
     <!-- Cuerpo -->
     <div class="modal-body" *ngIf="!editCargando">
 
-      <!-- ── Sección presentantes ── -->
-      <div class="edit-section">
-        <div class="edit-section-header">
-          <span class="edit-section-title">
-            <i class="bi bi-person-lines-fill"></i> Proponente / Presentante
-          </span>
-          <button class="btn-add-pres" type="button" (click)="agregarPresentante()">+ Agregar</button>
+      <!-- área scrolleable: solo presentantes -->
+      <div class="modal-scroll-area">
+
+        <!-- ── Sección presentantes ── -->
+        <div class="edit-section">
+          <div class="edit-section-header">
+            <span class="edit-section-title">
+              <i class="bi bi-person-lines-fill"></i> Proponente / Presentante
+            </span>
+            <button class="btn-add-pres" type="button" (click)="agregarPresentante()">+ Agregar</button>
+          </div>
+
+          <p class="pres-empty" *ngIf="editPresentantes.length === 0">
+            Sin presentantes. Haz clic en "+ Agregar" para añadir.
+          </p>
+
+          <div class="pres-table" *ngIf="editPresentantes.length > 0">
+            <div class="pres-header-row">
+              <span class="pres-col pres-col--tipo">Tipo de proponente</span>
+              <span class="pres-col pres-col--entidad">Entidad / Persona</span>
+              <span class="pres-col pres-col--del"></span>
+            </div>
+            <div class="pres-row" *ngFor="let p of editPresentantes; let i = index">
+              <div class="pres-col pres-col--tipo">
+                <ng-select
+                  [items]="editCatalogos.proponentes"
+                  bindLabel="valor"
+                  bindValue="id"
+                  placeholder="Tipo…"
+                  [(ngModel)]="p.id_tipo_presenta"
+                  [name]="'tipo_' + i"
+                  [clearable]="false"
+                  appendTo="body"
+                  (change)="onTipoPresentaChange(i)"
+                ></ng-select>
+              </div>
+              <div class="pres-col pres-col--entidad">
+                <ng-select
+                  *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length > 0"
+                  [items]="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta)"
+                  bindLabel="nombre"
+                  bindValue="id"
+                  placeholder="Seleccionar…"
+                  [(ngModel)]="p.id_presenta"
+                  [name]="'entidad_' + i"
+                  appendTo="body"
+                ></ng-select>
+                <span
+                  *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length === 0 && p.tipo_nombre"
+                  class="pres-no-entity"
+                >{{ p.presenta_nombre || '—' }}</span>
+              </div>
+              <div class="pres-col pres-col--del">
+                <button class="btn-del-pres" type="button" (click)="eliminarPresentante(i)" title="Eliminar">✕</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <p class="pres-empty" *ngIf="editPresentantes.length === 0">
-          Sin presentantes. Haz clic en "+ Agregar" para añadir.
-        </p>
-
-        <div class="pres-table" *ngIf="editPresentantes.length > 0">
-          <div class="pres-header-row">
-            <span class="pres-col pres-col--tipo">Tipo de proponente</span>
-            <span class="pres-col pres-col--entidad">Entidad / Persona</span>
-            <span class="pres-col pres-col--del"></span>
-          </div>
-          <div class="pres-row" *ngFor="let p of editPresentantes; let i = index">
-            <div class="pres-col pres-col--tipo">
-              <ng-select
-                [items]="editCatalogos.proponentes"
-                bindLabel="valor"
-                bindValue="id"
-                placeholder="Tipo…"
-                [(ngModel)]="p.id_tipo_presenta"
-                [name]="'tipo_' + i"
-                [clearable]="false"
-                appendTo="body"
-                (change)="onTipoPresentaChange(i)"
-              ></ng-select>
-            </div>
-            <div class="pres-col pres-col--entidad">
-              <ng-select
-                *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length > 0"
-                [items]="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta)"
-                bindLabel="nombre"
-                bindValue="id"
-                placeholder="Seleccionar…"
-                [(ngModel)]="p.id_presenta"
-                [name]="'entidad_' + i"
-                appendTo="body"
-              ></ng-select>
-              <span
-                *ngIf="getEntidadesPorTipo(p.tipo_nombre, p.id_tipo_presenta).length === 0 && p.tipo_nombre"
-                class="pres-no-entity"
-              >{{ p.presenta_nombre || '—' }}</span>
-            </div>
-            <div class="pres-col pres-col--del">
-              <button class="btn-del-pres" type="button" (click)="eliminarPresentante(i)" title="Eliminar">✕</button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- ── Sección turno ── -->
-      <div class="edit-section">
-        <div class="edit-section-header">
-          <span class="edit-section-title">
-            <i class="bi bi-arrow-right-circle"></i> Turno de comisión
-          </span>
-        </div>
+      <!-- área fija: turno — fuera del overflow-y para que el dropdown no se clipee -->
+      <div class="modal-turno-area">
 
-        <div class="turno-body">
-          <label class="toggle-label">
-            <span>¿Se turna a comisión?</span>
-            <label class="toggle-switch">
-              <input type="checkbox" [(ngModel)]="editSeTurna" name="seTurna" />
-              <span class="toggle-slider"></span>
+        <!-- ── Sección turno ── -->
+        <div class="edit-section">
+          <div class="edit-section-header">
+            <span class="edit-section-title">
+              <i class="bi bi-arrow-right-circle"></i> Turno de comisión
+            </span>
+          </div>
+
+          <div class="turno-body">
+            <label class="toggle-label">
+              <span>¿Se turna a comisión?</span>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="editSeTurna" name="seTurna" />
+                <span class="toggle-slider"></span>
+              </label>
             </label>
-          </label>
 
-          <div class="form-group" *ngIf="editSeTurna" style="margin-top:12px;">
-            <label class="form-label">Comisión(es)</label>
-            <ng-select
-              [items]="editCatalogos.comisiones"
-              bindLabel="nombre"
-              bindValue="id"
-              [multiple]="true"
-              placeholder="Seleccionar comisión(es)…"
-              [(ngModel)]="editTurnoComisionIds"
-              name="turnoComisiones"
-              appendTo="body"
-              [dropdownPosition]="'auto'"
-              [searchFn]="searchComision"
-            ></ng-select>
+            <div class="form-group" *ngIf="editSeTurna" style="margin-top:12px;">
+              <label class="form-label">Comisión(es)</label>
+              <ng-select
+                [items]="editCatalogos.comisiones"
+                bindLabel="nombre"
+                bindValue="id"
+                [multiple]="true"
+                [virtualScroll]="true"
+                placeholder="Seleccionar comisión(es)…"
+                [(ngModel)]="editTurnoComisionIds"
+                name="turnoComisiones"
+                [dropdownPosition]="'top'"
+                [searchFn]="searchComision"
+              ></ng-select>
+            </div>
           </div>
         </div>
+
       </div>
 
     </div>
