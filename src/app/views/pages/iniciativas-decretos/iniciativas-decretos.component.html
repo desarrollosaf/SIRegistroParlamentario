@@ -194,6 +194,8 @@
               [(ngModel)]="editTurnoComisionIds"
               name="turnoComisiones"
               appendTo="body"
+              [dropdownPosition]="'auto'"
+              [searchFn]="searchComision"
             ></ng-select>
           </div>
         </div>
