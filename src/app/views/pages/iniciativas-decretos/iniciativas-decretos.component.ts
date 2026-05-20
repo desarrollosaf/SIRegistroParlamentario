@@ -122,8 +122,8 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   editSeTurna = false;
   editTurnoComisionIds: string[] = [];
   editPresentantes: EditPresentante[] = [];
-  editCatalogos: { proponentes: any[]; diputados: any[]; partidos: any[]; comisiones: any[]; municipios: any[]; legislaturas: any[]; secretarias: any[]; catfundep: Record<string, any[]> } = {
-    proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {}
+  editCatalogos: { proponentes: any[]; diputados: any[]; partidos: any[]; comisiones: any[]; municipios: any[]; legislaturas: any[]; secretarias: any[]; catfundep: Record<string, any[]>; mesaDirectiva: any | null; jucopo: any | null; dipPermanente: any | null } = {
+    proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {}, mesaDirectiva: null, jucopo: null, dipPermanente: null
   };
 
   // --- AG Grid ---
@@ -544,14 +544,14 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     this.editPresentantes = [];
     this.editTurnoComisionIds = [];
     this.editSeTurna = false;
-    this.editCatalogos = { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {} };
+    this.editCatalogos = { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {}, mesaDirectiva: null, jucopo: null, dipPermanente: null };
     this.cdr.detectChanges();
 
     this._eventoService.getEdicionIniciativa(iniciativa.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
-          this.editCatalogos = data.catalogos ?? { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {} };
+          this.editCatalogos = data.catalogos ?? { proponentes: [], diputados: [], partidos: [], comisiones: [], municipios: [], legislaturas: [], secretarias: [], catfundep: {}, mesaDirectiva: null, jucopo: null, dipPermanente: null };
           this.editPresentantes = (data.presentantes ?? []).map((p: any) => ({
             id_tipo_presenta: p.id_tipo_presenta,
             tipo_nombre: p.tipo_nombre,
@@ -628,10 +628,10 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     switch (tipoNombre) {
       case 'Diputadas y Diputados': return this.editCatalogos.diputados;
       case 'Grupo Parlamentario':   return this.editCatalogos.partidos;
-      case 'Comisiones Legislativas':
-      case 'Mesa Directiva en turno':
-      case 'Junta de Coordinación Politica':
-      case 'Diputación Permanente': return this.editCatalogos.comisiones;
+      case 'Comisiones Legislativas':  return this.editCatalogos.comisiones;
+      case 'Mesa Directiva en turno':  return this.editCatalogos.mesaDirectiva ? [this.editCatalogos.mesaDirectiva] : [];
+      case 'Junta de Coordinación Politica': return this.editCatalogos.jucopo ? [this.editCatalogos.jucopo] : [];
+      case 'Diputación Permanente':    return this.editCatalogos.dipPermanente ? [this.editCatalogos.dipPermanente] : [];
       case 'Ayuntamientos':
       case 'Municipios':
       case 'AYTO':                  return this.editCatalogos.municipios;
