@@ -1221,7 +1221,7 @@ const resolverNombrePresentante = (tipoValor, id_presenta) => __awaiter(void 0, 
         return `${(_m = sec === null || sec === void 0 ? void 0 : sec.nombre) !== null && _m !== void 0 ? _m : ''} / ${(_o = sec === null || sec === void 0 ? void 0 : sec.titular) !== null && _o !== void 0 ? _o : ''}`.trim();
     }
     // Gobernadora, Cámara de Diputados, Poder Ejecutivo, etc. → CatFunDep0;
-    const cat = yield cat_fun_dep_1.default.findOne({ where: { tipo: entityId }, paranoid: false });
+    const cat = yield cat_fun_dep_1.default.findOne({ where: { id: entityId }, paranoid: false });
     return (_p = cat === null || cat === void 0 ? void 0 : cat.nombre_titular) !== null && _p !== void 0 ? _p : '';
 });
 const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1291,13 +1291,18 @@ const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, fun
             tipoJucopoRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoJucopoRow.id, nombre: { [sequelize_1.Op.like]: '%jucopo%' } }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
             tipoPermanenteRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoPermanenteRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
         ]);
-        // Agrupar CatFunDep por tipo (tipo = proponente.id)
+        // Agrupar CatFunDep por nombre del proponente (valor).
+        // id de cada entry = c.id (PK secuencial de CatFunDep).
+        // resolverNombrePresentante busca por { id: entityId }, consistente con este valor.
         const catFunDepPorTipo = {};
         for (const c of catFunDepRaw) {
-            const key = String(c.tipo);
+            const proponente = proponentesCat.find((p) => Number(p.id) === Number(c.tipo));
+            if (!proponente)
+                continue;
+            const key = proponente.valor;
             if (!catFunDepPorTipo[key])
                 catFunDepPorTipo[key] = [];
-            catFunDepPorTipo[key].push({ id: c.id, nombre: c.nombre_titular });
+            catFunDepPorTipo[key].push({ id: String(c.id), nombre: c.nombre_titular });
         }
         return res.status(200).json({
             id: ini.id,
