@@ -37,7 +37,6 @@ const integrante_legislaturas_1 = __importDefault(require("../models/integrante_
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
 const gender_1 = __importDefault(require("../models/gender"));
-const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const deduplicarPorId = (items) => {
     return items.filter((e, index, self) => index === self.findIndex((x) => x.id === e.id));
@@ -333,7 +332,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativas = yield obtenerIniciativasBase();
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
         const data = iniciativa.toJSON();
         const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
@@ -487,6 +486,9 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             // ✅ AQUÍ ESTÁ EL FIX
             tipo: tipoTexto((_p = data.tipo) !== null && _p !== void 0 ? _p : (_q = data.punto) === null || _q === void 0 ? void 0 : _q.tipo),
             se_turna_comision: String((_r = data.punto) === null || _r === void 0 ? void 0 : _r.se_turna_comision) === "1" || ((_s = data.punto) === null || _s === void 0 ? void 0 : _s.se_turna_comision) === true,
+            votingPuntoIntId: dispensa
+                ? ((_u = (_t = data.punto) === null || _t === void 0 ? void 0 : _t.id) !== null && _u !== void 0 ? _u : null)
+                : ((_w = (_v = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _v === void 0 ? void 0 : _v.id) !== null && _w !== void 0 ? _w : null),
         };
     })));
     return reporte;
@@ -1621,7 +1623,7 @@ const getDatosAsistenciaDiputado = (req, res) => __awaiter(void 0, void 0, void 
 });
 exports.getDatosAsistenciaDiputado = getDatosAsistenciaDiputado;
 const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b;
     try {
         // ── 1. construirReporteBase: source of truth for observac/tipo/comisiones ─
         const reporte = yield construirReporteBase();
@@ -1751,78 +1753,30 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
             .map(nombre => ({ nombre, integrantes: grupoIntegrantes[nombre] || 0, directo: grupoDirecto[nombre] || 0, total: (grupoIntegrantes[nombre] || 0) + (grupoDirecto[nombre] || 0) }))
             .sort((a, b) => b.total - a.total).slice(0, 10);
         // ── 5. Votación (para aprobadas) ──────────────────────────────────────────
-        // TemasPuntosVotos.id_punto almacena PuntosOrden.id (INTEGER), igual que en getifnini.
-        // Para dispensa: punto de votación = PuntosOrden.id del punto original.
-        // Para cierre: punto de votación = PuntosOrden.id del cierre destino (c.iniciativa?.id).
-        const aprobadosIds = reporte.filter(r => r.observac === "Aprobada").map(r => r.id);
+        // VotosPunto.id_punto es INTEGER y se crea con id_tema_punto_voto=null,
+        // por eso se consulta directamente por id_punto (PuntosOrden.id INTEGER).
+        // construirReporteBase ya resolvió el punto correcto:
+        //   dispensa → PuntosOrden.id del punto original
+        //   cierre   → PuntosOrden.id del punto destino (cierrePrincipal.iniciativa.id)
+        const aprobadas = reporte.filter(r => r.observac === "Aprobada");
         let porVotacion = [];
         let porPorcentajeAprobacion = [];
-        if (aprobadosIds.length > 0) {
-            const aprobadosData = yield inciativas_puntos_ordens_1.default.findAll({
-                where: { id: { [sequelize_1.Op.in]: aprobadosIds } },
-                attributes: ["id", "id_punto"],
-                include: [{ model: puntos_ordens_1.default, as: "punto", attributes: ["id", "dispensa"], paranoid: false }],
-                paranoid: false
-            });
-            const aprobadosJson = aprobadosData.map((a) => a.toJSON());
-            // Separate dispensa vs cierre
-            const dispensaInis = [];
-            const noDispensaInis = [];
-            for (const a of aprobadosJson) {
-                if (String((_c = a.punto) === null || _c === void 0 ? void 0 : _c.dispensa) === "1")
-                    dispensaInis.push(a);
-                else
-                    noDispensaInis.push(a);
-            }
-            // Map: PuntosOrden.id (INTEGER) → iniciativa UUID
-            const votingIntPuntoToIni = new Map();
-            // Dispensa: voting punto = PuntosOrden.id del punto original
-            for (const a of dispensaInis) {
-                if (((_d = a.punto) === null || _d === void 0 ? void 0 : _d.id) != null)
-                    votingIntPuntoToIni.set(a.punto.id, a.id);
-            }
-            // Cierre: fetch cierres con include as "iniciativa" → c.iniciativa.id = PuntosOrden.id (INTEGER) del destino
-            const noDispensaPuntoUUIDs = noDispensaInis.map((a) => a.id_punto).filter(Boolean);
-            if (noDispensaPuntoUUIDs.length > 0) {
-                const cierresRaw = yield iniciativas_estudio_1.default.findAll({
-                    where: { punto_origen_id: { [sequelize_1.Op.in]: noDispensaPuntoUUIDs }, status: "3" },
-                    attributes: ["punto_origen_id", "punto_destino_id"],
-                    include: [{ model: puntos_ordens_1.default, as: "iniciativa", attributes: ["id"], paranoid: false }],
-                    paranoid: false
-                });
-                // punto_origen_id (CHAR(36)) → destino PuntosOrden.id (INTEGER)
-                const cierreOrigenToDestInt = new Map();
-                for (const c of cierresRaw) {
-                    const cj = c.toJSON();
-                    if (((_e = cj.iniciativa) === null || _e === void 0 ? void 0 : _e.id) != null)
-                        cierreOrigenToDestInt.set(cj.punto_origen_id, cj.iniciativa.id);
-                }
-                for (const a of noDispensaInis) {
-                    const destInt = cierreOrigenToDestInt.get(a.id_punto);
-                    if (destInt != null)
-                        votingIntPuntoToIni.set(destInt, a.id);
-                    else if (((_f = a.punto) === null || _f === void 0 ? void 0 : _f.id) != null)
-                        votingIntPuntoToIni.set(a.punto.id, a.id); // fallback
-                }
-            }
-            // TemasPuntosVotos WHERE id_punto IN [INTEGER ids] — MySQL coerce CHAR→INT
-            const votingIntIds = [...votingIntPuntoToIni.keys()];
-            const temasRaw = votingIntIds.length > 0
-                ? yield temas_puntos_votos_1.default.findAll({ where: { id_punto: { [sequelize_1.Op.in]: votingIntIds } }, attributes: ["id", "id_punto"], paranoid: false, raw: true })
+        if (aprobadas.length > 0) {
+            const puntoIds = [...new Set(aprobadas.map(r => r.votingPuntoIntId).filter((id) => id != null))];
+            const votosRaw = puntoIds.length > 0
+                ? yield votos_punto_1.default.findAll({
+                    where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] } },
+                    attributes: ["id_punto", "sentido"],
+                    paranoid: false,
+                    raw: true
+                })
                 : [];
-            const temaIds = temasRaw.map((t) => t.id);
-            const temaToPuntoInt = new Map(temasRaw.map((t) => [t.id, Number(t.id_punto)]));
-            const votosRaw = temaIds.length > 0
-                ? yield votos_punto_1.default.findAll({ where: { id_tema_punto_voto: { [sequelize_1.Op.in]: temaIds } }, attributes: ["id_tema_punto_voto", "sentido"], paranoid: false, raw: true })
-                : [];
-            const votosPorPuntoInt = new Map();
+            const votosPorPunto = new Map();
             for (const voto of votosRaw) {
-                const pid = temaToPuntoInt.get(voto.id_tema_punto_voto);
-                if (pid == null)
-                    continue;
-                if (!votosPorPuntoInt.has(pid))
-                    votosPorPuntoInt.set(pid, { favor: 0, contra: 0, abstencion: 0 });
-                const e = votosPorPuntoInt.get(pid);
+                const pid = Number(voto.id_punto);
+                if (!votosPorPunto.has(pid))
+                    votosPorPunto.set(pid, { favor: 0, contra: 0, abstencion: 0 });
+                const e = votosPorPunto.get(pid);
                 if (voto.sentido === 1)
                     e.favor++;
                 else if (voto.sentido === 2)
@@ -1832,12 +1786,8 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
             }
             const votacionCats = { "Unanimidad (100%)": 0, "90% o más": 0, "80% o más": 0, "Mayoría (50%+1)": 0, "Sin datos de votación": 0 };
             const pctRangoCats = { "100%": 0, "90% – 99%": 0, "80% – 89%": 0, "70% – 79%": 0, "60% – 69%": 0, "50% – 59%": 0, "Sin datos": 0 };
-            const iniYaContada = new Set();
-            for (const [puntoInt, iniId] of votingIntPuntoToIni) {
-                if (iniYaContada.has(iniId))
-                    continue;
-                iniYaContada.add(iniId);
-                const votos = votosPorPuntoInt.get(puntoInt);
+            for (const r of aprobadas) {
+                const votos = r.votingPuntoIntId != null ? votosPorPunto.get(r.votingPuntoIntId) : undefined;
                 if (!votos) {
                     votacionCats["Sin datos de votación"]++;
                     pctRangoCats["Sin datos"]++;
@@ -1875,9 +1825,6 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
                 else
                     pctRangoCats["Sin datos"]++;
             }
-            const sinIden = aprobadosIds.filter(id => !iniYaContada.has(id)).length;
-            votacionCats["Sin datos de votación"] += sinIden;
-            pctRangoCats["Sin datos"] += sinIden;
             porVotacion = Object.entries(votacionCats).filter(([, v]) => v > 0).map(([tipo, total]) => ({ tipo, total }));
             porPorcentajeAprobacion = Object.entries(pctRangoCats).filter(([, v]) => v > 0).map(([rango, total]) => ({ rango, total }));
         }

@@ -25,7 +25,6 @@ import IntegranteLegislatura from "../models/integrante_legislaturas";
 import IntegranteComision from "../models/integrante_comisions";
 import AsistenciaVoto from "../models/asistencia_votos";
 import Gender from "../models/gender";
-import TemasPuntosVotos from "../models/temas_puntos_votos";
 import VotosPunto from "../models/votos_punto";
 
 type ReporteBaseItem = {
@@ -48,6 +47,7 @@ type ReporteBaseItem = {
   periodo: string;
   tipo: string | null;
   se_turna_comision: boolean;
+  votingPuntoIntId: number | null;
 };
 
 const deduplicarPorId = (items: any[]) => {
@@ -571,6 +571,9 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         // ✅ AQUÍ ESTÁ EL FIX
         tipo: tipoTexto(data.tipo ?? data.punto?.tipo),
         se_turna_comision: String(data.punto?.se_turna_comision) === "1" || data.punto?.se_turna_comision === true,
+        votingPuntoIntId: dispensa
+          ? (data.punto?.id ?? null)
+          : (cierrePrincipal?.iniciativa?.id ?? null),
       };
     })
   );
@@ -2038,76 +2041,32 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
       .sort((a, b) => b.total - a.total).slice(0, 10);
 
     // ── 5. Votación (para aprobadas) ──────────────────────────────────────────
-    // TemasPuntosVotos.id_punto almacena PuntosOrden.id (INTEGER), igual que en getifnini.
-    // Para dispensa: punto de votación = PuntosOrden.id del punto original.
-    // Para cierre: punto de votación = PuntosOrden.id del cierre destino (c.iniciativa?.id).
-    const aprobadosIds = reporte.filter(r => r.observac === "Aprobada").map(r => r.id);
+    // VotosPunto.id_punto es INTEGER y se crea con id_tema_punto_voto=null,
+    // por eso se consulta directamente por id_punto (PuntosOrden.id INTEGER).
+    // construirReporteBase ya resolvió el punto correcto:
+    //   dispensa → PuntosOrden.id del punto original
+    //   cierre   → PuntosOrden.id del punto destino (cierrePrincipal.iniciativa.id)
+    const aprobadas = reporte.filter(r => r.observac === "Aprobada");
     let porVotacion: { tipo: string; total: number }[] = [];
     let porPorcentajeAprobacion: { rango: string; total: number }[] = [];
 
-    if (aprobadosIds.length > 0) {
-      const aprobadosData = await IniciativaPuntoOrden.findAll({
-        where: { id: { [Op.in]: aprobadosIds } },
-        attributes: ["id", "id_punto"],
-        include: [{ model: PuntosOrden, as: "punto", attributes: ["id", "dispensa"], paranoid: false }],
-        paranoid: false
-      });
-      const aprobadosJson = aprobadosData.map((a: any) => a.toJSON());
+    if (aprobadas.length > 0) {
+      const puntoIds = [...new Set(aprobadas.map(r => r.votingPuntoIntId).filter((id): id is number => id != null))];
 
-      // Separate dispensa vs cierre
-      const dispensaInis: any[] = [];
-      const noDispensaInis: any[] = [];
-      for (const a of aprobadosJson) {
-        if (String(a.punto?.dispensa) === "1") dispensaInis.push(a);
-        else noDispensaInis.push(a);
-      }
-
-      // Map: PuntosOrden.id (INTEGER) → iniciativa UUID
-      const votingIntPuntoToIni = new Map<number, string>();
-
-      // Dispensa: voting punto = PuntosOrden.id del punto original
-      for (const a of dispensaInis) {
-        if (a.punto?.id != null) votingIntPuntoToIni.set(a.punto.id, a.id);
-      }
-
-      // Cierre: fetch cierres con include as "iniciativa" → c.iniciativa.id = PuntosOrden.id (INTEGER) del destino
-      const noDispensaPuntoUUIDs = noDispensaInis.map((a: any) => a.id_punto).filter(Boolean);
-      if (noDispensaPuntoUUIDs.length > 0) {
-        const cierresRaw = await IniciativaEstudio.findAll({
-          where: { punto_origen_id: { [Op.in]: noDispensaPuntoUUIDs }, status: "3" },
-          attributes: ["punto_origen_id", "punto_destino_id"],
-          include: [{ model: PuntosOrden, as: "iniciativa", attributes: ["id"], paranoid: false }],
-          paranoid: false
-        });
-        // punto_origen_id (CHAR(36)) → destino PuntosOrden.id (INTEGER)
-        const cierreOrigenToDestInt = new Map<string, number>();
-        for (const c of cierresRaw) {
-          const cj = (c as any).toJSON();
-          if (cj.iniciativa?.id != null) cierreOrigenToDestInt.set(cj.punto_origen_id, cj.iniciativa.id);
-        }
-        for (const a of noDispensaInis) {
-          const destInt = cierreOrigenToDestInt.get(a.id_punto);
-          if (destInt != null) votingIntPuntoToIni.set(destInt, a.id);
-          else if (a.punto?.id != null) votingIntPuntoToIni.set(a.punto.id, a.id); // fallback
-        }
-      }
-
-      // TemasPuntosVotos WHERE id_punto IN [INTEGER ids] — MySQL coerce CHAR→INT
-      const votingIntIds = [...votingIntPuntoToIni.keys()];
-      const temasRaw = votingIntIds.length > 0
-        ? await TemasPuntosVotos.findAll({ where: { id_punto: { [Op.in]: votingIntIds } }, attributes: ["id", "id_punto"], paranoid: false, raw: true })
+      const votosRaw = puntoIds.length > 0
+        ? await VotosPunto.findAll({
+            where: { id_punto: { [Op.in]: puntoIds }, sentido: { [Op.in]: [1, 2, 3] } },
+            attributes: ["id_punto", "sentido"],
+            paranoid: false,
+            raw: true
+          })
         : [];
-      const temaIds = (temasRaw as any[]).map((t: any) => t.id);
-      const temaToPuntoInt = new Map<string, number>((temasRaw as any[]).map((t: any) => [t.id, Number(t.id_punto)]));
-      const votosRaw = temaIds.length > 0
-        ? await VotosPunto.findAll({ where: { id_tema_punto_voto: { [Op.in]: temaIds } }, attributes: ["id_tema_punto_voto", "sentido"], paranoid: false, raw: true })
-        : [];
-      const votosPorPuntoInt = new Map<number, { favor: number; contra: number; abstencion: number }>();
+
+      const votosPorPunto = new Map<number, { favor: number; contra: number; abstencion: number }>();
       for (const voto of votosRaw as any[]) {
-        const pid = temaToPuntoInt.get(voto.id_tema_punto_voto);
-        if (pid == null) continue;
-        if (!votosPorPuntoInt.has(pid)) votosPorPuntoInt.set(pid, { favor: 0, contra: 0, abstencion: 0 });
-        const e = votosPorPuntoInt.get(pid)!;
+        const pid = Number(voto.id_punto);
+        if (!votosPorPunto.has(pid)) votosPorPunto.set(pid, { favor: 0, contra: 0, abstencion: 0 });
+        const e = votosPorPunto.get(pid)!;
         if (voto.sentido === 1) e.favor++;
         else if (voto.sentido === 2) e.abstencion++;
         else if (voto.sentido === 3) e.contra++;
@@ -2115,11 +2074,9 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
 
       const votacionCats: Record<string, number> = { "Unanimidad (100%)": 0, "90% o más": 0, "80% o más": 0, "Mayoría (50%+1)": 0, "Sin datos de votación": 0 };
       const pctRangoCats: Record<string, number> = { "100%": 0, "90% – 99%": 0, "80% – 89%": 0, "70% – 79%": 0, "60% – 69%": 0, "50% – 59%": 0, "Sin datos": 0 };
-      const iniYaContada = new Set<string>();
-      for (const [puntoInt, iniId] of votingIntPuntoToIni) {
-        if (iniYaContada.has(iniId)) continue;
-        iniYaContada.add(iniId);
-        const votos = votosPorPuntoInt.get(puntoInt);
+
+      for (const r of aprobadas) {
+        const votos = r.votingPuntoIntId != null ? votosPorPunto.get(r.votingPuntoIntId) : undefined;
         if (!votos) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
         const validos = votos.favor + votos.contra + votos.abstencion;
         if (validos === 0) { votacionCats["Sin datos de votación"]++; pctRangoCats["Sin datos"]++; continue; }
@@ -2137,9 +2094,7 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
         else if (votos.favor > validos / 2)  pctRangoCats["50% – 59%"]++;
         else                                 pctRangoCats["Sin datos"]++;
       }
-      const sinIden = aprobadosIds.filter(id => !iniYaContada.has(id)).length;
-      votacionCats["Sin datos de votación"] += sinIden;
-      pctRangoCats["Sin datos"] += sinIden;
+
       porVotacion = Object.entries(votacionCats).filter(([, v]) => v > 0).map(([tipo, total]) => ({ tipo, total }));
       porPorcentajeAprobacion = Object.entries(pctRangoCats).filter(([, v]) => v > 0).map(([rango, total]) => ({ rango, total }));
     }
