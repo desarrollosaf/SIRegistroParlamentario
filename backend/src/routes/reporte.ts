@@ -14,7 +14,8 @@ import {
   getComisionesDiputadoAsistencia,
   getReporteAsistenciaDiputado,
   getDatosAsistenciaDiputado,
-  getEstadisticasIniciativas
+  getEstadisticasIniciativas,
+  getExcelVotacionesDetalle
 } from "../controllers/reporte";
 
 const router = Router();
@@ -34,6 +35,7 @@ router.post("/api/reporte/iniciativas/por-periodo", getReportePorPeriodoLegislat
 
 // Estadísticas generales de iniciativas
 router.get("/api/reporte/iniciativas/estadisticas", getEstadisticasIniciativas);
+router.get("/api/reporte/iniciativas/estadisticas/excel-votaciones", getExcelVotacionesDetalle);
 
 // Asistencia por diputado
 router.get("/api/reporte/asistencia/diputados", getDiputadosAsistencia);

@@ -196,6 +196,10 @@
         <i class="bi bi-bar-chart-fill"></i>
         <span>Votaciones Aprobadas por Porcentaje</span>
         <span class="chart-badge">{{ aprobadas }} aprobadas</span>
+        <button class="btn-excel-votaciones" (click)="exportarExcelVotaciones()" [disabled]="descargandoVotaciones" title="Descargar detalle en Excel">
+          <i class="bi" [class.bi-file-earmark-excel-fill]="!descargandoVotaciones" [class.bi-hourglass-split]="descargandoVotaciones"></i>
+          {{ descargandoVotaciones ? 'Generando...' : 'Exportar Excel' }}
+        </button>
       </div>
       <apx-chart
         [series]="porcentajeAprobacionChart.series"

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getExcelVotacionesDetalle = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
@@ -1848,3 +1848,141 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.getEstadisticasIniciativas = getEstadisticasIniciativas;
+const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    try {
+        const reporte = yield construirReporteBase();
+        const aprobadas = reporte.filter(r => r.observac === "Aprobada");
+        const puntoIds = [...new Set(aprobadas.map(r => r.votingPuntoIntId).filter((id) => id != null))];
+        const votosRaw = puntoIds.length > 0
+            ? yield votos_punto_1.default.findAll({
+                where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] } },
+                attributes: ["id_punto", "sentido"],
+                paranoid: false,
+                raw: true
+            })
+            : [];
+        const votosPorPunto = new Map();
+        for (const voto of votosRaw) {
+            const pid = Number(voto.id_punto);
+            if (!votosPorPunto.has(pid))
+                votosPorPunto.set(pid, { favor: 0, contra: 0, abstencion: 0 });
+            const e = votosPorPunto.get(pid);
+            if (voto.sentido === 1)
+                e.favor++;
+            else if (voto.sentido === 2)
+                e.abstencion++;
+            else if (voto.sentido === 3)
+                e.contra++;
+        }
+        const ORDEN_RANGOS = ['100%', '90% – 99%', '80% – 89%', '70% – 79%', '60% – 69%', '50% – 59%', 'Sin datos de votación'];
+        const calcularRango = (votos) => {
+            if (!votos)
+                return 'Sin datos de votación';
+            const validos = votos.favor + votos.contra + votos.abstencion;
+            if (validos === 0)
+                return 'Sin datos de votación';
+            const pct = votos.favor / validos;
+            if (pct >= 1.0)
+                return '100%';
+            else if (pct >= 0.9)
+                return '90% – 99%';
+            else if (pct >= 0.8)
+                return '80% – 89%';
+            else if (pct >= 0.7)
+                return '70% – 79%';
+            else if (pct >= 0.6)
+                return '60% – 69%';
+            else if (votos.favor > validos / 2)
+                return '50% – 59%';
+            else
+                return 'Sin datos de votación';
+        };
+        const filas = aprobadas
+            .map(r => {
+            var _a, _b, _c, _d;
+            const votos = r.votingPuntoIntId != null ? votosPorPunto.get(r.votingPuntoIntId) : undefined;
+            const validos = votos ? votos.favor + votos.contra + votos.abstencion : 0;
+            const pctFavor = validos > 0 ? Math.round((votos.favor / validos) * 100) : null;
+            return {
+                no: r.no,
+                materia: r.materia,
+                autor: r.autor,
+                tipo: (_a = r.tipo) !== null && _a !== void 0 ? _a : '-',
+                presentac: r.presentac,
+                expedicion: r.expedicion,
+                favor: (_b = votos === null || votos === void 0 ? void 0 : votos.favor) !== null && _b !== void 0 ? _b : null,
+                contra: (_c = votos === null || votos === void 0 ? void 0 : votos.contra) !== null && _c !== void 0 ? _c : null,
+                abstencion: (_d = votos === null || votos === void 0 ? void 0 : votos.abstencion) !== null && _d !== void 0 ? _d : null,
+                pctFavor,
+                rango: calcularRango(votos),
+                rangoOrden: ORDEN_RANGOS.indexOf(calcularRango(votos))
+            };
+        })
+            .sort((a, b) => a.rangoOrden - b.rangoOrden);
+        const ExcelJS = require("exceljs");
+        const workbook = new ExcelJS.Workbook();
+        const ws = workbook.addWorksheet("Votaciones por Rango");
+        ws.columns = [
+            { header: "No.", key: "no", width: 6 },
+            { header: "Materia", key: "materia", width: 60 },
+            { header: "Autor", key: "autor", width: 30 },
+            { header: "Tipo", key: "tipo", width: 20 },
+            { header: "Presentación", key: "presentac", width: 14 },
+            { header: "Aprobación", key: "expedicion", width: 14 },
+            { header: "Rango % Favor", key: "rango", width: 20 },
+            { header: "A Favor", key: "favor", width: 10 },
+            { header: "En Contra", key: "contra", width: 10 },
+            { header: "Abstenciones", key: "abstencion", width: 13 },
+            { header: "% Favor", key: "pctFavor", width: 10 },
+        ];
+        const COLORES_RANGO = {
+            '100%': 'FF10b981',
+            '90% – 99%': 'FF34d399',
+            '80% – 89%': 'FFfbbf24',
+            '70% – 79%': 'FFf97316',
+            '60% – 69%': 'FFef4444',
+            '50% – 59%': 'FFdc2626',
+            'Sin datos de votación': 'FF94a3b8'
+        };
+        const headerRow = ws.getRow(1);
+        headerRow.height = 22;
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800048' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+        for (const fila of filas) {
+            const row = ws.addRow({
+                no: fila.no,
+                materia: fila.materia,
+                autor: fila.autor,
+                tipo: fila.tipo,
+                presentac: fila.presentac,
+                expedicion: fila.expedicion,
+                rango: fila.rango,
+                favor: (_a = fila.favor) !== null && _a !== void 0 ? _a : '-',
+                contra: (_b = fila.contra) !== null && _b !== void 0 ? _b : '-',
+                abstencion: (_c = fila.abstencion) !== null && _c !== void 0 ? _c : '-',
+                pctFavor: fila.pctFavor != null ? `${fila.pctFavor}%` : '-',
+            });
+            row.height = 28;
+            const color = (_d = COLORES_RANGO[fila.rango]) !== null && _d !== void 0 ? _d : 'FF94a3b8';
+            const rangoCell = row.getCell('rango');
+            rangoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+            rangoCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            row.eachCell((cell) => {
+                cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+                cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            });
+        }
+        ws.views = [{ state: 'frozen', ySplit: 1 }];
+        yield enviarWorkbook(res, workbook, 'votaciones_por_rango.xlsx');
+    }
+    catch (error) {
+        console.error("Error al generar Excel de votaciones:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getExcelVotacionesDetalle = getExcelVotacionesDetalle;

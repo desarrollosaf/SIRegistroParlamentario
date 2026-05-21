@@ -315,6 +315,12 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/`);
   }
 
+  descargarExcelVotaciones(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/excel-votaciones`, {
+      responseType: 'blob'
+    });
+  }
+
   getEdicionIniciativa(id: string): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl3}/edicion/${id}`);
   }

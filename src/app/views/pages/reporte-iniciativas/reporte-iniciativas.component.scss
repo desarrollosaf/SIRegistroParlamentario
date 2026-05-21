@@ -232,3 +232,23 @@ $brand: #800048;
 @media (max-width: 440px) {
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+.btn-excel-votaciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1d6f42;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+
+  i { font-size: 0.85rem; }
+  &:hover:not(:disabled) { background: #155534; }
+  &:disabled { opacity: .6; cursor: not-allowed; }
+}
