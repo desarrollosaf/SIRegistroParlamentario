@@ -2168,6 +2168,7 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
         return {
           no: r.no,
           materia: r.materia,
+          iniciativa: r.iniciativa,
           autor: r.autor,
           tipo: r.tipo ?? '-',
           presentac: r.presentac,
@@ -2188,7 +2189,8 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
 
     ws.columns = [
       { header: "No.", key: "no", width: 6 },
-      { header: "Materia", key: "materia", width: 60 },
+      { header: "Punto", key: "materia", width: 60 },
+      { header: "Iniciativa", key: "iniciativa", width: 60 },
       { header: "Autor", key: "autor", width: 30 },
       { header: "Tipo", key: "tipo", width: 20 },
       { header: "Presentación", key: "presentac", width: 14 },
@@ -2223,6 +2225,7 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
       const row = ws.addRow({
         no: fila.no,
         materia: fila.materia,
+        iniciativa: fila.iniciativa,
         autor: fila.autor,
         tipo: fila.tipo,
         presentac: fila.presentac,
