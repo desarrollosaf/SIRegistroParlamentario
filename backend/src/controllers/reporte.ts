@@ -48,6 +48,8 @@ type ReporteBaseItem = {
   tipo: string | null;
   se_turna_comision: boolean;
   votingPuntoIntId: number | null;
+  id_evento: string | null;
+  nopunto: number | null;
 };
 
 const deduplicarPorId = (items: any[]) => {
@@ -524,8 +526,9 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         data.evento?.tipoevento?.nombre
       );
 
-      const fechaExpedicion =
-        cierrePrincipal?.iniciativa?.evento?.fecha
+      const fechaExpedicion = dispensa
+        ? (data.evento?.fecha ? formatearFechaCorta(data.evento.fecha) : "-")
+        : cierrePrincipal?.iniciativa?.evento?.fecha
           ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
           : "-";
 
@@ -574,6 +577,12 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         votingPuntoIntId: dispensa
           ? (data.punto?.id ?? null)
           : (cierrePrincipal?.iniciativa?.id ?? null),
+        id_evento: dispensa
+          ? (data.evento?.id ?? null)
+          : (cierrePrincipal?.iniciativa?.evento?.id ?? null),
+        nopunto: dispensa
+          ? (data.punto?.nopunto ?? null)
+          : (cierrePrincipal?.iniciativa?.nopunto ?? null),
       };
     })
   );
@@ -2167,6 +2176,8 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
         const pctFavor = validos > 0 ? Math.round((votos!.favor / validos) * 100) : null;
         return {
           no: r.no,
+          id_evento: r.id_evento ?? '-',
+          nopunto: r.nopunto ?? '-',
           materia: r.materia,
           iniciativa: r.iniciativa,
           autor: r.autor,
@@ -2189,6 +2200,8 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
 
     ws.columns = [
       { header: "No.", key: "no", width: 6 },
+      { header: "ID Evento", key: "id_evento", width: 20 },
+      { header: "No. Punto", key: "nopunto", width: 12 },
       { header: "Punto", key: "materia", width: 60 },
       { header: "Iniciativa", key: "iniciativa", width: 60 },
       { header: "Autor", key: "autor", width: 30 },
@@ -2224,6 +2237,8 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
     for (const fila of filas) {
       const row = ws.addRow({
         no: fila.no,
+        id_evento: fila.id_evento,
+        nopunto: fila.nopunto,
         materia: fila.materia,
         iniciativa: fila.iniciativa,
         autor: fila.autor,
