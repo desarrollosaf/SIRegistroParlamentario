@@ -27,6 +27,7 @@ interface EstadisticasIniciativas {
 export class ReporteIniciativasComponent implements OnInit {
   cargando = true;
   datos: EstadisticasIniciativas | null = null;
+  descargandoVotaciones = false;
 
   generoChart: any = {};
   estatusChart: any = {};
@@ -347,6 +348,22 @@ export class ReporteIniciativasComponent implements OnInit {
   get mujeres(): number { return this.datos?.porGenero.find(g => g.genero === 'Mujeres')?.total ?? 0; }
   get hombres(): number { return this.datos?.porGenero.find(g => g.genero === 'Hombres')?.total ?? 0; }
   get sg(): number { return this.datos?.porGenero.find(g => g.genero === 'S/G')?.total ?? 0; }
+
+  exportarExcelVotaciones(): void {
+    this.descargandoVotaciones = true;
+    this._eventoService.descargarExcelVotaciones().subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'votaciones_por_rango.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.descargandoVotaciones = false;
+      },
+      error: () => { this.descargandoVotaciones = false; }
+    });
+  }
 
   pct(val: number, total: number): number {
     return total === 0 ? 0 : Math.round((val / total) * 100);
