@@ -111,7 +111,7 @@
     <div class="modal-body" *ngIf="!editCargando">
 
       <!-- área scrolleable: solo presentantes -->
-      <div class="modal-scroll-area" (scroll)="closeAllDropdowns()">
+      <div class="modal-scroll-area">
 
         <!-- ── Sección presentantes ── -->
         <div class="edit-section">
@@ -133,49 +133,70 @@
               <span class="pres-col pres-col--del"></span>
             </div>
             <div class="pres-row" *ngFor="let p of editPresentantes; let i = index">
+
+              <!-- Tipo de proponente -->
               <div class="pres-col pres-col--tipo">
-                <ng-select
-                  [items]="editCatalogos.proponentes"
-                  bindLabel="valor"
-                  bindValue="id"
-                  placeholder="Tipo…"
-                  [(ngModel)]="p.id_tipo_presenta"
-                  [name]="'tipo_' + i"
-                  [clearable]="false"
-                  appendTo="body"
-                  (change)="onTipoPresentaChange(i)"
-                ></ng-select>
+                <div class="cs-control" [class.cs-control--open]="csIsOpen('tipo_'+i)"
+                     (click)="csToggle('tipo_'+i, $event)">
+                  <span class="cs-value" *ngIf="p.id_tipo_presenta">
+                    {{ csLabel(editCatalogos.proponentes, p.id_tipo_presenta, 'id', 'valor') }}
+                  </span>
+                  <span class="cs-placeholder" *ngIf="!p.id_tipo_presenta">Tipo…</span>
+                  <span class="cs-arrow">▾</span>
+                </div>
+                <!-- Portal -->
+                <div class="cs-portal" *ngIf="csIsOpen('tipo_'+i)" [attr.data-cs]="'tipo_'+i"
+                     [ngStyle]="csGetStyle('tipo_'+i)" (click)="$event.stopPropagation()">
+                  <input class="cs-search" type="text" placeholder="Buscar…"
+                         [value]="csGetSearch('tipo_'+i)"
+                         (input)="csSetSearch('tipo_'+i, $any($event.target).value)" />
+                  <div class="cs-options">
+                    <div class="cs-option" *ngFor="let opt of csFilter('tipo_'+i, editCatalogos.proponentes, 'valor')"
+                         (click)="csSelectTipo(i, opt)">{{ opt.valor }}</div>
+                    <div class="cs-empty" *ngIf="csFilter('tipo_'+i, editCatalogos.proponentes, 'valor').length === 0">
+                      Sin resultados
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <!-- Entidad / Persona -->
               <div class="pres-col pres-col--entidad">
-                <!-- Texto libre para ciudadanas/ciudadanos -->
-                <input
-                  *ngIf="esTipoCiudadano(p.tipo_nombre)"
-                  type="text"
-                  class="ciudadano-input"
-                  placeholder="Nombre del ciudadano/a…"
-                  [(ngModel)]="p.id_presenta"
-                  [name]="'ciudadano_' + i"
-                />
-                <!-- Select con catálogo -->
-                <ng-select
-                  *ngIf="!esTipoCiudadano(p.tipo_nombre) && p.entidades.length > 0"
-                  [items]="p.entidades"
-                  bindLabel="nombre"
-                  bindValue="id"
-                  placeholder="Seleccionar…"
-                  [(ngModel)]="p.id_presenta"
-                  [name]="'entidad_' + i"
-                  appendTo="body"
-                  [virtualScroll]="true"
-                  [searchFn]="searchEntidad.bind(this)"
-                  [searchable]="true"
-                ></ng-select>
-                <!-- Sin catálogo para este tipo -->
-                <span
-                  *ngIf="!esTipoCiudadano(p.tipo_nombre) && p.entidades.length === 0 && p.tipo_nombre"
-                  class="pres-no-entity"
-                >{{ p.presenta_nombre || '—' }}</span>
+                <input *ngIf="esTipoCiudadano(p.tipo_nombre)" type="text" class="ciudadano-input"
+                       placeholder="Nombre del ciudadano/a…" [(ngModel)]="p.id_presenta"
+                       [name]="'ciudadano_' + i" />
+
+                <ng-container *ngIf="!esTipoCiudadano(p.tipo_nombre)">
+                  <div *ngIf="p.entidades.length > 0">
+                    <div class="cs-control" [class.cs-control--open]="csIsOpen('entidad_'+i)"
+                         (click)="csToggle('entidad_'+i, $event)">
+                      <span class="cs-value" *ngIf="p.id_presenta">
+                        {{ csLabel(p.entidades, p.id_presenta, 'id', 'nombre') }}
+                      </span>
+                      <span class="cs-placeholder" *ngIf="!p.id_presenta">Seleccionar…</span>
+                      <span class="cs-arrow">▾</span>
+                    </div>
+                    <!-- Portal -->
+                    <div class="cs-portal" *ngIf="csIsOpen('entidad_'+i)" [attr.data-cs]="'entidad_'+i"
+                         [ngStyle]="csGetStyle('entidad_'+i)" (click)="$event.stopPropagation()">
+                      <input class="cs-search" type="text" placeholder="Buscar…"
+                             [value]="csGetSearch('entidad_'+i)"
+                             (input)="csSetSearch('entidad_'+i, $any($event.target).value)" />
+                      <div class="cs-options">
+                        <div class="cs-option" *ngFor="let opt of csFilter('entidad_'+i, p.entidades, 'nombre')"
+                             (click)="csSelectEntidad(i, opt)">{{ opt.nombre }}</div>
+                        <div class="cs-empty" *ngIf="csFilter('entidad_'+i, p.entidades, 'nombre').length === 0">
+                          Sin resultados
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span *ngIf="p.entidades.length === 0 && p.tipo_nombre" class="pres-no-entity">
+                    {{ p.presenta_nombre || '—' }}
+                  </span>
+                </ng-container>
               </div>
+
               <div class="pres-col pres-col--del">
                 <button class="btn-del-pres" type="button" (click)="eliminarPresentante(i)" title="Eliminar">✕</button>
               </div>
@@ -185,7 +206,7 @@
 
       </div>
 
-      <!-- área fija: turno — fuera del overflow-y para que el dropdown no se clipee -->
+      <!-- área fija: turno -->
       <div class="modal-turno-area">
 
         <!-- ── Sección turno ── -->
@@ -216,8 +237,8 @@
                 placeholder="Seleccionar comisión(es)…"
                 [(ngModel)]="editTurnoComisionIds"
                 name="turnoComisiones"
-                [dropdownPosition]="'top'"
-                [searchFn]="searchComision"
+                appendTo="body"
+                [searchFn]="searchComisionFn"
               ></ng-select>
             </div>
           </div>

@@ -21,5 +21,17 @@
 // NobleUI styles for LTR layout
 @import "./styles/styles.scss";
 
+// ng-select dropdown must appear above modal backdrops (z-index 1000)
+.ng-dropdown-panel {
+  z-index: 1050 !important;
+}
+
+// ng-select: hide selected value while dropdown is open so the search input
+// doesn't overlap it — matches select2 behavior
+.ng-select.ng-select-single.ng-select-opened .ng-select-container .ng-value-container .ng-value {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 // NobleUI styles for RTL layout. Replace the above style with this CSS file to enable RTL styles
 // @import "./styles/rtl-css/styles.rtl.css";

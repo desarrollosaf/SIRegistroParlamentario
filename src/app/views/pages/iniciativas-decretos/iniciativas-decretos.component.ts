@@ -1,16 +1,15 @@
 import {
   ChangeDetectorRef,
   Component,
+  HostListener,
   inject,
   OnInit,
   OnDestroy,
-  ViewChildren,
-  QueryList,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgSelectModule, NgSelectComponent } from '@ng-select/ng-select';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../service/evento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import Swal from 'sweetalert2';
@@ -130,7 +129,6 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
   };
 
   // --- AG Grid ---
-  @ViewChildren(NgSelectComponent) private ngSelectInstances!: QueryList<NgSelectComponent>;
 
   private gridApi!: GridApi<Iniciativa>;
 
@@ -622,9 +620,6 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  closeAllDropdowns(): void {
-    this.ngSelectInstances?.forEach(s => s.close());
-  }
 
   esTipoCiudadano(tipoNombre: string): boolean {
     return tipoNombre.toLowerCase().includes('ciudadan');
@@ -634,12 +629,70 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
 
-  searchComision(term: string, item: any): boolean {
-    return this.normalizeStr(item.nombre ?? '').includes(this.normalizeStr(term));
+  readonly searchComisionFn = (term: string, item: any): boolean =>
+    this.normalizeStr(item.nombre ?? '').includes(this.normalizeStr(term));
+
+  // ─── Custom Select ───────────────────────────────────────────────────────────
+
+  private csState: Record<string, { search: string; top: number; left: number; width: number } | null> = {};
+
+  csIsOpen(key: string): boolean { return this.csState[key] != null; }
+  csGetSearch(key: string): string { return this.csState[key]?.search ?? ''; }
+
+  csSetSearch(key: string, val: string): void {
+    if (this.csState[key]) this.csState[key]!.search = val;
+    this.cdr.detectChanges();
   }
 
-  searchEntidad(term: string, item: any): boolean {
-    return this.normalizeStr(item.nombre ?? '').includes(this.normalizeStr(term));
+  csToggle(key: string, event: Event): void {
+    event.stopPropagation();
+    if (this.csState[key]) {
+      this.csState[key] = null;
+    } else {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      Object.keys(this.csState).forEach(k => this.csState[k] = null);
+      this.csState[key] = { search: '', top: rect.bottom + 2, left: rect.left, width: rect.width };
+      this.cdr.detectChanges();
+      setTimeout(() => (document.querySelector(`[data-cs="${key}"] .cs-search`) as HTMLElement)?.focus());
+    }
+    this.cdr.detectChanges();
+  }
+
+  csGetStyle(key: string): Record<string, string> {
+    const d = this.csState[key];
+    if (!d) return {};
+    return { position: 'fixed', top: d.top + 'px', left: d.left + 'px', width: d.width + 'px', zIndex: '9999' };
+  }
+
+  csFilter(key: string, items: any[], field: string): any[] {
+    const q = this.normalizeStr(this.csGetSearch(key));
+    if (!q) return items ?? [];
+    return (items ?? []).filter(item => this.normalizeStr(String(item[field] ?? '')).includes(q));
+  }
+
+  csLabel(items: any[], value: any, valField: string, labelField: string): string {
+    const found = (items ?? []).find(i => String(i[valField]) === String(value));
+    return found ? String(found[labelField] ?? '') : '';
+  }
+
+  csSelectTipo(i: number, opt: any): void {
+    this.csState['tipo_' + i] = null;
+    this.editPresentantes[i].id_tipo_presenta = opt.id;
+    this.onTipoPresentaChange(i);
+  }
+
+  csSelectEntidad(i: number, opt: any): void {
+    this.csState['entidad_' + i] = null;
+    this.editPresentantes[i].id_presenta = String(opt.id);
+    this.cdr.detectChanges();
+  }
+
+  @HostListener('document:click')
+  csCloseAll(): void {
+    if (Object.values(this.csState).some(v => v != null)) {
+      Object.keys(this.csState).forEach(k => this.csState[k] = null);
+      this.cdr.detectChanges();
+    }
   }
 
   onTipoPresentaChange(i: number): void {
