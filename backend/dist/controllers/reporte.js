@@ -1907,6 +1907,7 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
             return {
                 no: r.no,
                 materia: r.materia,
+                iniciativa: r.iniciativa,
                 autor: r.autor,
                 tipo: (_a = r.tipo) !== null && _a !== void 0 ? _a : '-',
                 presentac: r.presentac,
@@ -1925,7 +1926,8 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         const ws = workbook.addWorksheet("Votaciones por Rango");
         ws.columns = [
             { header: "No.", key: "no", width: 6 },
-            { header: "Materia", key: "materia", width: 60 },
+            { header: "Punto", key: "materia", width: 60 },
+            { header: "Iniciativa", key: "iniciativa", width: 60 },
             { header: "Autor", key: "autor", width: 30 },
             { header: "Tipo", key: "tipo", width: 20 },
             { header: "Presentación", key: "presentac", width: 14 },
@@ -1957,6 +1959,7 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
             const row = ws.addRow({
                 no: fila.no,
                 materia: fila.materia,
+                iniciativa: fila.iniciativa,
                 autor: fila.autor,
                 tipo: fila.tipo,
                 presentac: fila.presentac,
