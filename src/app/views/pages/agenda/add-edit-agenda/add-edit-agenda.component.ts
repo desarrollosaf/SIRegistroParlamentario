@@ -97,8 +97,6 @@ export class AddEditAgendaComponent {
 
       if (value === true) {
         ligaControl?.setValidators([Validators.required]);
-        horaInicioControl?.setValidators([Validators.required]);
-        horaFinControl?.setValidators([Validators.required]);
       } else {
         ligaControl?.clearValidators();
         horaInicioControl?.clearValidators();

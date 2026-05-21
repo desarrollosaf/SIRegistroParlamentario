@@ -2600,6 +2600,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+  imprimirAsistencia(): void {
+    window.open(`${this.enviro}api/eventos/asintenciapdf/${this.idEvento}`, '_blank');
+  }
+
   terminarAsistencia(): void {
     Swal.fire({
       title: '¿Terminar asistencia?',
