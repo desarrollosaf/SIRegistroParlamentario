@@ -332,7 +332,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
     const iniciativas = yield obtenerIniciativasBase();
     const reporte = yield Promise.all(iniciativas.map((iniciativa, index) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6;
         const data = iniciativa.toJSON();
         const { proponentesString, presentaString, diputados, diputadoIds, gruposParlamentarios, grupoParlamentarioIds } = yield getPresentantesDePunto(data.id);
         const todosEstudios = [
@@ -449,14 +449,16 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         }
         const turnadoInfo = yield getComisionesTurnado((_e = data.punto) === null || _e === void 0 ? void 0 : _e.id);
         const anfitrionesNacio = yield getAnfitriones((_f = data.evento) === null || _f === void 0 ? void 0 : _f.id, (_h = (_g = data.evento) === null || _g === void 0 ? void 0 : _g.tipoevento) === null || _h === void 0 ? void 0 : _h.nombre);
-        const fechaExpedicion = ((_k = (_j = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _j === void 0 ? void 0 : _j.evento) === null || _k === void 0 ? void 0 : _k.fecha)
-            ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
-            : "-";
+        const fechaExpedicion = dispensa
+            ? (((_j = data.evento) === null || _j === void 0 ? void 0 : _j.fecha) ? formatearFechaCorta(data.evento.fecha) : "-")
+            : ((_l = (_k = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _k === void 0 ? void 0 : _k.evento) === null || _l === void 0 ? void 0 : _l.fecha)
+                ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
+                : "-";
         const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
         const grupoParlamentario = gruposParlamentarios.length > 0
             ? gruposParlamentarios.join(", ")
             : "-";
-        const fechaEventoRaw = (_m = (_l = data.evento) === null || _l === void 0 ? void 0 : _l.fecha) !== null && _m !== void 0 ? _m : null;
+        const fechaEventoRaw = (_o = (_m = data.evento) === null || _m === void 0 ? void 0 : _m.fecha) !== null && _o !== void 0 ? _o : null;
         const tipoTexto = (tipo) => {
             switch (tipo) {
                 case 1: return "Iniciativa";
@@ -472,7 +474,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             autor: normalizarTexto(proponentesString),
             autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
-            materia: normalizarTexto((_o = data.punto) === null || _o === void 0 ? void 0 : _o.punto),
+            materia: normalizarTexto((_p = data.punto) === null || _p === void 0 ? void 0 : _p.punto),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
             comisiones: normalizarTexto(turnadoInfo.comisiones_turnado || ''),
@@ -484,11 +486,17 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             grupo_parlamentario_ids: grupoParlamentarioIds,
             periodo: obtenerPeriodo(fechaEventoRaw),
             // ✅ AQUÍ ESTÁ EL FIX
-            tipo: tipoTexto((_p = data.tipo) !== null && _p !== void 0 ? _p : (_q = data.punto) === null || _q === void 0 ? void 0 : _q.tipo),
-            se_turna_comision: String((_r = data.punto) === null || _r === void 0 ? void 0 : _r.se_turna_comision) === "1" || ((_s = data.punto) === null || _s === void 0 ? void 0 : _s.se_turna_comision) === true,
+            tipo: tipoTexto((_q = data.tipo) !== null && _q !== void 0 ? _q : (_r = data.punto) === null || _r === void 0 ? void 0 : _r.tipo),
+            se_turna_comision: String((_s = data.punto) === null || _s === void 0 ? void 0 : _s.se_turna_comision) === "1" || ((_t = data.punto) === null || _t === void 0 ? void 0 : _t.se_turna_comision) === true,
             votingPuntoIntId: dispensa
-                ? ((_u = (_t = data.punto) === null || _t === void 0 ? void 0 : _t.id) !== null && _u !== void 0 ? _u : null)
-                : ((_w = (_v = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _v === void 0 ? void 0 : _v.id) !== null && _w !== void 0 ? _w : null),
+                ? ((_v = (_u = data.punto) === null || _u === void 0 ? void 0 : _u.id) !== null && _v !== void 0 ? _v : null)
+                : ((_x = (_w = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _w === void 0 ? void 0 : _w.id) !== null && _x !== void 0 ? _x : null),
+            id_evento: dispensa
+                ? ((_z = (_y = data.evento) === null || _y === void 0 ? void 0 : _y.id) !== null && _z !== void 0 ? _z : null)
+                : ((_2 = (_1 = (_0 = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _0 === void 0 ? void 0 : _0.evento) === null || _1 === void 0 ? void 0 : _1.id) !== null && _2 !== void 0 ? _2 : null),
+            nopunto: dispensa
+                ? ((_4 = (_3 = data.punto) === null || _3 === void 0 ? void 0 : _3.nopunto) !== null && _4 !== void 0 ? _4 : null)
+                : ((_6 = (_5 = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _5 === void 0 ? void 0 : _5.nopunto) !== null && _6 !== void 0 ? _6 : null),
         };
     })));
     return reporte;
@@ -1900,20 +1908,23 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         };
         const filas = aprobadas
             .map(r => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f;
             const votos = r.votingPuntoIntId != null ? votosPorPunto.get(r.votingPuntoIntId) : undefined;
             const validos = votos ? votos.favor + votos.contra + votos.abstencion : 0;
             const pctFavor = validos > 0 ? Math.round((votos.favor / validos) * 100) : null;
             return {
                 no: r.no,
+                id_evento: (_a = r.id_evento) !== null && _a !== void 0 ? _a : '-',
+                nopunto: (_b = r.nopunto) !== null && _b !== void 0 ? _b : '-',
                 materia: r.materia,
+                iniciativa: r.iniciativa,
                 autor: r.autor,
-                tipo: (_a = r.tipo) !== null && _a !== void 0 ? _a : '-',
+                tipo: (_c = r.tipo) !== null && _c !== void 0 ? _c : '-',
                 presentac: r.presentac,
                 expedicion: r.expedicion,
-                favor: (_b = votos === null || votos === void 0 ? void 0 : votos.favor) !== null && _b !== void 0 ? _b : null,
-                contra: (_c = votos === null || votos === void 0 ? void 0 : votos.contra) !== null && _c !== void 0 ? _c : null,
-                abstencion: (_d = votos === null || votos === void 0 ? void 0 : votos.abstencion) !== null && _d !== void 0 ? _d : null,
+                favor: (_d = votos === null || votos === void 0 ? void 0 : votos.favor) !== null && _d !== void 0 ? _d : null,
+                contra: (_e = votos === null || votos === void 0 ? void 0 : votos.contra) !== null && _e !== void 0 ? _e : null,
+                abstencion: (_f = votos === null || votos === void 0 ? void 0 : votos.abstencion) !== null && _f !== void 0 ? _f : null,
                 pctFavor,
                 rango: calcularRango(votos),
                 rangoOrden: ORDEN_RANGOS.indexOf(calcularRango(votos))
@@ -1925,7 +1936,10 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         const ws = workbook.addWorksheet("Votaciones por Rango");
         ws.columns = [
             { header: "No.", key: "no", width: 6 },
-            { header: "Materia", key: "materia", width: 60 },
+            { header: "ID Evento", key: "id_evento", width: 20 },
+            { header: "No. Punto", key: "nopunto", width: 12 },
+            { header: "Punto", key: "materia", width: 60 },
+            { header: "Iniciativa", key: "iniciativa", width: 60 },
             { header: "Autor", key: "autor", width: 30 },
             { header: "Tipo", key: "tipo", width: 20 },
             { header: "Presentación", key: "presentac", width: 14 },
@@ -1956,7 +1970,10 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         for (const fila of filas) {
             const row = ws.addRow({
                 no: fila.no,
+                id_evento: fila.id_evento,
+                nopunto: fila.nopunto,
                 materia: fila.materia,
+                iniciativa: fila.iniciativa,
                 autor: fila.autor,
                 tipo: fila.tipo,
                 presentac: fila.presentac,
