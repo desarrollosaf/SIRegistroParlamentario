@@ -18,6 +18,12 @@
                 </div>
                 <br>
                 <div class="table-responsive">
+                    <!-- Skeleton -->
+                    <div *ngIf="loading()" class="skeleton-wrap">
+                        <div class="skeleton-header"></div>
+                        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]"></div>
+                    </div>
+
                     <div *ngIf="rows().length === 0 && !loading()" class="text-center my-3">
                         <p><strong>No hay datos para mostrar</strong></p>
                     </div>
@@ -52,7 +58,7 @@
                         </ngx-datatable-column>
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            prop="tipoevento" name="Tipo evento">
+                            prop="tipoevento" name="Tipo eventodd">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.tipoevento.nombre}}<br>
                                 {{row.titulo}}
