@@ -687,12 +687,36 @@ export class IniciativasDecretosComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  csTurnoIsSelected(optId: any): boolean {
+    return this.editTurnoComisionIds.some(x => String(x) === String(optId));
+  }
+
+  csTurnoToggle(optId: any): void {
+    if (this.csTurnoIsSelected(optId)) {
+      this.editTurnoComisionIds = this.editTurnoComisionIds.filter(x => String(x) !== String(optId));
+    } else {
+      this.editTurnoComisionIds = [...this.editTurnoComisionIds, optId];
+    }
+    this.csState['turno'] = null;
+    this.cdr.detectChanges();
+  }
+
+  onSeTurnaChange(): void {
+    if (!this.editSeTurna) this.csState['turno'] = null;
+    this.cdr.detectChanges();
+  }
+
+  csTurnoLabels(): { id: any; nombre: string }[] {
+    return this.editTurnoComisionIds.map(id => {
+      const found = this.editCatalogos.comisiones.find((c: any) => String(c.id) === String(id));
+      return { id, nombre: found?.nombre ?? String(id) };
+    });
+  }
+
   @HostListener('document:click')
   csCloseAll(): void {
-    if (Object.values(this.csState).some(v => v != null)) {
-      Object.keys(this.csState).forEach(k => this.csState[k] = null);
-      this.cdr.detectChanges();
-    }
+    Object.keys(this.csState).forEach(k => this.csState[k] = null);
+    this.cdr.detectChanges();
   }
 
   onTipoPresentaChange(i: number): void {
