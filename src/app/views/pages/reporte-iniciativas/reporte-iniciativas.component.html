@@ -212,24 +212,6 @@
 
     <!-- Fila 2: partido + comisiones -->
     <div class="charts-row-2">
-      <div class="chart-card" *ngIf="datos.porPartido.length > 0">
-        <div class="chart-card-header">
-          <i class="bi bi-flag-fill"></i>
-          <span>Iniciativas por Partido</span>
-          <span class="chart-badge">Por integrante</span>
-        </div>
-        <apx-chart
-          [series]="partidoChart.series"
-          [chart]="partidoChart.chart"
-          [xaxis]="partidoChart.xaxis"
-          [yaxis]="partidoChart.yaxis"
-          [colors]="partidoChart.colors"
-          [plotOptions]="partidoChart.plotOptions"
-          [dataLabels]="partidoChart.dataLabels"
-          [grid]="partidoChart.grid"
-          [tooltip]="partidoChart.tooltip"
-        ></apx-chart>
-      </div>
 
       <div class="chart-card" *ngIf="datos.porGrupoStack.length > 0">
         <div class="chart-card-header">
