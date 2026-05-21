@@ -108,7 +108,7 @@
     </div>
 
     <!-- Cuerpo -->
-    <div class="modal-body" *ngIf="!editCargando">
+    <div class="modal-body" *ngIf="!editCargando" (click)="csCloseAll()">
 
       <!-- área scrolleable: solo presentantes -->
       <div class="modal-scroll-area">
@@ -221,25 +221,51 @@
             <label class="toggle-label">
               <span>¿Se turna a comisión?</span>
               <label class="toggle-switch">
-                <input type="checkbox" [(ngModel)]="editSeTurna" name="seTurna" />
+                <input type="checkbox" [(ngModel)]="editSeTurna" name="seTurna"
+                       (ngModelChange)="onSeTurnaChange()" />
                 <span class="toggle-slider"></span>
               </label>
             </label>
 
             <div class="form-group" *ngIf="editSeTurna" style="margin-top:12px;">
               <label class="form-label">Comisión(es)</label>
-              <ng-select
-                [items]="editCatalogos.comisiones"
-                bindLabel="nombre"
-                bindValue="id"
-                [multiple]="true"
-                [virtualScroll]="true"
-                placeholder="Seleccionar comisión(es)…"
-                [(ngModel)]="editTurnoComisionIds"
-                name="turnoComisiones"
-                appendTo="body"
-                [searchFn]="searchComisionFn"
-              ></ng-select>
+
+              <!-- Control -->
+              <div class="cs-control cs-control--multi" [class.cs-control--open]="csIsOpen('turno')"
+                   (click)="csToggle('turno', $event)">
+                <div class="cs-tags" *ngIf="editTurnoComisionIds.length > 0">
+                  <span class="cs-tag" *ngFor="let sel of csTurnoLabels()">
+                    {{ sel.nombre }}
+                    <button class="cs-tag-remove" type="button"
+                            (click)="csTurnoToggle(sel.id); $event.stopPropagation()">✕</button>
+                  </span>
+                </div>
+                <span class="cs-placeholder" *ngIf="editTurnoComisionIds.length === 0">
+                  Seleccionar comisión(es)…
+                </span>
+                <span class="cs-arrow">▾</span>
+              </div>
+
+              <!-- Portal multi-select -->
+              <div class="cs-portal" *ngIf="csIsOpen('turno')" [attr.data-cs]="'turno'"
+                   [ngStyle]="csGetStyle('turno')" (click)="$event.stopPropagation()">
+                <input class="cs-search" type="text" placeholder="Buscar comisión…"
+                       [value]="csGetSearch('turno')"
+                       (input)="csSetSearch('turno', $any($event.target).value)" />
+                <div class="cs-options">
+                  <div class="cs-option cs-option--check"
+                       *ngFor="let opt of csFilter('turno', editCatalogos.comisiones, 'nombre')"
+                       [class.cs-option--selected]="csTurnoIsSelected(opt.id)"
+                       (click)="csTurnoToggle(opt.id)">
+                    <span class="cs-check-icon">{{ csTurnoIsSelected(opt.id) ? '✓' : '' }}</span>
+                    {{ opt.nombre }}
+                  </div>
+                  <div class="cs-empty" *ngIf="csFilter('turno', editCatalogos.comisiones, 'nombre').length === 0">
+                    Sin resultados
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

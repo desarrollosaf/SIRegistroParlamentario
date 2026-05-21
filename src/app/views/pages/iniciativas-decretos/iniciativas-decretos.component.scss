@@ -549,7 +549,10 @@ $danger-light:  #fef2f2;
 }
 
 // ── Edit modal ────────────────────────────────────────────────────────────────
-.modal-card--wide { max-width: 740px; }
+.modal-card--wide {
+  max-width: 860px;
+  .modal-scroll-area { min-height: 260px; }
+}
 
 .edit-loading-body {
   display: flex !important;
@@ -757,6 +760,62 @@ $danger-light:  #fef2f2;
   font-size: 12px;
   color: $text-hint;
   text-align: center;
+}
+
+.cs-control--multi {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 36px;
+  padding: 4px 8px;
+  gap: 4px;
+  align-items: center;
+}
+
+.cs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.cs-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: $primary-light;
+  color: $primary;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cs-tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $primary;
+  font-size: 10px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  &:hover { opacity: 1; }
+}
+
+.cs-option--check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  &.cs-option--selected { background: $primary-light; color: $primary; }
+}
+
+.cs-check-icon {
+  width: 14px;
+  font-size: 11px;
+  color: $primary;
+  flex-shrink: 0;
+  font-weight: 700;
 }
 
 // Scrollbar del panel desplegable de ng-select
