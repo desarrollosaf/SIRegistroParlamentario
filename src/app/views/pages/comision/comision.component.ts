@@ -701,9 +701,9 @@ export class ComisionComponent {
         console.log('hla',response)
         this.originalData.set(response.citas);
         this.temp.set(response.citas);
-        this.rows.set(response.citas);
         this.filteredCount.set(response.citas.length);
         this.loading.set(false);
+        this.setPage({ offset: 0 });
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';
@@ -721,19 +721,24 @@ export class ComisionComponent {
   }
 
   updateFilter(event: any) {
-    const val = (event.target?.value || '').toLowerCase();
+    const val = (event.target?.value || '').toLowerCase().trim();
 
     this.ngZone.runOutsideAngular(() => {
       const filtered = this.originalData().filter((row: any) => {
-        const id = (row.id || '').toLowerCase();
-        const nombre = (row.descripcion || '').toLowerCase();
-        const fecha = (row.fecha || '').toLowerCase();
-        const sede = (row.sede.sede || '').toLowerCase();
-        const tipo = (row.tipoevento.nombre || '').toLowerCase();
+        const id = String(row.id ?? '').toLowerCase();
+        const descripcion = (row.descripcion || '').toLowerCase();
+        const titulo = (row.titulo || '').toLowerCase();
+        const fechaRaw = row.fecha ? new Date(row.fecha) : null;
+        const fecha = fechaRaw
+          ? `${fechaRaw.getDate().toString().padStart(2,'0')}/${(fechaRaw.getMonth()+1).toString().padStart(2,'0')}/${fechaRaw.getFullYear()} ${fechaRaw.getHours().toString().padStart(2,'0')}:${fechaRaw.getMinutes().toString().padStart(2,'0')}:${fechaRaw.getSeconds().toString().padStart(2,'0')}`
+          : '';
+        const sede = (row.sede?.sede || '').toLowerCase();
+        const tipo = (row.tipoevento?.nombre || '').toLowerCase();
 
         return (
-          nombre.includes(val) ||
           id.includes(val) ||
+          descripcion.includes(val) ||
+          titulo.includes(val) ||
           fecha.includes(val) ||
           sede.includes(val) ||
           tipo.includes(val)
