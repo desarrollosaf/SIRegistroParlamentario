@@ -151,6 +151,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   formEdicionIniciativa!: FormGroup;
   iniciativaEnEdicion: any = null;
   slcPresentaEdicion: any[] = [];
+  ciudadanaNombreEdicion = '';
 
   tiposIniciativa = [
     { id: 1, label: 'Iniciativa' },
@@ -1364,6 +1365,17 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             ...item,
             id: String(item.id)
           }));
+          // Agregar items para presentanIds que no están en el catálogo
+          // (e.g. "Ciudadanas y ciudadanos" guarda nombre libre como id_presenta)
+          const catalogIds = new Set(this.slcPresentaEdicion.map((item: any) => item.id));
+          presentanIds.forEach((pid: string) => {
+            if (!catalogIds.has(pid)) {
+              const nombre = pid.includes('/') ? pid.split('/').slice(1).join('/') : pid;
+              if (nombre) {
+                this.slcPresentaEdicion.push({ id: pid, valor: nombre, tipo: 'ciudadano' });
+              }
+            }
+          });
           this.formEdicionIniciativa.patchValue({ id_presenta: presentanIds });
         },
         error: (e: HttpErrorResponse) => {
@@ -1377,7 +1389,35 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.mostrarformEdicionIniciativa = false;
     this.iniciativaEnEdicion = null;
     this.slcPresentaEdicion = [];
+    this.ciudadanaNombreEdicion = '';
     this.formEdicionIniciativa.reset();
+  }
+
+  get tieneCiudadanasEdicion(): boolean {
+    const ids: any[] = this.formEdicionIniciativa?.get('id_proponente')?.value || [];
+    return (this.slctProponentes || []).some(
+      (p: any) => ids.map(Number).includes(Number(p.id)) && p.valor?.toLowerCase().includes('ciudadan')
+    );
+  }
+
+  private getCiudadanasProponenteId(): string | null {
+    const p = (this.slctProponentes || []).find((p: any) => p.valor?.toLowerCase().includes('ciudadan'));
+    return p ? String(p.id) : null;
+  }
+
+  agregarCiudadanaEdicion(): void {
+    const nombre = this.ciudadanaNombreEdicion.trim();
+    if (!nombre) return;
+    const propId = this.getCiudadanasProponenteId();
+    const id = propId ? `${propId}/${nombre}` : nombre;
+    if (!this.slcPresentaEdicion.some((x: any) => x.id === id)) {
+      this.slcPresentaEdicion = [...this.slcPresentaEdicion, { id, valor: nombre, tipo: 'ciudadano' }];
+    }
+    const current: string[] = this.formEdicionIniciativa.get('id_presenta')?.value || [];
+    if (!current.includes(id)) {
+      this.formEdicionIniciativa.get('id_presenta')?.setValue([...current, id]);
+    }
+    this.ciudadanaNombreEdicion = '';
   }
 
   getTipoPEdicion(event: any): void {

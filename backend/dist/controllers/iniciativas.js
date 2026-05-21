@@ -1289,11 +1289,11 @@ const getEdicionIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const [mesaDirectivaCat, jucopotCat, dipPermCat] = yield Promise.all([
             tipoMesaRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoMesaRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
             tipoJucopoRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoJucopoRow.id, nombre: { [sequelize_1.Op.like]: '%jucopo%' } }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null,
-            tipoPermanenteRow ? comisions_1.default.findOne({ where: { tipo_comision_id: tipoPermanenteRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : null
+            tipoPermanenteRow ? comisions_1.default.findAll({ where: { tipo_comision_id: tipoPermanenteRow.id }, attributes: ['id', 'nombre'], paranoid: false, raw: true, order: [['created_at', 'DESC']] }) : Promise.resolve([])
         ]);
         // Agrupar CatFunDep por nombre del proponente (valor).
-        // id de cada entry = c.id (PK secuencial de CatFunDep).
-        // resolverNombrePresentante busca por { id: entityId }, consistente con este valor.
+        // Se usa String(c.tipo) como id de cada entry porque resolverNombrePresentante
+        // busca por { tipo: entityId }, por lo que id_presenta debe almacenar c.tipo.
         const catFunDepPorTipo = {};
         for (const c of catFunDepRaw) {
             const proponente = proponentesCat.find((p) => Number(p.id) === Number(c.tipo));
