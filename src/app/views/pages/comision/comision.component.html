@@ -34,7 +34,7 @@
                         [loadingIndicator]="loading()">
 
                         <ngx-datatable-column prop="id" [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            name="Nombre" [width]="220">
+                            name="No." [width]="220">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.id}}
                             </ng-template>
@@ -77,24 +77,20 @@
                                     <a class="btn btn-secondary action-btn" routerLink="detalle-comision/{{ row.id }}"
                                         data-bs-toggle="tooltip" data-bs-placement="top" title="Ir">
                                         <i class="bi bi-arrow-right-circle"></i>
-                                    </a> 
-
+                                    </a>
                                     <a class="btn btn-primary action-btn"
                                         routerLink="edit/{{ row.id }}" data-bs-toggle="tooltip"
-                                        data-bs-placement="top" title="Editar ">
+                                        data-bs-placement="top" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-
-                                    <a class="btn btn-danger action-btn"  data-bs-toggle="tooltip"
+                                    <a class="btn btn-danger action-btn" data-bs-toggle="tooltip"
                                         data-bs-placement="top" title="Eliminar" (click)="eliminarEvento(row.id)">
                                         <i class="bi bi-trash"></i>
                                     </a>
-
-                                    <!-- <a class="btn btn-info action-btn" data-bs-toggle="tooltip" data-bs-placement="top"
-                                        title="Integrantes" (click)="verificarIntegrantes(row.id)">
-                                        <i class="bi bi-person-exclamation"></i>
-                                    </a> -->
-                                    <a class="btn action-btn" 
+                                </div>
+                                <br>
+                                <div class="btn-group-actions mid">
+                                    <a class="btn action-btn"
                                         [class.btn-success]="row.publico === 1"
                                         [class.btn-outline-secondary]="row.publico !== 1"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -102,21 +98,18 @@
                                         (click)="togglePublico(row)">
                                         <i class="bi" [class.bi-eye-fill]="row.publico === 1" [class.bi-eye-slash]="row.publico !== 1"></i>
                                     </a>
-
                                     <a class="btn btn-warning action-btn"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
                                         title="Eliminar asistencia"
                                         (click)="eliminarAsistencia(row.id)">
                                         <i class="bi bi-person-dash-fill"></i>
                                     </a>
-
                                     <a class="btn btn-danger action-btn"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
                                         title="Eliminar votación"
                                         (click)="eliminarVotacion(row.id)">
                                         <i class="bi bi-slash-circle-fill"></i>
                                     </a>
-
                                 </div>
                             </ng-template>
                         </ngx-datatable-column>
