@@ -46,7 +46,7 @@
                             name="Fecha">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 <strong>Fecha:</strong> {{ row.fecha | date:'dd/MM/yyyy' }}<br>
-                                <strong>Hora:</strong> {{ row.fecha | date:'HH:mm:ss' }}
+                                <!-- <strong>Hora:</strong> {{ row.fecha | date:'HH:mm:ss' }} -->
                             </ng-template>
                         </ngx-datatable-column>
 
@@ -58,7 +58,7 @@
                         </ngx-datatable-column>
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            prop="tipoevento" name="Tipo eventodd">
+                            prop="tipoevento" name="Tipo evento">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{row.tipoevento.nombre}}<br>
                                 {{row.titulo}}
