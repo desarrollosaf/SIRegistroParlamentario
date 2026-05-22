@@ -1908,23 +1908,24 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         };
         const filas = aprobadas
             .map(r => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             const votos = r.votingPuntoIntId != null ? votosPorPunto.get(r.votingPuntoIntId) : undefined;
             const validos = votos ? votos.favor + votos.contra + votos.abstencion : 0;
             const pctFavor = validos > 0 ? Math.round((votos.favor / validos) * 100) : null;
             return {
                 no: r.no,
-                id_evento: (_a = r.id_evento) !== null && _a !== void 0 ? _a : '-',
-                nopunto: (_b = r.nopunto) !== null && _b !== void 0 ? _b : '-',
+                id_sap: (_a = r.id_sap) !== null && _a !== void 0 ? _a : '-',
+                id_evento: (_b = r.id_evento) !== null && _b !== void 0 ? _b : '-',
+                nopunto: (_c = r.nopunto) !== null && _c !== void 0 ? _c : '-',
                 materia: r.materia,
                 iniciativa: r.iniciativa,
                 autor: r.autor,
-                tipo: (_c = r.tipo) !== null && _c !== void 0 ? _c : '-',
+                tipo: (_d = r.tipo) !== null && _d !== void 0 ? _d : '-',
                 presentac: r.presentac,
                 expedicion: r.expedicion,
-                favor: (_d = votos === null || votos === void 0 ? void 0 : votos.favor) !== null && _d !== void 0 ? _d : null,
-                contra: (_e = votos === null || votos === void 0 ? void 0 : votos.contra) !== null && _e !== void 0 ? _e : null,
-                abstencion: (_f = votos === null || votos === void 0 ? void 0 : votos.abstencion) !== null && _f !== void 0 ? _f : null,
+                favor: (_e = votos === null || votos === void 0 ? void 0 : votos.favor) !== null && _e !== void 0 ? _e : null,
+                contra: (_f = votos === null || votos === void 0 ? void 0 : votos.contra) !== null && _f !== void 0 ? _f : null,
+                abstencion: (_g = votos === null || votos === void 0 ? void 0 : votos.abstencion) !== null && _g !== void 0 ? _g : null,
                 pctFavor,
                 rango: calcularRango(votos),
                 rangoOrden: ORDEN_RANGOS.indexOf(calcularRango(votos))
@@ -1936,6 +1937,7 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         const ws = workbook.addWorksheet("Votaciones por Rango");
         ws.columns = [
             { header: "No.", key: "no", width: 6 },
+            { header: "ID SAP", key: "id_sap", width: 15 },
             { header: "ID Evento", key: "id_evento", width: 20 },
             { header: "No. Punto", key: "nopunto", width: 12 },
             { header: "Punto", key: "materia", width: 60 },
@@ -1970,6 +1972,7 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
         for (const fila of filas) {
             const row = ws.addRow({
                 no: fila.no,
+                id_sap: fila.id_sap,
                 id_evento: fila.id_evento,
                 nopunto: fila.nopunto,
                 materia: fila.materia,

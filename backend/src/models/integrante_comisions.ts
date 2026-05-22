@@ -9,6 +9,9 @@ class IntegranteComision extends Model {
   declare comision_id: ForeignKey<string>;
   declare integrante_legislatura_id: ForeignKey<string>;
   declare tipo_cargo_comision_id: ForeignKey<string>;
+  declare orden: number;
+  declare fecha_inicio: string | null;
+  declare fecha_fin: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -44,6 +47,18 @@ IntegranteComision.init(
     tipo_cargo_comision_id: {
       type: DataTypes.CHAR(36),
       allowNull: false,
+    },
+    orden: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    fecha_inicio: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    fecha_fin: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
     },
     createdAt: {
       field: 'created_at',

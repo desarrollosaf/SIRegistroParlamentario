@@ -10,6 +10,7 @@ class AsistenciaVoto extends Model {
   declare id_diputado: ForeignKey<string>;
   declare partido_dip: string;
   declare comision_dip_id: string | null;
+  declare orden: number | null;
   declare id_cargo_dip: string | null;
   declare id_agenda: ForeignKey<string>;
   declare usuario_registra: number | null;
@@ -55,6 +56,10 @@ AsistenciaVoto.init(
     },
     comision_dip_id: {
       type: DataTypes.CHAR(36),
+      allowNull: true,
+    },
+    orden: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     id_cargo_dip: {

@@ -282,7 +282,7 @@ exports.getevento = getevento;
  */
 function crearAsistencias(evento, esSesion) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        var _a, _b;
         const listadoDiputados = [];
         if (esSesion) {
             const { Op } = require('sequelize');
@@ -328,6 +328,7 @@ function crearAsistencias(evento, esSesion) {
                             id_partido: inteLegis.partido_id,
                             comision_dip_id: null,
                             cargo_dip_id: null,
+                            orden: null,
                         });
                     }
                 }
@@ -339,16 +340,35 @@ function crearAsistencias(evento, esSesion) {
                 where: { agenda_id: evento.id },
             });
             if (comisiones.length > 0) {
+                const { Op } = require('sequelize');
+                const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
                 const comisionIds = comisiones.map((c) => c.autor_id);
                 const integrantes = yield integrante_comisions_1.default.findAll({
-                    where: { comision_id: comisionIds },
+                    where: {
+                        comision_id: comisionIds,
+                        fecha_inicio: {
+                            [Op.lte]: fechaEvento
+                        },
+                        [Op.or]: [
+                            {
+                                fecha_fin: {
+                                    [Op.gte]: fechaEvento
+                                }
+                            },
+                            {
+                                fecha_fin: null
+                            }
+                        ],
+                    },
                     include: [
                         {
                             model: integrante_legislaturas_1.default,
                             as: "integranteLegislatura",
-                            include: [{ model: diputado_1.default, as: "diputado" }],
+                            paranoid: false,
+                            include: [{ model: diputado_1.default, as: "diputado", paranoid: false }],
                         },
                     ],
+                    paranoid: false,
                 });
                 for (const inte of integrantes) {
                     if ((_a = inte.integranteLegislatura) === null || _a === void 0 ? void 0 : _a.diputado) {
@@ -356,7 +376,8 @@ function crearAsistencias(evento, esSesion) {
                             id_diputado: inte.integranteLegislatura.diputado.id,
                             id_partido: inte.integranteLegislatura.partido_id,
                             comision_dip_id: inte.comision_id,
-                            cargo_dip_id: inte.tipo_cargo_comision_id
+                            cargo_dip_id: inte.tipo_cargo_comision_id,
+                            orden: (_b = inte.orden) !== null && _b !== void 0 ? _b : null,
                         });
                     }
                 }
@@ -372,7 +393,8 @@ function crearAsistencias(evento, esSesion) {
             id_diputado: diputado.id_diputado,
             partido_dip: diputado.id_partido,
             comision_dip_id: diputado.comision_dip_id,
-            id_cargo_dip: diputado.cargo_dip_id, // 👈 Ya se guarda en la tabla
+            orden: diputado.orden,
+            id_cargo_dip: diputado.cargo_dip_id,
             id_agenda: evento.id,
         }));
         yield asistencia_votos_1.default.bulkCreate(asistencias);
@@ -507,9 +529,14 @@ function procesarAsistenciasComisiones(asistencias) {
         const comisionesArray = Object.values(integrantesAgrupados).sort((a, b) => {
             return a.importancia - b.importancia;
         });
-        // Ordenar integrantes dentro de cada comisión por nivel de cargo
+        // Ordenar integrantes dentro de cada comisión por orden, si no por nivel_cargo
         comisionesArray.forEach((comision) => {
-            comision.integrantes.sort((a, b) => a.nivel_cargo - b.nivel_cargo);
+            comision.integrantes.sort((a, b) => {
+                var _a, _b;
+                const valorA = a.orden != null ? a.orden : ((_a = a.nivel_cargo) !== null && _a !== void 0 ? _a : 999);
+                const valorB = b.orden != null ? b.orden : ((_b = b.nivel_cargo) !== null && _b !== void 0 ? _b : 999);
+                return valorA - valorB;
+            });
         });
         return comisionesArray;
     });
@@ -2028,6 +2055,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 id_partido: dip.id_partido,
                 id_comision_dip: dip.comision_dip_id,
                 id_cargo_dip: dip.id_cargo_dip,
+                orden: dip.orden,
             }));
             yield votos_punto_1.default.bulkCreate(votospunto);
             mensajeRespuesta = "Votacion creada correctamente";
@@ -2048,10 +2076,8 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
 exports.getvotacionpunto = getvotacionpunto;
 function obtenerListadoDiputados(evento) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const listadoDiputados = [];
-        const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
-            where: { valor: "Diputado Asociado" }
-        });
         const diputados = yield asistencia_votos_1.default.findAll({
             where: {
                 id_agenda: evento.id,
@@ -2063,6 +2089,7 @@ function obtenerListadoDiputados(evento) {
                 id_partido: inteLegis.partido_dip,
                 comision_dip_id: inteLegis.comision_dip_id,
                 id_cargo_dip: inteLegis.id_cargo_dip,
+                orden: (_a = inteLegis.orden) !== null && _a !== void 0 ? _a : null,
             });
         }
         return listadoDiputados;
@@ -2132,7 +2159,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             }
         }
         const resultados = votosRaw.map((voto) => {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             const diputado = diputadosMap.get(voto.id_diputado);
             const partido = partidosMap.get(voto.id_partido);
             const comision = comisionesMap.get(voto.id_comision_dip);
@@ -2148,6 +2175,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
                 id_partido: voto.id_partido,
                 id_comision_dip: voto.id_comision_dip,
                 id_cargo_dip: voto.id_cargo_dip,
+                orden: (_d = voto.orden) !== null && _d !== void 0 ? _d : null,
                 diputado: nombreCompletoDiputado,
                 partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null,
             };
@@ -2169,9 +2197,10 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
         }
         else {
             resultados.sort((a, b) => {
-                const nivelA = a.nivel_cargo || 999;
-                const nivelB = b.nivel_cargo || 999;
-                return nivelA - nivelB;
+                var _a, _b;
+                const valorA = a.orden != null ? a.orden : ((_a = a.nivel_cargo) !== null && _a !== void 0 ? _a : 999);
+                const valorB = b.orden != null ? b.orden : ((_b = b.nivel_cargo) !== null && _b !== void 0 ? _b : 999);
+                return valorA - valorB;
             });
             const agrupados = resultados.reduce((acc, voto) => {
                 const comisionId = voto.id_comision_dip || 'sin_comision';
