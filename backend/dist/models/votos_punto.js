@@ -42,6 +42,10 @@ VotosPunto.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
+    orden: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+    },
     id_cargo_dip: {
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,

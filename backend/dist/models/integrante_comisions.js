@@ -29,6 +29,18 @@ IntegranteComision.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: false,
     },
+    orden: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+    },
+    fecha_inicio: {
+        type: sequelize_1.DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    fecha_fin: {
+        type: sequelize_1.DataTypes.DATEONLY,
+        allowNull: true,
+    },
     createdAt: {
         field: 'created_at',
         type: sequelize_1.DataTypes.DATE,
