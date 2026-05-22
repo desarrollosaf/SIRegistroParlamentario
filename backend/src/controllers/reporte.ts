@@ -2176,6 +2176,7 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
         const pctFavor = validos > 0 ? Math.round((votos!.favor / validos) * 100) : null;
         return {
           no: r.no,
+          id_sap: r.id_sap ?? '-',
           id_evento: r.id_evento ?? '-',
           nopunto: r.nopunto ?? '-',
           materia: r.materia,
@@ -2200,6 +2201,7 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
 
     ws.columns = [
       { header: "No.", key: "no", width: 6 },
+      { header: "ID SAP", key: "id_sap", width: 15 },
       { header: "ID Evento", key: "id_evento", width: 20 },
       { header: "No. Punto", key: "nopunto", width: 12 },
       { header: "Punto", key: "materia", width: 60 },
@@ -2237,6 +2239,7 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
     for (const fila of filas) {
       const row = ws.addRow({
         no: fila.no,
+        id_sap: fila.id_sap,
         id_evento: fila.id_evento,
         nopunto: fila.nopunto,
         materia: fila.materia,

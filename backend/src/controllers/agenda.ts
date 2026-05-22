@@ -307,11 +307,12 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
  */
 async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
   
-  const listadoDiputados: { 
-    id_diputado: string; 
-    id_partido: string; 
-    comision_dip_id: string | null; 
-    cargo_dip_id: string | null; 
+  const listadoDiputados: {
+    id_diputado: string;
+    id_partido: string;
+    comision_dip_id: string | null;
+    cargo_dip_id: string | null;
+    orden: number | null;
   }[] = [];
 
   if (esSesion) {
@@ -361,6 +362,7 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
             id_partido: inteLegis.partido_id,
             comision_dip_id: null,
             cargo_dip_id: null,
+            orden: null,
           });
         }
       }
@@ -372,25 +374,46 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
     });
 
     if (comisiones.length > 0) {
+      const { Op } = require('sequelize');
+      const fechaEvento = new Date(evento.fecha).toISOString().split('T')[0];
       const comisionIds = comisiones.map((c) => c.autor_id);
       const integrantes = await IntegranteComision.findAll({
-        where: { comision_id: comisionIds },
+        where: {
+          comision_id: comisionIds,
+          fecha_inicio: {
+            [Op.lte]: fechaEvento
+          },
+          [Op.or]: [
+            {
+              fecha_fin: {
+                [Op.gte]: fechaEvento
+              }
+            },
+            {
+              fecha_fin: null
+            }
+          ],
+        },
         include: [
           {
             model: IntegranteLegislatura,
             as: "integranteLegislatura",
-            include: [{ model: Diputado, as: "diputado" }],
+            paranoid: false,
+            include: [{ model: Diputado, as: "diputado", paranoid: false }],
           },
         ],
+        paranoid: false,
       });
-
+    
+  
       for (const inte of integrantes) {
         if (inte.integranteLegislatura?.diputado) {
           listadoDiputados.push({
             id_diputado: inte.integranteLegislatura.diputado.id,
             id_partido: inte.integranteLegislatura.partido_id,
             comision_dip_id: inte.comision_id,
-            cargo_dip_id: inte.tipo_cargo_comision_id
+            cargo_dip_id: inte.tipo_cargo_comision_id,
+            orden: inte.orden ?? null,
           });
         }
       }
@@ -408,7 +431,8 @@ async function crearAsistencias(evento: any, esSesion: boolean): Promise<void> {
     id_diputado: diputado.id_diputado,
     partido_dip: diputado.id_partido,
     comision_dip_id: diputado.comision_dip_id,
-    id_cargo_dip: diputado.cargo_dip_id, // 👈 Ya se guarda en la tabla
+    orden: diputado.orden,
+    id_cargo_dip: diputado.cargo_dip_id,
     id_agenda: evento.id,
   }));
 
@@ -569,9 +593,13 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
     return a.importancia - b.importancia;
   });
 
-  // Ordenar integrantes dentro de cada comisión por nivel de cargo
+  // Ordenar integrantes dentro de cada comisión por orden, si no por nivel_cargo
   comisionesArray.forEach((comision: any) => {
-    comision.integrantes.sort((a: any, b: any) => a.nivel_cargo - b.nivel_cargo);
+    comision.integrantes.sort((a: any, b: any) => {
+      const valorA = a.orden != null ? a.orden : (a.nivel_cargo ?? 999);
+      const valorB = b.orden != null ? b.orden : (b.nivel_cargo ?? 999);
+      return valorA - valorB;
+    });
   });
 
   return comisionesArray;
@@ -2309,6 +2337,7 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
         id_partido: dip.id_partido,
         id_comision_dip: dip.comision_dip_id,
         id_cargo_dip: dip.id_cargo_dip,
+        orden: dip.orden,
       }));
       
       await VotosPunto.bulkCreate(votospunto);
@@ -2336,11 +2365,7 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
 };
 
 async function obtenerListadoDiputados(evento: any) {
-  const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null }[] = [];
-  
-    const dipasociados = await TipoCargoComision.findOne({
-      where: { valor: "Diputado Asociado" }
-    });
+  const listadoDiputados: { id_diputado: string; id_partido: string; comision_dip_id: string | null; id_cargo_dip: string | null; orden: number | null }[] = [];
 
     const diputados = await AsistenciaVoto.findAll({
       where: {
@@ -2353,6 +2378,7 @@ async function obtenerListadoDiputados(evento: any) {
             id_partido: inteLegis.partido_dip,
             comision_dip_id: inteLegis.comision_dip_id,
             id_cargo_dip: inteLegis.id_cargo_dip,
+            orden: inteLegis.orden ?? null,
           });
     }
   return listadoDiputados;
@@ -2367,6 +2393,7 @@ interface ResultadoVotacion {
   id_partido: string;
   id_comision_dip: string | null;
   id_cargo_dip: string | null;
+  orden: number | null;
   diputado: string | null;
   partido: string | null;
   comision_nombre?: string;
@@ -2485,6 +2512,7 @@ async function obtenerResultadosVotacionOptimizado(
       id_partido: voto.id_partido,
       id_comision_dip: voto.id_comision_dip,
       id_cargo_dip: voto.id_cargo_dip,
+      orden: (voto as any).orden ?? null,
       diputado: nombreCompletoDiputado,
       partido: partido?.siglas || null,
     };
@@ -2511,9 +2539,9 @@ async function obtenerResultadosVotacionOptimizado(
     
   } else {
     resultados.sort((a, b) => {
-      const nivelA = a.nivel_cargo || 999;
-      const nivelB = b.nivel_cargo || 999;
-      return nivelA - nivelB;
+      const valorA = a.orden != null ? a.orden : (a.nivel_cargo ?? 999);
+      const valorB = b.orden != null ? b.orden : (b.nivel_cargo ?? 999);
+      return valorA - valorB;
     });
 
     const agrupados = resultados.reduce((acc, voto) => {

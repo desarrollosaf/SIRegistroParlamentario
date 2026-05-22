@@ -10,6 +10,7 @@ class VotosPunto extends Model {
   declare id_diputado: ForeignKey<string> | null;
   declare id_partido: ForeignKey<string> | null;
   declare id_comision_dip: ForeignKey<string> | null;
+  declare orden: number | null;
   declare id_cargo_dip: ForeignKey<string> | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -50,6 +51,10 @@ VotosPunto.init(
     },
     id_comision_dip: {
       type: DataTypes.CHAR(36),
+      allowNull: true,
+    },
+    orden: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     id_cargo_dip: {
