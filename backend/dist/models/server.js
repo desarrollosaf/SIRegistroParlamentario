@@ -125,7 +125,8 @@ class Server {
                 '/api/eventos/getevento/',
                 '/api/eventos/getpuntos/',
                 '/api/eventos/getvotospunto/',
-                '/api/estadistico/getordenes'
+                '/api/estadistico/getordenes',
+                '/api/eventos/exportevento'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
