@@ -9,6 +9,7 @@ class Diputado extends Model {
   declare apaterno: string;
   declare amaterno: string;
   declare nombres: string;
+  declare alias: string | null;
   declare descripcion?: string | null;
   declare shortname: string;
   declare fancyurl: string;
@@ -45,6 +46,10 @@ Diputado.init(
     nombres: {
       type: DataTypes.STRING(255),
       allowNull: false,
+    },
+    alias: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     descripcion: {
       type: DataTypes.TEXT('long'),
