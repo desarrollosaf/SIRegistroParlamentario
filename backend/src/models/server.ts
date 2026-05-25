@@ -118,6 +118,7 @@ class Server {
                 '/api/reporte/iniciativas/grupo-diputado/',
                 '/api/reporte/iniciativas/totales-periodo/',
                 '/api/reporte/iniciativas/integrantes/',
+                '/api/reporte/iniciativas/estadisticas/',
                 '/api/iniciativas/iniciativas/',
                 '/api/estadistico/iniciativas/resumen',
                 '/api/estadistico/diputado/iniciativas',
@@ -137,11 +138,13 @@ class Server {
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;
-            
+
             if (isPublic) {
-                return next(); 
+                return next();
             }
 
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            res.setHeader('Pragma', 'no-cache');
 
            return verifyToken(req, res, next);
         });
