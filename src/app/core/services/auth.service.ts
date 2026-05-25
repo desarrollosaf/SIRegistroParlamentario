@@ -58,4 +58,10 @@ export class UserService {
       withCredentials: true
     });
   }
+
+  clearSession(): void {
+    this.currentUserSubject.next(null);
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('isLoggedin');
+  }
 }
