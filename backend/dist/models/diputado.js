@@ -27,6 +27,10 @@ Diputado.init({
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: false,
     },
+    alias: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: true,
+    },
     descripcion: {
         type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: true,

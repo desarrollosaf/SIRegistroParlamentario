@@ -143,6 +143,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
               nombre: c.comision_nombre,
               integrantes: (c.integrantes || []).map((i: any) => ({
                 ...i,
+                diputado: i.alias ,
                 sentido: i.sentido_voto ?? i.sentido ?? 0
               }))
             }));
@@ -151,6 +152,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
             this.esComision = false;
             this.participantes = response.integrantes.map((i: any) => ({
               ...i,
+              diputado: i.alias,
               sentido: i.sentido_voto ?? i.sentido ?? 0
             }));
             this.distribuirColumnas(this.participantes);
@@ -209,12 +211,20 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
             this.listaComisiones = response.integrantes.map((c: any) => ({
               id: c.comision_id,
               nombre: c.comision_nombre,
-              integrantes: (c.integrantes || []).map((i: any) => ({ ...i, sentido: i.sentido ?? 0 }))
+              integrantes: (c.integrantes || []).map((i: any) => ({
+                ...i,
+                diputado: i.alias,
+                sentido: i.sentido ?? 0
+              }))
             }));
             this.participantes = [];
           } else {
             this.esComision = false;
-            this.participantes = response.integrantes.map((i: any) => ({ ...i, sentido: i.sentido ?? 0 }));
+            this.participantes = response.integrantes.map((i: any) => ({
+              ...i,
+              diputado: i.alias ,
+              sentido: i.sentido ?? 0
+            }));
             this.distribuirColumnas(this.participantes);
           }
         } else {

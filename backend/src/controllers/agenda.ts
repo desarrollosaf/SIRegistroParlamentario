@@ -470,7 +470,7 @@ async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
   const [diputados, partidos] = await Promise.all([
     Diputado.findAll({
       where: { id: diputadoIds },
-      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
       raw: true,
       paranoid: false
     }),
@@ -496,6 +496,7 @@ async function procesarAsistenciasSesion(asistencias: any[]): Promise<any[]> {
     return {
       ...inte,
       diputado: nombreCompletoDiputado,
+      alias: (diputado as any)?.alias || null,
       partido: partido?.siglas || null,
     };
   });
@@ -521,7 +522,7 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
   const [diputados, partidos, comisiones, cargos] = await Promise.all([
     Diputado.findAll({
       where: { id: diputadoIds },
-      attributes: ["id", "apaterno", "amaterno", "nombres"],
+      attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
       raw: true,
       paranoid: false
     }),
@@ -562,6 +563,7 @@ async function procesarAsistenciasComisiones(asistencias: any[]): Promise<any[]>
     return {
       ...inte,
       diputado: nombreCompletoDiputado,
+      alias: (diputado as any)?.alias || null,
       partido: partido?.siglas || null,
       comision_id: inte.comision_dip_id,
       comision_nombre: comision?.nombre || 'Sin comisión',
@@ -2395,6 +2397,7 @@ interface ResultadoVotacion {
   id_cargo_dip: string | null;
   orden: number | null;
   diputado: string | null;
+  alias: string | null;
   partido: string | null;
   comision_nombre?: string;
   comision_importancia?: string;
@@ -2441,7 +2444,7 @@ async function obtenerResultadosVotacionOptimizado(
   const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
   const diputados = await Diputado.findAll({
     where: { id: diputadoIds },
-    attributes: ["id", "apaterno", "amaterno", "nombres"],
+    attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
     raw: true,
     paranoid: false,
   });
@@ -2514,6 +2517,7 @@ async function obtenerResultadosVotacionOptimizado(
       id_cargo_dip: voto.id_cargo_dip,
       orden: (voto as any).orden ?? null,
       diputado: nombreCompletoDiputado,
+      alias: (diputado as any)?.alias || null,
       partido: partido?.siglas || null,
     };
 

@@ -431,7 +431,7 @@ function procesarAsistenciasSesion(asistencias) {
         const [diputados, partidos] = yield Promise.all([
             diputado_1.default.findAll({
                 where: { id: diputadoIds },
-                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
                 raw: true,
                 paranoid: false
             }),
@@ -451,7 +451,7 @@ function procesarAsistenciasSesion(asistencias) {
             const nombreCompletoDiputado = diputado
                 ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
                 : null;
-            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null });
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, alias: (diputado === null || diputado === void 0 ? void 0 : diputado.alias) || null, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null });
         });
         // Ordenar alfabéticamente por nombre de diputado
         resultados.sort((a, b) => {
@@ -474,7 +474,7 @@ function procesarAsistenciasComisiones(asistencias) {
         const [diputados, partidos, comisiones, cargos] = yield Promise.all([
             diputado_1.default.findAll({
                 where: { id: diputadoIds },
-                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
                 raw: true,
                 paranoid: false
             }),
@@ -509,7 +509,7 @@ function procesarAsistenciasComisiones(asistencias) {
             const nombreCompletoDiputado = diputado
                 ? `${(_a = diputado.apaterno) !== null && _a !== void 0 ? _a : ""} ${(_b = diputado.amaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = diputado.nombres) !== null && _c !== void 0 ? _c : ""}`.trim()
                 : null;
-            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null, comision_id: inte.comision_dip_id, comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || 'Sin comisión', comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999 });
+            return Object.assign(Object.assign({}, inte), { diputado: nombreCompletoDiputado, alias: (diputado === null || diputado === void 0 ? void 0 : diputado.alias) || null, partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null, comision_id: inte.comision_dip_id, comision_nombre: (comision === null || comision === void 0 ? void 0 : comision.nombre) || 'Sin comisión', comision_importancia: (comision === null || comision === void 0 ? void 0 : comision.importancia) || 999, cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.valor) || null, nivel_cargo: (cargo === null || cargo === void 0 ? void 0 : cargo.nivel) || 999 });
         });
         // Agrupar por comisión
         const integrantesAgrupados = resultados.reduce((grupos, integrante) => {
@@ -2120,7 +2120,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
         const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
         const diputados = yield diputado_1.default.findAll({
             where: { id: diputadoIds },
-            attributes: ["id", "apaterno", "amaterno", "nombres"],
+            attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
             raw: true,
             paranoid: false,
         });
@@ -2177,6 +2177,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
                 id_cargo_dip: voto.id_cargo_dip,
                 orden: (_d = voto.orden) !== null && _d !== void 0 ? _d : null,
                 diputado: nombreCompletoDiputado,
+                alias: (diputado === null || diputado === void 0 ? void 0 : diputado.alias) || null,
                 partido: (partido === null || partido === void 0 ? void 0 : partido.siglas) || null,
             };
             if (tipoEvento === 'comision') {
