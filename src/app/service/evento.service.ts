@@ -138,6 +138,10 @@ export class EventoService {
   deleteIniciativa(id: String): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl1}/eliminariniciativa/${id}`)
   }
+
+  eliminarEstudio(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.myAppUrl}${this.myAPIUrl1}/eliminarestudio/${id}`)
+  }
   
   getReservas(id: String): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/getreservas/${id}`)

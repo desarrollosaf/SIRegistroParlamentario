@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exporpuntos = exports.deleteEvento = exports.terminarvotacion = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.actualizarIniciativaDetalle = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
+exports.exporpuntos = exports.deleteEvento = exports.terminarvotacion = exports.eliminarEstudio = exports.getifnini = exports.selectiniciativas = exports.crariniidits = exports.getiniciativas = exports.actualizarIniciativaDetalle = exports.eliminariniciativa = exports.creariniciativa = exports.actvototodos = exports.actualizartodos = exports.cargoDiputados = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const asistencia_votos_1 = __importDefault(require("../models/asistencia_votos"));
@@ -1015,6 +1015,21 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getifnini = getifnini;
+const eliminarEstudio = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const registro = yield iniciativas_estudio_1.default.findOne({ where: { id } });
+        if (!registro)
+            return res.status(404).json({ message: 'Registro no encontrado' });
+        yield registro.destroy();
+        return res.status(200).json({ message: 'Eliminado correctamente' });
+    }
+    catch (error) {
+        console.error('Error al eliminar estudio:', error);
+        return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+});
+exports.eliminarEstudio = eliminarEstudio;
 const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;

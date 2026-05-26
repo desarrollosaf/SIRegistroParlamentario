@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizartodos, actvototodos, actualizarIniciativaDetalle, cargoDiputados, crariniidits, creariniciativa, deleteEvento, eliminariniciativa, exporpuntos, getifnini, getiniciativas, selectiniciativas, terminarvotacion } from "../controllers/diputados";
+import { actualizartodos, actvototodos, actualizarIniciativaDetalle, cargoDiputados, crariniidits, creariniciativa, deleteEvento, eliminarEstudio, eliminariniciativa, exporpuntos, getifnini, getiniciativas, selectiniciativas, terminarvotacion } from "../controllers/diputados";
 const router = Router();
 
 
@@ -14,6 +14,7 @@ router.get("/api/diputados/selectiniciativas/", selectiniciativas);
 router.get("/api/diputados/getinfiniciativa/:id", getifnini);
 router.get("/api/diputados/terminarvotacion/:id", terminarvotacion);
 router.get("/api/diputados/eliminarevento/:id", deleteEvento);
+router.delete("/api/diputados/eliminarestudio/:id", eliminarEstudio);
 router.get("/api/diputados/exporcomisionespunto", exporpuntos );
 router.put("/api/diputados/actualizariniciativa/:id", actualizarIniciativaDetalle);
 
