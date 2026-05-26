@@ -214,6 +214,12 @@ export class EventoService {
     });
   }
 
+  generarReporteEstudiosProgresivo(): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/estudios-progresivo/`, {
+      responseType: 'blob'
+    });
+  }
+
   generarReporteIntegrantes(data: any): Observable<Blob> {
     return this.http.post(`${this.myAppUrl}${this.myAPIUrl2}/integrantes/`, data, {
       responseType: 'blob'

@@ -301,7 +301,7 @@ export class IniciativasComponent implements OnInit {
 
   // ─── Reportes directos (sin modal) ──────────────────────────────────────────
 
-  descargarReporte(tipo: 'general' | 'estudio' | 'aprobadas' | 'grupo-diputado' | 'totales-periodo' | 'totales-comision'): void {
+  descargarReporte(tipo: 'general' | 'estudio' | 'aprobadas' | 'grupo-diputado' | 'totales-periodo' | 'totales-comision' | 'estudios-progresivo'): void {
     this.closeExportMenu();
     this.descargandoReporte = true;
 
@@ -313,6 +313,7 @@ export class IniciativasComponent implements OnInit {
         case 'grupo-diputado': return this._eventoService.generarReporteGrupoDiputado();
         case 'totales-periodo': return this._eventoService.generarReporteTotalesPeriodo();
         case 'totales-comision': return this._eventoService.generarReporteTotalesComision();
+        case 'estudios-progresivo': return this._eventoService.generarReporteEstudiosProgresivo();
       }
     })();
 

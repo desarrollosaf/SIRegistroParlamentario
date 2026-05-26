@@ -83,22 +83,30 @@
                   <!-- 5. Totales por periodo -->
                   <button class="export-menu-item" (click)="descargarReporte('totales-periodo')">
                     <span class="export-item-icon icon-amber">
-                      <i class="bi bi-bar-chart-fill"></i>
+                      <i class="bi bi-pie-chart-fill"></i>
                     </span>
                     <span class="export-item-text">
                       <span class="export-item-label">Totales por periodo</span>
-
                     </span>
                   </button>
 
-                  <!-- 6. Totales  -->
+                  <!-- 6. Turnadas a comision -->
                   <button class="export-menu-item" (click)="descargarReporte('totales-comision')">
-                    <span class="export-item-icon icon-amber">
-                      <i class="bi bi-bar-chart-fill"></i>
+                    <span class="export-item-icon icon-blue">
+                      <i class="bi bi-send-fill"></i>
                     </span>
                     <span class="export-item-text">
                       <span class="export-item-label">Turnadas a comision</span>
+                    </span>
+                  </button>
 
+                  <!-- 7. Seguimiento por fechas -->
+                  <button class="export-menu-item" (click)="descargarReporte('estudios-progresivo')">
+                    <span class="export-item-icon icon-wine">
+                      <i class="bi bi-clock-history"></i>
+                    </span>
+                    <span class="export-item-text">
+                      <span class="export-item-label">Seguimiento por fechas</span>
                     </span>
                   </button>
 
