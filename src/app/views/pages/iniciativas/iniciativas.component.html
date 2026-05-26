@@ -300,7 +300,16 @@
                 </div>
                 <div class="timeline-line" *ngIf="!isLast"></div>
                 <div class="timeline-content">
-                  <div class="timeline-card">
+                  <div class="timeline-card" style="position:relative;">
+                    <button
+                      *ngIf="item.tipo === 'estudio' || item.tipo === 'dictamen' || item.tipo === 'cierre'"
+                      (click)="eliminarEstudio(item, i)"
+                      title="Eliminar registro"
+                      style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:#adb5bd;line-height:1;padding:2px 4px;font-size:14px;"
+                      onmouseenter="this.style.color='#dc3545'"
+                      onmouseleave="this.style.color='#adb5bd'">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
                     <div class="timeline-header">
                       <h6 class="timeline-title mb-1">{{ item.titulo }}</h6>
                       <small class="timeline-date">

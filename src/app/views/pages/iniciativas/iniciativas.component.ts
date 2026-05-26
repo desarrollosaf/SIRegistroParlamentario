@@ -23,6 +23,7 @@ interface Iniciativa {
 }
 
 interface TimelineItem {
+  id?: string;
   fecha: string;
   titulo: string;
   evento?: string;
@@ -209,6 +210,7 @@ export class IniciativasComponent implements OnInit {
     if (data.estudio && Array.isArray(data.estudio)) {
       data.estudio.forEach((item: any) => {
         this.timelineData.push({
+          id: item.id,
           fecha: item.fecha_evento,
           titulo: '🔍 En Estudio',
           descripcion: item.descripcion_evento,
@@ -226,6 +228,7 @@ export class IniciativasComponent implements OnInit {
     if (data.dictamen && Array.isArray(data.dictamen)) {
       data.dictamen.forEach((item: any) => {
         this.timelineData.push({
+          id: item.id,
           fecha: item.fecha_evento,
           titulo: '📋 Dictamen Emitido',
           descripcion: item.descripcion_evento,
@@ -243,6 +246,7 @@ export class IniciativasComponent implements OnInit {
 
     if (data.cierre) {
       this.timelineData.push({
+        id: data.cierre.id,
         fecha: data.cierre.fecha,
         titulo: '⚖️ Resolución',
         descripcion: data.cierre.descripcion_evento,
@@ -265,6 +269,59 @@ export class IniciativasComponent implements OnInit {
 
   toggleCollapse(index: number): void {
     this.isCollapsed[index] = !this.isCollapsed[index];
+  }
+
+  eliminarEstudio(item: TimelineItem, index: number): void {
+    if (!item.id) return;
+
+    const cierreIndex = this.timelineData.findIndex(t => t.tipo === 'cierre');
+    const cierre = cierreIndex !== -1 ? this.timelineData[cierreIndex] : null;
+    const dictamenTieneCierre = item.tipo === 'dictamen' && !!cierre?.id;
+
+    const titulo = dictamenTieneCierre
+      ? '⚠️ Este dictamen está amarrado a un cierre'
+      : '¿Eliminar este registro?';
+    const html = dictamenTieneCierre
+      ? `<p>Si eliminas el dictamen, el cierre asociado <strong>también se eliminará</strong>.</p><p>¿Deseas continuar?</p>`
+      : `<p>Se eliminará <strong>${item.titulo}</strong> del historial.</p>`;
+
+    Swal.fire({
+      title: titulo,
+      html,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      const borrarCierre$ = dictamenTieneCierre
+        ? this._eventoService.eliminarEstudio(cierre!.id!)
+        : null;
+
+      this._eventoService.eliminarEstudio(item.id!).subscribe({
+        next: () => {
+          this.timelineData.splice(index, 1);
+
+          if (borrarCierre$) {
+            // el índice puede haber cambiado tras el splice anterior
+            const nuevoIdx = this.timelineData.findIndex(t => t.tipo === 'cierre');
+            borrarCierre$.subscribe({
+              next: () => {
+                if (nuevoIdx !== -1) this.timelineData.splice(nuevoIdx, 1);
+                Swal.fire('Eliminado', 'El dictamen y el cierre fueron eliminados.', 'success');
+              },
+              error: () => Swal.fire('Atención', 'El dictamen se eliminó pero hubo un error al eliminar el cierre.', 'warning')
+            });
+          } else {
+            Swal.fire('Eliminado', 'El registro fue eliminado correctamente.', 'success');
+          }
+        },
+        error: () => Swal.fire('Error', 'No se pudo eliminar el registro.', 'error')
+      });
+    });
   }
 
   getTipoIcon(tipo: string): string {

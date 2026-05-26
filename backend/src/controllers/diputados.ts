@@ -1178,6 +1178,19 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+export const eliminarEstudio = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const registro = await IniciativaEstudio.findOne({ where: { id } });
+    if (!registro) return res.status(404).json({ message: 'Registro no encontrado' });
+    await registro.destroy();
+    return res.status(200).json({ message: 'Eliminado correctamente' });
+  } catch (error: any) {
+    console.error('Error al eliminar estudio:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
 export const terminarvotacion = async (req: Request, res: Response): Promise<any> => {
     try {
       const { id } = req.params;
