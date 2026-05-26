@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getExcelVotacionesDetalle = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getExcelVotacionesDetalle = exports.getReporteEstudiosProgresivo = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
@@ -1856,6 +1856,148 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.getEstadisticasIniciativas = getEstadisticasIniciativas;
+const getReporteEstudiosProgresivo = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8;
+    try {
+        const iniciativas = yield obtenerIniciativasBase();
+        const filas = [];
+        for (let index = 0; index < iniciativas.length; index++) {
+            const iniciativa = iniciativas[index];
+            const data = iniciativa.toJSON();
+            const todosEstudios = [
+                ...(Array.isArray((_a = data.punto) === null || _a === void 0 ? void 0 : _a.estudio) ? data.punto.estudio : []),
+                ...(Array.isArray(data.expedienteturno)
+                    ? data.expedienteturno.flatMap((exp) => Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : [])
+                    : [])
+            ];
+            const fuenteEstudios = deduplicarPorId(todosEstudios);
+            const estudios = fuenteEstudios.filter((e) => e.status === "1");
+            const dictamenes = fuenteEstudios.filter((e) => e.status === "2");
+            const dispensa = String((_b = data.punto) === null || _b === void 0 ? void 0 : _b.dispensa) === "1";
+            // Cierres (mismo algoritmo que construirReporteBase)
+            const posiblesPuntosIds = [
+                (_c = data.punto) === null || _c === void 0 ? void 0 : _c.id,
+                ...fuenteEstudios.map((e) => e.punto_destino_id).filter(Boolean)
+            ];
+            const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+            const expedientesRelacionados = yield expedientes_estudio_puntos_1.default.findAll({
+                where: { punto_origen_sesion_id: { [sequelize_1.Op.in]: posiblesPuntosUnicos } },
+                attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+                raw: true
+            });
+            const expedienteIds = [
+                ...new Set(expedientesRelacionados.map((e) => e.expediente_id).filter(Boolean))
+            ];
+            const whereCierres = { status: "3" };
+            if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
+                whereCierres[sequelize_1.Op.or] = [];
+                if (posiblesPuntosUnicos.length > 0) {
+                    whereCierres[sequelize_1.Op.or].push({ punto_origen_id: { [sequelize_1.Op.in]: posiblesPuntosUnicos } });
+                }
+                if (expedienteIds.length > 0) {
+                    whereCierres[sequelize_1.Op.or].push({ punto_origen_id: { [sequelize_1.Op.in]: expedienteIds } });
+                }
+            }
+            const cierresDB = ((_d = whereCierres[sequelize_1.Op.or]) === null || _d === void 0 ? void 0 : _d.length) > 0
+                ? yield iniciativas_estudio_1.default.findAll({
+                    where: whereCierres,
+                    include: [
+                        {
+                            model: puntos_ordens_1.default,
+                            as: "iniciativa",
+                            attributes: ["id", "punto", "nopunto", "tribuna"],
+                            include: [
+                                {
+                                    model: agendas_1.default,
+                                    as: "evento",
+                                    attributes: ["id", "fecha", "descripcion", "liga"],
+                                    include: [{ model: tipo_eventos_1.default, as: "tipoevento", attributes: ["nombre"] }]
+                                }
+                            ]
+                        }
+                    ]
+                })
+                : [];
+            const cierresMerge = [
+                ...fuenteEstudios.filter((e) => e.status === "3"),
+                ...cierresDB.map((c) => c.toJSON())
+            ];
+            const cierres = deduplicarPorId(cierresMerge);
+            const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
+            // Columnas ESTUDIO1-4 + COMEST1-4
+            const studyCols = {};
+            for (let i = 0; i < 4; i++) {
+                const est = (_e = estudios[i]) !== null && _e !== void 0 ? _e : null;
+                const fechaEst = (_h = (_g = (_f = est === null || est === void 0 ? void 0 : est.iniciativa) === null || _f === void 0 ? void 0 : _f.evento) === null || _g === void 0 ? void 0 : _g.fecha) !== null && _h !== void 0 ? _h : null;
+                const eventoId = (_l = (_k = (_j = est === null || est === void 0 ? void 0 : est.iniciativa) === null || _j === void 0 ? void 0 : _j.evento) === null || _k === void 0 ? void 0 : _k.id) !== null && _l !== void 0 ? _l : null;
+                const tipoNombre = (_q = (_p = (_o = (_m = est === null || est === void 0 ? void 0 : est.iniciativa) === null || _m === void 0 ? void 0 : _m.evento) === null || _o === void 0 ? void 0 : _o.tipoevento) === null || _p === void 0 ? void 0 : _p.nombre) !== null && _q !== void 0 ? _q : "";
+                let comisiones = "-";
+                if (eventoId) {
+                    const result = yield getAnfitriones(eventoId, tipoNombre);
+                    comisiones = (_r = result.comisiones) !== null && _r !== void 0 ? _r : "-";
+                }
+                studyCols[`estudio${i + 1}`] = formatearFechaCorta(fechaEst);
+                studyCols[`comest${i + 1}`] = comisiones;
+            }
+            // DICTAMINACION + COMESTDIC
+            const dictamen = (_s = dictamenes[0]) !== null && _s !== void 0 ? _s : null;
+            const fechaDictamen = (_v = (_u = (_t = dictamen === null || dictamen === void 0 ? void 0 : dictamen.iniciativa) === null || _t === void 0 ? void 0 : _t.evento) === null || _u === void 0 ? void 0 : _u.fecha) !== null && _v !== void 0 ? _v : null;
+            const eventoIdDic = (_y = (_x = (_w = dictamen === null || dictamen === void 0 ? void 0 : dictamen.iniciativa) === null || _w === void 0 ? void 0 : _w.evento) === null || _x === void 0 ? void 0 : _x.id) !== null && _y !== void 0 ? _y : null;
+            const tipoNombreDic = (_2 = (_1 = (_0 = (_z = dictamen === null || dictamen === void 0 ? void 0 : dictamen.iniciativa) === null || _z === void 0 ? void 0 : _z.evento) === null || _0 === void 0 ? void 0 : _0.tipoevento) === null || _1 === void 0 ? void 0 : _1.nombre) !== null && _2 !== void 0 ? _2 : "";
+            let comisionesDic = "-";
+            if (eventoIdDic) {
+                const result = yield getAnfitriones(eventoIdDic, tipoNombreDic);
+                comisionesDic = (_3 = result.comisiones) !== null && _3 !== void 0 ? _3 : "-";
+            }
+            // APROBACION
+            let fechaAprobacion = "-";
+            if (dispensa) {
+                fechaAprobacion = formatearFechaCorta((_4 = data.evento) === null || _4 === void 0 ? void 0 : _4.fecha);
+            }
+            else if ((_6 = (_5 = cierrePrincipal === null || cierrePrincipal === void 0 ? void 0 : cierrePrincipal.iniciativa) === null || _5 === void 0 ? void 0 : _5.evento) === null || _6 === void 0 ? void 0 : _6.fecha) {
+                fechaAprobacion = formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha);
+            }
+            filas.push(Object.assign(Object.assign({ no: index + 1, id_sist: normalizarTexto(data.id), id_sap: (_7 = data.id_sap) !== null && _7 !== void 0 ? _7 : "-", iniciativa: normalizarTexto(data.iniciativa), presentacion: formatearFechaCorta((_8 = data.evento) === null || _8 === void 0 ? void 0 : _8.fecha) }, studyCols), { dictaminacion: formatearFechaCorta(fechaDictamen), comestdic: comisionesDic, aprobacion: fechaAprobacion }));
+        }
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Estudios Progresivo");
+        worksheet.columns = [
+            { header: "NO.", key: "no", width: 8 },
+            { header: "ID_SIST", key: "id_sist", width: 40 },
+            { header: "ID_SAP", key: "id_sap", width: 15 },
+            { header: "INICIATIVA", key: "iniciativa", width: 55 },
+            { header: "PRESENTACION", key: "presentacion", width: 15 },
+            { header: "ESTUDIO1", key: "estudio1", width: 15 },
+            { header: "COMEST1", key: "comest1", width: 40 },
+            { header: "ESTUDIO2", key: "estudio2", width: 15 },
+            { header: "COMEST2", key: "comest2", width: 40 },
+            { header: "ESTUDIO3", key: "estudio3", width: 15 },
+            { header: "COMEST3", key: "comest3", width: 40 },
+            { header: "ESTUDIO4", key: "estudio4", width: 15 },
+            { header: "COMEST4", key: "comest4", width: 40 },
+            { header: "DICTAMINACION", key: "dictaminacion", width: 15 },
+            { header: "COMESTDIC", key: "comestdic", width: 40 },
+            { header: "APROBACION", key: "aprobacion", width: 15 }
+        ];
+        filas.sort((a, b) => {
+            const numA = parseInt(String(a.id_sist).replace(/\D/g, ""), 10) || 0;
+            const numB = parseInt(String(b.id_sist).replace(/\D/g, ""), 10) || 0;
+            return numA - numB;
+        });
+        filas.forEach((item, i) => {
+            item.no = i + 1;
+            worksheet.addRow(item);
+        });
+        aplicarEstiloHoja(worksheet);
+        worksheet.autoFilter = { from: "A1", to: "P1" };
+        return yield enviarWorkbook(res, workbook, "reporte_estudios_progresivo.xlsx");
+    }
+    catch (error) {
+        console.error("Error al generar Excel de estudios progresivo:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getReporteEstudiosProgresivo = getReporteEstudiosProgresivo;
 const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     try {

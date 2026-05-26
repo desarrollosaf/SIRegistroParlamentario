@@ -15,7 +15,8 @@ import {
   getReporteAsistenciaDiputado,
   getDatosAsistenciaDiputado,
   getEstadisticasIniciativas,
-  getExcelVotacionesDetalle
+  getExcelVotacionesDetalle,
+  getReporteEstudiosProgresivo
 } from "../controllers/reporte";
 
 const router = Router();
@@ -27,6 +28,7 @@ router.get("/api/reporte/iniciativas/grupo-diputado", getIniciativasPorGrupoYDip
 router.get("/api/reporte/iniciativas/totales-periodo", getTotalesPorPeriodo);
 router.post("/api/reporte/iniciativas/integrantes", getReporteIniciativasIntegrantes);
 router.get("/api/reporte/iniciativas/inicomisions", getIniciativasTurnadasComision);
+router.get("/api/reporte/iniciativas/estudios-progresivo", getReporteEstudiosProgresivo);
 
 // Periodos legislativos
 router.get("/api/reporte/iniciativas/periodos-legislativos", getPeriodosLegislativos);
