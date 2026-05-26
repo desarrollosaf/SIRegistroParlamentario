@@ -2127,6 +2127,179 @@ export const getEstadisticasIniciativas = async (_req: Request, res: Response): 
   }
 };
 
+export const getReporteEstudiosProgresivo = async (_req: Request, res: Response): Promise<any> => {
+  try {
+    const iniciativas = await obtenerIniciativasBase();
+    const filas: any[] = [];
+
+    for (let index = 0; index < iniciativas.length; index++) {
+      const iniciativa = iniciativas[index];
+      const data: any = iniciativa.toJSON();
+
+      const todosEstudios = [
+        ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
+        ...(Array.isArray(data.expedienteturno)
+          ? data.expedienteturno.flatMap((exp: any) =>
+              Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
+            )
+          : [])
+      ];
+
+      const fuenteEstudios = deduplicarPorId(todosEstudios);
+      const estudios  = fuenteEstudios.filter((e: any) => e.status === "1");
+      const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
+      const dispensa  = String(data.punto?.dispensa) === "1";
+
+      // Cierres (mismo algoritmo que construirReporteBase)
+      const posiblesPuntosIds = [
+        data.punto?.id,
+        ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
+      ];
+      const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+
+      const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
+        where: { punto_origen_sesion_id: { [Op.in]: posiblesPuntosUnicos } },
+        attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+        raw: true
+      });
+
+      const expedienteIds = [
+        ...new Set(expedientesRelacionados.map((e: any) => e.expediente_id).filter(Boolean))
+      ];
+
+      const whereCierres: any = { status: "3" };
+      if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
+        whereCierres[Op.or] = [];
+        if (posiblesPuntosUnicos.length > 0) {
+          whereCierres[Op.or].push({ punto_origen_id: { [Op.in]: posiblesPuntosUnicos } });
+        }
+        if (expedienteIds.length > 0) {
+          whereCierres[Op.or].push({ punto_origen_id: { [Op.in]: expedienteIds } });
+        }
+      }
+
+      const cierresDB =
+        whereCierres[Op.or]?.length > 0
+          ? await IniciativaEstudio.findAll({
+              where: whereCierres,
+              include: [
+                {
+                  model: PuntosOrden,
+                  as: "iniciativa",
+                  attributes: ["id", "punto", "nopunto", "tribuna"],
+                  include: [
+                    {
+                      model: Agenda,
+                      as: "evento",
+                      attributes: ["id", "fecha", "descripcion", "liga"],
+                      include: [{ model: TipoEventos, as: "tipoevento", attributes: ["nombre"] }]
+                    }
+                  ]
+                }
+              ]
+            })
+          : [];
+
+      const cierresMerge = [
+        ...fuenteEstudios.filter((e: any) => e.status === "3"),
+        ...cierresDB.map((c: any) => c.toJSON())
+      ];
+      const cierres = deduplicarPorId(cierresMerge);
+      const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
+
+      // Columnas ESTUDIO1-4 + COMEST1-4
+      const studyCols: any = {};
+      for (let i = 0; i < 4; i++) {
+        const est = estudios[i] ?? null;
+        const fechaEst = est?.iniciativa?.evento?.fecha ?? null;
+        const eventoId = est?.iniciativa?.evento?.id ?? null;
+        const tipoNombre = est?.iniciativa?.evento?.tipoevento?.nombre ?? "";
+
+        let comisiones = "-";
+        if (eventoId) {
+          const result = await getAnfitriones(eventoId, tipoNombre);
+          comisiones = result.comisiones ?? "-";
+        }
+
+        studyCols[`estudio${i + 1}`] = formatearFechaCorta(fechaEst);
+        studyCols[`comest${i + 1}`] = comisiones;
+      }
+
+      // DICTAMINACION + COMESTDIC
+      const dictamen = dictamenes[0] ?? null;
+      const fechaDictamen = dictamen?.iniciativa?.evento?.fecha ?? null;
+      const eventoIdDic = dictamen?.iniciativa?.evento?.id ?? null;
+      const tipoNombreDic = dictamen?.iniciativa?.evento?.tipoevento?.nombre ?? "";
+      let comisionesDic = "-";
+      if (eventoIdDic) {
+        const result = await getAnfitriones(eventoIdDic, tipoNombreDic);
+        comisionesDic = result.comisiones ?? "-";
+      }
+
+      // APROBACION
+      let fechaAprobacion = "-";
+      if (dispensa) {
+        fechaAprobacion = formatearFechaCorta(data.evento?.fecha);
+      } else if (cierrePrincipal?.iniciativa?.evento?.fecha) {
+        fechaAprobacion = formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha);
+      }
+
+      filas.push({
+        no: index + 1,
+        id_sist: normalizarTexto(data.id),
+        id_sap: data.id_sap ?? "-",
+        iniciativa: normalizarTexto(data.iniciativa),
+        presentacion: formatearFechaCorta(data.evento?.fecha),
+        ...studyCols,
+        dictaminacion: formatearFechaCorta(fechaDictamen),
+        comestdic: comisionesDic,
+        aprobacion: fechaAprobacion
+      });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Estudios Progresivo");
+
+    worksheet.columns = [
+      { header: "NO.",          key: "no",           width: 8  },
+      { header: "ID_SIST",      key: "id_sist",      width: 40 },
+      { header: "ID_SAP",       key: "id_sap",       width: 15 },
+      { header: "INICIATIVA",   key: "iniciativa",   width: 55 },
+      { header: "PRESENTACION", key: "presentacion", width: 15 },
+      { header: "ESTUDIO1",     key: "estudio1",     width: 15 },
+      { header: "COMEST1",      key: "comest1",      width: 40 },
+      { header: "ESTUDIO2",     key: "estudio2",     width: 15 },
+      { header: "COMEST2",      key: "comest2",      width: 40 },
+      { header: "ESTUDIO3",     key: "estudio3",     width: 15 },
+      { header: "COMEST3",      key: "comest3",      width: 40 },
+      { header: "ESTUDIO4",     key: "estudio4",     width: 15 },
+      { header: "COMEST4",      key: "comest4",      width: 40 },
+      { header: "DICTAMINACION",key: "dictaminacion",width: 15 },
+      { header: "COMESTDIC",    key: "comestdic",    width: 40 },
+      { header: "APROBACION",   key: "aprobacion",   width: 15 }
+    ];
+
+    filas.sort((a, b) => {
+      const numA = parseInt(String(a.id_sist).replace(/\D/g, ""), 10) || 0;
+      const numB = parseInt(String(b.id_sist).replace(/\D/g, ""), 10) || 0;
+      return numA - numB;
+    });
+
+    filas.forEach((item, i) => {
+      item.no = i + 1;
+      worksheet.addRow(item);
+    });
+
+    aplicarEstiloHoja(worksheet);
+    worksheet.autoFilter = { from: "A1", to: "P1" };
+
+    return await enviarWorkbook(res, workbook, "reporte_estudios_progresivo.xlsx");
+  } catch (error: any) {
+    console.error("Error al generar Excel de estudios progresivo:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+  }
+};
+
 export const getExcelVotacionesDetalle = async (_req: Request, res: Response): Promise<any> => {
   try {
     const reporte = await construirReporteBase();
