@@ -189,8 +189,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         
         if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
           const puntosRaw = await PuntosOrden.findAll({
-            where: { 
-              id: puntosturnados.map(p => p.id_punto) 
+            where: {
+              id: puntosturnados.map(p => p.id_punto)
             },
             attributes: ["id", "punto", "nopunto"],
             include: [
@@ -198,17 +198,24 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
                 model: Agenda,
                 as: 'evento',
                 attributes: ["fecha","id"]
+              },
+              {
+                model: IniciativaPuntoOrden,
+                as: 'iniciativas',
+                attributes: ['id'],
+                required: false
               }
             ]
           });
           puntos = puntosRaw.map((p: any) => {
             const data = p.toJSON();
-            const fecha = data.evento?.fecha 
-              ? new Date(data.evento.fecha).toISOString().split('T')[0]  
+            const fecha = data.evento?.fecha
+              ? new Date(data.evento.fecha).toISOString().split('T')[0]
               : '';
+            const iniciativasStr = (data.iniciativas ?? []).map((i: any) => i.id).join(' | ');
             return {
               id: data.id,
-              punto: `${fecha} - ${data.evento?.id} - ${data.nopunto} - ${data.punto}`
+              punto: `${fecha} - ${data.evento?.id} - [${iniciativasStr}] - ${data.punto}`
             };
           });
 
