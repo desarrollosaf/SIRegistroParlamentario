@@ -809,21 +809,24 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         const expedPuntos = origenIdsType2.size > 0
           ? await ExpedienteEstudiosPuntos.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
           : [];
-        const sesionIdsByExpediente = new Map<string, string[]>();
+        const sesionIdsByExpediente = new Map<string, number[]>();
         for (const ep of expedPuntos as any[]) {
-          if (!sesionIdsByExpediente.has(ep.expediente_id)) sesionIdsByExpediente.set(ep.expediente_id, []);
-          sesionIdsByExpediente.get(ep.expediente_id)!.push(ep.punto_origen_sesion_id);
+          const key = String(ep.expediente_id);
+          if (!sesionIdsByExpediente.has(key)) sesionIdsByExpediente.set(key, []);
+          sesionIdsByExpediente.get(key)!.push(ep.punto_origen_sesion_id);
         }
         const allSesionIds = (expedPuntos as any[]).map(ep => ep.punto_origen_sesion_id).filter(Boolean);
+        console.log(allSesionIds)
         const iniType2Raw = allSesionIds.length > 0
           ? await IniciativaPuntoOrden.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
           : [];
+
         const iniByPunto2 = new Map<string, string[]>();
         for (const ini of iniType2Raw as any[]) {
           if (!iniByPunto2.has(ini.id_punto)) iniByPunto2.set(ini.id_punto, []);
           iniByPunto2.get(ini.id_punto)!.push(ini.id);
         }
-
+        console.log(iniByPunto2)
         const dictamenes = dictamenesRaw.map((p: any) => {
           const d = p.toJSON();
           const fecha = d.evento?.fecha
@@ -835,10 +838,11 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
               idsIniciativas.push(...(iniByPunto1.get(est.punto_origen_id) ?? []));
             } else if (String(est.type) === '2') {
               for (const sesId of (sesionIdsByExpediente.get(est.punto_origen_id) ?? [])) {
-                idsIniciativas.push(...(iniByPunto2.get(sesId) ?? []));
+                idsIniciativas.push(...(iniByPunto2.get(String(sesId)) ?? []));
               }
             }
           }
+          console.log(idsIniciativas)
           return {
             id: d.id,
             punto: `${fecha} - ${d.evento?.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
