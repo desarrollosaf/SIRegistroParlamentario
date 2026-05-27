@@ -1,23 +1,23 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { UserService } from '../services/auth.service';
 import { map, catchError, of } from 'rxjs';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const adminGuard: CanActivateFn = (_route, _state) => {
   const router = inject(Router);
   const userService = inject(UserService);
+
   return userService.getCurrentUser().pipe(
     map((user: any) => {
-      userService.setCurrentUser(user);
-      // Si un diputado intenta acceder a rutas de admin, lo redirigimos a su panel
-      if (user?.role === 'diputado') {
+      const role = user?.role || 'admin';
+      if (role === 'diputado') {
         router.navigate(['/diputado/panel']);
         return false;
       }
       return true;
     }),
     catchError(() => {
-      router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
+      router.navigate(['/auth/login']);
       return of(false);
     })
   );

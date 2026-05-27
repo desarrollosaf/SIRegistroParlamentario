@@ -79,6 +79,11 @@ expedientes_estudio_puntos_1.default.hasMany(iniciativas_estudio_1.default, {
     sourceKey: 'expediente_id',
     as: 'estudio'
 });
+diputado_1.default.hasOne(integrante_legislaturas_1.default, {
+    foreignKey: 'diputado_id',
+    sourceKey: 'id',
+    as: 'integrante',
+});
 integrante_legislaturas_1.default.belongsTo(diputado_1.default, {
     foreignKey: 'diputado_id',
     as: 'diputado',

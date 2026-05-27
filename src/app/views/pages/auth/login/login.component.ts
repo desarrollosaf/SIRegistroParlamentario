@@ -48,7 +48,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/agenda-comision/sesiones';
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || null;
 
   }
 
@@ -61,12 +61,16 @@ onLoggedin(form: NgForm) {
   this._userService.login(user).subscribe({
     next: (response: any) => {
       const userData = response.user;
-      const bandera = response.bandera;
-      console.log(userData)
-      // Ya no guardes el token
-      localStorage.setItem('isLoggedin', 'true'); // opcional
+      userData.role = response.role;
+      localStorage.setItem('isLoggedin', 'true');
       this._userService.setCurrentUser(userData);
-      this.router.navigate([this.returnUrl]);
+      if (this.returnUrl) {
+        this.router.navigate([this.returnUrl]);
+      } else if (response.role === 'diputado') {
+        this.router.navigate(['/diputado/panel']);
+      } else {
+        this.router.navigate(['/agenda-comision/sesiones']);
+      }
       /*if (bandera) {
         this.router.navigate(['/registro']);
       } else {

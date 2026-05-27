@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 import  uploadAgenda from  "../controllers/uploadAgenda";
 const router = Router();
@@ -14,7 +14,9 @@ router.post("/api/eventos/savepunto/:id",upload.single("documento"), guardarpunt
 router.get("/api/eventos/getpuntos/:id", getpuntos );
 router.post("/api/eventos/savereserva/", crearreserva );
 router.get("/api/eventos/eliminarreserva/:id",eliminarreserva );
+router.put("/api/eventos/actualizarreserva/:id", actualizarReserva );
 router.get("/api/eventos/getreservas/:id",getreservas );
+router.get("/api/eventos/getiniciativaspunto/:id", getIniciativasPorPunto );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
 router.get("/api/eventos/eliminarpunto/:id/:sesion",eliminarpunto );
 router.post("/api/eventos/saveintervencion/", saveintervencion );

@@ -35,6 +35,16 @@ export class SocketService {
     this.ensureConnected();
   }
 
+  /** Panel diputado: conecta y se une a la sala general de diputados */
+  conectarComoDiputado(): void {
+    const socket = this.ensureConnected();
+    if (socket.connected) {
+      socket.emit('unirse-diputado');
+    } else {
+      socket.once('connect', () => socket.emit('unirse-diputado'));
+    }
+  }
+
   emitTerminarVotacion(idComision: string): void {
     this.socket?.emit('terminar-votacion', { idComision });
   }
@@ -69,6 +79,58 @@ export class SocketService {
 
   offProyeccionIniciada(): void {
     this.socket?.off('proyeccion-iniciada');
+  }
+
+  // Admin abre/cierra la asistencia para que los diputados registren
+  emitAbrirAsistencia(idComision: string, idAgenda: string): void {
+    this.socket?.emit('abrir-asistencia', { idComision, idAgenda });
+  }
+
+  emitCerrarAsistencia(idComision: string): void {
+    this.socket?.emit('cerrar-asistencia', { idComision });
+  }
+
+  // Admin abre/cierra la votación de un punto para que los diputados voten
+  emitAbrirVotacion(idComision: string, idAgenda: string, punto: any): void {
+    this.socket?.emit('abrir-votacion', { idComision, idAgenda, punto });
+  }
+
+  emitCerrarVotacion(idComision: string): void {
+    this.socket?.emit('cerrar-votacion', { idComision });
+  }
+
+  // Diputado escucha cuándo se abre/cierra asistencia
+  onAsistenciaAbierta(cb: (data: { idAgenda: string }) => void): void {
+    this.socket?.on('asistencia-abierta', cb);
+  }
+
+  offAsistenciaAbierta(): void {
+    this.socket?.off('asistencia-abierta');
+  }
+
+  onAsistenciaCerrada(cb: () => void): void {
+    this.socket?.on('asistencia-cerrada', cb);
+  }
+
+  offAsistenciaCerrada(): void {
+    this.socket?.off('asistencia-cerrada');
+  }
+
+  // Diputado escucha cuándo se abre/cierra una votación
+  onVotacionAbierta(cb: (data: { idAgenda: string, punto: any }) => void): void {
+    this.socket?.on('votacion-abierta', cb);
+  }
+
+  offVotacionAbierta(): void {
+    this.socket?.off('votacion-abierta');
+  }
+
+  onVotacionCerrada(cb: () => void): void {
+    this.socket?.on('votacion-cerrada', cb);
+  }
+
+  offVotacionCerrada(): void {
+    this.socket?.off('votacion-cerrada');
   }
 
   disconnect(): void {

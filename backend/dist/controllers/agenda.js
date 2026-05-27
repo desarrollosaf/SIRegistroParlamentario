@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -1561,6 +1561,7 @@ const crearreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         return res.status(200).json({
             message: "Reserva creada exitosamente",
+            data: { id: nuevoTema.id }
         });
     }
     catch (error) {
@@ -1572,6 +1573,35 @@ const crearreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.crearreserva = crearreserva;
+const actualizarReserva = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { body } = req;
+        const reserva = yield temas_puntos_votos_1.default.findOne({ where: { id } });
+        if (!reserva) {
+            return res.status(404).json({ message: "Reserva no encontrada" });
+        }
+        yield reserva.update({ tema_votacion: body.descripcion });
+        yield reservas_presenta_1.default.destroy({ where: { id_reserva: id } });
+        const presentaArray = (body.id_presenta || []).map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return { proponenteId: parseInt(proponenteId), autorId };
+        });
+        for (const item of presentaArray) {
+            yield reservas_presenta_1.default.create({
+                id_reserva: id,
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId,
+            });
+        }
+        return res.status(200).json({ message: "Reserva actualizada correctamente" });
+    }
+    catch (error) {
+        console.error("Error al actualizar la reserva:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.actualizarReserva = actualizarReserva;
 const eliminarreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1625,11 +1655,17 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             const { proponentesString, presentaString } = ((_a = data.presentan) === null || _a === void 0 ? void 0 : _a.length)
                 ? yield procesarPresentan(data.presentan)
                 : { proponentesString: '', presentaString: '' };
+            const _proponentesIds = [...new Set((data.presentan || []).map((p) => p.id_tipo_presenta).filter(Boolean))];
+            const _presentanIds = (data.presentan || [])
+                .filter((p) => p.id_tipo_presenta && p.id_presenta)
+                .map((p) => `${p.id_tipo_presenta}/${p.id_presenta}`);
             return {
                 id: data.id,
                 tema_votacion: data.tema_votacion,
                 proponente: proponentesString,
                 presenta: presentaString,
+                _proponentesIds,
+                _presentanIds,
             };
         })));
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
@@ -2090,10 +2126,15 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
             puntoa = null;
             votos = yield votos_punto_1.default.findOne({ where: { id_tema_punto_voto: body.idReserva } });
         }
+        else if (body.idPunto && body.idIniciativa) {
+            tema = null;
+            puntoa = body.idPunto;
+            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } });
+        }
         else {
             tema = null;
             puntoa = body.idPunto;
-            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto } });
+            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } });
         }
         console.log("tema:", tema, "punto:", puntoa);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id: body.idPunto } });
@@ -2121,6 +2162,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 mensaje: "PENDIENTE",
                 id_punto: puntoa,
                 id_tema_punto_voto: tema,
+                id_iniciativa: body.idIniciativa || null,
                 id_diputado: dip.id_diputado,
                 id_partido: dip.id_partido,
                 id_comision_dip: dip.comision_dip_id,
@@ -2130,7 +2172,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
             yield votos_punto_1.default.bulkCreate(votospunto);
             mensajeRespuesta = "Votacion creada correctamente";
         }
-        const integrantes = yield obtenerResultadosVotacionOptimizado(tema, puntoa, tipoEvento);
+        const integrantes = yield obtenerResultadosVotacionOptimizado(tema, puntoa, tipoEvento, body.idIniciativa || null);
         return res.status(200).json({
             msg: mensajeRespuesta,
             evento,
@@ -2165,7 +2207,7 @@ function obtenerListadoDiputados(evento) {
         return listadoDiputados;
     });
 }
-function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento) {
+function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento, idIniciativa) {
     return __awaiter(this, void 0, void 0, function* () {
         const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
             where: { valor: "Diputado Asociado" }
@@ -2176,6 +2218,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
         }
         else if (idPunto) {
             whereConditions.id_punto = idPunto;
+            whereConditions.id_iniciativa = idIniciativa || null;
         }
         else {
             return []; // No hay nada que buscar
@@ -5873,3 +5916,32 @@ const deleteComentarioEvento = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.deleteComentarioEvento = deleteComentarioEvento;
+const getIniciativasPorPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const iniciativasDirectas = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { id_punto: id },
+            include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
+        });
+        const estudios = yield iniciativas_estudio_1.default.findAll({
+            where: { punto_destino_id: id },
+            attributes: ['punto_origen_id'],
+            raw: true,
+        });
+        const origenIds = estudios.map((e) => e.punto_origen_id).filter(Boolean);
+        let iniciativasDictamenes = [];
+        if (origenIds.length > 0) {
+            iniciativasDictamenes = yield inciativas_puntos_ordens_1.default.findAll({
+                where: { id_punto: origenIds },
+                include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
+            });
+        }
+        const iniciativas = [...iniciativasDirectas, ...iniciativasDictamenes];
+        return res.status(200).json({ iniciativas });
+    }
+    catch (error) {
+        console.error('Error al obtener iniciativas por punto:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor.' });
+    }
+});
+exports.getIniciativasPorPunto = getIniciativasPorPunto;

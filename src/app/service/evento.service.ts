@@ -135,6 +135,10 @@ export class EventoService {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl}/eliminarreserva/${id}`)
   }
 
+  actualizarReserva(id: string, data: any): Observable<any> {
+    return this.http.put<any>(`${this.myAppUrl}${this.myAPIUrl}/actualizarreserva/${id}`, data)
+  }
+
   deleteIniciativa(id: String): Observable<string> {
     return this.http.get<string>(`${this.myAppUrl}${this.myAPIUrl1}/eliminariniciativa/${id}`)
   }
@@ -337,6 +341,10 @@ export class EventoService {
 
   updateEdicionIniciativa(id: string, data: any): Observable<any> {
     return this.http.put<any>(`${this.myAppUrl}${this.myAPIUrl3}/edicion/${id}`, data);
+  }
+
+  getIniciativasPorPunto(id: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getiniciativaspunto/${id}`)
   }
 
 }

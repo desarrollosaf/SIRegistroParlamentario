@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cerrarsesion = exports.getCurrentUser = exports.LoginUser = exports.ReadUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = __importDefault(require("../models/user"));
+const role_users_1 = __importDefault(require("../models/role_users"));
+const role_1 = __importDefault(require("../models/role"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ReadUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const listUser = yield user_1.default.findAll();
@@ -25,44 +27,40 @@ const ReadUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.ReadUser = ReadUser;
 const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const { name, password } = req.body;
-    console.log(name);
     let passwordValid = false;
-    let user = null;
     let bandera = true;
-    user = yield user_1.default.findOne({
-        where: { name: name },
+    const user = yield user_1.default.findOne({
+        where: { name },
+        include: [{ model: role_users_1.default, as: 'rol_users', include: [{ model: role_1.default, as: 'role' }] }]
     });
     if (!user) {
-        return res.status(400).json({
-            msg: `Usuario no existe con el usuario ${name}`
-        });
+        return res.status(400).json({ msg: `Usuario no existe con el usuario ${name}` });
     }
     const hash = user.password.replace(/^\$2y\$/, '$2b$');
     passwordValid = yield bcrypt_1.default.compare(password, hash);
     if (!passwordValid) {
-        return res.status(402).json({
-            msg: `Password Incorrecto => ${password}`
-        });
+        return res.status(402).json({ msg: `Password Incorrecto` });
     }
-    const accessToken = jsonwebtoken_1.default.sign({ rfc: name }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', { expiresIn: '2h' });
+    const roleName = ((_b = (_a = user.rol_users) === null || _a === void 0 ? void 0 : _a.role) === null || _b === void 0 ? void 0 : _b.name) || 'admin';
+    const accessToken = jsonwebtoken_1.default.sign({ rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', { expiresIn: '2h' });
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // ✅ más correcto para distinguir local vs producción
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 2 * 60 * 60 * 1000, // 2 horas
+        maxAge: 2 * 60 * 60 * 1000,
         path: '/',
     });
-    console.log(accessToken);
-    return res.json({ user, bandera });
+    return res.json({ user, bandera, role: roleName });
 });
 exports.LoginUser = LoginUser;
 const getCurrentUser = (req, res) => {
     const user = req.user;
-    // Podrías consultar más info en la base de datos si quieres
     res.json({
         rfc: user.rfc,
-        // otros datos si es necesario
+        role: user.role || 'admin',
+        integrante_legislatura_id: user.integrante_legislatura_id || null,
     });
 };
 exports.getCurrentUser = getCurrentUser;

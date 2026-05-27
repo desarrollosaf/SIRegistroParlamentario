@@ -47,7 +47,16 @@ export class UserService {
   get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
-  
+
+  getRol(): string {
+    const user = this.currentUserSubject.value;
+    return user?.role || user?.rol_users?.role?.name || 'admin';
+  }
+
+  esDiputado(): boolean {
+    return this.getRol() === 'diputado';
+  }
+
   setCurrentUser(user: User | null) {
     this.currentUserSubject.next(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
