@@ -725,11 +725,13 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             : [];
         const sesionIdsByExpediente = new Map();
         for (const ep of expedPuntos) {
-            if (!sesionIdsByExpediente.has(ep.expediente_id))
-                sesionIdsByExpediente.set(ep.expediente_id, []);
-            sesionIdsByExpediente.get(ep.expediente_id).push(ep.punto_origen_sesion_id);
+            const key = String(ep.expediente_id);
+            if (!sesionIdsByExpediente.has(key))
+                sesionIdsByExpediente.set(key, []);
+            sesionIdsByExpediente.get(key).push(ep.punto_origen_sesion_id);
         }
         const allSesionIds = expedPuntos.map(ep => ep.punto_origen_sesion_id).filter(Boolean);
+        console.log(allSesionIds);
         const iniType2Raw = allSesionIds.length > 0
             ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
             : [];
@@ -739,6 +741,7 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 iniByPunto2.set(ini.id_punto, []);
             iniByPunto2.get(ini.id_punto).push(ini.id);
         }
+        console.log(iniByPunto2);
         const dictamenes = dictamenesRaw.map((p) => {
             var _a, _b, _c, _d, _e, _f;
             const d = p.toJSON();
@@ -752,10 +755,11 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 else if (String(est.type) === '2') {
                     for (const sesId of ((_d = sesionIdsByExpediente.get(est.punto_origen_id)) !== null && _d !== void 0 ? _d : [])) {
-                        idsIniciativas.push(...((_e = iniByPunto2.get(sesId)) !== null && _e !== void 0 ? _e : []));
+                        idsIniciativas.push(...((_e = iniByPunto2.get(String(sesId))) !== null && _e !== void 0 ? _e : []));
                     }
                 }
             }
+            console.log(idsIniciativas);
             return {
                 id: d.id,
                 punto: `${fecha} - ${(_f = d.evento) === null || _f === void 0 ? void 0 : _f.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
