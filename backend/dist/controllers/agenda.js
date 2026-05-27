@@ -187,22 +187,27 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                                 model: agendas_1.default,
                                 as: 'evento',
                                 attributes: ["fecha", "id"]
-                            },
-                            {
-                                model: inciativas_puntos_ordens_1.default,
-                                as: 'iniciativas',
-                                attributes: ['id'],
-                                required: false
                             }
                         ]
                     });
+                    const puntosIds = puntosRaw.map((p) => p.id);
+                    const iniciativasPuntosRaw = puntosIds.length > 0
+                        ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
+                        : [];
+                    const iniByPuntoId = new Map();
+                    for (const ini of iniciativasPuntosRaw) {
+                        const key = Number(ini.id_punto);
+                        if (!iniByPuntoId.has(key))
+                            iniByPuntoId.set(key, []);
+                        iniByPuntoId.get(key).push(ini.id);
+                    }
                     puntos = puntosRaw.map((p) => {
                         var _a, _b, _c;
                         const data = p.toJSON();
                         const fecha = ((_a = data.evento) === null || _a === void 0 ? void 0 : _a.fecha)
                             ? new Date(data.evento.fecha).toISOString().split('T')[0]
                             : '';
-                        const iniciativasStr = ((_b = data.iniciativas) !== null && _b !== void 0 ? _b : []).map((i) => i.id).join(' | ');
+                        const iniciativasStr = ((_b = iniByPuntoId.get(data.id)) !== null && _b !== void 0 ? _b : []).join(' | ');
                         return {
                             id: data.id,
                             punto: `${fecha} - ${(_c = data.evento) === null || _c === void 0 ? void 0 : _c.id} - [${iniciativasStr}] - ${data.punto}`
