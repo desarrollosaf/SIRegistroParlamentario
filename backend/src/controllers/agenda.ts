@@ -198,21 +198,27 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
                 model: Agenda,
                 as: 'evento',
                 attributes: ["fecha","id"]
-              },
-              {
-                model: IniciativaPuntoOrden,
-                as: 'iniciativas',
-                attributes: ['id'],
-                required: false
               }
             ]
           });
+
+          const puntosIds = puntosRaw.map((p: any) => p.id);
+          const iniciativasPuntosRaw = puntosIds.length > 0
+            ? await IniciativaPuntoOrden.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
+            : [];
+          const iniByPuntoId = new Map<number, string[]>();
+          for (const ini of iniciativasPuntosRaw as any[]) {
+            const key = Number(ini.id_punto);
+            if (!iniByPuntoId.has(key)) iniByPuntoId.set(key, []);
+            iniByPuntoId.get(key)!.push(ini.id);
+          }
+
           puntos = puntosRaw.map((p: any) => {
             const data = p.toJSON();
             const fecha = data.evento?.fecha
               ? new Date(data.evento.fecha).toISOString().split('T')[0]
               : '';
-            const iniciativasStr = (data.iniciativas ?? []).map((i: any) => i.id).join(' | ');
+            const iniciativasStr = (iniByPuntoId.get(data.id) ?? []).join(' | ');
             return {
               id: data.id,
               punto: `${fecha} - ${data.evento?.id} - [${iniciativasStr}] - ${data.punto}`
