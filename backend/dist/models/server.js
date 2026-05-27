@@ -29,11 +29,11 @@ const socket_io_1 = require("socket.io");
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
-        this.port = process.env.PORT || '3013';
+        this.port = process.env.PORT || '3020';
         this.httpServer = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.httpServer, {
             cors: {
-                origin: ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200'],
+                origin: ['https://parlamentario2.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200'],
                 credentials: true
             }
         });
