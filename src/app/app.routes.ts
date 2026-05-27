@@ -81,6 +81,10 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'diputado',
+    loadChildren: () => import('./views/pages/diputado/diputado.routes')
+  },
+  {
     path: 'proyeccion-votacion',
     loadComponent: () => import('./views/pages/comision/proyeccion-votacion/proyeccion-votacion.component').then(c => c.ProyeccionVotacionComponent)
   },

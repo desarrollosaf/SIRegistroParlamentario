@@ -1723,8 +1723,9 @@ export const crearreserva = async (req: Request, res: Response): Promise<any> =>
       });
     }
     
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Reserva creada exitosamente",
+      data: { id: nuevoTema.id }
     });
     
   } catch (error: any) {
@@ -1733,6 +1734,41 @@ export const crearreserva = async (req: Request, res: Response): Promise<any> =>
       message: "Error interno del servidor",
       error: error.message 
     });
+  }
+};
+
+export const actualizarReserva = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { body } = req;
+
+    const reserva = await TemasPuntosVotos.findOne({ where: { id } });
+    if (!reserva) {
+      return res.status(404).json({ message: "Reserva no encontrada" });
+    }
+
+    await reserva.update({ tema_votacion: body.descripcion });
+
+    await ReservasPresenta.destroy({ where: { id_reserva: id } });
+
+    const presentaArray = (body.id_presenta || []).map((item: string) => {
+      const [proponenteId, autorId] = item.split('/');
+      return { proponenteId: parseInt(proponenteId), autorId };
+    });
+
+    for (const item of presentaArray) {
+      await ReservasPresenta.create({
+        id_reserva: id,
+        id_tipo_presenta: item.proponenteId,
+        id_presenta: item.autorId,
+      });
+    }
+
+    return res.status(200).json({ message: "Reserva actualizada correctamente" });
+
+  } catch (error: any) {
+    console.error("Error al actualizar la reserva:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
   }
 };
 
@@ -1791,11 +1827,18 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
           ? await procesarPresentan(data.presentan)
           : { proponentesString: '', presentaString: '' };
 
+        const _proponentesIds = [...new Set((data.presentan || []).map((p: any) => p.id_tipo_presenta).filter(Boolean))];
+        const _presentanIds = (data.presentan || [])
+          .filter((p: any) => p.id_tipo_presenta && p.id_presenta)
+          .map((p: any) => `${p.id_tipo_presenta}/${p.id_presenta}`);
+
         return {
           id:            data.id,
           tema_votacion: data.tema_votacion,
           proponente:    proponentesString,
           presenta:      presentaString,
+          _proponentesIds,
+          _presentanIds,
         };
       })
     );
@@ -2358,10 +2401,14 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
       tema = body.idReserva;
       puntoa = null;
       votos = await VotosPunto.findOne({ where: { id_tema_punto_voto: body.idReserva } });
+    } else if (body.idPunto && body.idIniciativa) {
+      tema = null;
+      puntoa = body.idPunto;
+      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } });
     } else {
       tema = null;
       puntoa = body.idPunto;
-      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto } });
+      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } });
     }
     
     console.log("tema:", tema, "punto:", puntoa);
@@ -2397,6 +2444,7 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
         mensaje: "PENDIENTE",
         id_punto: puntoa,
         id_tema_punto_voto: tema,
+        id_iniciativa: body.idIniciativa || null,
         id_diputado: dip.id_diputado,
         id_partido: dip.id_partido,
         id_comision_dip: dip.comision_dip_id,
@@ -2412,7 +2460,8 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     const integrantes = await obtenerResultadosVotacionOptimizado(
       tema,
       puntoa,
-      tipoEvento
+      tipoEvento,
+      body.idIniciativa || null
     );
     
     return res.status(200).json({
@@ -2477,7 +2526,8 @@ interface ComisionAgrupada {
 async function obtenerResultadosVotacionOptimizado(
   idTemaPuntoVoto: string | null,
   idPunto: string | null,
-  tipoEvento: 'sesion' | 'comision'
+  tipoEvento: 'sesion' | 'comision',
+  idIniciativa?: string | null
 ): Promise<ResultadoVotacion[] | ComisionAgrupada[]> {
     
     const dipasociados = await TipoCargoComision.findOne({
@@ -2490,6 +2540,7 @@ async function obtenerResultadosVotacionOptimizado(
       whereConditions.id_tema_punto_voto = idTemaPuntoVoto;
     } else if (idPunto) {
       whereConditions.id_punto = idPunto;
+      whereConditions.id_iniciativa = idIniciativa || null;
     } else {
       return []; // No hay nada que buscar
     }
@@ -6986,6 +7037,41 @@ export const deleteComentarioEvento = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error al eliminar comentario:', error);
+    return res.status(500).json({ msg: 'Error interno del servidor.' });
+  }
+};
+
+export const getIniciativasPorPunto = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const iniciativasDirectas = await IniciativaPuntoOrden.findAll({
+      where: { id_punto: id },
+      include: [{ model: IniciativasPresenta, as: 'presentan' }],
+    });
+
+    const estudios = await IniciativaEstudio.findAll({
+      where: { punto_destino_id: id },
+      attributes: ['punto_origen_id'],
+      raw: true,
+    });
+
+    const origenIds = (estudios as any[]).map((e: any) => e.punto_origen_id).filter(Boolean);
+
+    let iniciativasDictamenes: any[] = [];
+    if (origenIds.length > 0) {
+      iniciativasDictamenes = await IniciativaPuntoOrden.findAll({
+        where: { id_punto: origenIds },
+        include: [{ model: IniciativasPresenta, as: 'presentan' }],
+      });
+    }
+
+    const iniciativas = [...iniciativasDirectas, ...iniciativasDictamenes];
+
+    return res.status(200).json({ iniciativas });
+
+  } catch (error) {
+    console.error('Error al obtener iniciativas por punto:', error);
     return res.status(500).json({ msg: 'Error interno del servidor.' });
   }
 };

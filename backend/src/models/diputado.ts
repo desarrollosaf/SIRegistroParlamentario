@@ -123,10 +123,6 @@ Diputado.init(
   }
 );
 
-Diputado.hasOne(IntegranteLegislatura, {
-  foreignKey: 'diputado_id',
-  sourceKey: 'id',
-  as: 'integrante',
-});
+
 
 export default Diputado;

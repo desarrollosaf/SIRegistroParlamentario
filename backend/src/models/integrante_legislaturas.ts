@@ -6,7 +6,6 @@ import Informe from './informes';
 import IntegranteComision from './integrante_comisions';
 import Legislatura from './legislaturas';
 import Partido from './partidos';
-import Diputado from './diputado';
 
 class IntegranteLegislatura extends Model {
   declare id: string;

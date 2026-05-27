@@ -17,7 +17,9 @@ router.post("/api/eventos/savepunto/:id", multer_1.default.single("documento"), 
 router.get("/api/eventos/getpuntos/:id", agenda_1.getpuntos);
 router.post("/api/eventos/savereserva/", agenda_1.crearreserva);
 router.get("/api/eventos/eliminarreserva/:id", agenda_1.eliminarreserva);
+router.put("/api/eventos/actualizarreserva/:id", agenda_1.actualizarReserva);
 router.get("/api/eventos/getreservas/:id", agenda_1.getreservas);
+router.get("/api/eventos/getiniciativaspunto/:id", agenda_1.getIniciativasPorPunto);
 router.post("/api/eventos/actualizarPunto/:id", multer_1.default.single("documento"), agenda_1.actualizarPunto);
 router.get("/api/eventos/eliminarpunto/:id/:sesion", agenda_1.eliminarpunto);
 router.post("/api/eventos/saveintervencion/", agenda_1.saveintervencion);

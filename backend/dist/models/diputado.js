@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const legislativoConnection_1 = __importDefault(require("../database/legislativoConnection"));
-const integrante_legislaturas_1 = __importDefault(require("./integrante_legislaturas"));
 // import Gender from './gender';
 class Diputado extends sequelize_1.Model {
 }
@@ -99,10 +98,5 @@ Diputado.init({
     tableName: 'diputados',
     timestamps: true,
     paranoid: true,
-});
-Diputado.hasOne(integrante_legislaturas_1.default, {
-    foreignKey: 'diputado_id',
-    sourceKey: 'id',
-    as: 'integrante',
 });
 exports.default = Diputado;
