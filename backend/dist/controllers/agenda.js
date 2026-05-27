@@ -187,18 +187,25 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                                 model: agendas_1.default,
                                 as: 'evento',
                                 attributes: ["fecha", "id"]
+                            },
+                            {
+                                model: inciativas_puntos_ordens_1.default,
+                                as: 'iniciativas',
+                                attributes: ['id'],
+                                required: false
                             }
                         ]
                     });
                     puntos = puntosRaw.map((p) => {
-                        var _a, _b;
+                        var _a, _b, _c;
                         const data = p.toJSON();
                         const fecha = ((_a = data.evento) === null || _a === void 0 ? void 0 : _a.fecha)
                             ? new Date(data.evento.fecha).toISOString().split('T')[0]
                             : '';
+                        const iniciativasStr = ((_b = data.iniciativas) !== null && _b !== void 0 ? _b : []).map((i) => i.id).join(' | ');
                         return {
                             id: data.id,
-                            punto: `${fecha} - ${(_b = data.evento) === null || _b === void 0 ? void 0 : _b.id} - ${data.nopunto} - ${data.punto}`
+                            punto: `${fecha} - ${(_c = data.evento) === null || _c === void 0 ? void 0 : _c.id} - [${iniciativasStr}] - ${data.punto}`
                         };
                     });
                 }
