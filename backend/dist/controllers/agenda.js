@@ -176,19 +176,37 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 const puntosturnados = yield puntos_comisiones_1.default.findAll({
                     where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
                 });
-                if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
+                if (puntosturnados.length > 0) {
+                    const idsTurnados = puntosturnados.map(p => p.id_punto);
+                    // type=1: punto_origen_id apunta directamente al punto de sesión
+                    const estudiosType1 = yield iniciativas_estudio_1.default.findAll({
+                        where: { punto_origen_id: idsTurnados, type: '1', status: { [sequelize_1.Op.gte]: 2 } },
+                        attributes: ['punto_origen_id'],
+                        raw: true
+                    });
+                    // type=2: punto_origen_id apunta a un expediente → buscar los puntos de sesión en ExpedienteEstudiosPuntos
+                    const estudiosType2 = yield iniciativas_estudio_1.default.findAll({
+                        where: { type: '2', status: { [sequelize_1.Op.gte]: 2 } },
+                        attributes: ['punto_origen_id'],
+                        raw: true
+                    });
+                    const expedienteIds = estudiosType2.map((e) => e.punto_origen_id);
+                    const puntosEnExpediente = expedienteIds.length > 0
+                        ? yield expedientes_estudio_puntos_1.default.findAll({
+                            where: { expediente_id: expedienteIds },
+                            attributes: ['punto_origen_sesion_id'],
+                            raw: true
+                        })
+                        : [];
+                    const idsYaUsados = new Set([
+                        ...estudiosType1.map((e) => String(e.punto_origen_id)),
+                        ...puntosEnExpediente.map((e) => String(e.punto_origen_sesion_id)),
+                    ]);
+                    const idsPendientes = idsTurnados.filter((id) => !idsYaUsados.has(String(id)));
                     const puntosRaw = yield puntos_ordens_1.default.findAll({
-                        where: {
-                            id: puntosturnados.map(p => p.id_punto)
-                        },
+                        where: { id: idsPendientes },
                         attributes: ["id", "punto", "nopunto"],
-                        include: [
-                            {
-                                model: agendas_1.default,
-                                as: 'evento',
-                                attributes: ["fecha", "id"]
-                            }
-                        ]
+                        include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
                     });
                     const puntosIds = puntosRaw.map((p) => p.id);
                     const iniciativasPuntosRaw = puntosIds.length > 0
