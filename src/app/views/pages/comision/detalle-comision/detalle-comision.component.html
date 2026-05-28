@@ -149,6 +149,13 @@
                                                 <button class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
                                                     <i class="bi bi-stop-circle-fill me-1"></i> Terminar
                                                 </button>
+                                                <span class="vr mx-1"></span>
+                                                <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirAsistenciaDiputados()" title="Permitir que los diputados registren su asistencia desde su dispositivo">
+                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
+                                                </button>
+                                                <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarAsistenciaDiputados()">
+                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
+                                                </button>
                                             </div>
                                         </div>
 
@@ -369,6 +376,13 @@
                                             </button>
                                             <button class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
                                                 <i class="bi bi-stop-circle-fill me-1"></i> Terminar
+                                            </button>
+                                            <span class="vr mx-1"></span>
+                                            <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirAsistenciaDiputados()" title="Permitir que los diputados registren su asistencia desde su dispositivo">
+                                                <i class="bi bi-phone me-1"></i> Abrir para diputados
+                                            </button>
+                                            <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarAsistenciaDiputados()">
+                                                <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                             </button>
                                         </div>
                                         <!-- Iterar sobre cada comisión -->
@@ -1284,6 +1298,43 @@
                                                     </ng-template>
                                                 </ng-select>
                                             </div>
+
+                                            <!-- Crear reserva rápida desde votación -->
+                                            <div class="col-md-12" *ngIf="puntoSeleccionadoVotacion">
+                                                <label class="form-label fw-semibold">Crear nueva reserva (opcional)</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" class="form-control"
+                                                        [(ngModel)]="nuevaReservaTexto"
+                                                        placeholder="Escribe el texto de la reserva y presiona Guardar..."
+                                                        (keyup.enter)="crearReservaDesdeVotacion()">
+                                                    <button class="btn btn-outline-secondary" type="button"
+                                                        (click)="crearReservaDesdeVotacion()"
+                                                        [disabled]="!nuevaReservaTexto.trim() || guardandoNuevaReserva">
+                                                        <span *ngIf="guardandoNuevaReserva" class="spinner-border spinner-border-sm me-1"></span>
+                                                        <i *ngIf="!guardandoNuevaReserva" class="bi bi-plus-circle me-1"></i>
+                                                        Guardar reserva
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Select de Iniciativa del Punto -->
+                                            <div class="col-md-12" *ngIf="listaIniciativasPunto.length > 0">
+                                                <label class="form-label fw-semibold">Selecciona la iniciativa a votar (opcional)</label>
+                                                <ng-select [items]="listaIniciativasPunto" bindLabel="iniciativa"
+                                                    bindValue="id" [(ngModel)]="iniciativaSeleccionadaVotacion"
+                                                    placeholder="Selecciona una iniciativa del punto"
+                                                    [clearable]="true" (change)="iniciarVotacion()">
+                                                    <ng-template ng-label-tmp let-item="item">
+                                                        <span *ngIf="item.expediente" class="fw-semibold me-1">Exp. {{ item.expediente }}:</span>{{ item.iniciativa }}
+                                                    </ng-template>
+                                                    <ng-template ng-option-tmp let-item="item">
+                                                        <div class="d-flex flex-column">
+                                                            <span *ngIf="item.expediente" class="fw-semibold">Exp. {{ item.expediente }}</span>
+                                                            <small class="text-muted">{{ item.iniciativa }}</small>
+                                                        </div>
+                                                    </ng-template>
+                                                </ng-select>
+                                            </div>
                                         </div>
                                     </div>
                                     <br>
@@ -1389,6 +1440,13 @@
                                                 </button>
                                                 <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
                                                     <i class="bi bi-display me-1"></i> Proyectar
+                                                </button>
+                                                <span class="vr mx-1"></span>
+                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirVotacionDiputados()" [disabled]="!votacionIniciada" title="Permitir que los diputados voten desde su dispositivo">
+                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
+                                                </button>
+                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarVotacionDiputados()">
+                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                                 </button>
                                             </div>
 
@@ -1627,6 +1685,13 @@
                                                 </button>
                                                 <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
                                                     <i class="bi bi-display me-1"></i> Proyectar
+                                                </button>
+                                                <span class="vr mx-1"></span>
+                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirVotacionDiputados()" [disabled]="!votacionIniciada" title="Permitir que los diputados voten desde su dispositivo">
+                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
+                                                </button>
+                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarVotacionDiputados()">
+                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                                 </button>
                                             </div>
                                         </div>
@@ -2113,6 +2178,53 @@
             </div>
         </div>
 
+        <!-- Formulario de Edición -->
+        <div class="card form-intervencion fade-in mb-4" *ngIf="mostrarformEdicionReserva">
+            <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-pencil-square me-1"></i> Editando reserva</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelarEdicionReserva()">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </button>
+            </div>
+            <div class="card-body">
+                <form [formGroup]="formEdicionReserva">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-people-fill me-1"></i> Proponente
+                            </label>
+                            <ng-select [items]="slctProponentes" bindLabel="valor" bindValue="id" [multiple]="true"
+                                [closeOnSelect]="false" formControlName="id_proponente"
+                                placeholder="Selecciona proponente(s)"
+                                (change)="getTipoPEdicionReserva($event?.length ? $event : [])">
+                            </ng-select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-fill me-1"></i> Presenta
+                            </label>
+                            <ng-select [items]="slcPresentaEdicionReserva" bindLabel="valor" bindValue="id"
+                                [multiple]="true" [closeOnSelect]="false" formControlName="id_presenta"
+                                placeholder="Selecciona quien(es) presenta(n)">
+                            </ng-select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text-fill me-1"></i> Descripción de la reserva
+                            </label>
+                            <textarea class="form-control" formControlName="descripcion" rows="3"
+                                placeholder="Escribe la descripción de la reserva..."></textarea>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-success" (click)="guardarEdicionReserva()">
+                            <i class="bi bi-save"></i> Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Tabla -->
         <div class="card">
             <div class="card-header bg-light">
@@ -2130,7 +2242,7 @@
                                 <th>Descripción</th>
                                 <th style="width: 160px;">Proponente</th>
                                 <th style="width: 160px;">Presenta</th>
-                                <th class="text-center" style="width: 80px;">Acciones</th>
+                                <th class="text-center" style="width: 110px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2148,6 +2260,10 @@
                                     {{ reserva.presenta || '—' }}
                                 </td>
                                 <td class="text-center align-middle">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                        (click)="abrirEdicionReserva(reserva)" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         (click)="eliminarReserva(reserva, i)" title="Eliminar">
                                         <i class="bi bi-trash3"></i>

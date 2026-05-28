@@ -36,6 +36,10 @@ User.init({
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: true,
     },
+    integrante_legislatura_id: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: true,
+    },
 }, {
     sequelize: registrocomisiones_1.default,
     tableName: 'users',

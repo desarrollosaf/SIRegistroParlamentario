@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -668,7 +668,6 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.actualizar = actualizar;
 const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
         const proponentes = yield proponentes_1.default.findAll({
             attributes: ['id', 'valor'],
@@ -698,71 +697,75 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             ]
         });
-        // Recolectar punto_origen_id por tipo para hacer queries en batch
-        const origenIdsType1 = new Set();
-        const origenIdsType2 = new Set();
-        for (const p of dictamenesRaw) {
-            for (const est of ((_a = p.toJSON().puntosestudiados) !== null && _a !== void 0 ? _a : [])) {
-                if (String(est.type) === '1' && est.punto_origen_id)
-                    origenIdsType1.add(est.punto_origen_id);
-                if (String(est.type) === '2' && est.punto_origen_id)
-                    origenIdsType2.add(est.punto_origen_id);
-            }
-        }
-        // type=1: iniciativas directo del punto origen
-        const iniType1Raw = origenIdsType1.size > 0
-            ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
-            : [];
-        const iniByPunto1 = new Map();
-        for (const ini of iniType1Raw) {
-            if (!iniByPunto1.has(ini.id_punto))
-                iniByPunto1.set(ini.id_punto, []);
-            iniByPunto1.get(ini.id_punto).push(ini.id);
-        }
-        // type=2: buscar los puntos del expediente via ExpedienteEstudiosPuntos
-        const expedPuntos = origenIdsType2.size > 0
-            ? yield expedientes_estudio_puntos_1.default.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
-            : [];
-        const sesionIdsByExpediente = new Map();
-        for (const ep of expedPuntos) {
-            const key = String(ep.expediente_id);
-            if (!sesionIdsByExpediente.has(key))
-                sesionIdsByExpediente.set(key, []);
-            sesionIdsByExpediente.get(key).push(ep.punto_origen_sesion_id);
-        }
-        const allSesionIds = expedPuntos.map(ep => ep.punto_origen_sesion_id).filter(Boolean);
-        console.log(allSesionIds);
-        const iniType2Raw = allSesionIds.length > 0
-            ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
-            : [];
-        const iniByPunto2 = new Map();
-        for (const ini of iniType2Raw) {
-            if (!iniByPunto2.has(ini.id_punto))
-                iniByPunto2.set(ini.id_punto, []);
-            iniByPunto2.get(ini.id_punto).push(ini.id);
-        }
-        console.log(iniByPunto2);
+        // // Recolectar punto_origen_id por tipo para hacer queries en batch
+        // const origenIdsType1 = new Set<string>();
+        // const origenIdsType2 = new Set<string>();
+        // for (const p of dictamenesRaw) {
+        //   for (const est of ((p as any).toJSON().puntosestudiados ?? [])) {
+        //     if (String(est.type) === '1' && est.punto_origen_id) origenIdsType1.add(est.punto_origen_id);
+        //     if (String(est.type) === '2' && est.punto_origen_id) origenIdsType2.add(est.punto_origen_id);
+        //   }
+        // }
+        // // type=1: iniciativas directo del punto origen
+        // const iniType1Raw = origenIdsType1.size > 0
+        //   ? await IniciativaPuntoOrden.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
+        //   : [];
+        // const iniByPunto1 = new Map<string, string[]>();
+        // for (const ini of iniType1Raw as any[]) {
+        //   if (!iniByPunto1.has(ini.id_punto)) iniByPunto1.set(ini.id_punto, []);
+        //   iniByPunto1.get(ini.id_punto)!.push(ini.id);
+        // }
+        // // type=2: buscar los puntos del expediente via ExpedienteEstudiosPuntos
+        // const expedPuntos = origenIdsType2.size > 0
+        //   ? await ExpedienteEstudiosPuntos.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
+        //   : [];
+        // const sesionIdsByExpediente = new Map<string, number[]>();
+        // for (const ep of expedPuntos as any[]) {
+        //   const key = String(ep.expediente_id);
+        //   if (!sesionIdsByExpediente.has(key)) sesionIdsByExpediente.set(key, []);
+        //   sesionIdsByExpediente.get(key)!.push(ep.punto_origen_sesion_id);
+        // }
+        // const allSesionIds = (expedPuntos as any[]).map(ep => ep.punto_origen_sesion_id).filter(Boolean);
+        // console.log(allSesionIds)
+        // const iniType2Raw = allSesionIds.length > 0
+        //   ? await IniciativaPuntoOrden.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
+        //   : [];
+        // const iniByPunto2 = new Map<string, string[]>();
+        // for (const ini of iniType2Raw as any[]) {
+        //   if (!iniByPunto2.has(ini.id_punto)) iniByPunto2.set(ini.id_punto, []);
+        //   iniByPunto2.get(ini.id_punto)!.push(ini.id);
+        // }
+        // console.log(iniByPunto2)
+        // const dictamenes = dictamenesRaw.map((p: any) => {
+        //   const d = p.toJSON();
+        //   const fecha = d.evento?.fecha
+        //     ? new Date(d.evento.fecha).toISOString().split('T')[0]
+        //     : '';
+        //   const idsIniciativas: string[] = [];
+        //   for (const est of (d.puntosestudiados ?? [])) {
+        //     if (String(est.type) === '1') {
+        //       idsIniciativas.push(...(iniByPunto1.get(est.punto_origen_id) ?? []));
+        //     } else if (String(est.type) === '2') {
+        //       for (const sesId of (sesionIdsByExpediente.get(est.punto_origen_id) ?? [])) {
+        //         idsIniciativas.push(...(iniByPunto2.get(String(sesId)) ?? []));
+        //       }
+        //     }
+        //   }
+        //   console.log(idsIniciativas)
+        //   return {
+        //     id: d.id,
+        //     punto: `${fecha} - ${d.evento?.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
+        //   };
+        // });
         const dictamenes = dictamenesRaw.map((p) => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b;
             const d = p.toJSON();
             const fecha = ((_a = d.evento) === null || _a === void 0 ? void 0 : _a.fecha)
                 ? new Date(d.evento.fecha).toISOString().split('T')[0]
                 : '';
-            const idsIniciativas = [];
-            for (const est of ((_b = d.puntosestudiados) !== null && _b !== void 0 ? _b : [])) {
-                if (String(est.type) === '1') {
-                    idsIniciativas.push(...((_c = iniByPunto1.get(est.punto_origen_id)) !== null && _c !== void 0 ? _c : []));
-                }
-                else if (String(est.type) === '2') {
-                    for (const sesId of ((_d = sesionIdsByExpediente.get(est.punto_origen_id)) !== null && _d !== void 0 ? _d : [])) {
-                        idsIniciativas.push(...((_e = iniByPunto2.get(String(sesId))) !== null && _e !== void 0 ? _e : []));
-                    }
-                }
-            }
-            console.log(idsIniciativas);
             return {
                 id: d.id,
-                punto: `${fecha} - ${(_f = d.evento) === null || _f === void 0 ? void 0 : _f.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
+                punto: `${fecha} - ${(_b = d.evento) === null || _b === void 0 ? void 0 : _b.id} - ${d.punto}`
             };
         });
         const legislatura = yield legislaturas_1.default.findOne({
@@ -1561,6 +1564,7 @@ const crearreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         return res.status(200).json({
             message: "Reserva creada exitosamente",
+            data: { id: nuevoTema.id }
         });
     }
     catch (error) {
@@ -1572,6 +1576,35 @@ const crearreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.crearreserva = crearreserva;
+const actualizarReserva = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { body } = req;
+        const reserva = yield temas_puntos_votos_1.default.findOne({ where: { id } });
+        if (!reserva) {
+            return res.status(404).json({ message: "Reserva no encontrada" });
+        }
+        yield reserva.update({ tema_votacion: body.descripcion });
+        yield reservas_presenta_1.default.destroy({ where: { id_reserva: id } });
+        const presentaArray = (body.id_presenta || []).map((item) => {
+            const [proponenteId, autorId] = item.split('/');
+            return { proponenteId: parseInt(proponenteId), autorId };
+        });
+        for (const item of presentaArray) {
+            yield reservas_presenta_1.default.create({
+                id_reserva: id,
+                id_tipo_presenta: item.proponenteId,
+                id_presenta: item.autorId,
+            });
+        }
+        return res.status(200).json({ message: "Reserva actualizada correctamente" });
+    }
+    catch (error) {
+        console.error("Error al actualizar la reserva:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.actualizarReserva = actualizarReserva;
 const eliminarreserva = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1625,11 +1658,17 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             const { proponentesString, presentaString } = ((_a = data.presentan) === null || _a === void 0 ? void 0 : _a.length)
                 ? yield procesarPresentan(data.presentan)
                 : { proponentesString: '', presentaString: '' };
+            const _proponentesIds = [...new Set((data.presentan || []).map((p) => p.id_tipo_presenta).filter(Boolean))];
+            const _presentanIds = (data.presentan || [])
+                .filter((p) => p.id_tipo_presenta && p.id_presenta)
+                .map((p) => `${p.id_tipo_presenta}/${p.id_presenta}`);
             return {
                 id: data.id,
                 tema_votacion: data.tema_votacion,
                 proponente: proponentesString,
                 presenta: presentaString,
+                _proponentesIds,
+                _presentanIds,
             };
         })));
         const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
@@ -2090,10 +2129,15 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
             puntoa = null;
             votos = yield votos_punto_1.default.findOne({ where: { id_tema_punto_voto: body.idReserva } });
         }
+        else if (body.idPunto && body.idIniciativa) {
+            tema = null;
+            puntoa = body.idPunto;
+            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } });
+        }
         else {
             tema = null;
             puntoa = body.idPunto;
-            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto } });
+            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } });
         }
         console.log("tema:", tema, "punto:", puntoa);
         const punto = yield puntos_ordens_1.default.findOne({ where: { id: body.idPunto } });
@@ -2121,6 +2165,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 mensaje: "PENDIENTE",
                 id_punto: puntoa,
                 id_tema_punto_voto: tema,
+                id_iniciativa: body.idIniciativa || null,
                 id_diputado: dip.id_diputado,
                 id_partido: dip.id_partido,
                 id_comision_dip: dip.comision_dip_id,
@@ -2130,7 +2175,7 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
             yield votos_punto_1.default.bulkCreate(votospunto);
             mensajeRespuesta = "Votacion creada correctamente";
         }
-        const integrantes = yield obtenerResultadosVotacionOptimizado(tema, puntoa, tipoEvento);
+        const integrantes = yield obtenerResultadosVotacionOptimizado(tema, puntoa, tipoEvento, body.idIniciativa || null);
         return res.status(200).json({
             msg: mensajeRespuesta,
             evento,
@@ -2165,7 +2210,7 @@ function obtenerListadoDiputados(evento) {
         return listadoDiputados;
     });
 }
-function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento) {
+function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvento, idIniciativa) {
     return __awaiter(this, void 0, void 0, function* () {
         const dipasociados = yield tipo_cargo_comisions_1.default.findOne({
             where: { valor: "Diputado Asociado" }
@@ -2176,6 +2221,7 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
         }
         else if (idPunto) {
             whereConditions.id_punto = idPunto;
+            whereConditions.id_iniciativa = idIniciativa || null;
         }
         else {
             return []; // No hay nada que buscar
@@ -5873,3 +5919,32 @@ const deleteComentarioEvento = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.deleteComentarioEvento = deleteComentarioEvento;
+const getIniciativasPorPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const iniciativasDirectas = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { id_punto: id },
+            include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
+        });
+        const estudios = yield iniciativas_estudio_1.default.findAll({
+            where: { punto_destino_id: id },
+            attributes: ['punto_origen_id'],
+            raw: true,
+        });
+        const origenIds = estudios.map((e) => e.punto_origen_id).filter(Boolean);
+        let iniciativasDictamenes = [];
+        if (origenIds.length > 0) {
+            iniciativasDictamenes = yield inciativas_puntos_ordens_1.default.findAll({
+                where: { id_punto: origenIds },
+                include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
+            });
+        }
+        const iniciativas = [...iniciativasDirectas, ...iniciativasDictamenes];
+        return res.status(200).json({ iniciativas });
+    }
+    catch (error) {
+        console.error('Error al obtener iniciativas por punto:', error);
+        return res.status(500).json({ msg: 'Error interno del servidor.' });
+    }
+});
+exports.getIniciativasPorPunto = getIniciativasPorPunto;
