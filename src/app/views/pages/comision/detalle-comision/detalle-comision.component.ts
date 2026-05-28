@@ -67,8 +67,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   columnaVotantes2: Votante[] = [];
   puntoSeleccionadoVotacion: number | null = null;
   reservaPuntoSeleccionadoVotacion: string | null = null;
+  iniciativaSeleccionadaVotacion: string | null = null;
   listaReservasPunto: any[] = [];
+  listaIniciativasPunto: any[] = [];
   listaPuntosVotacion: any[] = [];
+  nuevaReservaTexto: string = '';
+  guardandoNuevaReserva: boolean = false;
 
   votacionActual: { idPunto: number | null, idReserva: string | null } = {
     idPunto: null,
@@ -120,6 +124,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   proyeccionWindow: Window | null = null;
   isUpdatingAsistencia: boolean = false;
   isUpdatingVotacion: boolean = false;
+  asistenciaAbiertaDiputados: boolean = false;
+  votacionAbiertaDiputados: boolean = false;
   tituloC: '';
   idEvento: '';
   fechaC: '';
@@ -152,6 +158,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   iniciativaEnEdicion: any = null;
   slcPresentaEdicion: any[] = [];
   ciudadanaNombreEdicion = '';
+
+  mostrarformEdicionReserva = false;
+  formEdicionReserva!: FormGroup;
+  reservaEnEdicion: any = null;
+  slcPresentaEdicionReserva: any[] = [];
 
   tiposIniciativa = [
     { id: 1, label: 'Iniciativa' },
@@ -237,6 +248,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.formEdicionIniciativa = this.fb.group({
       descripcion: ['', Validators.required],
       tipo: ['', Validators.required],
+      id_proponente: [[]],
+      id_presenta: [[]],
+    });
+
+    this.formEdicionReserva = this.fb.group({
+      descripcion: ['', Validators.required],
       id_proponente: [[]],
       id_presenta: [[]],
     });
@@ -1974,6 +1991,119 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  abrirEdicionReserva(reserva: any): void {
+    this.mostrarformReserva = false;
+    this.reservaEnEdicion = reserva;
+    this.mostrarformEdicionReserva = true;
+    this.slcPresentaEdicionReserva = [];
+
+    const proponentesIds: number[] = (reserva._proponentesIds || []).map(Number);
+    const presentanIds: string[] = reserva._presentanIds || [];
+
+    this.formEdicionReserva.patchValue({
+      descripcion: reserva.tema_votacion || '',
+      id_proponente: proponentesIds,
+      id_presenta: [],
+    });
+
+    if (proponentesIds.length > 0) {
+      const proponentesObjs = (this.slctProponentes || []).filter((p: any) =>
+        proponentesIds.includes(Number(p.id))
+      );
+      this._eventoService.getTipo(proponentesObjs).subscribe({
+        next: (response: any) => {
+          this.slcPresentaEdicionReserva = (response.dtSlct || []).map((item: any) => ({
+            ...item,
+            id: String(item.id)
+          }));
+          this.formEdicionReserva.patchValue({ id_presenta: presentanIds });
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  cancelarEdicionReserva(): void {
+    this.mostrarformEdicionReserva = false;
+    this.reservaEnEdicion = null;
+    this.slcPresentaEdicionReserva = [];
+    this.formEdicionReserva.reset({ id_proponente: [], id_presenta: [], descripcion: '' });
+  }
+
+  getTipoPEdicionReserva(event: any): void {
+    this.formEdicionReserva.get('id_presenta')?.setValue([]);
+    this.slcPresentaEdicionReserva = [];
+    if (!event || (Array.isArray(event) && event.length === 0)) return;
+    this._eventoService.getTipo(event).subscribe({
+      next: (response: any) => {
+        this.slcPresentaEdicionReserva = (response.dtSlct || []).map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error cargando presenta para edición de reserva:', e);
+      }
+    });
+  }
+
+  guardarEdicionReserva(): void {
+    if (!this.formEdicionReserva.get('descripcion')?.value?.trim()) {
+      Swal.fire({ position: 'center', icon: 'warning', title: '¡Atención!', text: 'Debe escribir la descripción de la reserva.', showConfirmButton: false, timer: 2000 });
+      return;
+    }
+
+    const idsPresenta: any[] = this.formEdicionReserva.value.id_presenta || [];
+    const idsProponente: any[] = this.formEdicionReserva.value.id_proponente || [];
+
+    const getNombreProponente = () =>
+      (this.slctProponentes || [])
+        .filter((p: any) => idsProponente.map(Number).includes(Number(p.id)))
+        .map((p: any) => p.valor).join(', ') || '—';
+
+    const getNombrePresenta = () =>
+      this.slcPresentaEdicionReserva
+        .filter((p: any) => idsPresenta.map(String).includes(String(p.id)))
+        .map((p: any) => p.valor).join(', ') || '—';
+
+    const datos = {
+      descripcion: this.formEdicionReserva.value.descripcion,
+      id_presenta: idsPresenta,
+    };
+
+    this._eventoService.actualizarReserva(this.reservaEnEdicion.id, datos).subscribe({
+      next: () => {
+        const index = this.listaReservas.findIndex(r => r.id === this.reservaEnEdicion.id);
+        if (index !== -1) {
+          this.listaReservas[index] = {
+            ...this.listaReservas[index],
+            tema_votacion: datos.descripcion,
+            proponente: idsProponente.length > 0 ? getNombreProponente() : this.listaReservas[index].proponente,
+            presenta: idsPresenta.length > 0 ? getNombrePresenta() : this.listaReservas[index].presenta,
+            _proponentesIds: idsProponente.length > 0 ? idsProponente.map(Number) : this.reservaEnEdicion._proponentesIds,
+            _presentanIds: idsPresenta.length > 0 ? idsPresenta.map(String) : this.reservaEnEdicion._presentanIds,
+          };
+
+          if (this.puntoSeleccionadoReserva?.reservas) {
+            const ri = this.puntoSeleccionadoReserva.reservas.findIndex((r: any) => r.id === this.reservaEnEdicion.id);
+            if (ri !== -1) this.puntoSeleccionadoReserva.reservas[ri] = { ...this.listaReservas[index] };
+          }
+          const puntoIndex = this.listaPuntos.findIndex(p => p.id === this.puntoSeleccionadoReserva?.id);
+          if (puntoIndex !== -1) this.listaPuntos[puntoIndex].reservas = [...this.listaReservas];
+        }
+
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+        Toast.fire({ icon: 'success', title: 'Reserva actualizada correctamente.' });
+        this.cancelarEdicionReserva();
+        this.cdr.detectChanges();
+      },
+      error: (e: HttpErrorResponse) => {
+        Swal.fire({ icon: 'error', title: 'Error', text: e.error?.message || 'Error al actualizar la reserva', timer: 3000 });
+      }
+    });
+  }
+
   abrirModalIntervencion() {
     this.formIntervencion.reset({
       id_diputado: [],
@@ -2355,18 +2485,32 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   getReservasPuntos(puntoId: any) {
+    if (!puntoId) return;
     this.reservaPuntoSeleccionadoVotacion = null;
+    this.iniciativaSeleccionadaVotacion = null;
+    this.listaIniciativasPunto = [];
 
     this._eventoService.getReservas(puntoId.id).subscribe({
       next: (response: any) => {
-        console.log('reservas', response.data.reservas);
-        this.listaReservasPunto = response.data.reservas || [];
+        this.listaReservasPunto = response.data?.reservas || [];
         this.cdr.detectChanges();
-        this.iniciarVotacion();
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al cargar reservas:', e);
         this.listaReservasPunto = [];
+      }
+    });
+
+    this._eventoService.getIniciativasPorPunto(puntoId.id).subscribe({
+      next: (response: any) => {
+        this.listaIniciativasPunto = response.iniciativas || [];
+        this.cdr.detectChanges();
+        this.iniciarVotacion();
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al cargar iniciativas del punto:', e);
+        this.listaIniciativasPunto = [];
+        this.iniciarVotacion();
       }
     });
   }
@@ -2386,8 +2530,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     this.votacionActual = {
       idPunto: this.puntoSeleccionadoVotacion,
-      idReserva: this.reservaPuntoSeleccionadoVotacion || null
-    };
+      idReserva: this.reservaPuntoSeleccionadoVotacion || null,
+      idIniciativa: this.iniciativaSeleccionadaVotacion || null
+    } as any;
 
     console.log('Datos de votación:', this.votacionActual);
 
@@ -2567,6 +2712,43 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  crearReservaDesdeVotacion(): void {
+    if (!this.nuevaReservaTexto.trim() || !this.puntoSeleccionadoVotacion) return;
+    this.guardandoNuevaReserva = true;
+
+    const datos = {
+      punto: this.puntoSeleccionadoVotacion,
+      descripcion: this.nuevaReservaTexto.trim(),
+      id_presenta: []
+    };
+
+    this._eventoService.saveReserva(datos).subscribe({
+      next: (res: any) => {
+        const nuevaReservaId = res?.data?.id || null;
+        this.nuevaReservaTexto = '';
+        this.guardandoNuevaReserva = false;
+        this._eventoService.getReservas(String(this.puntoSeleccionadoVotacion)).subscribe({
+          next: (response: any) => {
+            this.listaReservasPunto = response.data?.reservas || [];
+            if (nuevaReservaId) {
+              this.reservaPuntoSeleccionadoVotacion = nuevaReservaId;
+            } else if (this.listaReservasPunto.length > 0) {
+              const ultima = this.listaReservasPunto[this.listaReservasPunto.length - 1];
+              this.reservaPuntoSeleccionadoVotacion = ultima.id;
+            }
+            this.iniciarVotacion();
+            this.cdr.detectChanges();
+          },
+          error: () => { this.guardandoNuevaReserva = false; }
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        console.error('Error al crear reserva:', e);
+        this.guardandoNuevaReserva = false;
+      }
+    });
+  }
+
   marcarVotacionComision(integrante: any, sentido: number, comisionId: string): void {
     integrante.sentido = sentido;
     const datos = {
@@ -2617,8 +2799,26 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }).then((result) => {
       if (result.isConfirmed) {
         this._socketService.emitTerminarAsistencia(this.idComisionRuta);
+        if (this.asistenciaAbiertaDiputados) {
+          this._socketService.emitCerrarAsistencia(this.idComisionRuta);
+          this.asistenciaAbiertaDiputados = false;
+        }
       }
     });
+  }
+
+  abrirAsistenciaDiputados(): void {
+    this._socketService.emitAbrirAsistencia(this.idComisionRuta, this.idEvento);
+    this.asistenciaAbiertaDiputados = true;
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+    Toast.fire({ icon: 'success', title: 'Asistencia abierta para diputados' });
+  }
+
+  cerrarAsistenciaDiputados(): void {
+    this._socketService.emitCerrarAsistencia(this.idComisionRuta);
+    this.asistenciaAbiertaDiputados = false;
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+    Toast.fire({ icon: 'info', title: 'Asistencia cerrada para diputados' });
   }
 
   terminarVotacion(): void {
@@ -2651,7 +2851,30 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  abrirVotacionDiputados(): void {
+    if (!this.votacionIniciada) {
+      Swal.fire({ icon: 'warning', title: 'Primero inicia la votación de un punto', showConfirmButton: false, timer: 2000 });
+      return;
+    }
+    const puntoActivo = this.listaPuntosVotacion.find((p: any) => p.id === this.puntoSeleccionadoVotacion) || { id: this.puntoSeleccionadoVotacion };
+    this._socketService.emitAbrirVotacion(this.idComisionRuta, this.idEvento, puntoActivo);
+    this.votacionAbiertaDiputados = true;
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+    Toast.fire({ icon: 'success', title: 'Votación abierta para diputados' });
+  }
+
+  cerrarVotacionDiputados(): void {
+    this._socketService.emitCerrarVotacion(this.idComisionRuta);
+    this.votacionAbiertaDiputados = false;
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+    Toast.fire({ icon: 'info', title: 'Votación cerrada para diputados' });
+  }
+
   private finalizarVotacion(): void {
+    if (this.votacionAbiertaDiputados) {
+      this._socketService.emitCerrarVotacion(this.idComisionRuta);
+      this.votacionAbiertaDiputados = false;
+    }
     this._socketService.emitTerminarVotacion(this.idComisionRuta);
     this.puntoSeleccionadoVotacion = null;
     this.reservaPuntoSeleccionadoVotacion = null;

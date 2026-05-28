@@ -22,6 +22,7 @@ const user_1 = __importDefault(require("../routes/user"));
 const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
 const iniciativas_1 = __importDefault(require("../routes/iniciativas"));
+const diputado_1 = __importDefault(require("../routes/diputado"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -58,6 +59,27 @@ class Server {
             socket.on('iniciar-proyeccion', (data) => {
                 this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
             });
+            // El diputado se une a la sala general para recibir eventos
+            socket.on('unirse-diputado', () => {
+                socket.join('sala-diputados');
+            });
+            // Eventos para el panel del diputado
+            socket.on('abrir-asistencia', (data) => {
+                this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
+                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: data.idComision });
+            });
+            socket.on('cerrar-asistencia', (data) => {
+                this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-cerrada');
+                this.io.to('sala-diputados').emit('asistencia-cerrada');
+            });
+            socket.on('abrir-votacion', (data) => {
+                this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
+                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision });
+            });
+            socket.on('cerrar-votacion', (data) => {
+                this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
+                this.io.to('sala-diputados').emit('votacion-cerrada');
+            });
             socket.on('disconnect', () => {
                 console.log('Socket desconectado:', socket.id);
             });
@@ -77,6 +99,7 @@ class Server {
         this.app.use(reporte_1.default);
         this.app.use(iniciativas_1.default);
         this.app.use(estadistico_1.default);
+        this.app.use(diputado_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -127,7 +150,7 @@ class Server {
                 '/api/eventos/getpuntos/',
                 '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes',
-                '/api/eventos/exportevento'
+                '/api/diputado/crear-cuentas',
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

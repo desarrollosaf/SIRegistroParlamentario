@@ -6,7 +6,9 @@ import jwt from 'jsonwebtoken';
 
 export interface JwtPayload {
     id: number;
+    rfc: string;
     role: string;
+    integrante_legislatura_id: string | null;
 }
 
 // export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {

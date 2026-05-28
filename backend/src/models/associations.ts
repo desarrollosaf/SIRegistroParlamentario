@@ -98,6 +98,13 @@ ExpedienteEstudiosPuntos.hasMany(IniciativaEstudio, {
   as: 'estudio'
 });
 
+
+Diputado.hasOne(IntegranteLegislatura, {
+  foreignKey: 'diputado_id',
+  sourceKey: 'id',
+  as: 'integrante',
+});
+
 IntegranteLegislatura.belongsTo(Diputado, {
   foreignKey: 'diputado_id',
   as: 'diputado',

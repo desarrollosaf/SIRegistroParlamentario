@@ -13,16 +13,15 @@ import RolUsers from './role_users';
 class User extends Model<
   InferAttributes<User>,
   InferCreationAttributes<User>
-  
 > {
-  declare id: CreationOptional<string>; // UUID como string
+  declare id: CreationOptional<string>;
   declare name: string | null;
   declare email: string | null;
   declare email_verified_at: Date | null;
   declare password: string | null;
   declare remember_token: string | null;
+  declare integrante_legislatura_id: string | null;
   declare rol_users?: { role_id: number };
-
 }
 
 User.init(
@@ -51,6 +50,10 @@ User.init(
     },
     remember_token: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    integrante_legislatura_id: {
+      type: DataTypes.CHAR(36),
       allowNull: true,
     },
   },

@@ -50,6 +50,10 @@ VotosPunto.init({
         type: sequelize_1.DataTypes.CHAR(36),
         allowNull: true,
     },
+    id_iniciativa: {
+        type: sequelize_1.DataTypes.CHAR(36),
+        allowNull: true,
+    },
     createdAt: {
         allowNull: true,
         type: sequelize_1.DataTypes.DATE,

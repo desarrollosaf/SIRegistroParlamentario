@@ -1,0 +1,82 @@
+<div class="panel-diputado">
+
+  <!-- Header -->
+  <div class="panel-header">
+    <div class="panel-header__info">
+      <h4 *ngIf="perfil?.diputado as dip">
+        {{ dip.nombres }} {{ dip.apaterno }} {{ dip.amaterno }}
+      </h4>
+      <h4 *ngIf="!perfil">Cargando perfil...</h4>
+      <span class="badge bg-primary">Diputado/a</span>
+    </div>
+    <button class="btn btn-outline-danger btn-sm" (click)="cerrarSesion()">
+      Cerrar sesión
+    </button>
+  </div>
+
+  <!-- Sin sesión activa -->
+  <div class="panel-espera" *ngIf="!asistenciaAbierta && !votacionAbierta">
+    <div class="espera-icon">
+      <i class="mdi mdi-clock-outline"></i>
+    </div>
+    <h5>En espera de la sesión</h5>
+    <p>Cuando el administrador inicie la asistencia o una votación, los controles aparecerán aquí automáticamente.</p>
+  </div>
+
+  <!-- Bloque de Asistencia -->
+  <div class="panel-bloque panel-bloque--asistencia" *ngIf="asistenciaAbierta">
+    <div class="bloque-header">
+      <span class="bloque-icon"><i class="mdi mdi-account-check"></i></span>
+      <h5>Registro de Asistencia</h5>
+      <span class="badge bg-success badge-pulsante">Abierta</span>
+    </div>
+
+    <div *ngIf="!asistenciaRegistrada" class="bloque-accion">
+      <p>La sesión de asistencia está activa. Confirma tu presencia.</p>
+      <button class="btn btn-success btn-lg btn-registrar" (click)="registrarAsistencia()">
+        <i class="mdi mdi-check-circle me-2"></i>
+        Registrar mi asistencia
+      </button>
+    </div>
+
+    <div *ngIf="asistenciaRegistrada" class="bloque-confirmacion">
+      <i class="mdi mdi-check-decagram text-success"></i>
+      <p>Asistencia registrada correctamente</p>
+    </div>
+  </div>
+
+  <!-- Bloque de Votación -->
+  <div class="panel-bloque panel-bloque--votacion" *ngIf="votacionAbierta">
+    <div class="bloque-header">
+      <span class="bloque-icon"><i class="mdi mdi-vote"></i></span>
+      <h5>Votación en curso</h5>
+      <span class="badge bg-warning text-dark badge-pulsante">Activa</span>
+    </div>
+
+    <div *ngIf="puntoActivo" class="punto-info">
+      <p class="punto-label">Punto a votar:</p>
+      <p class="punto-nombre">{{ puntoActivo.nombre || puntoActivo.titulo || 'Punto del orden del día' }}</p>
+    </div>
+
+    <div *ngIf="!votoRegistrado" class="botones-voto">
+      <button class="btn btn-voto btn-a-favor" (click)="votar(1)">
+        <i class="mdi mdi-thumb-up"></i>
+        A favor
+      </button>
+      <button class="btn btn-voto btn-abstencion" (click)="votar(2)">
+        <i class="mdi mdi-minus-circle"></i>
+        Abstención
+      </button>
+      <button class="btn btn-voto btn-en-contra" (click)="votar(3)">
+        <i class="mdi mdi-thumb-down"></i>
+        En contra
+      </button>
+    </div>
+
+    <div *ngIf="votoRegistrado" class="bloque-confirmacion">
+      <i class="mdi mdi-check-decagram text-success"></i>
+      <p>Tu voto fue registrado correctamente</p>
+    </div>
+  </div>
+
+</div>
