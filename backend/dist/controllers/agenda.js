@@ -1416,7 +1416,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
         const puntos = yield Promise.all(puntosRaw.map((punto) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
+            var _a, _b, _c, _d;
             const data = punto.toJSON();
             const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
                 ? data.turnocomision
@@ -1479,14 +1479,25 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
             let puntosestudiado = null;
             let dictamenes = null;
+            const buildLabelPunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b;
+                const p = yield puntos_ordens_1.default.findOne({
+                    where: { id },
+                    attributes: ["id", "punto"],
+                    include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
+                });
+                const inis = yield inciativas_puntos_ordens_1.default.findAll({
+                    where: { id_punto: id }, attributes: ['id'], raw: true
+                });
+                const d = p === null || p === void 0 ? void 0 : p.toJSON();
+                const fecha = ((_a = d === null || d === void 0 ? void 0 : d.evento) === null || _a === void 0 ? void 0 : _a.fecha) ? new Date(d.evento.fecha).toISOString().split('T')[0] : '';
+                const iniciativasStr = inis.map((i) => i.id).join(' | ');
+                return { id: d === null || d === void 0 ? void 0 : d.id, punto: `${fecha} - ${(_b = d === null || d === void 0 ? void 0 : d.evento) === null || _b === void 0 ? void 0 : _b.id} - [${iniciativasStr}] - ${d === null || d === void 0 ? void 0 : d.punto}` };
+            });
             if (estudiado) {
                 if (estudiado.type === "1") {
-                    const info = [
-                        {
-                            id: (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id,
-                            punto: (_e = estudiado.iniciativaorigen) === null || _e === void 0 ? void 0 : _e.punto
-                        }
-                    ];
+                    const origenId = (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id;
+                    const info = origenId ? [yield buildLabelPunto(origenId)] : [];
                     if (esSesion) {
                         dictamenes = info;
                     }
@@ -1508,21 +1519,10 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     else {
                         const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
                             where: { expediente_id: estudiado.punto_origen_id },
-                            include: [
-                                {
-                                    model: puntos_ordens_1.default,
-                                    as: 'puntoOrigen',
-                                    attributes: ["id", "punto"]
-                                }
-                            ]
+                            attributes: ['punto_origen_sesion_id'],
+                            raw: true
                         });
-                        puntosestudiado = puntosExpediente.map((p) => {
-                            var _a, _b;
-                            return ({
-                                id: (_a = p.toJSON().puntoOrigen) === null || _a === void 0 ? void 0 : _a.id,
-                                punto: (_b = p.toJSON().puntoOrigen) === null || _b === void 0 ? void 0 : _b.punto
-                            });
-                        });
+                        puntosestudiado = yield Promise.all(puntosExpediente.map((p) => buildLabelPunto(p.punto_origen_sesion_id)));
                     }
                 }
             }
