@@ -1,15 +1,15 @@
 {
   "production": {
-    "username": "usr_siregistro",
-    "password": "T64X4ZOuiHRCnVWqHVEL",
-    "database": "adminplem_siregistroparlamentario",
+    "username": "usr_siregistro2",
+    "password": "0PilTYwMLzq52Cl",
+    "database": "adminplem_siregistroparlamentario2",
     "host": "192.168.36.53",
     "dialect": "mysql"
   },
   "development": {
-    "username": "usr_siregistro",
-    "password": "T64X4ZOuiHRCnVWqHVEL",
-    "database": "adminplem_siregistroparlamentario",
+    "username": "usr_siregistro2",
+    "password": "0PilTYwMLzq52Cl",
+    "database": "adminplem_siregistroparlamentario2",
     "host": "192.168.36.53",
     "dialect": "mysql"
   }
