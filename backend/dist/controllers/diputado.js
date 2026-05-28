@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMiPerfil = exports.getSesionActiva = exports.registrarVoto = exports.registrarAsistencia = exports.crearCuentasDiputados = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const uuid_1 = require("uuid");
 const user_1 = __importDefault(require("../models/user"));
 const role_users_1 = __importDefault(require("../models/role_users"));
 const role_1 = __importDefault(require("../models/role"));
@@ -62,7 +61,6 @@ const crearCuentasDiputados = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 const passwordPlain = `DIP-${integrante.id.substring(0, 8)}`;
                 const passwordHash = yield bcrypt_1.default.hash(passwordPlain, 10);
                 const nuevoUser = yield user_1.default.create({
-                    id: (0, uuid_1.v4)(),
                     name: username,
                     email: dip.email || null,
                     password: passwordHash,
