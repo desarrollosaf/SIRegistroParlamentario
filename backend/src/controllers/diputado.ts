@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 import User from '../models/user';
 import RolUsers from '../models/role_users';
 import Roles from '../models/role';
@@ -58,7 +57,6 @@ export const crearCuentasDiputados = async (req: Request, res: Response): Promis
                 const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
                 const nuevoUser = await User.create({
-                    id: uuidv4(),
                     name: username,
                     email: dip.email || null,
                     password: passwordHash,
