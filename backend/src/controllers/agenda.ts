@@ -187,19 +187,41 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
           )
         });
         
-        if (puntosturnados.length > 0) { // ✅ Validar antes de buscar puntos
+        if (puntosturnados.length > 0) {
+          const idsTurnados = puntosturnados.map(p => p.id_punto);
+
+          // type=1: punto_origen_id apunta directamente al punto de sesión
+          const estudiosType1 = await IniciativaEstudio.findAll({
+            where: { punto_origen_id: idsTurnados, type: '1', status: { [Op.gte]: 2 } },
+            attributes: ['punto_origen_id'],
+            raw: true
+          });
+
+          // type=2: punto_origen_id apunta a un expediente → buscar los puntos de sesión en ExpedienteEstudiosPuntos
+          const estudiosType2 = await IniciativaEstudio.findAll({
+            where: { type: '2', status: { [Op.gte]: 2 } },
+            attributes: ['punto_origen_id'],
+            raw: true
+          });
+          const expedienteIds = estudiosType2.map((e: any) => e.punto_origen_id);
+          const puntosEnExpediente = expedienteIds.length > 0
+            ? await ExpedienteEstudiosPuntos.findAll({
+                where: { expediente_id: expedienteIds },
+                attributes: ['punto_origen_sesion_id'],
+                raw: true
+              })
+            : [];
+
+          const idsYaUsados = new Set([
+            ...estudiosType1.map((e: any) => String(e.punto_origen_id)),
+            ...puntosEnExpediente.map((e: any) => String(e.punto_origen_sesion_id)),
+          ]);
+          const idsPendientes = idsTurnados.filter((id: any) => !idsYaUsados.has(String(id)));
+
           const puntosRaw = await PuntosOrden.findAll({
-            where: {
-              id: puntosturnados.map(p => p.id_punto)
-            },
+            where: { id: idsPendientes },
             attributes: ["id", "punto", "nopunto"],
-            include: [
-              {
-                model: Agenda,
-                as: 'evento',
-                attributes: ["fecha","id"]
-              }
-            ]
+            include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
           });
 
           const puntosIds = puntosRaw.map((p: any) => p.id);
@@ -224,8 +246,8 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
               punto: `${fecha} - ${data.evento?.id} - [${iniciativasStr}] - ${data.punto}`
             };
           });
-
         }
+
         
         const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
         
@@ -1625,14 +1647,25 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       let puntosestudiado = null;
       let dictamenes = null;
 
+      const buildLabelPunto = async (id: number) => {
+        const p = await PuntosOrden.findOne({
+          where: { id },
+          attributes: ["id", "punto"],
+          include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
+        }) as any;
+        const inis = await IniciativaPuntoOrden.findAll({
+          where: { id_punto: id }, attributes: ['id'], raw: true
+        });
+        const d = p?.toJSON();
+        const fecha = d?.evento?.fecha ? new Date(d.evento.fecha).toISOString().split('T')[0] : '';
+        const iniciativasStr = inis.map((i: any) => i.id).join(' | ');
+        return { id: d?.id, punto: `${fecha} - ${d?.evento?.id} - [${iniciativasStr}] - ${d?.punto}` };
+      };
+
       if (estudiado) {
         if (estudiado.type === "1") {
-          const info = [
-            {
-              id: estudiado.iniciativaorigen?.id,
-              punto: estudiado.iniciativaorigen?.punto
-            }
-          ];
+          const origenId = estudiado.iniciativaorigen?.id;
+          const info = origenId ? [await buildLabelPunto(origenId)] : [];
           if (esSesion) {
             dictamenes = info;
           } else {
@@ -1653,18 +1686,12 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
           } else {
             const puntosExpediente = await ExpedienteEstudiosPuntos.findAll({
               where: { expediente_id: estudiado.punto_origen_id },
-              include: [
-                {
-                  model: PuntosOrden,
-                  as: 'puntoOrigen',
-                  attributes: ["id", "punto"]
-                }
-              ]
+              attributes: ['punto_origen_sesion_id'],
+              raw: true
             });
-            puntosestudiado = puntosExpediente.map((p: any) => ({
-              id: p.toJSON().puntoOrigen?.id,
-              punto: p.toJSON().puntoOrigen?.punto
-            }));
+            puntosestudiado = await Promise.all(
+              puntosExpediente.map((p: any) => buildLabelPunto(p.punto_origen_sesion_id))
+            );
           }
         }
       }
