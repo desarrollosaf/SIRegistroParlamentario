@@ -12,28 +12,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIntegrantesVerde = exports.getIntegrantesMorena = void 0;
+exports.getIntegrantesPartido = void 0;
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 require("../models/associations");
-const COORDINADOR_MORENA = { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' };
-const COORDINADOR_VERDE = { apaterno: 'Couttolenc', amaterno: 'Buentello', nombres: 'José Alberto' };
-function mapIntegrantes(lista, coordinador) {
-    return lista.map((i) => {
-        const d = i.diputado;
-        const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
-        const esCoordinador = (d === null || d === void 0 ? void 0 : d.apaterno) === coordinador.apaterno &&
-            (d === null || d === void 0 ? void 0 : d.amaterno) === coordinador.amaterno &&
-            (d === null || d === void 0 ? void 0 : d.nombres) === coordinador.nombres;
-        return { id: i.id, nombre, coordinador: esCoordinador };
-    });
-}
-const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const PARTIDOS = {
+    morena: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480', coordinador: { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' } },
+    verde: { id: '1342c104-d5ec-4eda-b5ca-7d653b440a5e', coordinador: { apaterno: 'Couttolenc', amaterno: 'Buentello', nombres: 'José Alberto' } },
+    pan: { id: '16db3ac6-ca98-4d5f-b00a-d5ff6e8d828c', coordinador: null },
+    pri: { id: '7d2af11b-ed98-43f9-b7a9-a449c459cdf5', coordinador: null },
+    pna: { id: '136c3dbb-10a6-4aad-8c5f-bae3f72444ec', coordinador: null },
+    pt: { id: '3ed5f80b-f675-4c0b-b922-f9bdadce0fe0', coordinador: null },
+    prd: { id: 'c1fdb97c-2880-4268-8789-6a95d3769092', coordinador: null },
+    mc: { id: 'c6981a10-cc1f-4e3a-a08d-603485b0fc7c', coordinador: null },
+};
+const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const slug = req.params.slug.toLowerCase().trim();
+    const config = PARTIDOS[slug];
+    if (!config) {
+        return res.status(404).json({ msg: `Partido '${slug}' no configurado` });
+    }
     try {
         const partido = yield partidos_1.default.findOne({
-            where: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480' },
+            where: { id: config.id },
             include: [
                 {
                     model: integrante_legislaturas_1.default,
@@ -44,40 +47,27 @@ const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, fun
             ],
         });
         if (!partido) {
-            return res.status(404).json({ msg: 'Grupo parlamentario de Morena no encontrado' });
+            return res.status(404).json({ msg: 'Partido no encontrado en base de datos' });
         }
-        const integrantes = mapIntegrantes((_a = partido.integrante_legislaturas) !== null && _a !== void 0 ? _a : [], COORDINADOR_MORENA);
-        return res.status(200).json({ msg: 'Exito', total: integrantes.length, integrantes });
-    }
-    catch (error) {
-        console.error('Error obteniendo integrantes de Morena:', error);
-        return res.status(500).json({ msg: 'Ocurrió un error al obtener los integrantes', error: error.message });
-    }
-});
-exports.getIntegrantesMorena = getIntegrantesMorena;
-const getIntegrantesVerde = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    try {
-        const partido = yield partidos_1.default.findOne({
-            where: { id: '1342c104-d5ec-4eda-b5ca-7d653b440a5e' },
-            include: [
-                {
-                    model: integrante_legislaturas_1.default,
-                    as: 'integrante_legislaturas',
-                    where: { fecha_fin: null },
-                    include: [{ model: diputado_1.default, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
-                },
-            ],
+        const integrantes = ((_a = partido.integrante_legislaturas) !== null && _a !== void 0 ? _a : []).map((i) => {
+            const d = i.diputado;
+            const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
+            const esCoordinador = config.coordinador !== null &&
+                (d === null || d === void 0 ? void 0 : d.apaterno) === config.coordinador.apaterno &&
+                (d === null || d === void 0 ? void 0 : d.amaterno) === config.coordinador.amaterno &&
+                (d === null || d === void 0 ? void 0 : d.nombres) === config.coordinador.nombres;
+            return { id: i.id, nombre, coordinador: esCoordinador };
         });
-        if (!partido) {
-            return res.status(404).json({ msg: 'Grupo parlamentario del Partido Verde no encontrado' });
-        }
-        const integrantes = mapIntegrantes((_a = partido.integrante_legislaturas) !== null && _a !== void 0 ? _a : [], COORDINADOR_VERDE);
-        return res.status(200).json({ msg: 'Exito', total: integrantes.length, integrantes });
+        return res.status(200).json({
+            msg: 'Exito',
+            partido: { id: partido.id, nombre: partido.nombre, siglas: partido.siglas },
+            total: integrantes.length,
+            integrantes,
+        });
     }
     catch (error) {
-        console.error('Error obteniendo integrantes del Verde:', error);
+        console.error('Error obteniendo integrantes:', error);
         return res.status(500).json({ msg: 'Ocurrió un error al obtener los integrantes', error: error.message });
     }
 });
-exports.getIntegrantesVerde = getIntegrantesVerde;
+exports.getIntegrantesPartido = getIntegrantesPartido;
