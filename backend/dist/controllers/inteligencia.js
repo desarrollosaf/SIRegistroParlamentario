@@ -55,7 +55,8 @@ const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, fun
         });
         return res.status(200).json({
             msg: 'Exito',
-            data: integrantes,
+            total: integrantes.length,
+            integrantes,
         });
     }
     catch (error) {
