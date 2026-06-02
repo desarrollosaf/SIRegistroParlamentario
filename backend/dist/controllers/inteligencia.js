@@ -13,21 +13,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getIntegrantesMorena = void 0;
-const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 require("../models/associations");
+const COORDINADOR = { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' };
 const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const partido = yield partidos_1.default.findOne({
-            where: {
-                [sequelize_1.Op.or]: [
-                    { siglas: { [sequelize_1.Op.like]: '%MORENA%' } },
-                    { nombre: { [sequelize_1.Op.like]: '%Morena%' } },
-                ],
-            },
+            where: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480' },
             include: [
                 {
                     model: integrante_legislaturas_1.default,
@@ -36,7 +31,7 @@ const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, fun
                         {
                             model: diputado_1.default,
                             as: 'diputado',
-                            attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'alias', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
+                            attributes: ['id', 'apaterno', 'amaterno', 'nombres'],
                         },
                     ],
                 },
@@ -45,9 +40,21 @@ const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (!partido) {
             return res.status(404).json({ msg: 'Grupo parlamentario de Morena no encontrado' });
         }
+        const integrantes = ((_a = partido.integrante_legislaturas) !== null && _a !== void 0 ? _a : []).map((i) => {
+            const d = i.diputado;
+            const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
+            const esCoordinador = (d === null || d === void 0 ? void 0 : d.apaterno) === COORDINADOR.apaterno &&
+                (d === null || d === void 0 ? void 0 : d.amaterno) === COORDINADOR.amaterno &&
+                (d === null || d === void 0 ? void 0 : d.nombres) === COORDINADOR.nombres;
+            return {
+                id: i.id,
+                nombre,
+                coordinador: esCoordinador,
+            };
+        });
         return res.status(200).json({
             msg: 'Exito',
-            data: (_a = partido.integrante_legislaturas) !== null && _a !== void 0 ? _a : [],
+            data: integrantes,
         });
     }
     catch (error) {
