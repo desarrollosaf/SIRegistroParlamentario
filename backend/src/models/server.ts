@@ -8,6 +8,7 @@ import user from "../routes/user";
 import catalogos from "../routes/catalogos";
 import diputados from "../routes/diputados";
 import iniciativas from "../routes/iniciativas";
+import inteligencia from "../routes/inteligencia";
 import diputadoRoutes from "../routes/diputado";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
@@ -124,6 +125,7 @@ class Server {
        this.app.use(iniciativas);
        this.app.use(estadistico);
        this.app.use(diputadoRoutes);
+       this.app.use(inteligencia);
     }
 
     
@@ -178,6 +180,7 @@ class Server {
                 '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
+                '/api/inteligencia/morena/integrantes/'
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;
