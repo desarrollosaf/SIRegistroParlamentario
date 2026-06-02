@@ -3019,28 +3019,76 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
+  sesionActiva: boolean = false;
+
   iniciarEvento(tipo: number): void {
+    // Emitir socket para activar la sesión en todos los clientes conectados
+    this._socketService.conectar();
+
+    this._socketService.offSesionConfirmada();
+    this._socketService.offSesionRechazada();
+
+    this._socketService.onSesionConfirmada(() => {
+      this.sesionActiva = true;
+      this._socketService.offSesionConfirmada();
+      this._socketService.offSesionRechazada();
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Sesión iniciada correctamente',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    });
+
+    this._socketService.onSesionRechazada((data) => {
+      this._socketService.offSesionConfirmada();
+      this._socketService.offSesionRechazada();
+      Swal.fire({
+        icon: 'warning',
+        title: 'No se puede iniciar',
+        text: data.motivo,
+        confirmButtonColor: '#800048',
+        confirmButtonText: 'Aceptar'
+      });
+    });
+
+    this._socketService.emitIniciarSesion({
+      idAgenda: this.idEvento,
+      titulo: this.tituloC,
+      fecha: this.fechaC,
+      esComision: this.esComision,
+      ordenDia: this.listaPuntos
+    });
+
+    // También enviar notificación WhatsApp
     this._eventoService.notificarInicioEvento(this.idComisionRuta).subscribe({
-      next: (response: any) => {
-        Swal.close();
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Notificación enviada correctamente',
-          timer: 3000,
-          showConfirmButton: false
-        });
-      },
       error: (e: HttpErrorResponse) => {
-        console.error('Error al notificar:', e);
-        Swal.close();
+        console.error('Error al notificar WhatsApp:', e);
+      }
+    });
+  }
+
+  terminarSesion(): void {
+    Swal.fire({
+      title: '¿Terminar sesión?',
+      text: 'Se notificará a todos los diputados conectados que la sesión ha concluido.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#800048',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, terminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._socketService.emitTerminarSesion(this.idEvento, this.esComision);
+        this.sesionActiva = false;
         Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo enviar la notificación',
           toast: true,
           position: 'top-end',
+          icon: 'info',
+          title: 'Sesión terminada',
           timer: 3000,
           showConfirmButton: false
         });

@@ -32,6 +32,8 @@ class Server {
     constructor() {
         this.asistenciasAbiertas = new Map();
         this.votacionesAbiertas = new Map();
+        // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
+        this.sesionesActivas = new Map();
         this.app = (0, express_1.default)();
         this.port = process.env.PORT || '3020';
         this.httpServer = http_1.default.createServer(this.app);
@@ -94,6 +96,44 @@ class Server {
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
                 this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: data.idComision });
             });
+            // ── Sesiones activas ────────────────────────────────────────────
+            socket.on('iniciar-sesion', (data) => {
+                const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
+                // Para sesión plenaria solo puede haber una activa
+                if (!data.esComision && this.sesionesActivas.has('sesion-plenaria')) {
+                    socket.emit('sesion-rechazada', {
+                        motivo: 'Ya existe una sesión plenaria activa',
+                        sesionActiva: this.sesionesActivas.get('sesion-plenaria')
+                    });
+                    return;
+                }
+                const sesion = {
+                    idAgenda: data.idAgenda,
+                    titulo: data.titulo,
+                    fecha: data.fecha,
+                    esComision: data.esComision,
+                    ordenDia: data.ordenDia,
+                    iniciadaEn: new Date().toISOString()
+                };
+                this.sesionesActivas.set(clave, sesion);
+                // Notifica a todos los diputados conectados
+                this.io.to('sala-diputados').emit('sesion-iniciada', Object.assign({ clave }, sesion));
+                // Notifica a la sala de proyección si aplica
+                this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-iniciada', Object.assign({ clave }, sesion));
+                // Confirma al que inició
+                socket.emit('sesion-confirmada', Object.assign({ clave }, sesion));
+            });
+            socket.on('terminar-sesion', (data) => {
+                const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
+                this.sesionesActivas.delete(clave);
+                this.io.to('sala-diputados').emit('sesion-terminada', { clave, idAgenda: data.idAgenda });
+                this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-terminada', { clave, idAgenda: data.idAgenda });
+            });
+            // Un cliente recién conectado pregunta qué sesiones están activas
+            socket.on('get-sesiones-activas', () => {
+                const lista = Array.from(this.sesionesActivas.entries()).map(([clave, s]) => (Object.assign({ clave }, s)));
+                socket.emit('sesiones-activas', lista);
+            });
             socket.on('disconnect', () => {
                 console.log('Socket desconectado:', socket.id);
             });
@@ -101,6 +141,7 @@ class Server {
         this.app.set('io', this.io);
         this.app.set('asistenciasAbiertas', this.asistenciasAbiertas);
         this.app.set('votacionesAbiertas', this.votacionesAbiertas);
+        this.app.set('sesionesActivas', this.sesionesActivas);
     }
     listen() {
         this.httpServer.listen(this.port, () => {
