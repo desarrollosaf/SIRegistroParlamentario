@@ -12,14 +12,18 @@ export class DiputadoService {
     return this.http.get(`${this.base}/mi-perfil`, { withCredentials: true });
   }
 
+  getEstadoPanel(): Observable<any> {
+    return this.http.get(`${this.base}/estado-panel`, { withCredentials: true });
+  }
+
   getSesionActiva(idComision: string): Observable<any> {
     return this.http.get(`${this.base}/sesion-activa/${idComision}`, { withCredentials: true });
   }
 
   registrarAsistencia(body: {
     id_agenda: string;
-    partido_dip: string;
-    comision_dip_id?: string;
+    id_comision: string;
+    partido_dip?: string;
     id_cargo_dip?: string;
     orden?: number;
   }): Observable<any> {
@@ -27,12 +31,9 @@ export class DiputadoService {
   }
 
   registrarVoto(body: {
-    id_agenda: string;
     sentido_voto: number;
-    partido_dip: string;
-    comision_dip_id?: string;
-    id_cargo_dip?: string;
-    orden?: number;
+    id_voto_punto: string;
+    id_comision: string;
   }): Observable<any> {
     return this.http.post(`${this.base}/registrar-voto`, body, { withCredentials: true });
   }
