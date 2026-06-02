@@ -3,14 +3,14 @@
   <!-- Header -->
   <div class="panel-header">
     <div class="panel-header__info">
-      <h4 *ngIf="perfil?.diputado as dip">
-        {{ dip.nombres }} {{ dip.apaterno }} {{ dip.amaterno }}
-      </h4>
-      <h4 *ngIf="!perfil">Cargando perfil...</h4>
-      <span class="badge bg-primary">Diputado/a</span>
+      <ng-container *ngIf="perfil?.diputado as dip">
+        <h4>{{ dip.nombres }} {{ dip.apaterno }} {{ dip.amaterno }}</h4>
+      </ng-container>
+      <h4 *ngIf="cargandoPerfil">Cargando perfil...</h4>
+      <span class="badge bg-primary ms-2">Diputado/a</span>
     </div>
     <button class="btn btn-outline-danger btn-sm" (click)="cerrarSesion()">
-      Cerrar sesión
+      <i class="mdi mdi-logout me-1"></i> Cerrar sesión
     </button>
   </div>
 
@@ -27,8 +27,18 @@
   <div class="panel-bloque panel-bloque--asistencia" *ngIf="asistenciaAbierta">
     <div class="bloque-header">
       <span class="bloque-icon"><i class="mdi mdi-account-check"></i></span>
-      <h5>Registro de Asistencia</h5>
-      <span class="badge bg-success badge-pulsante">Abierta</span>
+      <div class="bloque-titulo">
+        <h5>Registro de Asistencia</h5>
+        <span class="badge bg-success badge-pulsante">Abierta</span>
+      </div>
+    </div>
+
+    <!-- Info del evento -->
+    <div class="evento-info" *ngIf="eventoAsistencia?.descripcion">
+      <p class="evento-nombre">{{ eventoAsistencia!.descripcion }}</p>
+      <p class="evento-fecha" *ngIf="eventoAsistencia!.fecha">
+        <i class="mdi mdi-calendar me-1"></i>{{ formatFecha(eventoAsistencia!.fecha) }}
+      </p>
     </div>
 
     <div *ngIf="!asistenciaRegistrada" class="bloque-accion">
@@ -40,8 +50,8 @@
     </div>
 
     <div *ngIf="asistenciaRegistrada" class="bloque-confirmacion">
-      <i class="mdi mdi-check-decagram text-success"></i>
-      <p>Asistencia registrada correctamente</p>
+      <i class="mdi mdi-check-decagram text-success" style="font-size: 3rem;"></i>
+      <p class="mt-2 text-success fw-semibold">Asistencia registrada correctamente</p>
     </div>
   </div>
 
@@ -49,33 +59,52 @@
   <div class="panel-bloque panel-bloque--votacion" *ngIf="votacionAbierta">
     <div class="bloque-header">
       <span class="bloque-icon"><i class="mdi mdi-vote"></i></span>
-      <h5>Votación en curso</h5>
-      <span class="badge bg-warning text-dark badge-pulsante">Activa</span>
+      <div class="bloque-titulo">
+        <h5>Votación en curso</h5>
+        <span class="badge bg-warning text-dark badge-pulsante">Activa</span>
+      </div>
+    </div>
+
+    <!-- Info del evento -->
+    <div class="evento-info" *ngIf="eventoVotacion?.descripcion">
+      <p class="evento-nombre">{{ eventoVotacion!.descripcion }}</p>
+      <p class="evento-fecha" *ngIf="eventoVotacion!.fecha">
+        <i class="mdi mdi-calendar me-1"></i>{{ formatFecha(eventoVotacion!.fecha) }}
+      </p>
     </div>
 
     <div *ngIf="puntoActivo" class="punto-info">
       <p class="punto-label">Punto a votar:</p>
-      <p class="punto-nombre">{{ puntoActivo.nombre || puntoActivo.titulo || 'Punto del orden del día' }}</p>
+      <p class="punto-nombre">{{ puntoActivo.punto || puntoActivo.nombre || puntoActivo.titulo || 'Punto del orden del día' }}</p>
     </div>
 
-    <div *ngIf="!votoRegistrado" class="botones-voto">
-      <button class="btn btn-voto btn-a-favor" (click)="votar(1)">
+    <!-- Confirmación del voto actual (si ya votó) -->
+    <div *ngIf="votoRegistrado" class="voto-actual-confirmacion">
+      <i class="mdi mdi-check-circle text-success"></i>
+      <span class="ms-1">Voto registrado: <strong>{{ etiquetaSentido }}</strong></span>
+      <span class="text-muted ms-2" style="font-size:0.85rem;">(puedes cambiar tu voto)</span>
+    </div>
+
+    <!-- Botones de voto — siempre visibles mientras la votación esté abierta -->
+    <div class="botones-voto">
+      <button class="btn btn-voto btn-a-favor"
+              [class.btn-voto--activo]="sentidoVotado === 1"
+              (click)="votar(1)">
         <i class="mdi mdi-thumb-up"></i>
         A favor
       </button>
-      <button class="btn btn-voto btn-abstencion" (click)="votar(2)">
+      <button class="btn btn-voto btn-abstencion"
+              [class.btn-voto--activo]="sentidoVotado === 2"
+              (click)="votar(2)">
         <i class="mdi mdi-minus-circle"></i>
         Abstención
       </button>
-      <button class="btn btn-voto btn-en-contra" (click)="votar(3)">
+      <button class="btn btn-voto btn-en-contra"
+              [class.btn-voto--activo]="sentidoVotado === 3"
+              (click)="votar(3)">
         <i class="mdi mdi-thumb-down"></i>
         En contra
       </button>
-    </div>
-
-    <div *ngIf="votoRegistrado" class="bloque-confirmacion">
-      <i class="mdi mdi-check-decagram text-success"></i>
-      <p>Tu voto fue registrado correctamente</p>
     </div>
   </div>
 

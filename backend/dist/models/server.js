@@ -22,6 +22,7 @@ const user_1 = __importDefault(require("../routes/user"));
 const catalogos_1 = __importDefault(require("../routes/catalogos"));
 const diputados_1 = __importDefault(require("../routes/diputados"));
 const iniciativas_1 = __importDefault(require("../routes/iniciativas"));
+const inteligencia_1 = __importDefault(require("../routes/inteligencia"));
 const diputado_1 = __importDefault(require("../routes/diputado"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -29,6 +30,8 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 class Server {
     constructor() {
+        this.asistenciasAbiertas = new Map();
+        this.votacionesAbiertas = new Map();
         this.app = (0, express_1.default)();
         this.port = process.env.PORT || '3020';
         this.httpServer = http_1.default.createServer(this.app);
@@ -65,26 +68,39 @@ class Server {
             });
             // Eventos para el panel del diputado
             socket.on('abrir-asistencia', (data) => {
+                this.asistenciasAbiertas.set(data.idComision, { idAgenda: data.idAgenda });
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
                 this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: data.idComision });
             });
             socket.on('cerrar-asistencia', (data) => {
+                this.asistenciasAbiertas.delete(data.idComision);
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-cerrada');
-                this.io.to('sala-diputados').emit('asistencia-cerrada');
+                this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: data.idComision });
             });
             socket.on('abrir-votacion', (data) => {
+                var _a, _b, _c;
+                this.votacionesAbiertas.set(data.idComision, {
+                    idAgenda: data.idAgenda,
+                    punto: data.punto,
+                    idPunto: (_a = data.idPunto) !== null && _a !== void 0 ? _a : null,
+                    idReserva: (_b = data.idReserva) !== null && _b !== void 0 ? _b : null,
+                    idIniciativa: (_c = data.idIniciativa) !== null && _c !== void 0 ? _c : null,
+                });
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
-                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision });
+                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
             });
             socket.on('cerrar-votacion', (data) => {
+                this.votacionesAbiertas.delete(data.idComision);
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
-                this.io.to('sala-diputados').emit('votacion-cerrada');
+                this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: data.idComision });
             });
             socket.on('disconnect', () => {
                 console.log('Socket desconectado:', socket.id);
             });
         });
         this.app.set('io', this.io);
+        this.app.set('asistenciasAbiertas', this.asistenciasAbiertas);
+        this.app.set('votacionesAbiertas', this.votacionesAbiertas);
     }
     listen() {
         this.httpServer.listen(this.port, () => {
@@ -100,6 +116,7 @@ class Server {
         this.app.use(iniciativas_1.default);
         this.app.use(estadistico_1.default);
         this.app.use(diputado_1.default);
+        this.app.use(inteligencia_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -151,6 +168,7 @@ class Server {
                 '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
+                '/api/inteligencia/morena/integrantes/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

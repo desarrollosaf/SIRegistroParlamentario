@@ -1859,12 +1859,26 @@ const actualizarPunto = (req, res) => __awaiter(void 0, void 0, void 0, function
                 }
             }
             else {
-                console.log("SOLO ES UN PUNTO: ");
+                // puntosTurnadosArray.length === 0: el usuario eliminó todos los puntos turnados
                 const puntoTurnado = yield puntos_comisiones_1.default.findOne({
                     where: { id_punto_turno: punto.id },
                 });
                 if (puntoTurnado) {
                     yield puntoTurnado.update({ id_punto_turno: null });
+                }
+                const estudioAEliminar = yield iniciativas_estudio_1.default.findOne({
+                    where: { punto_destino_id: punto.id }
+                });
+                if (estudioAEliminar) {
+                    if (estudioAEliminar.type === "2") {
+                        const expedienteId = estudioAEliminar.punto_origen_id;
+                        yield expedientes_estudio_puntos_1.default.destroy({
+                            where: { expediente_id: expedienteId }
+                        });
+                        yield inciativas_puntos_ordens_1.default.update({ expediente: null }, { where: { expediente: expedienteId } });
+                        yield expediente_1.default.destroy({ where: { id: expedienteId } });
+                    }
+                    yield estudioAEliminar.destroy();
                 }
                 puntoDesc = body.punto;
             }

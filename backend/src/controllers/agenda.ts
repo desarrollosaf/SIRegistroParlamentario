@@ -2089,13 +2089,32 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
         }
 
       } else {
-        console.log("SOLO ES UN PUNTO: ")
+        // puntosTurnadosArray.length === 0: el usuario eliminó todos los puntos turnados
         const puntoTurnado = await PuntosComisiones.findOne({
           where: { id_punto_turno: punto.id },
         });
         if (puntoTurnado) {
           await puntoTurnado.update({ id_punto_turno: null });
         }
+
+        const estudioAEliminar = await IniciativaEstudio.findOne({
+          where: { punto_destino_id: punto.id }
+        });
+        if (estudioAEliminar) {
+          if (estudioAEliminar.type === "2") {
+            const expedienteId = estudioAEliminar.punto_origen_id;
+            await ExpedienteEstudiosPuntos.destroy({
+              where: { expediente_id: expedienteId }
+            });
+            await IniciativaPuntoOrden.update(
+              { expediente: null },
+              { where: { expediente: expedienteId } }
+            );
+            await Expediente.destroy({ where: { id: expedienteId } });
+          }
+          await estudioAEliminar.destroy();
+        }
+
         puntoDesc = body.punto;
       }
 
