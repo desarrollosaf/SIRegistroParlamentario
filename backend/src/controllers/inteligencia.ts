@@ -14,6 +14,7 @@ export const getIntegrantesMorena = async (req: Request, res: Response): Promise
         {
           model: IntegranteLegislatura,
           as: 'integrante_legislaturas',
+          where: { fecha_fin: null },
           include: [
             {
               model: Diputado,
