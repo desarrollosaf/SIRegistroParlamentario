@@ -1,19 +1,15 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
 import Partidos from '../models/partidos';
 import IntegranteLegislatura from '../models/integrante_legislaturas';
 import Diputado from '../models/diputado';
 import '../models/associations';
 
+const COORDINADOR = { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' };
+
 export const getIntegrantesMorena = async (req: Request, res: Response): Promise<Response> => {
   try {
     const partido = await Partidos.findOne({
-      where: {
-        [Op.or]: [
-          { siglas: { [Op.like]: '%MORENA%' } },
-          { nombre: { [Op.like]: '%Morena%' } },
-        ],
-      },
+      where: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480' },
       include: [
         {
           model: IntegranteLegislatura,
@@ -22,7 +18,7 @@ export const getIntegrantesMorena = async (req: Request, res: Response): Promise
             {
               model: Diputado,
               as: 'diputado',
-              attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'alias', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
+              attributes: ['id', 'apaterno', 'amaterno', 'nombres'],
             },
           ],
         },
@@ -33,9 +29,24 @@ export const getIntegrantesMorena = async (req: Request, res: Response): Promise
       return res.status(404).json({ msg: 'Grupo parlamentario de Morena no encontrado' });
     }
 
+    const integrantes = ((partido as any).integrante_legislaturas ?? []).map((i: any) => {
+      const d = i.diputado;
+      const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
+      const esCoordinador =
+        d?.apaterno === COORDINADOR.apaterno &&
+        d?.amaterno === COORDINADOR.amaterno &&
+        d?.nombres === COORDINADOR.nombres;
+
+      return {
+        id: i.id,
+        nombre,
+        coordinador: esCoordinador,
+      };
+    });
+
     return res.status(200).json({
       msg: 'Exito',
-      data: (partido as any).integrante_legislaturas ?? [],
+      data: integrantes,
     });
   } catch (error) {
     console.error('Error obteniendo integrantes de Morena:', error);
