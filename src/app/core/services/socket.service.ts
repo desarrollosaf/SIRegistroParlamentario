@@ -133,6 +133,66 @@ export class SocketService {
     this.socket?.off('votacion-cerrada');
   }
 
+  // ── Sesiones activas ──────────────────────────────────────────────────────
+
+  emitIniciarSesion(data: {
+    idAgenda: string;
+    titulo: string;
+    fecha: string;
+    esComision: boolean;
+    ordenDia: any[];
+  }): void {
+    this.socket?.emit('iniciar-sesion', data);
+  }
+
+  emitTerminarSesion(idAgenda: string, esComision: boolean): void {
+    this.socket?.emit('terminar-sesion', { idAgenda, esComision });
+  }
+
+  emitGetSesionesActivas(): void {
+    this.socket?.emit('get-sesiones-activas');
+  }
+
+  onSesionIniciada(cb: (data: any) => void): void {
+    this.socket?.on('sesion-iniciada', cb);
+  }
+
+  offSesionIniciada(): void {
+    this.socket?.off('sesion-iniciada');
+  }
+
+  onSesionTerminada(cb: (data: { clave: string; idAgenda: string }) => void): void {
+    this.socket?.on('sesion-terminada', cb);
+  }
+
+  offSesionTerminada(): void {
+    this.socket?.off('sesion-terminada');
+  }
+
+  onSesionConfirmada(cb: (data: any) => void): void {
+    this.socket?.on('sesion-confirmada', cb);
+  }
+
+  offSesionConfirmada(): void {
+    this.socket?.off('sesion-confirmada');
+  }
+
+  onSesionRechazada(cb: (data: { motivo: string; sesionActiva: any }) => void): void {
+    this.socket?.on('sesion-rechazada', cb);
+  }
+
+  offSesionRechazada(): void {
+    this.socket?.off('sesion-rechazada');
+  }
+
+  onSesionesActivas(cb: (lista: any[]) => void): void {
+    this.socket?.on('sesiones-activas', cb);
+  }
+
+  offSesionesActivas(): void {
+    this.socket?.off('sesiones-activas');
+  }
+
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = undefined;
