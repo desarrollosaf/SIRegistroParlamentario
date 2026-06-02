@@ -168,7 +168,8 @@ class Server {
                 '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
-                '/api/inteligencia/morena/integrantes/'
+                '/api/inteligencia/morena/integrantes/',
+                '/api/inteligencia/verde/integrantes/'
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
