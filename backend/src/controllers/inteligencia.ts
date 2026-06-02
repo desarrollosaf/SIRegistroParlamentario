@@ -47,7 +47,8 @@ export const getIntegrantesMorena = async (req: Request, res: Response): Promise
 
     return res.status(200).json({
       msg: 'Exito',
-      data: integrantes,
+      total: integrantes.length,
+      integrantes,
     });
   } catch (error) {
     console.error('Error obteniendo integrantes de Morena:', error);
