@@ -5959,26 +5959,78 @@ const deleteComentarioEvento = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.deleteComentarioEvento = deleteComentarioEvento;
 const getIniciativasPorPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
+        // 1. Datos del punto actual
+        const puntoActual = yield puntos_ordens_1.default.findOne({
+            where: { id },
+            attributes: ['id', 'dispensa'],
+            raw: true,
+        });
+        // 2. Iniciativas directas (siempre se buscan; para dispensa es el único camino)
         const iniciativasDirectas = yield inciativas_puntos_ordens_1.default.findAll({
             where: { id_punto: id },
             include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
         });
-        const estudios = yield iniciativas_estudio_1.default.findAll({
-            where: { punto_destino_id: id },
-            attributes: ['punto_origen_id'],
-            raw: true,
+        if (puntoActual === null || puntoActual === void 0 ? void 0 : puntoActual.dispensa) {
+            return res.status(200).json({ iniciativas: iniciativasDirectas });
+        }
+        // 3. Para puntos dictamen (dispensa=false):
+        //    Buscar los puntos de comisión que tienen id_dictamen = este punto.
+        //    Esos puntos tienen en sus `puntosestudiados` (IniciativaEstudio) la referencia
+        //    al punto origen con las iniciativas — misma lógica que el catálogo de dictámenes.
+        const puntosComision = yield puntos_ordens_1.default.findAll({
+            where: { id_dictamen: id },
+            include: [
+                {
+                    model: iniciativas_estudio_1.default,
+                    as: 'puntosestudiados',
+                    attributes: ['type', 'punto_origen_id'],
+                },
+            ],
         });
-        const origenIds = estudios.map((e) => e.punto_origen_id).filter(Boolean);
-        let iniciativasDictamenes = [];
-        if (origenIds.length > 0) {
-            iniciativasDictamenes = yield inciativas_puntos_ordens_1.default.findAll({
-                where: { id_punto: origenIds },
+        const origenIdsType1 = new Set();
+        const origenIdsType2 = new Set();
+        for (const pc of puntosComision) {
+            for (const est of ((_a = pc.toJSON().puntosestudiados) !== null && _a !== void 0 ? _a : [])) {
+                if (String(est.type) === '1' && est.punto_origen_id)
+                    origenIdsType1.add(est.punto_origen_id);
+                if (String(est.type) === '2' && est.punto_origen_id)
+                    origenIdsType2.add(est.punto_origen_id);
+            }
+        }
+        // type=1: punto_origen_id → IniciativaPuntoOrden directamente
+        let iniciativasType1 = [];
+        if (origenIdsType1.size > 0) {
+            iniciativasType1 = yield inciativas_puntos_ordens_1.default.findAll({
+                where: { id_punto: [...origenIdsType1] },
                 include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
             });
         }
-        const iniciativas = [...iniciativasDirectas, ...iniciativasDictamenes];
+        // type=2: punto_origen_id es un expediente → ExpedienteEstudiosPuntos → IniciativaPuntoOrden
+        let iniciativasType2 = [];
+        if (origenIdsType2.size > 0) {
+            const expPuntos = yield expedientes_estudio_puntos_1.default.findAll({
+                where: { expediente_id: [...origenIdsType2] },
+                attributes: ['punto_origen_sesion_id'],
+                raw: true,
+            });
+            const puntoOrigenIds = expPuntos
+                .map((ep) => ep.punto_origen_sesion_id)
+                .filter(Boolean);
+            if (puntoOrigenIds.length > 0) {
+                iniciativasType2 = yield inciativas_puntos_ordens_1.default.findAll({
+                    where: { id_punto: puntoOrigenIds },
+                    include: [{ model: iniciativaspresenta_1.default, as: 'presentan' }],
+                });
+            }
+        }
+        const iniciativas = [
+            ...iniciativasDirectas,
+            ...iniciativasType1,
+            ...iniciativasType2,
+        ];
         return res.status(200).json({ iniciativas });
     }
     catch (error) {

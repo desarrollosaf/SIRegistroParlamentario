@@ -127,9 +127,19 @@
                                             class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-sm-4 gap-3">
                                             <h5 class="mb-0">Lista de Asistencia</h5>
                                             <div class="d-flex gap-2 flex-wrap">
-                                                <button class="btn btn-light btn-sm" (click)="iniciarEvento(2)">
-                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar
-                                                </button>
+                                                <ng-container *ngIf="!sesionActiva; else btnTerminarSesion1">
+                                                    <button class="btn btn-light btn-sm" (click)="iniciarEvento(2)">
+                                                        <i class="bi bi-skip-start-btn-fill"></i> Iniciar
+                                                    </button>
+                                                </ng-container>
+                                                <ng-template #btnTerminarSesion1>
+                                                    <button class="btn btn-danger btn-sm" (click)="terminarSesion()">
+                                                        <i class="bi bi-stop-circle-fill me-1"></i> Terminar sesión
+                                                    </button>
+                                                    <span class="badge bg-success ms-1">
+                                                        <i class="bi bi-circle-fill me-1" style="font-size:0.55rem"></i> En sesión
+                                                    </span>
+                                                </ng-template>
                                                 <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                     <i class="bi bi-people-fill me-1"></i> Integrantes
                                                 </button>
@@ -355,9 +365,19 @@
 
 
                                         <div class="d-flex gap-2 flex-wrap justify-content-end">
-                                            <button class="btn btn-light btn-sm" (click)="iniciarEvento(1)">
-                                                <i class="bi bi-skip-start-btn-fill"></i> Iniciar
-                                            </button>
+                                            <ng-container *ngIf="!sesionActiva; else btnTerminarSesion2">
+                                                <button class="btn btn-light btn-sm" (click)="iniciarEvento(1)">
+                                                    <i class="bi bi-skip-start-btn-fill"></i> Iniciar
+                                                </button>
+                                            </ng-container>
+                                            <ng-template #btnTerminarSesion2>
+                                                <button class="btn btn-danger btn-sm" (click)="terminarSesion()">
+                                                    <i class="bi bi-stop-circle-fill me-1"></i> Terminar sesión
+                                                </button>
+                                                <span class="badge bg-success ms-1">
+                                                    <i class="bi bi-circle-fill me-1" style="font-size:0.55rem"></i> En sesión
+                                                </span>
+                                            </ng-template>
                                             <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                 <i class="bi bi-people-fill me-1"></i> Integrantes
                                             </button>
@@ -1325,12 +1345,12 @@
                                                     placeholder="Selecciona una iniciativa del punto"
                                                     [clearable]="true" (change)="iniciarVotacion()">
                                                     <ng-template ng-label-tmp let-item="item">
-                                                        <span *ngIf="item.expediente" class="fw-semibold me-1">Exp. {{ item.expediente }}:</span>{{ item.iniciativa }}
+                                                        <span *ngIf="item.expediente" class="fw-semibold me-1">Exp. {{ item.expediente }}:</span><span class="fw-semibold me-1">{{ item.id }} -</span>{{ item.iniciativa }}
                                                     </ng-template>
                                                     <ng-template ng-option-tmp let-item="item">
                                                         <div class="d-flex flex-column">
                                                             <span *ngIf="item.expediente" class="fw-semibold">Exp. {{ item.expediente }}</span>
-                                                            <small class="text-muted">{{ item.iniciativa }}</small>
+                                                            <span class="fw-semibold small">{{ item.id }} - {{ item.iniciativa }}</span>
                                                         </div>
                                                     </ng-template>
                                                 </ng-select>

@@ -7106,28 +7106,82 @@ export const getIniciativasPorPunto = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
+    // 1. Datos del punto actual
+    const puntoActual = await PuntosOrden.findOne({
+      where: { id },
+      attributes: ['id', 'dispensa'],
+      raw: true,
+    });
+
+    // 2. Iniciativas directas (siempre se buscan; para dispensa es el único camino)
     const iniciativasDirectas = await IniciativaPuntoOrden.findAll({
       where: { id_punto: id },
       include: [{ model: IniciativasPresenta, as: 'presentan' }],
     });
 
-    const estudios = await IniciativaEstudio.findAll({
-      where: { punto_destino_id: id },
-      attributes: ['punto_origen_id'],
-      raw: true,
+    if ((puntoActual as any)?.dispensa) {
+      return res.status(200).json({ iniciativas: iniciativasDirectas });
+    }
+
+    // 3. Para puntos dictamen (dispensa=false):
+    //    Buscar los puntos de comisión que tienen id_dictamen = este punto.
+    //    Esos puntos tienen en sus `puntosestudiados` (IniciativaEstudio) la referencia
+    //    al punto origen con las iniciativas — misma lógica que el catálogo de dictámenes.
+    const puntosComision = await PuntosOrden.findAll({
+      where: { id_dictamen: id },
+      include: [
+        {
+          model: IniciativaEstudio,
+          as: 'puntosestudiados',
+          attributes: ['type', 'punto_origen_id'],
+        },
+      ],
     });
 
-    const origenIds = (estudios as any[]).map((e: any) => e.punto_origen_id).filter(Boolean);
+    const origenIdsType1 = new Set<string>();
+    const origenIdsType2 = new Set<string>();
 
-    let iniciativasDictamenes: any[] = [];
-    if (origenIds.length > 0) {
-      iniciativasDictamenes = await IniciativaPuntoOrden.findAll({
-        where: { id_punto: origenIds },
+    for (const pc of puntosComision) {
+      for (const est of ((pc as any).toJSON().puntosestudiados ?? [])) {
+        if (String(est.type) === '1' && est.punto_origen_id) origenIdsType1.add(est.punto_origen_id);
+        if (String(est.type) === '2' && est.punto_origen_id) origenIdsType2.add(est.punto_origen_id);
+      }
+    }
+
+    // type=1: punto_origen_id → IniciativaPuntoOrden directamente
+    let iniciativasType1: any[] = [];
+    if (origenIdsType1.size > 0) {
+      iniciativasType1 = await IniciativaPuntoOrden.findAll({
+        where: { id_punto: [...origenIdsType1] },
         include: [{ model: IniciativasPresenta, as: 'presentan' }],
       });
     }
 
-    const iniciativas = [...iniciativasDirectas, ...iniciativasDictamenes];
+    // type=2: punto_origen_id es un expediente → ExpedienteEstudiosPuntos → IniciativaPuntoOrden
+    let iniciativasType2: any[] = [];
+    if (origenIdsType2.size > 0) {
+      const expPuntos = await ExpedienteEstudiosPuntos.findAll({
+        where: { expediente_id: [...origenIdsType2] },
+        attributes: ['punto_origen_sesion_id'],
+        raw: true,
+      });
+      const puntoOrigenIds = (expPuntos as any[])
+        .map((ep: any) => ep.punto_origen_sesion_id)
+        .filter(Boolean);
+
+      if (puntoOrigenIds.length > 0) {
+        iniciativasType2 = await IniciativaPuntoOrden.findAll({
+          where: { id_punto: puntoOrigenIds },
+          include: [{ model: IniciativasPresenta, as: 'presentan' }],
+        });
+      }
+    }
+
+    const iniciativas = [
+      ...iniciativasDirectas,
+      ...iniciativasType1,
+      ...iniciativasType2,
+    ];
 
     return res.status(200).json({ iniciativas });
 
