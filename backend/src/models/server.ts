@@ -18,9 +18,12 @@ class Server {
 
     private app: Application
     private port: string
-    
+
     private httpServer: http.Server;
     private io: SocketIOServer;
+
+    private asistenciasAbiertas: Map<string, { idAgenda: string }> = new Map();
+    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null }> = new Map();
 
     constructor(){
         this.app = express()
@@ -33,12 +36,12 @@ class Server {
         }
         });
 
-        this.setupSocket(); 
+        this.setupSocket();
 
         this.midlewares();
         this.router();
         this.DBconnetc();
-        this.listen();  
+        this.listen();
     }
 
     private setupSocket() {
@@ -68,23 +71,33 @@ class Server {
 
         // Eventos para el panel del diputado
         socket.on('abrir-asistencia', (data: { idComision: string, idAgenda: string }) => {
+            this.asistenciasAbiertas.set(data.idComision, { idAgenda: data.idAgenda });
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
             this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: data.idComision });
         });
 
         socket.on('cerrar-asistencia', (data: { idComision: string }) => {
+            this.asistenciasAbiertas.delete(data.idComision);
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-cerrada');
-            this.io.to('sala-diputados').emit('asistencia-cerrada');
+            this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: data.idComision });
         });
 
-        socket.on('abrir-votacion', (data: { idComision: string, idAgenda: string, punto: any }) => {
+        socket.on('abrir-votacion', (data: { idComision: string, idAgenda: string, punto: any, idPunto?: any, idReserva?: string | null, idIniciativa?: string | null }) => {
+            this.votacionesAbiertas.set(data.idComision, {
+                idAgenda: data.idAgenda,
+                punto: data.punto,
+                idPunto: data.idPunto ?? null,
+                idReserva: data.idReserva ?? null,
+                idIniciativa: data.idIniciativa ?? null,
+            });
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
-            this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision });
+            this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
         });
 
         socket.on('cerrar-votacion', (data: { idComision: string }) => {
+            this.votacionesAbiertas.delete(data.idComision);
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
-            this.io.to('sala-diputados').emit('votacion-cerrada');
+            this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: data.idComision });
         });
 
         socket.on('disconnect', () => {
@@ -92,6 +105,8 @@ class Server {
         });
         });
         this.app.set('io', this.io);
+        this.app.set('asistenciasAbiertas', this.asistenciasAbiertas);
+        this.app.set('votacionesAbiertas', this.votacionesAbiertas);
     }
 
     listen(){

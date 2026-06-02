@@ -2857,7 +2857,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       return;
     }
     const puntoActivo = this.listaPuntosVotacion.find((p: any) => p.id === this.puntoSeleccionadoVotacion) || { id: this.puntoSeleccionadoVotacion };
-    this._socketService.emitAbrirVotacion(this.idComisionRuta, this.idEvento, puntoActivo);
+    this._socketService.emitAbrirVotacion(
+      this.idComisionRuta,
+      this.idEvento,
+      puntoActivo,
+      this.puntoSeleccionadoVotacion,
+      this.reservaPuntoSeleccionadoVotacion,
+      this.iniciativaSeleccionadaVotacion
+    );
     this.votacionAbiertaDiputados = true;
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
     Toast.fire({ icon: 'success', title: 'Votación abierta para diputados' });
