@@ -91,8 +91,8 @@ export class SocketService {
   }
 
   // Admin abre/cierra la votación de un punto para que los diputados voten
-  emitAbrirVotacion(idComision: string, idAgenda: string, punto: any): void {
-    this.socket?.emit('abrir-votacion', { idComision, idAgenda, punto });
+  emitAbrirVotacion(idComision: string, idAgenda: string, punto: any, idPunto?: any, idReserva?: string | null, idIniciativa?: string | null): void {
+    this.socket?.emit('abrir-votacion', { idComision, idAgenda, punto, idPunto, idReserva, idIniciativa });
   }
 
   emitCerrarVotacion(idComision: string): void {
@@ -100,7 +100,7 @@ export class SocketService {
   }
 
   // Diputado escucha cuándo se abre/cierra asistencia
-  onAsistenciaAbierta(cb: (data: { idAgenda: string }) => void): void {
+  onAsistenciaAbierta(cb: (data: { idAgenda: string; idComision: string }) => void): void {
     this.socket?.on('asistencia-abierta', cb);
   }
 
@@ -108,7 +108,7 @@ export class SocketService {
     this.socket?.off('asistencia-abierta');
   }
 
-  onAsistenciaCerrada(cb: () => void): void {
+  onAsistenciaCerrada(cb: (data: { idComision: string }) => void): void {
     this.socket?.on('asistencia-cerrada', cb);
   }
 
@@ -117,7 +117,7 @@ export class SocketService {
   }
 
   // Diputado escucha cuándo se abre/cierra una votación
-  onVotacionAbierta(cb: (data: { idAgenda: string, punto: any }) => void): void {
+  onVotacionAbierta(cb: (data: { idAgenda: string; punto: any; idComision: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null }) => void): void {
     this.socket?.on('votacion-abierta', cb);
   }
 
@@ -125,7 +125,7 @@ export class SocketService {
     this.socket?.off('votacion-abierta');
   }
 
-  onVotacionCerrada(cb: () => void): void {
+  onVotacionCerrada(cb: (data: { idComision: string }) => void): void {
     this.socket?.on('votacion-cerrada', cb);
   }
 

@@ -8,6 +8,7 @@ const router = (0, express_1.Router)();
 router.post('/api/diputado/crear-cuentas', diputado_1.crearCuentasDiputados);
 // Rutas del diputado (requieren token)
 router.get('/api/diputado/mi-perfil', auth_1.verifyToken, diputado_1.getMiPerfil);
+router.get('/api/diputado/estado-panel', auth_1.verifyToken, diputado_1.getEstadoPanel);
 router.get('/api/diputado/sesion-activa/:idComision', auth_1.verifyToken, diputado_1.getSesionActiva);
 router.post('/api/diputado/registrar-asistencia', auth_1.verifyToken, diputado_1.registrarAsistencia);
 router.post('/api/diputado/registrar-voto', auth_1.verifyToken, diputado_1.registrarVoto);
