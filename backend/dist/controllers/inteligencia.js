@@ -27,6 +27,7 @@ const getIntegrantesMorena = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 {
                     model: integrante_legislaturas_1.default,
                     as: 'integrante_legislaturas',
+                    where: { fecha_fin: null },
                     include: [
                         {
                             model: diputado_1.default,
