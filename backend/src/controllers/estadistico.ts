@@ -46,6 +46,9 @@ type ReporteBaseItem = {
   comisiones: string;
   expedicion: string;
   observac: string;
+  dispensada: boolean;
+  aprobada: boolean;
+  documento: string | null;
   diputado: string;
   grupo_parlamentario: string;
   diputado_ids: string[];
@@ -272,7 +275,7 @@ const obtenerIniciativasBase = async () =>
 // CONSTRUCCIÓN DEL REPORTE  (N+1 eliminado)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+export const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
   // 1) Todas las queries en paralelo — catálogos + iniciativas + relaciones auxiliares
   const [iniciativasRaw, catalogos, todasPresentan, todosAnfitriones, todosPuntosComisiones] =
     await Promise.all([

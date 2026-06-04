@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrdenesDia = exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = void 0;
+exports.getOrdenesDia = exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = exports.construirReporteBase = void 0;
 const sequelize_1 = require("sequelize");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
@@ -441,6 +441,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         };
     });
 });
+exports.construirReporteBase = construirReporteBase;
 // ─────────────────────────────────────────────────────────────────────────────
 // EXCEL HELPER (sin cambios)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -487,7 +488,7 @@ const contarPorObservacion = (items, obs) => items.filter((i) => i.observac === 
 // ─────────────────────────────────────────────────────────────────────────────
 const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const iniciativas = reporte.filter((i) => Number(i.tipo) === 1);
         const puntosAcuerdo = reporte.filter((i) => Number(i.tipo) === 2);
         const minutas = reporte.filter((i) => Number(i.tipo) === 3);
@@ -563,7 +564,7 @@ const getIniciativasPresentadasPorDiputado = (req, res) => __awaiter(void 0, voi
         const diputadoId = String(id);
         const [diputadoRaw, reporte] = yield Promise.all([
             diputado_1.default.findOne({ where: { id: diputadoId }, include: [{ model: integrante_legislaturas_1.default, as: "integrante" }] }),
-            construirReporteBase(),
+            (0, exports.construirReporteBase)(),
         ]);
         if (!diputadoRaw)
             return res.status(404).json({ ok: false, message: "Diputado no encontrado" });
@@ -621,7 +622,7 @@ const getIniciativasTurnadasPorComision = (req, res) => __awaiter(void 0, void 0
         const [comisionRaw, puntosComisiones, reporte] = yield Promise.all([
             comisions_1.default.findOne({ where: { id: comisionId }, attributes: ["id", "nombre"], raw: true }),
             puntos_comisiones_1.default.findAll({ attributes: ["id_punto", "id_comision"], raw: true }),
-            construirReporteBase(),
+            (0, exports.construirReporteBase)(),
         ]);
         if (!comisionRaw)
             return res.status(404).json({ ok: false, message: "Comisión no encontrada" });
@@ -804,7 +805,7 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
             })
             : [];
         const puntosConVoto = new Set(votosRaw.map((v) => String(v.id_punto)));
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const reporteMap = new Map();
         for (const item of reporte) {
             reporteMap.set(String(item.id), item);
@@ -908,7 +909,7 @@ const getEventosPorComision = (req, res) => __awaiter(void 0, void 0, void 0, fu
 exports.getEventosPorComision = getEventosPorComision;
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         return yield generarExcelSimple(res, "Reporte Iniciativas", "reporte_iniciativas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
@@ -932,7 +933,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getifnini = getifnini;
 const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const filtrado = reporte.filter((i) => i.observac === "En estudio");
         return yield generarExcelSimple(res, "En estudio", "reporte_iniciativas_en_estudio.xlsx", [
             { header: "NO.", key: "no", width: 8 },
@@ -956,7 +957,7 @@ const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getIniciativasEnEstudio = getIniciativasEnEstudio;
 const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const filtrado = reporte.filter((i) => i.observac === "Aprobada");
         return yield generarExcelSimple(res, "Aprobadas", "reporte_iniciativas_aprobadas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
@@ -981,7 +982,7 @@ const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getIniciativasAprobadas = getIniciativasAprobadas;
 const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const mapa = new Map();
         for (const item of reporte) {
             const diputado = item.diputado || "-";
@@ -1016,7 +1017,7 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
 exports.getIniciativasPorGrupoYDiputado = getIniciativasPorGrupoYDiputado;
 const getTotalesPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const mapa = new Map();
         for (const item of reporte) {
             const periodo = item.periodo || "-";
@@ -1062,7 +1063,7 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
             wherePresenta.id_presenta = filtroId;
         const [relaciones, reporte] = yield Promise.all([
             iniciativaspresenta_1.default.findAll({ where: wherePresenta, attributes: ["id_iniciativa", "id_presenta"], raw: true }),
-            construirReporteBase(),
+            (0, exports.construirReporteBase)(),
         ]);
         if (!relaciones.length)
             return res.status(404).json({ message: "No se encontraron iniciativas para el filtro enviado" });
@@ -2024,7 +2025,7 @@ const getOrdenesDia = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 ],
                 order: [['fecha', 'DESC']],
             }),
-            construirReporteBase(),
+            (0, exports.construirReporteBase)(),
         ]);
         // Decretos/acuerdos en batch
         const iniIds = reporte.map(r => r.id).filter(id => id && id !== '-');
