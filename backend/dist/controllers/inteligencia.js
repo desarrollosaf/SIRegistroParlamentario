@@ -123,14 +123,16 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
     try {
         const reporte = yield (0, estadistico_1.construirReporteBase)();
-        const termino = q.toLowerCase();
+        const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
         const coincidencias = reporte.filter((item) => {
-            var _a, _b, _c, _d, _e;
-            return ((_a = item.iniciativa) === null || _a === void 0 ? void 0 : _a.toLowerCase().includes(termino)) ||
-                ((_b = item.autor) === null || _b === void 0 ? void 0 : _b.toLowerCase().includes(termino)) ||
-                ((_c = item.autor_detalle) === null || _c === void 0 ? void 0 : _c.toLowerCase().includes(termino)) ||
-                ((_d = item.materia) === null || _d === void 0 ? void 0 : _d.toLowerCase().includes(termino)) ||
-                ((_e = item.grupo_parlamentario) === null || _e === void 0 ? void 0 : _e.toLowerCase().includes(termino));
+            const haystack = [
+                item.iniciativa,
+                item.autor,
+                item.autor_detalle,
+                item.materia,
+                item.grupo_parlamentario,
+            ].join(' ').toLowerCase();
+            return terminos.every((t) => haystack.includes(t));
         });
         if (!coincidencias.length) {
             return res.status(200).json({ msg: 'Sin resultados', total: 0, resultados: [] });
