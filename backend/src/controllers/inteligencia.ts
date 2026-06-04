@@ -67,6 +67,25 @@ export const getIntegrantesPartido = async (req: Request, res: Response): Promis
   }
 };
 
+// ─── Alias de partidos para búsqueda ─────────────────────────────────────────
+
+const ALIAS_PARTIDOS: Record<string, string> = {
+  pvem:   'verde',
+  pan:    'accion nacional',
+  pri:    'revolucionario institucional',
+  pt:     'partido del trabajo',
+  prd:    'revolución democrática',
+  mc:     'movimiento ciudadano',
+  pna:    'nueva alianza',
+  morena: 'morena'
+};
+
+function expandirAliases(terminos: string[]): string[] {
+  return terminos.flatMap((t) =>
+    ALIAS_PARTIDOS[t] ? ALIAS_PARTIDOS[t].split(' ') : [t]
+  );
+}
+
 // ─── Helpers para construir el timeline ──────────────────────────────────────
 
 function construirTimeline(item: any): { paso: number; evento: string; fecha: string; detalle: string }[] {
@@ -126,7 +145,7 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
 
   try {
     const reporte = await construirReporteBase();
-    const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const terminos = expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean));
 
     const coincidencias = reporte.filter((item) => {
       const haystack = [
