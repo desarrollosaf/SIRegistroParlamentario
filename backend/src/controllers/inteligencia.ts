@@ -131,7 +131,9 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
     const coincidencias = reporte.filter((item) =>
       item.iniciativa?.toLowerCase().includes(termino) ||
       item.autor?.toLowerCase().includes(termino) ||
-      item.materia?.toLowerCase().includes(termino)
+      item.autor_detalle?.toLowerCase().includes(termino) ||
+      item.materia?.toLowerCase().includes(termino) ||
+      item.grupo_parlamentario?.toLowerCase().includes(termino)
     );
 
     if (!coincidencias.length) {
