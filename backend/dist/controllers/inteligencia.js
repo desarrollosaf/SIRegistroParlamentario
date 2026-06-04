@@ -72,6 +72,20 @@ const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getIntegrantesPartido = getIntegrantesPartido;
+// ─── Alias de partidos para búsqueda ─────────────────────────────────────────
+const ALIAS_PARTIDOS = {
+    pvem: 'verde',
+    pan: 'accion nacional',
+    pri: 'revolucionario institucional',
+    pt: 'partido del trabajo',
+    prd: 'revolución democrática',
+    mc: 'movimiento ciudadano',
+    pna: 'nueva alianza',
+    morena: 'morena'
+};
+function expandirAliases(terminos) {
+    return terminos.flatMap((t) => ALIAS_PARTIDOS[t] ? ALIAS_PARTIDOS[t].split(' ') : [t]);
+}
 // ─── Helpers para construir el timeline ──────────────────────────────────────
 function construirTimeline(item) {
     var _a, _b, _c, _d, _e;
@@ -123,7 +137,7 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
     try {
         const reporte = yield (0, estadistico_1.construirReporteBase)();
-        const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
+        const terminos = expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean));
         const coincidencias = reporte.filter((item) => {
             const haystack = [
                 item.iniciativa,
