@@ -126,15 +126,19 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
 
   try {
     const reporte = await construirReporteBase();
-    const termino = q.toLowerCase();
+    const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
 
-    const coincidencias = reporte.filter((item) =>
-      item.iniciativa?.toLowerCase().includes(termino) ||
-      item.autor?.toLowerCase().includes(termino) ||
-      item.autor_detalle?.toLowerCase().includes(termino) ||
-      item.materia?.toLowerCase().includes(termino) ||
-      item.grupo_parlamentario?.toLowerCase().includes(termino)
-    );
+    const coincidencias = reporte.filter((item) => {
+      const haystack = [
+        item.iniciativa,
+        item.autor,
+        item.autor_detalle,
+        item.materia,
+        item.grupo_parlamentario,
+      ].join(' ').toLowerCase();
+
+      return terminos.every((t) => haystack.includes(t));
+    });
 
     if (!coincidencias.length) {
       return res.status(200).json({ msg: 'Sin resultados', total: 0, resultados: [] });
