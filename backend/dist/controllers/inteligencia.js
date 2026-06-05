@@ -145,6 +145,9 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 item.autor_detalle,
                 item.materia,
                 item.grupo_parlamentario,
+                item.presentac,
+                item.fecha_evento_raw,
+                item.periodo,
             ].join(' ').toLowerCase();
             return terminos.every((t) => haystack.includes(t));
         });

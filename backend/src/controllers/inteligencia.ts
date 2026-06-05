@@ -154,6 +154,9 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
         item.autor_detalle,
         item.materia,
         item.grupo_parlamentario,
+        item.presentac,
+        item.fecha_evento_raw,
+        item.periodo,
       ].join(' ').toLowerCase();
 
       return terminos.every((t) => haystack.includes(t));
