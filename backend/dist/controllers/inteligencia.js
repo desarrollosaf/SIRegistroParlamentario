@@ -156,7 +156,7 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
     try {
         const reporte = yield (0, estadistico_1.construirReporteBase)();
-        const terminos = expandirFechas(expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean)));
+        const terminosOriginales = q.toLowerCase().split(/\s+/).filter(Boolean);
         const coincidencias = reporte.filter((item) => {
             const haystack = [
                 item.iniciativa,
@@ -168,7 +168,11 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 item.fecha_evento_raw,
                 item.periodo,
             ].join(' ').toLowerCase();
-            return terminos.every((t) => haystack.includes(t));
+            // Cada término original debe aparecer en alguna de sus variantes (OR entre variantes, AND entre términos)
+            return terminosOriginales.every((t) => {
+                const variantes = expandirFechas(expandirAliases([t]));
+                return variantes.some((v) => haystack.includes(v));
+            });
         });
         if (!coincidencias.length) {
             return res.status(200).json({ msg: 'Sin resultados', total: 0, resultados: [] });
