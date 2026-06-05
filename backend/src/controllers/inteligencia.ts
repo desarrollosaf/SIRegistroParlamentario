@@ -86,6 +86,27 @@ function expandirAliases(terminos: string[]): string[] {
   );
 }
 
+const MESES_CORTO = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+function expandirFechas(terminos: string[]): string[] {
+  return terminos.flatMap((t) => {
+    // DD/MM/YYYY o DD-MM-YYYY
+    const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) {
+      const [, d, mo, y] = m;
+      const dia  = d.padStart(2, '0');
+      const mes  = mo.padStart(2, '0');
+      const mesN = MESES_CORTO[parseInt(mo, 10) - 1];
+      return [
+        `${dia}-${mesN}-${y.slice(-2)}`, // 06-Feb-25
+        `${y}-${mes}-${dia}`,            // 2025-02-06
+        `${y}-${mes}`,                   // 2025-02
+      ];
+    }
+    return [t];
+  });
+}
+
 // ─── Helpers para construir el timeline ──────────────────────────────────────
 
 function construirTimeline(item: any): { paso: number; evento: string; fecha: string; detalle: string }[] {
@@ -145,7 +166,7 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
 
   try {
     const reporte = await construirReporteBase();
-    const terminos = expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean));
+    const terminos = expandirFechas(expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean)));
 
     const coincidencias = reporte.filter((item) => {
       const haystack = [
