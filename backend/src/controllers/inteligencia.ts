@@ -166,7 +166,7 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
 
   try {
     const reporte = await construirReporteBase();
-    const terminos = expandirFechas(expandirAliases(q.toLowerCase().split(/\s+/).filter(Boolean)));
+    const terminosOriginales = q.toLowerCase().split(/\s+/).filter(Boolean);
 
     const coincidencias = reporte.filter((item) => {
       const haystack = [
@@ -180,7 +180,11 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
         item.periodo,
       ].join(' ').toLowerCase();
 
-      return terminos.every((t) => haystack.includes(t));
+      // Cada término original debe aparecer en alguna de sus variantes (OR entre variantes, AND entre términos)
+      return terminosOriginales.every((t) => {
+        const variantes = expandirFechas(expandirAliases([t]));
+        return variantes.some((v) => haystack.includes(v));
+      });
     });
 
     if (!coincidencias.length) {
