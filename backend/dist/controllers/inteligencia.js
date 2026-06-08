@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buscarIniciativa = exports.getIntegrantesPartido = void 0;
+exports.buscarIniciativa = exports.getTodosLosIntegrantes = exports.getIntegrantesPartido = void 0;
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const diputado_1 = __importDefault(require("../models/diputado"));
@@ -72,6 +72,44 @@ const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getIntegrantesPartido = getIntegrantesPartido;
+const getTodosLosIntegrantes = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const partidos = yield partidos_1.default.findAll({
+            include: [
+                {
+                    model: integrante_legislaturas_1.default,
+                    as: 'integrante_legislaturas',
+                    where: { fecha_fin: null },
+                    required: false,
+                    include: [{ model: diputado_1.default, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+                },
+            ],
+        });
+        const grupos = partidos
+            .map((p) => {
+            var _a;
+            const config = Object.values(PARTIDOS).find((c) => c.id === p.id);
+            const integrantes = ((_a = p.integrante_legislaturas) !== null && _a !== void 0 ? _a : []).map((i) => {
+                const d = i.diputado;
+                const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
+                const esCoordinador = !!(config === null || config === void 0 ? void 0 : config.coordinador) &&
+                    (d === null || d === void 0 ? void 0 : d.apaterno) === config.coordinador.apaterno &&
+                    (d === null || d === void 0 ? void 0 : d.amaterno) === config.coordinador.amaterno &&
+                    (d === null || d === void 0 ? void 0 : d.nombres) === config.coordinador.nombres;
+                return { id: i.id, nombre, coordinador: esCoordinador };
+            });
+            return { id: p.id, nombre: p.nombre, siglas: p.siglas, total: integrantes.length, integrantes };
+        })
+            .filter((g) => g.total > 0);
+        const totalDiputados = grupos.reduce((acc, g) => acc + g.total, 0);
+        return res.status(200).json({ msg: 'Exito', total: totalDiputados, grupos });
+    }
+    catch (error) {
+        console.error('Error obteniendo todos los integrantes:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error', error: error.message });
+    }
+});
+exports.getTodosLosIntegrantes = getTodosLosIntegrantes;
 // ─── Alias de partidos para búsqueda ─────────────────────────────────────────
 const ALIAS_PARTIDOS = {
     pvem: 'verde',
