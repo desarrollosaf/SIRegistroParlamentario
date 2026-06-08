@@ -86,6 +86,8 @@ function expandirAliases(terminos: string[]): string[] {
   );
 }
 
+const quitarAcentos = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+
 const MESES_CORTO = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
 function expandirFechas(terminos: string[]): string[] {
@@ -169,7 +171,7 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
     const terminosOriginales = q.toLowerCase().split(/\s+/).filter(Boolean);
 
     const coincidencias = reporte.filter((item) => {
-      const haystack = [
+      const haystack = quitarAcentos([
         item.iniciativa,
         item.autor,
         item.autor_detalle,
@@ -178,11 +180,11 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
         item.presentac,
         item.fecha_evento_raw,
         item.periodo,
-      ].join(' ').toLowerCase();
+      ].join(' ').toLowerCase());
 
       // Cada término original debe aparecer en alguna de sus variantes (OR entre variantes, AND entre términos)
       return terminosOriginales.every((t) => {
-        const variantes = expandirFechas(expandirAliases([t]));
+        const variantes = expandirFechas(expandirAliases([quitarAcentos(t)]));
         return variantes.some((v) => haystack.includes(v));
       });
     });
