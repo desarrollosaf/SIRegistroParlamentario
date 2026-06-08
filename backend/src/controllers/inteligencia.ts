@@ -67,6 +67,46 @@ export const getIntegrantesPartido = async (req: Request, res: Response): Promis
   }
 };
 
+export const getTodosLosIntegrantes = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    const partidos = await Partidos.findAll({
+      include: [
+        {
+          model: IntegranteLegislatura,
+          as: 'integrante_legislaturas',
+          where: { fecha_fin: null },
+          required: false,
+          include: [{ model: Diputado, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+        },
+      ],
+    });
+
+    const grupos = partidos
+      .map((p: any) => {
+        const config = Object.values(PARTIDOS).find((c) => c.id === p.id);
+        const integrantes = (p.integrante_legislaturas ?? []).map((i: any) => {
+          const d = i.diputado;
+          const nombre = d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '';
+          const esCoordinador =
+            !!config?.coordinador &&
+            d?.apaterno === config.coordinador.apaterno &&
+            d?.amaterno === config.coordinador.amaterno &&
+            d?.nombres  === config.coordinador.nombres;
+          return { id: i.id, nombre, coordinador: esCoordinador };
+        });
+        return { id: p.id, nombre: p.nombre, siglas: p.siglas, total: integrantes.length, integrantes };
+      })
+      .filter((g) => g.total > 0);
+
+    const totalDiputados = grupos.reduce((acc, g) => acc + g.total, 0);
+
+    return res.status(200).json({ msg: 'Exito', total: totalDiputados, grupos });
+  } catch (error) {
+    console.error('Error obteniendo todos los integrantes:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error', error: (error as Error).message });
+  }
+};
+
 // ─── Alias de partidos para búsqueda ─────────────────────────────────────────
 
 const ALIAS_PARTIDOS: Record<string, string> = {
