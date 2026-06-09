@@ -7,4 +7,6 @@ router.get('/api/inteligencia/todos/integrantes/', inteligencia_1.getTodosLosInt
 router.get('/api/inteligencia/diputado/buscar/', inteligencia_1.getIntegrante);
 router.get('/api/inteligencia/:slug/integrantes/', inteligencia_1.getIntegrantesPartido);
 router.get('/api/inteligencia/iniciativa/buscar/', inteligencia_1.buscarIniciativa);
+router.get('/api/inteligencia/comisiones/', inteligencia_1.listarComisiones);
+router.get('/api/inteligencia/comision/buscar/', inteligencia_1.buscarComision);
 exports.default = router;

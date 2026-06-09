@@ -3,6 +3,10 @@ import { Op } from 'sequelize';
 import Partidos from '../models/partidos';
 import IntegranteLegislatura from '../models/integrante_legislaturas';
 import Diputado from '../models/diputado';
+import Comision from '../models/comisions';
+import IntegranteComision from '../models/integrante_comisions';
+import TipoCargoComision from '../models/tipo_cargo_comisions';
+import TipoComisions from '../models/tipo_comisions';
 import { construirReporteBase } from './estadistico';
 import '../models/associations';
 
@@ -258,6 +262,96 @@ function construirTimeline(item: any): { paso: number; evento: string; fecha: st
 
   return pasos;
 }
+
+export const listarComisiones = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    const [comisiones, tipos] = await Promise.all([
+      Comision.findAll({ attributes: ['id', 'nombre', 'alias', 'tipo_comision_id'] }),
+      TipoComisions.findAll({ attributes: ['id', 'valor'] }),
+    ]);
+
+    const tipoMap = new Map((tipos as any[]).map((t) => [t.id, t.valor]));
+
+    const lista = (comisiones as any[]).map((c) => ({
+      id:     c.id,
+      nombre: c.nombre,
+      alias:  c.alias ?? null,
+      tipo:   tipoMap.get(c.tipo_comision_id) ?? null,
+    }));
+
+    return res.status(200).json({ msg: 'Exito', total: lista.length, comisiones: lista });
+  } catch (error) {
+    console.error('Error listando comisiones:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error', error: (error as Error).message });
+  }
+};
+
+export const buscarComision = async (req: Request, res: Response): Promise<Response> => {
+  const q = ((req.query.q as string) ?? '').trim();
+
+  if (!q || q.length < 3) {
+    return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
+  }
+
+  try {
+    const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
+
+    const condiciones = terminos.map((t) => ({ nombre: { [Op.like]: `%${t}%` } }));
+
+    const comisiones = await Comision.findAll({
+      where: { [Op.and]: condiciones },
+      attributes: ['id', 'nombre', 'alias', 'tipo_comision_id'],
+    }) as any[];
+
+    if (!comisiones.length) {
+      return res.status(200).json({ msg: 'Sin resultados', total: 0, resultados: [] });
+    }
+
+    const resultados = await Promise.all(
+      comisiones.map(async (comision) => {
+        const miembros = await IntegranteComision.findAll({
+          where: { comision_id: comision.id, fecha_fin: null },
+          include: [
+            {
+              model: IntegranteLegislatura,
+              as: 'integranteLegislatura',
+              include: [{ model: Diputado, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+            },
+            { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['id', 'valor', 'nivel'] },
+          ],
+          order: [['orden', 'ASC']],
+        }) as any[];
+
+        const integrantes = miembros
+          .map((m) => {
+            const d = m.integranteLegislatura?.diputado;
+            return {
+              id:     m.id,
+              nombre: d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '',
+              cargo:  m.tipo_cargo?.valor ?? null,
+              _nivel: m.tipo_cargo?.nivel ?? 99,
+              _orden: m.orden ?? 99,
+            };
+          })
+          .sort((a, b) => a._nivel - b._nivel || a._orden - b._orden)
+          .map(({ _nivel, _orden, ...rest }) => rest);
+
+        return {
+          id:          comision.id,
+          nombre:      comision.nombre,
+          alias:       comision.alias ?? null,
+          total:       integrantes.length,
+          integrantes,
+        };
+      })
+    );
+
+    return res.status(200).json({ msg: 'Exito', total: resultados.length, resultados });
+  } catch (error) {
+    console.error('Error buscando comisión:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error al buscar la comisión', error: (error as Error).message });
+  }
+};
 
 export const buscarIniciativa = async (req: Request, res: Response): Promise<Response> => {
   const q = ((req.query.q as string) ?? '').trim();
