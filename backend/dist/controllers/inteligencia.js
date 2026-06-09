@@ -113,10 +113,31 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         const integranteData = (_c = diputado.integrante) !== null && _c !== void 0 ? _c : null;
         let partido = null;
+        let comisiones = [];
         if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.partido_id) {
             partido = yield partidos_1.default.findOne({
                 where: { id: integranteData.partido_id },
                 attributes: ['id', 'nombre', 'siglas'],
+            });
+        }
+        if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.id) {
+            const memberships = yield integrante_comisions_1.default.findAll({
+                where: { integrante_legislatura_id: integranteData.id, fecha_fin: null },
+                include: [
+                    { model: comisions_1.default, as: 'comision', attributes: ['id', 'nombre'] },
+                    { model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['valor', 'nivel'] },
+                ],
+                order: [['orden', 'ASC']],
+            });
+            comisiones = memberships
+                .sort((a, b) => { var _a, _b, _c, _d; return ((_b = (_a = a.tipo_cargo) === null || _a === void 0 ? void 0 : _a.nivel) !== null && _b !== void 0 ? _b : 99) - ((_d = (_c = b.tipo_cargo) === null || _c === void 0 ? void 0 : _c.nivel) !== null && _d !== void 0 ? _d : 99); })
+                .map((m) => {
+                var _a, _b, _c, _d, _e, _f;
+                return ({
+                    id: (_b = (_a = m.comision) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : null,
+                    nombre: (_d = (_c = m.comision) === null || _c === void 0 ? void 0 : _c.nombre) !== null && _d !== void 0 ? _d : null,
+                    cargo: (_f = (_e = m.tipo_cargo) === null || _e === void 0 ? void 0 : _e.valor) !== null && _f !== void 0 ? _f : null,
+                });
             });
         }
         return res.status(200).json({
@@ -131,6 +152,7 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 twitter: diputado.twitter,
                 instagram: diputado.instagram,
                 partido: partido ? { id: partido.id, nombre: partido.nombre, siglas: partido.siglas } : null,
+                comisiones,
             },
         });
     }

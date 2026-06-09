@@ -103,12 +103,32 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
 
     const integranteData = diputado.integrante ?? null;
     let partido = null;
+    let comisiones: { id: string; nombre: string; cargo: string | null }[] = [];
 
     if (integranteData?.partido_id) {
       partido = await Partidos.findOne({
         where: { id: integranteData.partido_id },
         attributes: ['id', 'nombre', 'siglas'],
       });
+    }
+
+    if (integranteData?.id) {
+      const memberships = await IntegranteComision.findAll({
+        where: { integrante_legislatura_id: integranteData.id, fecha_fin: null },
+        include: [
+          { model: Comision, as: 'comision', attributes: ['id', 'nombre'] },
+          { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['valor', 'nivel'] },
+        ],
+        order: [['orden', 'ASC']],
+      }) as any[];
+
+      comisiones = memberships
+        .sort((a: any, b: any) => (a.tipo_cargo?.nivel ?? 99) - (b.tipo_cargo?.nivel ?? 99))
+        .map((m: any) => ({
+          id:     m.comision?.id ?? null,
+          nombre: m.comision?.nombre ?? null,
+          cargo:  m.tipo_cargo?.valor ?? null,
+        }));
     }
 
     return res.status(200).json({
@@ -123,6 +143,7 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
         twitter:     diputado.twitter,
         instagram:   diputado.instagram,
         partido:     partido ? { id: (partido as any).id, nombre: (partido as any).nombre, siglas: (partido as any).siglas } : null,
+        comisiones,
       },
     });
   } catch (error) {
