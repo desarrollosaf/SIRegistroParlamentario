@@ -8,15 +8,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buscarIniciativa = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
+exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
 const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const diputado_1 = __importDefault(require("../models/diputado"));
+const comisions_1 = __importDefault(require("../models/comisions"));
+const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
+const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
+const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const estadistico_1 = require("./estadistico");
 require("../models/associations");
 const PARTIDOS = {
@@ -240,6 +255,93 @@ function construirTimeline(item) {
     }
     return pasos;
 }
+const listarComisiones = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [comisiones, tipos] = yield Promise.all([
+            comisions_1.default.findAll({ attributes: ['id', 'nombre', 'alias', 'tipo_comision_id'] }),
+            tipo_comisions_1.default.findAll({ attributes: ['id', 'valor'] }),
+        ]);
+        const tipoMap = new Map(tipos.map((t) => [t.id, t.valor]));
+        const lista = comisiones.map((c) => {
+            var _a, _b;
+            return ({
+                id: c.id,
+                nombre: c.nombre,
+                alias: (_a = c.alias) !== null && _a !== void 0 ? _a : null,
+                tipo: (_b = tipoMap.get(c.tipo_comision_id)) !== null && _b !== void 0 ? _b : null,
+            });
+        });
+        return res.status(200).json({ msg: 'Exito', total: lista.length, comisiones: lista });
+    }
+    catch (error) {
+        console.error('Error listando comisiones:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error', error: error.message });
+    }
+});
+exports.listarComisiones = listarComisiones;
+const buscarComision = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const q = ((_a = req.query.q) !== null && _a !== void 0 ? _a : '').trim();
+    if (!q || q.length < 3) {
+        return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
+    }
+    try {
+        const terminos = q.toLowerCase().split(/\s+/).filter(Boolean);
+        const condiciones = terminos.map((t) => ({ nombre: { [sequelize_1.Op.like]: `%${t}%` } }));
+        const comisiones = yield comisions_1.default.findAll({
+            where: { [sequelize_1.Op.and]: condiciones },
+            attributes: ['id', 'nombre', 'alias', 'tipo_comision_id'],
+        });
+        if (!comisiones.length) {
+            return res.status(200).json({ msg: 'Sin resultados', total: 0, resultados: [] });
+        }
+        const resultados = yield Promise.all(comisiones.map((comision) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            const miembros = yield integrante_comisions_1.default.findAll({
+                where: { comision_id: comision.id, fecha_fin: null },
+                include: [
+                    {
+                        model: integrante_legislaturas_1.default,
+                        as: 'integranteLegislatura',
+                        include: [{ model: diputado_1.default, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+                    },
+                    { model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['id', 'valor', 'nivel'] },
+                ],
+                order: [['orden', 'ASC']],
+            });
+            const integrantes = miembros
+                .map((m) => {
+                var _a, _b, _c, _d, _e, _f;
+                const d = (_a = m.integranteLegislatura) === null || _a === void 0 ? void 0 : _a.diputado;
+                return {
+                    id: m.id,
+                    nombre: d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '',
+                    cargo: (_c = (_b = m.tipo_cargo) === null || _b === void 0 ? void 0 : _b.valor) !== null && _c !== void 0 ? _c : null,
+                    _nivel: (_e = (_d = m.tipo_cargo) === null || _d === void 0 ? void 0 : _d.nivel) !== null && _e !== void 0 ? _e : 99,
+                    _orden: (_f = m.orden) !== null && _f !== void 0 ? _f : 99,
+                };
+            })
+                .sort((a, b) => a._nivel - b._nivel || a._orden - b._orden)
+                .map((_a) => {
+                var { _nivel, _orden } = _a, rest = __rest(_a, ["_nivel", "_orden"]);
+                return rest;
+            });
+            return {
+                id: comision.id,
+                nombre: comision.nombre,
+                alias: (_a = comision.alias) !== null && _a !== void 0 ? _a : null,
+                total: integrantes.length,
+                integrantes,
+            };
+        })));
+        return res.status(200).json({ msg: 'Exito', total: resultados.length, resultados });
+    }
+    catch (error) {
+        console.error('Error buscando comisión:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error al buscar la comisión', error: error.message });
+    }
+});
+exports.buscarComision = buscarComision;
 const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const q = ((_a = req.query.q) !== null && _a !== void 0 ? _a : '').trim();
