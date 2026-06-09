@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import Partidos from '../models/partidos';
 import IntegranteLegislatura from '../models/integrante_legislaturas';
 import Diputado from '../models/diputado';
@@ -64,6 +65,65 @@ export const getIntegrantesPartido = async (req: Request, res: Response): Promis
   } catch (error) {
     console.error('Error obteniendo integrantes:', error);
     return res.status(500).json({ msg: 'Ocurrió un error al obtener los integrantes', error: (error as Error).message });
+  }
+};
+
+
+export const getIntegrante = async (req: Request, res: Response): Promise<Response> => {
+  const q = ((req.query.q ?? req.params.q) as string ?? '').trim();
+
+  if (!q || q.length < 3) {
+    return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
+  }
+
+  try {
+    const palabras = quitarAcentos(q).toLowerCase().split(/[\s\-]+/).filter(Boolean);
+
+    const condiciones = palabras.map((p) => ({
+      [Op.or]: [
+        { apaterno: { [Op.like]: `%${p}%` } },
+        { amaterno: { [Op.like]: `%${p}%` } },
+        { nombres:  { [Op.like]: `%${p}%` } },
+      ],
+    }));
+
+    const diputado = await Diputado.findOne({
+      where: { [Op.and]: condiciones },
+      attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'descripcion', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
+      include: [{ model: IntegranteLegislatura, as: 'integrante', where: { fecha_fin: null }, required: false }],
+    }) as any;
+
+    if (!diputado) {
+      return res.status(404).json({ msg: `No se encontró diputado con '${q}'` });
+    }
+
+    const integranteData = diputado.integrante ?? null;
+    let partido = null;
+
+    if (integranteData?.partido_id) {
+      partido = await Partidos.findOne({
+        where: { id: integranteData.partido_id },
+        attributes: ['id', 'nombre', 'siglas'],
+      });
+    }
+
+    return res.status(200).json({
+      msg: 'Exito',
+      data: {
+        id:          diputado.id,
+        nombre:      `${diputado.apaterno} ${diputado.amaterno} ${diputado.nombres}`.trim(),
+        descripcion: diputado.descripcion ?? null,
+        email:       diputado.email,
+        telefono:    diputado.telefono,
+        facebook:    diputado.facebook,
+        twitter:     diputado.twitter,
+        instagram:   diputado.instagram,
+        partido:     partido ? { id: (partido as any).id, nombre: (partido as any).nombre, siglas: (partido as any).siglas } : null,
+      },
+    });
+  } catch (error) {
+    console.error('Error obteniendo diputado:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error al obtener el diputado', error: (error as Error).message });
   }
 };
 

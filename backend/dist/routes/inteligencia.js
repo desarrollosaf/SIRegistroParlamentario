@@ -4,6 +4,7 @@ const express_1 = require("express");
 const inteligencia_1 = require("../controllers/inteligencia");
 const router = (0, express_1.Router)();
 router.get('/api/inteligencia/todos/integrantes/', inteligencia_1.getTodosLosIntegrantes);
+router.get('/api/inteligencia/diputado/buscar/', inteligencia_1.getIntegrante);
 router.get('/api/inteligencia/:slug/integrantes/', inteligencia_1.getIntegrantesPartido);
 router.get('/api/inteligencia/iniciativa/buscar/', inteligencia_1.buscarIniciativa);
 exports.default = router;
