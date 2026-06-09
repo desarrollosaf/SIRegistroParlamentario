@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buscarIniciativa = exports.getTodosLosIntegrantes = exports.getIntegrantesPartido = void 0;
+exports.buscarIniciativa = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
+const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const diputado_1 = __importDefault(require("../models/diputado"));
@@ -72,6 +73,58 @@ const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getIntegrantesPartido = getIntegrantesPartido;
+const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    const q = ((_b = ((_a = req.query.q) !== null && _a !== void 0 ? _a : req.params.q)) !== null && _b !== void 0 ? _b : '').trim();
+    if (!q || q.length < 3) {
+        return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
+    }
+    try {
+        const palabras = quitarAcentos(q).toLowerCase().split(/[\s\-]+/).filter(Boolean);
+        const condiciones = palabras.map((p) => ({
+            [sequelize_1.Op.or]: [
+                { apaterno: { [sequelize_1.Op.like]: `%${p}%` } },
+                { amaterno: { [sequelize_1.Op.like]: `%${p}%` } },
+                { nombres: { [sequelize_1.Op.like]: `%${p}%` } },
+            ],
+        }));
+        const diputado = yield diputado_1.default.findOne({
+            where: { [sequelize_1.Op.and]: condiciones },
+            attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'descripcion', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
+            include: [{ model: integrante_legislaturas_1.default, as: 'integrante', where: { fecha_fin: null }, required: false }],
+        });
+        if (!diputado) {
+            return res.status(404).json({ msg: `No se encontró diputado con '${q}'` });
+        }
+        const integranteData = (_c = diputado.integrante) !== null && _c !== void 0 ? _c : null;
+        let partido = null;
+        if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.partido_id) {
+            partido = yield partidos_1.default.findOne({
+                where: { id: integranteData.partido_id },
+                attributes: ['id', 'nombre', 'siglas'],
+            });
+        }
+        return res.status(200).json({
+            msg: 'Exito',
+            data: {
+                id: diputado.id,
+                nombre: `${diputado.apaterno} ${diputado.amaterno} ${diputado.nombres}`.trim(),
+                descripcion: (_d = diputado.descripcion) !== null && _d !== void 0 ? _d : null,
+                email: diputado.email,
+                telefono: diputado.telefono,
+                facebook: diputado.facebook,
+                twitter: diputado.twitter,
+                instagram: diputado.instagram,
+                partido: partido ? { id: partido.id, nombre: partido.nombre, siglas: partido.siglas } : null,
+            },
+        });
+    }
+    catch (error) {
+        console.error('Error obteniendo diputado:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error al obtener el diputado', error: error.message });
+    }
+});
+exports.getIntegrante = getIntegrante;
 const getTodosLosIntegrantes = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const partidos = yield partidos_1.default.findAll({
