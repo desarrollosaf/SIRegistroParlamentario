@@ -42,7 +42,16 @@ class Server {
         this.httpServer = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.httpServer, {
             cors: {
-                origin: ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200', 'http://localhost:8100', 'capacitor://localhost'],
+                origin: [
+                    'https://parlamentario.congresoedomex.gob.mx',
+                    'https://nuevapagina.congresoedomex.gob.mx',
+                    'http://localhost:4200',
+                    'http://localhost:8100',
+                    'http://localhost',
+                    'https://localhost',
+                    'capacitor://localhost',
+                    'ionic://localhost',
+                ],
                 credentials: true
             }
         });
@@ -199,9 +208,17 @@ class Server {
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
             origin: function (origin, callback) {
-                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx', 'capacitor://localhost'];
-                const isLocalhost = !origin || /^http:\/\/localhost(:\d+)?$/.test(origin);
-                if (isLocalhost || allowedOrigins.includes(origin)) {
+                const allowedOrigins = [
+                    'https://parlamentario.congresoedomex.gob.mx',
+                    'https://nuevapagina.congresoedomex.gob.mx',
+                    'https://congresoedomex.gob.mx',
+                    'https://www.congresoedomex.gob.mx',
+                    'capacitor://localhost',
+                    'ionic://localhost',
+                    'https://localhost',
+                ];
+                const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
+                if (isLocalhost || allowedOrigins.includes(origin !== null && origin !== void 0 ? origin : '')) {
                     callback(null, true);
                 }
                 else {
