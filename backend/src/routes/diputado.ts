@@ -6,6 +6,11 @@ import {
     getSesionActiva,
     getMiPerfil,
     getEstadoPanel,
+    getMisComisiones,
+    getMiAsistencia,
+    getOrdenDelDia,
+    getMisVotos,
+    getSesionesComisionesActivas,
 } from '../controllers/diputado';
 import { verifyToken } from '../middlewares/auth';
 
@@ -20,5 +25,10 @@ router.get('/api/diputado/estado-panel', verifyToken, getEstadoPanel);
 router.get('/api/diputado/sesion-activa/:idComision', verifyToken, getSesionActiva);
 router.post('/api/diputado/registrar-asistencia', verifyToken, registrarAsistencia);
 router.post('/api/diputado/registrar-voto', verifyToken, registrarVoto);
+router.get('/api/diputado/mis-comisiones', verifyToken, getMisComisiones);
+router.get('/api/diputado/sesiones-comisiones-activas', verifyToken, getSesionesComisionesActivas);
+router.get('/api/diputado/mi-asistencia/:idAgenda', verifyToken, getMiAsistencia);
+router.get('/api/diputado/orden-del-dia/:idAgenda', verifyToken, getOrdenDelDia);
+router.get('/api/diputado/mis-votos/:idAgenda', verifyToken, getMisVotos);
 
 export default router;
