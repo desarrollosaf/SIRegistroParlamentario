@@ -22,9 +22,9 @@ const SECRET_KEY = process.env.SECRET_KEY || 'TSE-Poder-legislativo';
 //     }
 // };
 const verifyToken = (req, res, next) => {
-    var _a;
-    const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.accessToken;
-    console.log(token);
+    var _a, _b;
+    const bearerToken = (_a = req.header('Authorization')) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
+    const token = bearerToken || ((_b = req.cookies) === null || _b === void 0 ? void 0 : _b.accessToken);
     if (!token) {
         res.status(401).json({ msg: 'Token no proporcionado' });
         return;

@@ -52,7 +52,7 @@ const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         maxAge: 2 * 60 * 60 * 1000,
         path: '/',
     });
-    return res.json({ user, bandera, role: roleName });
+    return res.json({ user, bandera, role: roleName, token: accessToken });
 });
 exports.LoginUser = LoginUser;
 const getCurrentUser = (req, res) => {

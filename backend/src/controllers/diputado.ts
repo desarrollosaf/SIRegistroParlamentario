@@ -8,6 +8,11 @@ import IntegranteLegislatura from '../models/integrante_legislaturas';
 import AsistenciaVoto from '../models/asistencia_votos';
 import VotosPunto from '../models/votos_punto';
 import sequelizeSAF from '../database/registrocomisiones';
+import IntegranteComision from '../models/integrante_comisions';
+import Comision from '../models/comisions';
+import TipoCargoComision from '../models/tipo_cargo_comisions';
+import PuntosOrden from '../models/puntos_ordens';
+import AnfitrionAgenda from '../models/anfitrion_agendas';
 
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
@@ -292,6 +297,9 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
                     sentidoActual: votoRegistro.sentido,
                     descripcion: eventoInfo?.descripcion || '',
                     fecha: eventoInfo?.fecha || '',
+                    idPunto: estado.idPunto ?? null,
+                    idReserva: estado.idReserva ?? null,
+                    idIniciativa: estado.idIniciativa ?? null,
                 };
                 break;
             }
@@ -358,5 +366,197 @@ export const getMiPerfil = async (req: Request, res: Response): Promise<any> => 
         return res.json({ integrante: { ...integrante.toJSON(), diputado } });
     } catch (error: any) {
         return res.status(500).json({ msg: 'Error al obtener perfil', error: error.message });
+    }
+};
+
+/** Verifica si el diputado ya registró asistencia en una sesión específica */
+export const getMiAsistencia = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const integranteLegislaturaId = (req as any).user?.integrante_legislatura_id;
+        if (!integranteLegislaturaId) return res.status(403).json({ msg: 'Sin perfil de diputado' });
+
+        const { idAgenda } = req.params;
+        // AsistenciaVoto almacena diputado.id (no integrante_legislatura.id)
+        const diputadoId = await getDiputadoId(integranteLegislaturaId);
+        if (!diputadoId) return res.json({ yaRegistro: false, sentido: 0, mensaje: '' });
+
+        const registro = await AsistenciaVoto.findOne({
+            where: { id_diputado: diputadoId, id_agenda: idAgenda }
+        }) as any;
+
+        return res.json({
+            yaRegistro: registro ? registro.sentido_voto !== 0 : false,
+            sentido: registro?.sentido_voto ?? 0,
+            mensaje: registro?.mensaje ?? '',
+        });
+    } catch (error: any) {
+        return res.status(500).json({ msg: 'Error al obtener asistencia', error: error.message });
+    }
+};
+
+/** Devuelve los puntos del orden del día de una sesión */
+export const getOrdenDelDia = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { idAgenda } = req.params;
+
+    const puntos = await PuntosOrden.findAll({
+      where: {
+        id_evento: idAgenda
+      },
+      attributes: [
+        'id',
+        'punto',
+        'nopunto',
+        'observaciones'
+      ],
+      order: [['nopunto', 'ASC']]
+    });
+
+    return res.json({ puntos });
+  } catch (error: any) {
+    return res.status(500).json({
+      msg: 'Error al obtener orden del día',
+      error: error.message
+    });
+  }
+};
+
+/** Devuelve los votos del diputado para los puntos de una sesión */
+export const getMisVotos = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const integranteLegislaturaId = (req as any).user?.integrante_legislatura_id;
+
+        if (!integranteLegislaturaId) {
+            return res.status(403).json({ msg: 'Sin perfil de diputado' });
+        }
+
+        const { idAgenda } = req.params;
+
+        const diputadoId = await getDiputadoId(integranteLegislaturaId);
+
+        if (!diputadoId) {
+            return res.json({ votos: [] });
+        }
+
+        const puntos = await PuntosOrden.findAll({
+            where: {
+                id_evento: idAgenda
+            },
+            attributes: [
+                'id',
+                'punto',
+                'nopunto'
+            ],
+            order: [['nopunto', 'ASC']]
+        });
+
+        if (!puntos.length) {
+            return res.json({ votos: [] });
+        }
+
+        const puntoIds = puntos.map(p => p.id);
+
+        const registros = await VotosPunto.findAll({
+            where: {
+                id_diputado: diputadoId,
+                id_punto: puntoIds
+            }
+        });
+
+        const votoMap: Record<number, any> = {};
+
+        registros.forEach((v: any) => {
+            if (v.id_punto != null) {
+                votoMap[Number(v.id_punto)] = v;
+            }
+        });
+
+        const votos = puntos
+            .map((p: any) => {
+                const voto = votoMap[p.id];
+
+                if (!voto || voto.sentido === 0) {
+                    return null;
+                }
+
+                return {
+                    nopunto: p.nopunto,
+                    punto: p.punto,
+                    sentido: voto.sentido,
+                    mensaje: voto.mensaje ?? '',
+                };
+            })
+            .filter(Boolean);
+
+        return res.json({ votos });
+
+    } catch (error: any) {
+        return res.status(500).json({
+            msg: 'Error al obtener votos',
+            error: error.message
+        });
+    }
+};
+
+// Retorna sesiones de comisión activas con su idComision.
+// Para sesiones antiguas (sin idComision guardado) lo resuelve via AnfitrionAgenda.
+export const getSesionesComisionesActivas = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const sesionesActivas: Map<string, any> = req.app.get('sesionesActivas') || new Map();
+
+        const comisionSessions = Array.from(sesionesActivas.entries())
+            .filter(([, s]) => s.esComision)
+            .map(([clave, s]) => ({ clave, ...s }));
+
+        const resultado = await Promise.all(comisionSessions.map(async (s) => {
+            let idComision: string | null = s.idComision ?? null;
+
+            // Si el idComision ya es un UUID (36 chars) lo usamos directamente.
+            // Si es un SAF ID corto o no existe, buscamos por nombre en registrocomisiones.
+            const esUUID = idComision && idComision.length === 36 && idComision.includes('-');
+            if (!esUUID && s.titulo) {
+                const com = await Comision.findOne({ where: { nombre: s.titulo } }) as any;
+                idComision = com?.id ?? idComision;
+            }
+
+            return {
+                idAgenda: s.idAgenda,
+                titulo: s.titulo,
+                fecha: s.fecha,
+                idComision,
+            };
+        }));
+
+        return res.json({ sesiones: resultado.filter(s => s.idComision) });
+    } catch (error: any) {
+        return res.status(500).json({ msg: 'Error al obtener sesiones activas', error: error.message });
+    }
+};
+
+export const getMisComisiones = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const integranteLegislaturaId = (req as any).user?.integrante_legislatura_id;
+        if (!integranteLegislaturaId) {
+            return res.status(403).json({ msg: 'Cuenta no vinculada a perfil de diputado' });
+        }
+
+        const membresias = await IntegranteComision.findAll({
+            where: { integrante_legislatura_id: integranteLegislaturaId },
+            include: [
+                { model: Comision, as: 'comision', attributes: ['id', 'nombre'] },
+                { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['id', 'valor', 'nivel'] },
+            ],
+        }) as any[];
+
+        const comisiones = membresias.map((m: any) => ({
+            id: m.comision?.id,
+            nombre: m.comision?.nombre,
+            cargo: m.tipo_cargo?.valor ?? 'Vocal',
+            nivel: m.tipo_cargo?.nivel ?? 99,
+        })).filter((c: any) => c.id);
+
+        return res.json({ comisiones });
+    } catch (error: any) {
+        return res.status(500).json({ msg: 'Error al obtener comisiones', error: error.message });
     }
 };
