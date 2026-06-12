@@ -28,10 +28,13 @@ const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
+const comisions_1 = __importDefault(require("./comisions"));
 class Server {
     constructor() {
         this.asistenciasAbiertas = new Map();
         this.votacionesAbiertas = new Map();
+        // Mapa SAF-ID → UUID de registrocomisiones para comisiones
+        this.safIdToUUID = new Map();
         // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
         this.sesionesActivas = new Map();
         this.app = (0, express_1.default)();
@@ -39,7 +42,7 @@ class Server {
         this.httpServer = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.httpServer, {
             cors: {
-                origin: ['https://parlamentario2.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200'],
+                origin: ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'http://localhost:4200', 'http://localhost:8100', 'capacitor://localhost'],
                 credentials: true
             }
         });
@@ -64,40 +67,51 @@ class Server {
             socket.on('iniciar-proyeccion', (data) => {
                 this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
             });
-            // El diputado se une a la sala general para recibir eventos
-            socket.on('unirse-diputado', () => {
+            // El diputado se une a la sala general y a su sala personal
+            socket.on('unirse-diputado', (data) => {
                 socket.join('sala-diputados');
+                if (data === null || data === void 0 ? void 0 : data.integranteId) {
+                    socket.join(`diputado-${data.integranteId}`);
+                }
             });
             // Eventos para el panel del diputado
             socket.on('abrir-asistencia', (data) => {
-                this.asistenciasAbiertas.set(data.idComision, { idAgenda: data.idAgenda });
+                var _a;
+                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
+                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda });
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
-                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: data.idComision });
+                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: uuid });
             });
             socket.on('cerrar-asistencia', (data) => {
-                this.asistenciasAbiertas.delete(data.idComision);
+                var _a;
+                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
+                this.asistenciasAbiertas.delete(uuid);
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-cerrada');
-                this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: data.idComision });
+                this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: uuid });
             });
             socket.on('abrir-votacion', (data) => {
-                var _a, _b, _c;
-                this.votacionesAbiertas.set(data.idComision, {
+                var _a, _b, _c, _d;
+                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
+                this.votacionesAbiertas.set(uuid, {
                     idAgenda: data.idAgenda,
                     punto: data.punto,
-                    idPunto: (_a = data.idPunto) !== null && _a !== void 0 ? _a : null,
-                    idReserva: (_b = data.idReserva) !== null && _b !== void 0 ? _b : null,
-                    idIniciativa: (_c = data.idIniciativa) !== null && _c !== void 0 ? _c : null,
+                    idPunto: (_b = data.idPunto) !== null && _b !== void 0 ? _b : null,
+                    idReserva: (_c = data.idReserva) !== null && _c !== void 0 ? _c : null,
+                    idIniciativa: (_d = data.idIniciativa) !== null && _d !== void 0 ? _d : null,
                 });
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
-                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: data.idComision, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
+                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: uuid, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
             });
             socket.on('cerrar-votacion', (data) => {
-                this.votacionesAbiertas.delete(data.idComision);
+                var _a;
+                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
+                this.votacionesAbiertas.delete(uuid);
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
-                this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: data.idComision });
+                this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: uuid });
             });
             // ── Sesiones activas ────────────────────────────────────────────
-            socket.on('iniciar-sesion', (data) => {
+            socket.on('iniciar-sesion', (data) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
                 const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
                 // Para sesión plenaria solo puede haber una activa
                 if (!data.esComision && this.sesionesActivas.has('sesion-plenaria')) {
@@ -107,11 +121,24 @@ class Server {
                     });
                     return;
                 }
+                // Resolver SAF ID → UUID de registrocomisiones usando el nombre
+                let idComisionUUID = (_a = data.idComision) !== null && _a !== void 0 ? _a : undefined;
+                if (data.esComision && data.idComision && data.titulo) {
+                    try {
+                        const com = yield comisions_1.default.findOne({ where: { nombre: data.titulo } });
+                        if (com === null || com === void 0 ? void 0 : com.id) {
+                            idComisionUUID = com.id;
+                            this.safIdToUUID.set(data.idComision, com.id);
+                        }
+                    }
+                    catch (_b) { }
+                }
                 const sesion = {
                     idAgenda: data.idAgenda,
                     titulo: data.titulo,
                     fecha: data.fecha,
                     esComision: data.esComision,
+                    idComision: idComisionUUID,
                     ordenDia: data.ordenDia,
                     iniciadaEn: new Date().toISOString()
                 };
@@ -122,17 +149,26 @@ class Server {
                 this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-iniciada', Object.assign({ clave }, sesion));
                 // Confirma al que inició
                 socket.emit('sesion-confirmada', Object.assign({ clave }, sesion));
-            });
+            }));
             socket.on('terminar-sesion', (data) => {
+                var _a;
                 const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
+                const sesionPrevia = this.sesionesActivas.get(clave);
                 this.sesionesActivas.delete(clave);
-                this.io.to('sala-diputados').emit('sesion-terminada', { clave, idAgenda: data.idAgenda });
-                this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-terminada', { clave, idAgenda: data.idAgenda });
+                const payload = { clave, idAgenda: data.idAgenda, idComision: (_a = sesionPrevia === null || sesionPrevia === void 0 ? void 0 : sesionPrevia.idComision) !== null && _a !== void 0 ? _a : undefined };
+                this.io.to('sala-diputados').emit('sesion-terminada', payload);
+                this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-terminada', payload);
             });
             // Un cliente recién conectado pregunta qué sesiones están activas
             socket.on('get-sesiones-activas', () => {
                 const lista = Array.from(this.sesionesActivas.entries()).map(([clave, s]) => (Object.assign({ clave }, s)));
                 socket.emit('sesiones-activas', lista);
+            });
+            // Consulta el estado actual de asistencias y votaciones abiertas
+            socket.on('get-estado-eventos', () => {
+                const asistencias = Array.from(this.asistenciasAbiertas.entries()).map(([idComision, data]) => (Object.assign({ idComision }, data)));
+                const votaciones = Array.from(this.votacionesAbiertas.entries()).map(([idComision, data]) => (Object.assign({ idComision }, data)));
+                socket.emit('estado-eventos', { asistencias, votaciones });
             });
             socket.on('disconnect', () => {
                 console.log('Socket desconectado:', socket.id);
@@ -163,8 +199,9 @@ class Server {
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
             origin: function (origin, callback) {
-                const allowedOrigins = ['https://parlamentario2.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx', 'http://localhost:4200'];
-                if (!origin || allowedOrigins.includes(origin)) {
+                const allowedOrigins = ['https://parlamentario.congresoedomex.gob.mx', 'https://nuevapagina.congresoedomex.gob.mx', 'https://congresoedomex.gob.mx', 'https://www.congresoedomex.gob.mx', 'capacitor://localhost'];
+                const isLocalhost = !origin || /^http:\/\/localhost(:\d+)?$/.test(origin);
+                if (isLocalhost || allowedOrigins.includes(origin)) {
                     callback(null, true);
                 }
                 else {

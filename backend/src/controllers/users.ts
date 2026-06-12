@@ -58,7 +58,7 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
         path: '/',
     });
 
-    return res.json({ user, bandera, role: roleName });
+    return res.json({ user, bandera, role: roleName, token: accessToken });
 }
 
 export const getCurrentUser = (req: Request, res: Response) => {

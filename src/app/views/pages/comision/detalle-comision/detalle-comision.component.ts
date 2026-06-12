@@ -263,6 +263,31 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._socketService.conectar();
+
+    // Recuperar sesión activa al recargar y guardar sus datos reales
+    this._socketService.onSesionesActivas((lista: any[]) => {
+      if (!this.idEvento) return;
+      const clave = this.esComision ? this.idEvento : 'sesion-plenaria';
+      const sesion = lista.find((s: any) => s.clave === clave || s.idAgenda === this.idEvento);
+      this.sesionActiva = !!sesion;
+      if (sesion) {
+        // Guardar los datos REALES para poder terminarla correctamente
+        this.sesionActivaIdAgenda   = sesion.idAgenda   ?? this.idEvento;
+        this.sesionActivaEsComision = sesion.esComision  ?? this.esComision;
+      } else {
+        this.sesionActivaIdAgenda   = '';
+        this.sesionActivaEsComision = false;
+      }
+    });
+
+    // Recuperar estado de asistencias/votaciones abiertas al recargar
+    this._socketService.onEstadoEventos((data) => {
+      const idC = this.idComisionRuta;
+      this.asistenciaAbiertaDiputados = data.asistencias.some((a: any) => a.idComision === idC);
+      this.votacionAbiertaDiputados   = data.votaciones.some((v: any) => v.idComision === idC);
+    });
+    this._socketService.emitGetEstadoEventos();
+
     this.cargarDatosIniciales();
     this.cargarCatalogosBase();
 
@@ -611,6 +636,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.idEvento = response.evento.id;
         this.tituloC = response.titulo;
         this.fechaC = response.evento.fecha;
+        // Consulta sesiones activas ahora que idEvento está disponible
+        this._socketService.emitGetSesionesActivas();
         this.slcPuntosTurnados = response.puntos;
         this.listaComentarios = response.comentarios || [];
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
@@ -2786,6 +2813,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     window.open(`${this.enviro}api/eventos/asintenciapdf/${this.idEvento}`, '_blank');
   }
 
+  
   terminarAsistencia(): void {
     Swal.fire({
       title: '¿Terminar asistencia?',
@@ -2805,6 +2833,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  proyectarYAbrirAsistencia(): void {
+    this.proyectarAsistencia();
+    this.abrirAsistenciaDiputados();
   }
 
   abrirAsistenciaDiputados(): void {
@@ -2849,6 +2882,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  proyectarYAbrirVotacion(): void {
+    this.proyectarVotacion();
+    this.abrirVotacionDiputados();
   }
 
   abrirVotacionDiputados(): void {
@@ -3020,37 +3058,71 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
   sesionActiva: boolean = false;
+  // Datos reales de la sesión activa (pueden ser de OTRO evento si navegamos)
+  private sesionActivaIdAgenda: string = '';
+  private sesionActivaEsComision: boolean = false;
 
-  iniciarEvento(tipo: number): void {
-    // Emitir socket para activar la sesión en todos los clientes conectados
-    this._socketService.conectar();
+  private confirmarSesionIniciada(): void {
+    this.sesionActiva = true;
+    this.sesionActivaIdAgenda = this.idEvento;
+    this.sesionActivaEsComision = this.esComision;
+    this._socketService.offSesionConfirmada();
+    this._socketService.offSesionRechazada();
+    this.cdr.detectChanges();
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Sesión iniciada correctamente', timer: 3000, showConfirmButton: false });
+  }
 
+  private getOrdenDiaSerializable(): any[] {
+    return this.listaPuntos.map(({ form, tiposDisponibles, presentaDisponibles, nuevoDocumento, ...rest }) => rest);
+  }
+
+  private intentarIniciarSesion(): void {
     this._socketService.offSesionConfirmada();
     this._socketService.offSesionRechazada();
 
-    this._socketService.onSesionConfirmada(() => {
-      this.sesionActiva = true;
-      this._socketService.offSesionConfirmada();
-      this._socketService.offSesionRechazada();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Sesión iniciada correctamente',
-        timer: 3000,
-        showConfirmButton: false
-      });
-    });
+    this._socketService.onSesionConfirmada(() => this.confirmarSesionIniciada());
 
     this._socketService.onSesionRechazada((data) => {
       this._socketService.offSesionConfirmada();
       this._socketService.offSesionRechazada();
+
       Swal.fire({
         icon: 'warning',
-        title: 'No se puede iniciar',
-        text: data.motivo,
+        title: 'Ya existe una sesión activa',
+        html: `<p style="margin:0 0 8px">${data.motivo}</p><p style="margin:0;color:#555">¿Deseas cerrar el evento activo y activar esta sesión?</p>`,
+        showCancelButton: true,
         confirmButtonColor: '#800048',
-        confirmButtonText: 'Aceptar'
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, cerrar y activar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        if (data.sesionActiva) {
+          this._socketService.emitTerminarSesion(data.sesionActiva.idAgenda, data.sesionActiva.esComision);
+        }
+
+        // Reintento después de que el servidor limpie el mapa
+        setTimeout(() => {
+          // Configura listeners ANTES de emitir
+          this._socketService.offSesionConfirmada();
+          this._socketService.offSesionRechazada();
+          this._socketService.onSesionConfirmada(() => this.confirmarSesionIniciada());
+          this._socketService.onSesionRechazada(() => {
+            // Segunda vez rechazada: informar sin loop
+            this._socketService.offSesionConfirmada();
+            this._socketService.offSesionRechazada();
+            Swal.fire({ icon: 'error', title: 'No se pudo iniciar', text: 'El servidor no pudo liberar la sesión anterior. Intenta de nuevo.', confirmButtonColor: '#800048', confirmButtonText: 'Aceptar' });
+          });
+          this._socketService.emitIniciarSesion({
+            idAgenda: this.idEvento,
+            titulo: this.tituloC,
+            fecha: this.fechaC,
+            esComision: this.esComision,
+            idComision: this.esComision ? this.idComisionRuta : undefined,
+            ordenDia: this.getOrdenDiaSerializable()
+          });
+        }, 400);
       });
     });
 
@@ -3059,8 +3131,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       titulo: this.tituloC,
       fecha: this.fechaC,
       esComision: this.esComision,
-      ordenDia: this.listaPuntos
+      idComision: this.esComision ? this.idComisionRuta : undefined,
+      ordenDia: this.getOrdenDiaSerializable()
     });
+  }
+
+  iniciarEvento(tipo: number): void {
+    this._socketService.conectar();
+    this.intentarIniciarSesion();
 
     // También enviar notificación WhatsApp
     this._eventoService.notificarInicioEvento(this.idComisionRuta).subscribe({
@@ -3082,8 +3160,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this._socketService.emitTerminarSesion(this.idEvento, this.esComision);
-        this.sesionActiva = false;
+        // Usar los datos REALES de la sesión activa, no los del evento actual
+        const idAgendaTerminar   = this.sesionActivaIdAgenda   || this.idEvento;
+        const esComisionTerminar = this.sesionActivaIdAgenda ? this.sesionActivaEsComision : this.esComision;
+        this._socketService.emitTerminarSesion(idAgendaTerminar, esComisionTerminar);
+        this.sesionActiva           = false;
+        this.sesionActivaIdAgenda   = '';
+        this.sesionActivaEsComision = false;
         Swal.fire({
           toast: true,
           position: 'top-end',

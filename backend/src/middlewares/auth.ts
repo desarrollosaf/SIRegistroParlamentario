@@ -30,8 +30,9 @@ export interface JwtPayload {
 // };
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
-  const token = req.cookies?.accessToken;
-  console.log(token)
+  const bearerToken = req.header('Authorization')?.replace('Bearer ', '');
+  const token = bearerToken || req.cookies?.accessToken;
+
   if (!token) {
     res.status(401).json({ msg: 'Token no proporcionado' });
     return;
