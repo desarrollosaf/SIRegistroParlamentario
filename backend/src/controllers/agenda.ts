@@ -756,10 +756,20 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
       }
     );
 
+    // Notificar en tiempo real al diputado afectado vía sala personal
+    const io = (req as any).app.get('io');
+    const idDip = (voto as any).id_diputado;
+    if (io && idDip) {
+      io.to(`diputado-${idDip}`).emit('asistencia-actualizada-admin', {
+        id_diputado: idDip,
+        sentido: nuevoSentido,
+        mensaje: nuevoMensaje,
+      });
+    }
+
     return res.status(200).json({
       msg: "Registro actualizado correctamente",
       estatus: 200,
-
     });
 
   } catch (error) {
@@ -2784,6 +2794,8 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
         });
     }
 
+    const registroVoto = await VotosPunto.findOne({ where: { id: body.id } });
+
     const [cantidadActualizada] = await VotosPunto.update(
       {
         sentido: nuevoSentido,
@@ -2799,6 +2811,17 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
     if (cantidadActualizada === 0) {
       return res.status(404).json({
         msg: "No se encontró el voto del diputado para este punto",
+      });
+    }
+
+    // Notificar en tiempo real al diputado afectado vía sala personal
+    const io = (req as any).app.get('io');
+    const idDipVoto = registroVoto ? (registroVoto as any).id_diputado : null;
+    if (io && idDipVoto) {
+      io.to(`diputado-${idDipVoto}`).emit('voto-actualizado-admin', {
+        id_diputado: idDipVoto,
+        sentido: nuevoSentido,
+        mensaje: nuevoMensaje,
       });
     }
 

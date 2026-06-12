@@ -12,4 +12,9 @@ router.get('/api/diputado/estado-panel', auth_1.verifyToken, diputado_1.getEstad
 router.get('/api/diputado/sesion-activa/:idComision', auth_1.verifyToken, diputado_1.getSesionActiva);
 router.post('/api/diputado/registrar-asistencia', auth_1.verifyToken, diputado_1.registrarAsistencia);
 router.post('/api/diputado/registrar-voto', auth_1.verifyToken, diputado_1.registrarVoto);
+router.get('/api/diputado/mis-comisiones', auth_1.verifyToken, diputado_1.getMisComisiones);
+router.get('/api/diputado/sesiones-comisiones-activas', auth_1.verifyToken, diputado_1.getSesionesComisionesActivas);
+router.get('/api/diputado/mi-asistencia/:idAgenda', auth_1.verifyToken, diputado_1.getMiAsistencia);
+router.get('/api/diputado/orden-del-dia/:idAgenda', auth_1.verifyToken, diputado_1.getOrdenDelDia);
+router.get('/api/diputado/mis-votos/:idAgenda', auth_1.verifyToken, diputado_1.getMisVotos);
 exports.default = router;

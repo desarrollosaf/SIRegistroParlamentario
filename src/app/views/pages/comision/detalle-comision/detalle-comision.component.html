@@ -14,6 +14,27 @@
                         <i class="bi bi-calendar3 me-1"></i>
                         {{ this.fechaC | date:'dd/MM/yyyy' }}
                     </div>
+                    <div *ngIf="sesionActiva || asistenciaAbiertaDiputados || votacionAbiertaDiputados"
+                         class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                        <span *ngIf="sesionActiva"
+                              class="badge rounded-pill px-3 py-2"
+                              style="background-color:#198754;font-size:0.78rem;letter-spacing:0.3px">
+                            <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;vertical-align:middle"></i>
+                            En sesión
+                        </span>
+                        <span *ngIf="asistenciaAbiertaDiputados"
+                              class="badge rounded-pill px-3 py-2"
+                              style="background-color:#0dcaf0;color:#000;font-size:0.78rem;letter-spacing:0.3px">
+                            <i class="bi bi-phone-fill me-1"></i>
+                            Asistencia abierta
+                        </span>
+                        <span *ngIf="votacionAbiertaDiputados"
+                              class="badge rounded-pill px-3 py-2"
+                              style="background-color:#0d6efd;font-size:0.78rem;letter-spacing:0.3px">
+                            <i class="bi bi-phone-fill me-1"></i>
+                            Votación abierta
+                        </span>
+                    </div>
                 </div>
                 <br>
 
@@ -136,9 +157,6 @@
                                                     <button class="btn btn-danger btn-sm" (click)="terminarSesion()">
                                                         <i class="bi bi-stop-circle-fill me-1"></i> Terminar sesión
                                                     </button>
-                                                    <span class="badge bg-success ms-1">
-                                                        <i class="bi bi-circle-fill me-1" style="font-size:0.55rem"></i> En sesión
-                                                    </span>
                                                 </ng-template>
                                                 <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                     <i class="bi bi-people-fill me-1"></i> Integrantes
@@ -150,21 +168,14 @@
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
-                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarAsistencia()">
+                                                <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-info btn-sm text-white" (click)="proyectarYAbrirAsistencia()" title="Proyectar y abrir para diputados">
                                                     <i class="bi bi-display me-1"></i> Proyectar
                                                 </button>
                                                 <button class="btn btn-secondary btn-sm" (click)="imprimirAsistencia()">
                                                     <i class="bi bi-printer-fill me-1"></i> Imprimir
                                                 </button>
-                                                <button class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
+                                                <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
                                                     <i class="bi bi-stop-circle-fill me-1"></i> Terminar
-                                                </button>
-                                                <span class="vr mx-1"></span>
-                                                <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirAsistenciaDiputados()" title="Permitir que los diputados registren su asistencia desde su dispositivo">
-                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
-                                                </button>
-                                                <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarAsistenciaDiputados()">
-                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                                 </button>
                                             </div>
                                         </div>
@@ -374,9 +385,6 @@
                                                 <button class="btn btn-danger btn-sm" (click)="terminarSesion()">
                                                     <i class="bi bi-stop-circle-fill me-1"></i> Terminar sesión
                                                 </button>
-                                                <span class="badge bg-success ms-1">
-                                                    <i class="bi bi-circle-fill me-1" style="font-size:0.55rem"></i> En sesión
-                                                </span>
                                             </ng-template>
                                             <button class="btn btn-light btn-sm" (click)="verificarIntegrantes()">
                                                 <i class="bi bi-people-fill me-1"></i> Integrantes
@@ -388,21 +396,14 @@
                                             <button class="btn btn-success btn-sm" (click)="notificarWhats(1)">
                                                 <i class="bi bi-whatsapp me-1"></i> Notificar
                                             </button>
-                                            <button class="btn btn-info btn-sm text-white" (click)="proyectarAsistencia()">
+                                            <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-info btn-sm text-white" (click)="proyectarYAbrirAsistencia()" title="Proyectar y abrir para diputados">
                                                 <i class="bi bi-display me-1"></i> Proyectar
                                             </button>
                                             <button class="btn btn-secondary btn-sm" (click)="imprimirAsistencia()">
                                                 <i class="bi bi-printer-fill me-1"></i> Imprimir
                                             </button>
-                                            <button class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
+                                            <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-danger btn-sm" (click)="terminarAsistencia()">
                                                 <i class="bi bi-stop-circle-fill me-1"></i> Terminar
-                                            </button>
-                                            <span class="vr mx-1"></span>
-                                            <button *ngIf="!asistenciaAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirAsistenciaDiputados()" title="Permitir que los diputados registren su asistencia desde su dispositivo">
-                                                <i class="bi bi-phone me-1"></i> Abrir para diputados
-                                            </button>
-                                            <button *ngIf="asistenciaAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarAsistenciaDiputados()">
-                                                <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                             </button>
                                         </div>
                                         <!-- Iterar sobre cada comisión -->
@@ -1446,7 +1447,7 @@
                                             </h5>
 
                                             <div class="d-flex gap-2 flex-wrap">
-                                                <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
+                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
                                                 </button>
                                                 <button class="btn btn-warning btn-sm" (click)="reiniciarVotacion()">
@@ -1458,15 +1459,8 @@
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(2)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
-                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
+                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-info btn-sm text-white" (click)="proyectarYAbrirVotacion()" [disabled]="!votacionIniciada" title="Proyectar y abrir para diputados">
                                                     <i class="bi bi-display me-1"></i> Proyectar
-                                                </button>
-                                                <span class="vr mx-1"></span>
-                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirVotacionDiputados()" [disabled]="!votacionIniciada" title="Permitir que los diputados voten desde su dispositivo">
-                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
-                                                </button>
-                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarVotacionDiputados()">
-                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                                 </button>
                                             </div>
 
@@ -1691,7 +1685,7 @@
                                                 Registro de Votos por Comisión
                                             </h5>
                                             <div class="d-flex gap-2 flex-wrap">
-                                                <button class="btn btn-danger btn-sm" (click)="terminarVotacion()">
+                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-danger btn-sm" (click)="terminarVotacion()">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Terminar
                                                 </button>
                                                 <button class="btn btn-warning btn-sm" (click)="reiniciarVotacion()">
@@ -1703,15 +1697,8 @@
                                                 <button class="btn btn-success btn-sm" (click)="notificarWhats(2)">
                                                     <i class="bi bi-whatsapp me-1"></i> Notificar
                                                 </button>
-                                                <button class="btn btn-info btn-sm text-white" (click)="proyectarVotacion()" [disabled]="!votacionIniciada">
+                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-info btn-sm text-white" (click)="proyectarYAbrirVotacion()" [disabled]="!votacionIniciada" title="Proyectar y abrir para diputados">
                                                     <i class="bi bi-display me-1"></i> Proyectar
-                                                </button>
-                                                <span class="vr mx-1"></span>
-                                                <button *ngIf="!votacionAbiertaDiputados" class="btn btn-primary btn-sm" (click)="abrirVotacionDiputados()" [disabled]="!votacionIniciada" title="Permitir que los diputados voten desde su dispositivo">
-                                                    <i class="bi bi-phone me-1"></i> Abrir para diputados
-                                                </button>
-                                                <button *ngIf="votacionAbiertaDiputados" class="btn btn-outline-primary btn-sm" (click)="cerrarVotacionDiputados()">
-                                                    <i class="bi bi-phone-fill me-1"></i> Cerrar para diputados
                                                 </button>
                                             </div>
                                         </div>

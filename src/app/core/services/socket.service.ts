@@ -140,6 +140,7 @@ export class SocketService {
     titulo: string;
     fecha: string;
     esComision: boolean;
+    idComision?: string;
     ordenDia: any[];
   }): void {
     this.socket?.emit('iniciar-sesion', data);
@@ -191,6 +192,18 @@ export class SocketService {
 
   offSesionesActivas(): void {
     this.socket?.off('sesiones-activas');
+  }
+
+  emitGetEstadoEventos(): void {
+    this.socket?.emit('get-estado-eventos');
+  }
+
+  onEstadoEventos(cb: (data: { asistencias: any[]; votaciones: any[] }) => void): void {
+    this.socket?.on('estado-eventos', cb);
+  }
+
+  offEstadoEventos(): void {
+    this.socket?.off('estado-eventos');
   }
 
   disconnect(): void {
