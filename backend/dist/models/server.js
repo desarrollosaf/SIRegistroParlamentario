@@ -129,17 +129,37 @@ class Server {
                     });
                     return;
                 }
-                // Resolver SAF ID → UUID de registrocomisiones usando el nombre
+                // Resolver SAF ID → UUID usando el nombre de la sesión (coincide con nombre de comisión)
                 let idComisionUUID = (_a = data.idComision) !== null && _a !== void 0 ? _a : undefined;
-                if (data.esComision && data.idComision && data.titulo) {
+                const idComisiones = [];
+                if (data.esComision && data.titulo) {
                     try {
                         const com = yield comisions_1.default.findOne({ where: { nombre: data.titulo } });
                         if (com === null || com === void 0 ? void 0 : com.id) {
                             idComisionUUID = com.id;
-                            this.safIdToUUID.set(data.idComision, com.id);
+                            if (data.idComision)
+                                this.safIdToUUID.set(data.idComision, com.id);
+                            idComisiones.push(com.id);
                         }
                     }
                     catch (_b) { }
+                }
+                // Para eventos conjuntos: buscar otros anfitriones del mismo agenda_id
+                if (data.esComision && data.idAgenda) {
+                    try {
+                        const anfitriones = yield AnfitrionAgenda.findAll({
+                            where: { agenda_id: data.idAgenda },
+                            attributes: ['autor_id'],
+                            raw: true,
+                        });
+                        for (const a of anfitriones) {
+                            const cached = this.safIdToUUID.get(a.autor_id);
+                            if (cached && !idComisiones.includes(cached)) {
+                                idComisiones.push(cached);
+                            }
+                        }
+                    }
+                    catch (_c) { }
                 }
                 const sesion = {
                     idAgenda: data.idAgenda,
@@ -147,6 +167,7 @@ class Server {
                     fecha: data.fecha,
                     esComision: data.esComision,
                     idComision: idComisionUUID,
+                    idComisiones,
                     ordenDia: data.ordenDia,
                     iniciadaEn: new Date().toISOString()
                 };

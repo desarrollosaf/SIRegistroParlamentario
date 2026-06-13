@@ -36,6 +36,7 @@ class Server {
         fecha: string;
         esComision: boolean;
         idComision?: string;
+        idComisiones: string[];   // todos los UUIDs (incluye conjuntas)
         ordenDia: any[];
         iniciadaEn: string;
     }> = new Map();
@@ -151,14 +152,34 @@ class Server {
                 return;
             }
 
-            // Resolver SAF ID → UUID de registrocomisiones usando el nombre
+            // Resolver SAF ID → UUID usando el nombre de la sesión (coincide con nombre de comisión)
             let idComisionUUID = data.idComision ?? undefined;
-            if (data.esComision && data.idComision && data.titulo) {
+            const idComisiones: string[] = [];
+
+            if (data.esComision && data.titulo) {
                 try {
                     const com = await Comision.findOne({ where: { nombre: data.titulo } }) as any;
                     if (com?.id) {
                         idComisionUUID = com.id;
-                        this.safIdToUUID.set(data.idComision, com.id);
+                        if (data.idComision) this.safIdToUUID.set(data.idComision, com.id);
+                        idComisiones.push(com.id);
+                    }
+                } catch {}
+            }
+
+            // Para eventos conjuntos: buscar otros anfitriones del mismo agenda_id
+            if (data.esComision && data.idAgenda) {
+                try {
+                    const anfitriones = await AnfitrionAgenda.findAll({
+                        where: { agenda_id: data.idAgenda },
+                        attributes: ['autor_id'],
+                        raw: true,
+                    }) as any[];
+                    for (const a of anfitriones) {
+                        const cached = this.safIdToUUID.get(a.autor_id);
+                        if (cached && !idComisiones.includes(cached)) {
+                            idComisiones.push(cached);
+                        }
                     }
                 } catch {}
             }
@@ -169,6 +190,7 @@ class Server {
                 fecha: data.fecha,
                 esComision: data.esComision,
                 idComision: idComisionUUID,
+                idComisiones,
                 ordenDia: data.ordenDia,
                 iniciadaEn: new Date().toISOString()
             };
