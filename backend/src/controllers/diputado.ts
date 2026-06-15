@@ -524,10 +524,11 @@ export const getSesionesComisionesActivas = async (req: Request, res: Response):
                 titulo: s.titulo,
                 fecha: s.fecha,
                 idComision,
+                idComisiones: (s.idComisiones?.length ? s.idComisiones : (idComision ? [idComision] : [])) as string[],
             };
         }));
 
-        return res.json({ sesiones: resultado.filter(s => s.idComision) });
+        return res.json({ sesiones: resultado.filter(s => s.idComision || s.idComisiones?.length) });
     } catch (error: any) {
         return res.status(500).json({ msg: 'Error al obtener sesiones activas', error: error.message });
     }
