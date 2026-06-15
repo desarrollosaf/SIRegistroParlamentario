@@ -61,6 +61,45 @@ class Server {
         this.DBconnetc();
         this.listen();
     }
+    /** Resuelve el SAF commission ID a uno o varios UUIDs de registrocomisiones.
+     *  Primero intenta el caché, luego consulta AnfitrionAgenda por idAgenda. */
+    resolveUUIDs(idComisionSAF, idAgenda) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const cached = this.safIdToUUID.get(idComisionSAF);
+            if (cached)
+                return [cached];
+            try {
+                const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                    where: { agenda_id: idAgenda },
+                    attributes: ['autor_id'],
+                    raw: true,
+                });
+                const uuids = anfitriones.map((a) => a.autor_id).filter(Boolean);
+                if (uuids.length > 0) {
+                    this.safIdToUUID.set(idComisionSAF, uuids[0]);
+                    return uuids;
+                }
+            }
+            catch (_a) { }
+            return [idComisionSAF];
+        });
+    }
+    /** Busca en un mapa todos los UUIDs cuyo safId coincide con el SAF commission ID. */
+    findUUIDsBySafId(safId, map) {
+        const uuids = [];
+        for (const [uuid, info] of map.entries()) {
+            if (info.safId === safId || uuid === safId) {
+                uuids.push(uuid);
+            }
+        }
+        // Fallback: caché
+        const cached = this.safIdToUUID.get(safId);
+        if (cached && !uuids.includes(cached))
+            uuids.push(cached);
+        if (uuids.length === 0)
+            uuids.push(safId);
+        return uuids;
+    }
     setupSocket() {
         this.io.on('connection', (socket) => {
             console.log('Socket conectado:', socket.id);
@@ -84,39 +123,53 @@ class Server {
                 }
             });
             // Eventos para el panel del diputado
-            socket.on('abrir-asistencia', (data) => {
-                var _a;
-                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
-                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda });
+            socket.on('abrir-asistencia', (data) => __awaiter(this, void 0, void 0, function* () {
+                const uuids = yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                for (const uuid of uuids) {
+                    this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision });
+                }
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
-                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: uuid });
-            });
+                for (const uuid of uuids) {
+                    this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: uuid });
+                }
+            }));
             socket.on('cerrar-asistencia', (data) => {
-                var _a;
-                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
-                this.asistenciasAbiertas.delete(uuid);
+                const uuids = this.findUUIDsBySafId(data.idComision, this.asistenciasAbiertas);
+                for (const uuid of uuids) {
+                    this.asistenciasAbiertas.delete(uuid);
+                }
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-cerrada');
-                this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: uuid });
+                for (const uuid of uuids) {
+                    this.io.to('sala-diputados').emit('asistencia-cerrada', { idComision: uuid });
+                }
             });
-            socket.on('abrir-votacion', (data) => {
-                var _a, _b, _c, _d;
-                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
-                this.votacionesAbiertas.set(uuid, {
-                    idAgenda: data.idAgenda,
-                    punto: data.punto,
-                    idPunto: (_b = data.idPunto) !== null && _b !== void 0 ? _b : null,
-                    idReserva: (_c = data.idReserva) !== null && _c !== void 0 ? _c : null,
-                    idIniciativa: (_d = data.idIniciativa) !== null && _d !== void 0 ? _d : null,
-                });
+            socket.on('abrir-votacion', (data) => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b, _c;
+                const uuids = yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                for (const uuid of uuids) {
+                    this.votacionesAbiertas.set(uuid, {
+                        idAgenda: data.idAgenda,
+                        punto: data.punto,
+                        idPunto: (_a = data.idPunto) !== null && _a !== void 0 ? _a : null,
+                        idReserva: (_b = data.idReserva) !== null && _b !== void 0 ? _b : null,
+                        idIniciativa: (_c = data.idIniciativa) !== null && _c !== void 0 ? _c : null,
+                        safId: data.idComision,
+                    });
+                }
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
-                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: uuid, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
-            });
+                for (const uuid of uuids) {
+                    this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: uuid, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
+                }
+            }));
             socket.on('cerrar-votacion', (data) => {
-                var _a;
-                const uuid = (_a = this.safIdToUUID.get(data.idComision)) !== null && _a !== void 0 ? _a : data.idComision;
-                this.votacionesAbiertas.delete(uuid);
+                const uuids = this.findUUIDsBySafId(data.idComision, this.votacionesAbiertas);
+                for (const uuid of uuids) {
+                    this.votacionesAbiertas.delete(uuid);
+                }
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-cerrada');
-                this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: uuid });
+                for (const uuid of uuids) {
+                    this.io.to('sala-diputados').emit('votacion-cerrada', { idComision: uuid });
+                }
             });
             // ── Sesiones activas ────────────────────────────────────────────
             socket.on('iniciar-sesion', (data) => __awaiter(this, void 0, void 0, function* () {
@@ -146,6 +199,9 @@ class Server {
                         }
                         if (idComisiones.length > 0) {
                             idComisionUUID = idComisiones[0];
+                            // Poblar cache SAF→UUID para que cerrar-* pueda resolverlo
+                            if (data.idComision)
+                                this.safIdToUUID.set(data.idComision, idComisiones[0]);
                         }
                     }
                     catch (_a) { }
@@ -181,15 +237,33 @@ class Server {
                 // Confirma al que inició
                 socket.emit('sesion-confirmada', Object.assign({ clave }, sesion));
             }));
-            socket.on('terminar-sesion', (data) => {
-                var _a;
+            socket.on('terminar-sesion', (data) => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b, _c;
                 const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
                 const sesionPrevia = this.sesionesActivas.get(clave);
                 this.sesionesActivas.delete(clave);
-                const payload = { clave, idAgenda: data.idAgenda, idComision: (_a = sesionPrevia === null || sesionPrevia === void 0 ? void 0 : sesionPrevia.idComision) !== null && _a !== void 0 ? _a : undefined };
+                let idComisiones = (_a = sesionPrevia === null || sesionPrevia === void 0 ? void 0 : sesionPrevia.idComisiones) !== null && _a !== void 0 ? _a : [];
+                // Si no hay UUIDs guardados (sesión iniciada con código viejo), consultar directo
+                if (idComisiones.length === 0 && data.esComision && data.idAgenda) {
+                    try {
+                        const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                            where: { agenda_id: data.idAgenda },
+                            attributes: ['autor_id'],
+                            raw: true,
+                        });
+                        idComisiones = anfitriones.map((a) => a.autor_id).filter(Boolean);
+                    }
+                    catch (_d) { }
+                }
+                const payload = {
+                    clave,
+                    idAgenda: data.idAgenda,
+                    idComision: (_c = (_b = sesionPrevia === null || sesionPrevia === void 0 ? void 0 : sesionPrevia.idComision) !== null && _b !== void 0 ? _b : idComisiones[0]) !== null && _c !== void 0 ? _c : undefined,
+                    idComisiones,
+                };
                 this.io.to('sala-diputados').emit('sesion-terminada', payload);
                 this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-terminada', payload);
-            });
+            }));
             // Un cliente recién conectado pregunta qué sesiones están activas
             socket.on('get-sesiones-activas', () => {
                 const lista = Array.from(this.sesionesActivas.entries()).map(([clave, s]) => (Object.assign({ clave }, s)));
