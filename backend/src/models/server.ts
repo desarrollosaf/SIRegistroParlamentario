@@ -15,6 +15,7 @@ import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import Comision from './comisions';
+import AnfitrionAgenda from './anfitrion_agendas';
 
 class Server {
 
