@@ -18,6 +18,8 @@ const user_1 = __importDefault(require("../models/user"));
 const role_users_1 = __importDefault(require("../models/role_users"));
 const role_1 = __importDefault(require("../models/role"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
+const diputado_1 = __importDefault(require("../models/diputado"));
 const ReadUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const listUser = yield user_1.default.findAll();
     return res.json({
@@ -27,7 +29,7 @@ const ReadUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.ReadUser = ReadUser;
 const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     const { name, password } = req.body;
     let passwordValid = false;
     let bandera = true;
@@ -52,7 +54,21 @@ const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         maxAge: 2 * 60 * 60 * 1000,
         path: '/',
     });
-    return res.json({ user, bandera, role: roleName, token: accessToken });
+    // Obtener nombre completo del diputado vinculado
+    let nombreCompleto = user.name;
+    if (user.integrante_legislatura_id) {
+        try {
+            const integrante = yield integrante_legislaturas_1.default.findByPk(user.integrante_legislatura_id);
+            if (integrante === null || integrante === void 0 ? void 0 : integrante.diputado_id) {
+                const diputado = yield diputado_1.default.findByPk(integrante.diputado_id);
+                if (diputado) {
+                    nombreCompleto = (_c = diputado.alias) !== null && _c !== void 0 ? _c : `${diputado.nombres} ${diputado.apaterno} ${diputado.amaterno}`.trim();
+                }
+            }
+        }
+        catch (_d) { }
+    }
+    return res.json({ user: Object.assign(Object.assign({}, user.toJSON()), { nombreCompleto }), bandera, role: roleName, token: accessToken });
 });
 exports.LoginUser = LoginUser;
 const getCurrentUser = (req, res) => {

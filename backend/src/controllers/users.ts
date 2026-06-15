@@ -58,7 +58,21 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
         path: '/',
     });
 
-    return res.json({ user, bandera, role: roleName, token: accessToken });
+    // Obtener nombre completo del diputado vinculado
+    let nombreCompleto: string = user.name;
+    if (user.integrante_legislatura_id) {
+        try {
+            const integrante = await IntegranteLegislatura.findByPk(user.integrante_legislatura_id) as any;
+            if (integrante?.diputado_id) {
+                const diputado = await Diputado.findByPk(integrante.diputado_id) as any;
+                if (diputado) {
+                    nombreCompleto = diputado.alias ?? `${diputado.nombres} ${diputado.apaterno} ${diputado.amaterno}`.trim();
+                }
+            }
+        } catch {}
+    }
+
+    return res.json({ user: { ...user.toJSON(), nombreCompleto }, bandera, role: roleName, token: accessToken });
 }
 
 export const getCurrentUser = (req: Request, res: Response) => {

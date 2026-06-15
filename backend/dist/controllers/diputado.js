@@ -458,7 +458,7 @@ const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, voi
             .filter(([, s]) => s.esComision)
             .map(([clave, s]) => (Object.assign({ clave }, s)));
         const resultado = yield Promise.all(comisionSessions.map((s) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b;
+            var _a, _b, _c;
             let idComision = (_a = s.idComision) !== null && _a !== void 0 ? _a : null;
             // Si el idComision ya es un UUID (36 chars) lo usamos directamente.
             // Si es un SAF ID corto o no existe, buscamos por nombre en registrocomisiones.
@@ -472,9 +472,10 @@ const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, voi
                 titulo: s.titulo,
                 fecha: s.fecha,
                 idComision,
+                idComisiones: (((_c = s.idComisiones) === null || _c === void 0 ? void 0 : _c.length) ? s.idComisiones : (idComision ? [idComision] : [])),
             };
         })));
-        return res.json({ sesiones: resultado.filter(s => s.idComision) });
+        return res.json({ sesiones: resultado.filter(s => { var _a; return s.idComision || ((_a = s.idComisiones) === null || _a === void 0 ? void 0 : _a.length); }) });
     }
     catch (error) {
         return res.status(500).json({ msg: 'Error al obtener sesiones activas', error: error.message });
