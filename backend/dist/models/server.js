@@ -120,7 +120,6 @@ class Server {
             });
             // ── Sesiones activas ────────────────────────────────────────────
             socket.on('iniciar-sesion', (data) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
                 const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
                 // Para sesión plenaria solo puede haber una activa
                 if (!data.esComision && this.sesionesActivas.has('sesion-plenaria')) {
@@ -130,10 +129,29 @@ class Server {
                     });
                     return;
                 }
-                // Resolver SAF ID → UUID usando el nombre de la sesión (coincide con nombre de comisión)
-                let idComisionUUID = (_a = data.idComision) !== null && _a !== void 0 ? _a : undefined;
+                let idComisionUUID = undefined;
                 const idComisiones = [];
-                if (data.esComision && data.titulo) {
+                // autor_id en anfitrion_agendas ya es el UUID de la comisión en registrocomisiones
+                if (data.esComision && data.idAgenda) {
+                    try {
+                        const anfitriones = yield AnfitrionAgenda.findAll({
+                            where: { agenda_id: data.idAgenda },
+                            attributes: ['autor_id'],
+                            raw: true,
+                        });
+                        for (const a of anfitriones) {
+                            if (a.autor_id && !idComisiones.includes(a.autor_id)) {
+                                idComisiones.push(a.autor_id);
+                            }
+                        }
+                        if (idComisiones.length > 0) {
+                            idComisionUUID = idComisiones[0];
+                        }
+                    }
+                    catch (_a) { }
+                }
+                // Fallback: si no hubo anfitriones, intentar resolver por nombre
+                if (idComisiones.length === 0 && data.esComision && data.titulo) {
                     try {
                         const com = yield comisions_1.default.findOne({ where: { nombre: data.titulo } });
                         if (com === null || com === void 0 ? void 0 : com.id) {
@@ -144,23 +162,6 @@ class Server {
                         }
                     }
                     catch (_b) { }
-                }
-                // Para eventos conjuntos: buscar otros anfitriones del mismo agenda_id
-                if (data.esComision && data.idAgenda) {
-                    try {
-                        const anfitriones = yield AnfitrionAgenda.findAll({
-                            where: { agenda_id: data.idAgenda },
-                            attributes: ['autor_id'],
-                            raw: true,
-                        });
-                        for (const a of anfitriones) {
-                            const cached = this.safIdToUUID.get(a.autor_id);
-                            if (cached && !idComisiones.includes(cached)) {
-                                idComisiones.push(cached);
-                            }
-                        }
-                    }
-                    catch (_c) { }
                 }
                 const sesion = {
                     idAgenda: data.idAgenda,

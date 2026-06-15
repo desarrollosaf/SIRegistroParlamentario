@@ -153,22 +153,10 @@ class Server {
                 return;
             }
 
-            // Resolver SAF ID → UUID usando el nombre de la sesión (coincide con nombre de comisión)
-            let idComisionUUID = data.idComision ?? undefined;
+            let idComisionUUID: string | undefined = undefined;
             const idComisiones: string[] = [];
 
-            if (data.esComision && data.titulo) {
-                try {
-                    const com = await Comision.findOne({ where: { nombre: data.titulo } }) as any;
-                    if (com?.id) {
-                        idComisionUUID = com.id;
-                        if (data.idComision) this.safIdToUUID.set(data.idComision, com.id);
-                        idComisiones.push(com.id);
-                    }
-                } catch {}
-            }
-
-            // Para eventos conjuntos: buscar otros anfitriones del mismo agenda_id
+            // autor_id en anfitrion_agendas ya es el UUID de la comisión en registrocomisiones
             if (data.esComision && data.idAgenda) {
                 try {
                     const anfitriones = await AnfitrionAgenda.findAll({
@@ -177,10 +165,24 @@ class Server {
                         raw: true,
                     }) as any[];
                     for (const a of anfitriones) {
-                        const cached = this.safIdToUUID.get(a.autor_id);
-                        if (cached && !idComisiones.includes(cached)) {
-                            idComisiones.push(cached);
+                        if (a.autor_id && !idComisiones.includes(a.autor_id)) {
+                            idComisiones.push(a.autor_id);
                         }
+                    }
+                    if (idComisiones.length > 0) {
+                        idComisionUUID = idComisiones[0];
+                    }
+                } catch {}
+            }
+
+            // Fallback: si no hubo anfitriones, intentar resolver por nombre
+            if (idComisiones.length === 0 && data.esComision && data.titulo) {
+                try {
+                    const com = await Comision.findOne({ where: { nombre: data.titulo } }) as any;
+                    if (com?.id) {
+                        idComisionUUID = com.id;
+                        if (data.idComision) this.safIdToUUID.set(data.idComision, com.id);
+                        idComisiones.push(com.id);
                     }
                 } catch {}
             }
