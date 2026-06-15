@@ -29,6 +29,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const comisions_1 = __importDefault(require("./comisions"));
+const anfitrion_agendas_1 = __importDefault(require("./anfitrion_agendas"));
 class Server {
     constructor() {
         this.asistenciasAbiertas = new Map();
@@ -134,7 +135,7 @@ class Server {
                 // autor_id en anfitrion_agendas ya es el UUID de la comisión en registrocomisiones
                 if (data.esComision && data.idAgenda) {
                     try {
-                        const anfitriones = yield AnfitrionAgenda.findAll({
+                        const anfitriones = yield anfitrion_agendas_1.default.findAll({
                             where: { agenda_id: data.idAgenda },
                             attributes: ['autor_id'],
                             raw: true,
