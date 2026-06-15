@@ -16,6 +16,13 @@
 
   <!-- Sin sesión activa -->
   <div class="panel-espera" *ngIf="!asistenciaAbierta && !votacionAbierta">
+    <div class="bienvenida-wrap" *ngIf="perfil?.diputado as dip">
+      <div class="bienvenida-avatar">
+        <i class="mdi mdi-account-circle"></i>
+      </div>
+      <p class="bienvenida-saludo">Bienvenido/a</p>
+      <h4 class="bienvenida-nombre">{{ dip.nombres }} {{ dip.apaterno }} {{ dip.amaterno }}</h4>
+    </div>
     <div class="espera-icon">
       <i class="mdi mdi-clock-outline"></i>
     </div>

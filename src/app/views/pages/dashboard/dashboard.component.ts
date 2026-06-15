@@ -1,13 +1,16 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbCalendar, NgbDatepickerModule, NgbDateStruct, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ApexOptions, NgApexchartsModule } from "ng-apexcharts";
 import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.directive';
 import { ThemeCssVariableService, ThemeCssVariablesType } from '../../../core/services/theme-css-variable.service';
+import { UserService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-dashboard',
     imports: [
+        CommonModule,
         NgbDropdownModule,
         FormsModule,
         NgbDatepickerModule,
@@ -18,6 +21,9 @@ import { ThemeCssVariableService, ThemeCssVariablesType } from '../../../core/se
     styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
+
+  private userService = inject(UserService);
+  nombreUsuario: string = '';
 
   /**
    * NgbDatepicker
@@ -39,6 +45,7 @@ export class DashboardComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
+    this.nombreUsuario = this.userService.currentUserValue?.name || '';
     this.customersChartOptions = this.getCustomersChartOptions(this.themeCssVariables);
     this.ordersChartOptions = this.getOrdersChartOptions(this.themeCssVariables);
     this.growthChartOptions = this.getGrowthChartOptions(this.themeCssVariables);
