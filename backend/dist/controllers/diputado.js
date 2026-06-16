@@ -207,7 +207,7 @@ exports.registrarVoto = registrarVoto;
 // Retorna el estado actual del panel para el diputado (persiste al recargar).
 // Incluye descripcion y fecha del evento para mostrar en pantalla.
 const getEstadoPanel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f;
     try {
         const tokenUser = req.user;
         const integranteLegislaturaId = tokenUser.integrante_legislatura_id;
@@ -230,6 +230,7 @@ const getEstadoPanel = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 const eventoInfo = yield getInfoEvento(estado.idAgenda);
                 asistenciaPanel = {
                     idComision,
+                    idComisiones: (_a = estado.idComisiones) !== null && _a !== void 0 ? _a : [idComision],
                     idAgenda: estado.idAgenda,
                     yaRegistro: registro.sentido_voto !== 0,
                     descripcion: (eventoInfo === null || eventoInfo === void 0 ? void 0 : eventoInfo.descripcion) || '',
@@ -261,16 +262,17 @@ const getEstadoPanel = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 const eventoInfo = yield getInfoEvento(estado.idAgenda);
                 votacionPanel = {
                     idComision,
+                    idComisiones: (_b = estado.idComisiones) !== null && _b !== void 0 ? _b : [idComision],
                     idAgenda: estado.idAgenda,
                     punto: estado.punto,
                     id_voto_punto: votoRegistro.id,
-                    yaVoto: ((_a = votoRegistro.sentido) !== null && _a !== void 0 ? _a : 0) !== 0,
+                    yaVoto: ((_c = votoRegistro.sentido) !== null && _c !== void 0 ? _c : 0) !== 0,
                     sentidoActual: votoRegistro.sentido,
                     descripcion: (eventoInfo === null || eventoInfo === void 0 ? void 0 : eventoInfo.descripcion) || '',
                     fecha: (eventoInfo === null || eventoInfo === void 0 ? void 0 : eventoInfo.fecha) || '',
-                    idPunto: (_b = estado.idPunto) !== null && _b !== void 0 ? _b : null,
-                    idReserva: (_c = estado.idReserva) !== null && _c !== void 0 ? _c : null,
-                    idIniciativa: (_d = estado.idIniciativa) !== null && _d !== void 0 ? _d : null,
+                    idPunto: (_d = estado.idPunto) !== null && _d !== void 0 ? _d : null,
+                    idReserva: (_e = estado.idReserva) !== null && _e !== void 0 ? _e : null,
+                    idIniciativa: (_f = estado.idIniciativa) !== null && _f !== void 0 ? _f : null,
                 };
                 break;
             }
