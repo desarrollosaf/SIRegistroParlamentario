@@ -44,6 +44,7 @@ class Server {
             cors: {
                 origin: [
                     'https://parlamentario.congresoedomex.gob.mx',
+                    'https://parlamentario2.congresoedomex.gob.mx',
                     'https://nuevapagina.congresoedomex.gob.mx',
                     'http://localhost:4200',
                     'http://localhost:8100',
@@ -315,6 +316,7 @@ class Server {
             origin: function (origin, callback) {
                 const allowedOrigins = [
                     'https://parlamentario.congresoedomex.gob.mx',
+                    'https://parlamentario2.congresoedomex.gob.mx',
                     'https://nuevapagina.congresoedomex.gob.mx',
                     'https://congresoedomex.gob.mx',
                     'https://www.congresoedomex.gob.mx',
