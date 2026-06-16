@@ -512,22 +512,31 @@ export const getSesionesComisionesActivas = async (req: Request, res: Response):
 
         const resultado = await Promise.all(comisionSessions.map(async (s) => {
             let idComision: string | null = s.idComision ?? null;
+            let idComisiones: string[] = s.idComisiones?.length ? [...s.idComisiones] : [];
 
-            // Si el idComision ya es un UUID (36 chars) lo usamos directamente.
-            // Si es un SAF ID corto o no existe, buscamos por nombre en registrocomisiones.
-            const esUUID = idComision && idComision.length === 36 && idComision.includes('-');
-            if (!esUUID && s.titulo) {
+            // Si idComision no es UUID, intentar resolver por nombre
+            const esUUID = (id: string | null) => !!id && id.length === 36 && id.includes('-');
+            if (!esUUID(idComision) && s.titulo) {
                 const com = await Comision.findOne({ where: { nombre: s.titulo } }) as any;
-                idComision = com?.id ?? idComision;
+                if (com?.id) idComision = com.id;
             }
 
-            return {
-                idAgenda: s.idAgenda,
-                titulo: s.titulo,
-                fecha: s.fecha,
-                idComision,
-                idComisiones: (s.idComisiones?.length ? s.idComisiones : (idComision ? [idComision] : [])) as string[],
-            };
+            // Si todavía no tenemos UUIDs (sesión iniciada con código viejo), consultar AnfitrionAgenda
+            if (idComisiones.length === 0 && s.idAgenda) {
+                try {
+                    const anfitriones = await AnfitrionAgenda.findAll({
+                        where: { agenda_id: s.idAgenda },
+                        attributes: ['autor_id'],
+                        raw: true,
+                    }) as any[];
+                    idComisiones = anfitriones.map((a: any) => a.autor_id as string).filter(Boolean);
+                    if (!esUUID(idComision) && idComisiones.length > 0) idComision = idComisiones[0];
+                } catch {}
+            }
+
+            if (idComisiones.length === 0 && idComision) idComisiones = [idComision];
+
+            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones };
         }));
 
         return res.json({ sesiones: resultado.filter(s => s.idComision || s.idComisiones?.length) });
