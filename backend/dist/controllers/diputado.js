@@ -26,6 +26,7 @@ const integrante_comisions_1 = __importDefault(require("../models/integrante_com
 const comisions_1 = __importDefault(require("../models/comisions"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
+const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
 function getDiputadoId(integranteLegislaturaId) {
@@ -460,22 +461,33 @@ const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, voi
             .filter(([, s]) => s.esComision)
             .map(([clave, s]) => (Object.assign({ clave }, s)));
         const resultado = yield Promise.all(comisionSessions.map((s) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a, _b;
             let idComision = (_a = s.idComision) !== null && _a !== void 0 ? _a : null;
-            // Si el idComision ya es un UUID (36 chars) lo usamos directamente.
-            // Si es un SAF ID corto o no existe, buscamos por nombre en registrocomisiones.
-            const esUUID = idComision && idComision.length === 36 && idComision.includes('-');
-            if (!esUUID && s.titulo) {
+            let idComisiones = ((_b = s.idComisiones) === null || _b === void 0 ? void 0 : _b.length) ? [...s.idComisiones] : [];
+            // Si idComision no es UUID, intentar resolver por nombre
+            const esUUID = (id) => !!id && id.length === 36 && id.includes('-');
+            if (!esUUID(idComision) && s.titulo) {
                 const com = yield comisions_1.default.findOne({ where: { nombre: s.titulo } });
-                idComision = (_b = com === null || com === void 0 ? void 0 : com.id) !== null && _b !== void 0 ? _b : idComision;
+                if (com === null || com === void 0 ? void 0 : com.id)
+                    idComision = com.id;
             }
-            return {
-                idAgenda: s.idAgenda,
-                titulo: s.titulo,
-                fecha: s.fecha,
-                idComision,
-                idComisiones: (((_c = s.idComisiones) === null || _c === void 0 ? void 0 : _c.length) ? s.idComisiones : (idComision ? [idComision] : [])),
-            };
+            // Si todavía no tenemos UUIDs (sesión iniciada con código viejo), consultar AnfitrionAgenda
+            if (idComisiones.length === 0 && s.idAgenda) {
+                try {
+                    const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                        where: { agenda_id: s.idAgenda },
+                        attributes: ['autor_id'],
+                        raw: true,
+                    });
+                    idComisiones = anfitriones.map((a) => a.autor_id).filter(Boolean);
+                    if (!esUUID(idComision) && idComisiones.length > 0)
+                        idComision = idComisiones[0];
+                }
+                catch (_c) { }
+            }
+            if (idComisiones.length === 0 && idComision)
+                idComisiones = [idComision];
+            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones };
         })));
         return res.json({ sesiones: resultado.filter(s => { var _a; return s.idComision || ((_a = s.idComisiones) === null || _a === void 0 ? void 0 : _a.length); }) });
     }
