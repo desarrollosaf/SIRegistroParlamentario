@@ -24,8 +24,8 @@ class Server {
     private httpServer: http.Server;
     private io: SocketIOServer;
 
-    private asistenciasAbiertas: Map<string, { idAgenda: string; safId?: string }> = new Map();
-    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string }> = new Map();
+    private asistenciasAbiertas: Map<string, { idAgenda: string; safId?: string; idComisiones: string[] }> = new Map();
+    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string; idComisiones: string[] }> = new Map();
 
     // Mapa SAF-ID → UUID de registrocomisiones para comisiones
     private safIdToUUID: Map<string, string> = new Map();
@@ -142,7 +142,7 @@ class Server {
                 : await this.resolveUUIDs(data.idComision, data.idAgenda);
 
             for (const uuid of uuids) {
-                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision });
+                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids });
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
             for (const uuid of uuids) {
@@ -176,6 +176,7 @@ class Server {
                     idReserva: data.idReserva ?? null,
                     idIniciativa: data.idIniciativa ?? null,
                     safId: data.idComision,
+                    idComisiones: uuids,
                 });
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
