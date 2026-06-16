@@ -258,6 +258,7 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
                 const eventoInfo = await getInfoEvento(estado.idAgenda);
                 asistenciaPanel = {
                     idComision,
+                    idComisiones: (estado as any).idComisiones ?? [idComision],
                     idAgenda: estado.idAgenda,
                     yaRegistro: registro.sentido_voto !== 0,
                     descripcion: eventoInfo?.descripcion || '',
@@ -290,6 +291,7 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
                 const eventoInfo = await getInfoEvento(estado.idAgenda);
                 votacionPanel = {
                     idComision,
+                    idComisiones: (estado as any).idComisiones ?? [idComision],
                     idAgenda: estado.idAgenda,
                     punto: estado.punto,
                     id_voto_punto: votoRegistro.id,
