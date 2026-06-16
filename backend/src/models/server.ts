@@ -136,7 +136,12 @@ class Server {
 
         // Eventos para el panel del diputado
         socket.on('abrir-asistencia', async (data: { idComision: string, idAgenda: string }) => {
-            const uuids = await this.resolveUUIDs(data.idComision, data.idAgenda);
+            // Obtener UUIDs desde la sesión activa (fuente más confiable)
+            const sesion = this.sesionesActivas.get(data.idAgenda);
+            const uuids = sesion?.idComisiones?.length
+                ? sesion.idComisiones
+                : await this.resolveUUIDs(data.idComision, data.idAgenda);
+
             for (const uuid of uuids) {
                 this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision });
             }
@@ -158,7 +163,12 @@ class Server {
         });
 
         socket.on('abrir-votacion', async (data: { idComision: string, idAgenda: string, punto: any, idPunto?: any, idReserva?: string | null, idIniciativa?: string | null }) => {
-            const uuids = await this.resolveUUIDs(data.idComision, data.idAgenda);
+            // Obtener UUIDs desde la sesión activa (fuente más confiable)
+            const sesion = this.sesionesActivas.get(data.idAgenda);
+            const uuids = sesion?.idComisiones?.length
+                ? sesion.idComisiones
+                : await this.resolveUUIDs(data.idComision, data.idAgenda);
+
             for (const uuid of uuids) {
                 this.votacionesAbiertas.set(uuid, {
                     idAgenda: data.idAgenda,

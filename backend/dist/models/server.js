@@ -125,7 +125,12 @@ class Server {
             });
             // Eventos para el panel del diputado
             socket.on('abrir-asistencia', (data) => __awaiter(this, void 0, void 0, function* () {
-                const uuids = yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                var _a;
+                // Obtener UUIDs desde la sesión activa (fuente más confiable)
+                const sesion = this.sesionesActivas.get(data.idAgenda);
+                const uuids = ((_a = sesion === null || sesion === void 0 ? void 0 : sesion.idComisiones) === null || _a === void 0 ? void 0 : _a.length)
+                    ? sesion.idComisiones
+                    : yield this.resolveUUIDs(data.idComision, data.idAgenda);
                 for (const uuid of uuids) {
                     this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision });
                 }
@@ -145,15 +150,19 @@ class Server {
                 }
             });
             socket.on('abrir-votacion', (data) => __awaiter(this, void 0, void 0, function* () {
-                var _a, _b, _c;
-                const uuids = yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                var _a, _b, _c, _d;
+                // Obtener UUIDs desde la sesión activa (fuente más confiable)
+                const sesion = this.sesionesActivas.get(data.idAgenda);
+                const uuids = ((_a = sesion === null || sesion === void 0 ? void 0 : sesion.idComisiones) === null || _a === void 0 ? void 0 : _a.length)
+                    ? sesion.idComisiones
+                    : yield this.resolveUUIDs(data.idComision, data.idAgenda);
                 for (const uuid of uuids) {
                     this.votacionesAbiertas.set(uuid, {
                         idAgenda: data.idAgenda,
                         punto: data.punto,
-                        idPunto: (_a = data.idPunto) !== null && _a !== void 0 ? _a : null,
-                        idReserva: (_b = data.idReserva) !== null && _b !== void 0 ? _b : null,
-                        idIniciativa: (_c = data.idIniciativa) !== null && _c !== void 0 ? _c : null,
+                        idPunto: (_b = data.idPunto) !== null && _b !== void 0 ? _b : null,
+                        idReserva: (_c = data.idReserva) !== null && _c !== void 0 ? _c : null,
+                        idIniciativa: (_d = data.idIniciativa) !== null && _d !== void 0 ? _d : null,
                         safId: data.idComision,
                     });
                 }
