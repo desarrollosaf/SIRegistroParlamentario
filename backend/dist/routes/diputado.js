@@ -17,4 +17,5 @@ router.get('/api/diputado/sesiones-comisiones-activas', auth_1.verifyToken, dipu
 router.get('/api/diputado/mi-asistencia/:idAgenda', auth_1.verifyToken, diputado_1.getMiAsistencia);
 router.get('/api/diputado/orden-del-dia/:idAgenda', auth_1.verifyToken, diputado_1.getOrdenDelDia);
 router.get('/api/diputado/mis-votos/:idAgenda', auth_1.verifyToken, diputado_1.getMisVotos);
+router.get('/api/diputado/comision/:idComision/info', auth_1.verifyToken, diputado_1.getComisionInfo);
 exports.default = router;

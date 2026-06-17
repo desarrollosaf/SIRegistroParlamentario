@@ -1684,6 +1684,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
 
         } else if (estudiado.type === "2") {
           if (esSesion) {
+            console.log('estudiado.punto_destino_id', estudiado.punto_destino_id);
             const info: any[] = [];
             const puntoss = await PuntosOrden.findAll({
               where: { id_dictamen: estudiado.punto_destino_id },

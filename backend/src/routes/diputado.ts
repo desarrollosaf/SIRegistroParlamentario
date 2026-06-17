@@ -11,6 +11,7 @@ import {
     getOrdenDelDia,
     getMisVotos,
     getSesionesComisionesActivas,
+    getComisionInfo,
 } from '../controllers/diputado';
 import { verifyToken } from '../middlewares/auth';
 
@@ -30,5 +31,6 @@ router.get('/api/diputado/sesiones-comisiones-activas', verifyToken, getSesiones
 router.get('/api/diputado/mi-asistencia/:idAgenda', verifyToken, getMiAsistencia);
 router.get('/api/diputado/orden-del-dia/:idAgenda', verifyToken, getOrdenDelDia);
 router.get('/api/diputado/mis-votos/:idAgenda', verifyToken, getMisVotos);
+router.get('/api/diputado/comision/:idComision/info', verifyToken, getComisionInfo);
 
 export default router;
