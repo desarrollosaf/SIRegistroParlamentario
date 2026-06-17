@@ -1524,6 +1524,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 else if (estudiado.type === "2") {
                     if (esSesion) {
+                        console.log('estudiado.punto_destino_id', estudiado.punto_destino_id);
                         const info = [];
                         const puntoss = yield puntos_ordens_1.default.findAll({
                             where: { id_dictamen: estudiado.punto_destino_id },

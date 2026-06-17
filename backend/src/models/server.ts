@@ -297,6 +297,7 @@ class Server {
             const payload = {
                 clave,
                 idAgenda: data.idAgenda,
+                esComision: data.esComision,
                 idComision: sesionPrevia?.idComision ?? idComisiones[0] ?? undefined,
                 idComisiones,
             };

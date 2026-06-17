@@ -130,9 +130,11 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
 
-        const registro = await AsistenciaVoto.findOne({
-            where: { id_diputado: diputadoId, id_agenda }
-        });
+        // Para eventos conjuntos hay un registro por comisión — filtrar por comision_dip_id cuando se provee
+        const whereAsistencia: any = { id_diputado: diputadoId, id_agenda };
+        if (id_comision) whereAsistencia.comision_dip_id = id_comision;
+
+        const registro = await AsistenciaVoto.findOne({ where: whereAsistencia });
 
         if (!registro) {
             return res.status(404).json({ msg: 'No se encontró registro de asistencia. El administrador debe iniciar la sesión.' });
@@ -184,8 +186,9 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
             return res.status(400).json({ msg: 'sentido_voto es requerido' });
         }
 
-        if (![1, 2, 3].includes(Number(sentido_voto))) {
-            return res.status(400).json({ msg: 'sentido_voto debe ser 1 (a favor), 2 (abstención) o 3 (en contra)' });
+        // 0 = Sin Registro (reset a pendiente), 1-3 = votos normales
+        if (![0, 1, 2, 3].includes(Number(sentido_voto))) {
+            return res.status(400).json({ msg: 'sentido_voto debe ser 0 (sin registro), 1 (a favor), 2 (abstención) o 3 (en contra)' });
         }
 
         const diputadoIdVoto = await getDiputadoId(integranteLegislaturaId);
@@ -193,22 +196,44 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
 
-        if (!id_voto_punto) {
-            return res.status(400).json({ msg: 'id_voto_punto es requerido' });
+        // Buscar el registro de voto correcto
+        let votoRegistro: any = null;
+
+        // Para eventos conjuntos: buscar por comision_dip_id usando votacionesAbiertas
+        if (id_comision) {
+            const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
+            const votAbierta = votacionesAbiertas.get(id_comision);
+            if (votAbierta) {
+                const whereVoto: any = { id_diputado: diputadoIdVoto, id_comision_dip: id_comision };
+                if (votAbierta.idReserva) {
+                    whereVoto.id_tema_punto_voto = votAbierta.idReserva;
+                } else if (votAbierta.idPunto && votAbierta.idIniciativa) {
+                    whereVoto.id_punto = votAbierta.idPunto;
+                    whereVoto.id_iniciativa = votAbierta.idIniciativa;
+                } else if (votAbierta.idPunto) {
+                    whereVoto.id_punto = votAbierta.idPunto;
+                }
+                votoRegistro = await VotosPunto.findOne({ where: whereVoto });
+            }
         }
 
-        const votoRegistro = await VotosPunto.findOne({
-            where: { id: id_voto_punto, id_diputado: diputadoIdVoto }
-        });
+        // Fallback: buscar por id_voto_punto directo
+        if (!votoRegistro && id_voto_punto) {
+            votoRegistro = await VotosPunto.findOne({
+                where: { id: id_voto_punto, id_diputado: diputadoIdVoto }
+            });
+        }
 
         if (!votoRegistro) {
             return res.status(404).json({ msg: 'No se encontró el registro de votación para este diputado.' });
         }
 
         const sentido = Number(sentido_voto);
-        const mensajeVoto = sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
+        // sentido 0 = Sin Registro → reset a null
+        const sentidoDb = sentido === 0 ? null : sentido;
+        const mensajeVoto = sentido === 0 ? 'Sin Registro' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
 
-        await votoRegistro.update({ sentido, mensaje: mensajeVoto });
+        await votoRegistro.update({ sentido: sentidoDb, mensaje: mensajeVoto });
 
         const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
         const io = req.app.get('io');
@@ -497,6 +522,60 @@ export const getMisVotos = async (req: Request, res: Response): Promise<any> => 
             msg: 'Error al obtener votos',
             error: error.message
         });
+    }
+};
+
+/** Devuelve próximos eventos, eventos pasados e integrantes de una comisión */
+export const getComisionInfo = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idComision } = req.params;
+        const now = new Date();
+        const fechaHoy = now.toISOString().slice(0, 10);
+
+        // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
+        const [proximos]: any = await sequelizeSAF.query(`
+            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+            FROM agendas a
+            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+            WHERE aa.autor_id = :idComision
+              AND a.deleted_at IS NULL
+              AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
+            ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
+            LIMIT 5
+        `, { replacements: { idComision, fechaHoy } });
+
+        // Eventos pasados (últimas 5 sesiones)
+        const [pasados]: any = await sequelizeSAF.query(`
+            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+            FROM agendas a
+            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+            WHERE aa.autor_id = :idComision
+              AND a.deleted_at IS NULL
+              AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
+            ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
+            LIMIT 5
+        `, { replacements: { idComision, fechaHoy } });
+
+        // Integrantes con nombre y cargo
+        const integrantesRaw = await IntegranteComision.findAll({
+            where: { comision_id: idComision, fecha_fin: null },
+            include: [{ model: TipoCargoComision, as: 'tipo_cargo', attributes: ['valor'] }],
+            order: [['orden', 'ASC']],
+        }) as any[];
+
+        const integrantes = await Promise.all(integrantesRaw.map(async (ic: any) => {
+            const il = await IntegranteLegislatura.findByPk(ic.integrante_legislatura_id, { raw: true }) as any;
+            let nombre = 'Diputado/a';
+            if (il?.diputado_id) {
+                const dip = await Diputado.findByPk(il.diputado_id, { raw: true }) as any;
+                if (dip) nombre = dip.alias ?? `${dip.nombres ?? ''} ${dip.apaterno ?? ''} ${dip.amaterno ?? ''}`.trim();
+            }
+            return { id: ic.id, nombre, cargo: ic.tipo_cargo?.valor ?? '', orden: ic.orden };
+        }));
+
+        return res.json({ proximos, pasados, integrantes });
+    } catch (error: any) {
+        return res.status(500).json({ msg: 'Error al obtener info de comisión', error: error.message });
     }
 };
 

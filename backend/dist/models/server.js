@@ -269,6 +269,7 @@ class Server {
                 const payload = {
                     clave,
                     idAgenda: data.idAgenda,
+                    esComision: data.esComision,
                     idComision: (_c = (_b = sesionPrevia === null || sesionPrevia === void 0 ? void 0 : sesionPrevia.idComision) !== null && _b !== void 0 ? _b : idComisiones[0]) !== null && _c !== void 0 ? _c : undefined,
                     idComisiones,
                 };
