@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMisComisiones = exports.getSesionesComisionesActivas = exports.getMisVotos = exports.getOrdenDelDia = exports.getMiAsistencia = exports.getMiPerfil = exports.getSesionActiva = exports.getEstadoPanel = exports.registrarVoto = exports.registrarAsistencia = exports.crearCuentasDiputados = void 0;
+exports.getMisComisiones = exports.getSesionesComisionesActivas = exports.getComisionInfo = exports.getMisVotos = exports.getOrdenDelDia = exports.getMiAsistencia = exports.getMiPerfil = exports.getSesionActiva = exports.getEstadoPanel = exports.registrarVoto = exports.registrarAsistencia = exports.crearCuentasDiputados = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = __importDefault(require("../models/user"));
 const role_users_1 = __importDefault(require("../models/role_users"));
@@ -130,9 +130,11 @@ const registrarAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, func
         if (!diputadoId) {
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
-        const registro = yield asistencia_votos_1.default.findOne({
-            where: { id_diputado: diputadoId, id_agenda }
-        });
+        // Para eventos conjuntos hay un registro por comisión — filtrar por comision_dip_id cuando se provee
+        const whereAsistencia = { id_diputado: diputadoId, id_agenda };
+        if (id_comision)
+            whereAsistencia.comision_dip_id = id_comision;
+        const registro = yield asistencia_votos_1.default.findOne({ where: whereAsistencia });
         if (!registro) {
             return res.status(404).json({ msg: 'No se encontró registro de asistencia. El administrador debe iniciar la sesión.' });
         }
@@ -170,25 +172,49 @@ const registrarVoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (sentido_voto === undefined) {
             return res.status(400).json({ msg: 'sentido_voto es requerido' });
         }
-        if (![1, 2, 3].includes(Number(sentido_voto))) {
-            return res.status(400).json({ msg: 'sentido_voto debe ser 1 (a favor), 2 (abstención) o 3 (en contra)' });
+        // 0 = Sin Registro (reset a pendiente), 1-3 = votos normales
+        if (![0, 1, 2, 3].includes(Number(sentido_voto))) {
+            return res.status(400).json({ msg: 'sentido_voto debe ser 0 (sin registro), 1 (a favor), 2 (abstención) o 3 (en contra)' });
         }
         const diputadoIdVoto = yield getDiputadoId(integranteLegislaturaId);
         if (!diputadoIdVoto) {
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
-        if (!id_voto_punto) {
-            return res.status(400).json({ msg: 'id_voto_punto es requerido' });
+        // Buscar el registro de voto correcto
+        let votoRegistro = null;
+        // Para eventos conjuntos: buscar por comision_dip_id usando votacionesAbiertas
+        if (id_comision) {
+            const votacionesAbiertas = req.app.get('votacionesAbiertas') || new Map();
+            const votAbierta = votacionesAbiertas.get(id_comision);
+            if (votAbierta) {
+                const whereVoto = { id_diputado: diputadoIdVoto, id_comision_dip: id_comision };
+                if (votAbierta.idReserva) {
+                    whereVoto.id_tema_punto_voto = votAbierta.idReserva;
+                }
+                else if (votAbierta.idPunto && votAbierta.idIniciativa) {
+                    whereVoto.id_punto = votAbierta.idPunto;
+                    whereVoto.id_iniciativa = votAbierta.idIniciativa;
+                }
+                else if (votAbierta.idPunto) {
+                    whereVoto.id_punto = votAbierta.idPunto;
+                }
+                votoRegistro = yield votos_punto_1.default.findOne({ where: whereVoto });
+            }
         }
-        const votoRegistro = yield votos_punto_1.default.findOne({
-            where: { id: id_voto_punto, id_diputado: diputadoIdVoto }
-        });
+        // Fallback: buscar por id_voto_punto directo
+        if (!votoRegistro && id_voto_punto) {
+            votoRegistro = yield votos_punto_1.default.findOne({
+                where: { id: id_voto_punto, id_diputado: diputadoIdVoto }
+            });
+        }
         if (!votoRegistro) {
             return res.status(404).json({ msg: 'No se encontró el registro de votación para este diputado.' });
         }
         const sentido = Number(sentido_voto);
-        const mensajeVoto = sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
-        yield votoRegistro.update({ sentido, mensaje: mensajeVoto });
+        // sentido 0 = Sin Registro → reset a null
+        const sentidoDb = sentido === 0 ? null : sentido;
+        const mensajeVoto = sentido === 0 ? 'Sin Registro' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
+        yield votoRegistro.update({ sentido: sentidoDb, mensaje: mensajeVoto });
         const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
         const io = req.app.get('io');
         if (io && roomIdVoto) {
@@ -452,6 +478,58 @@ const getMisVotos = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getMisVotos = getMisVotos;
+/** Devuelve próximos eventos, eventos pasados e integrantes de una comisión */
+const getComisionInfo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { idComision } = req.params;
+        const now = new Date();
+        const fechaHoy = now.toISOString().slice(0, 10);
+        // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
+        const [proximos] = yield registrocomisiones_1.default.query(`
+            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+            FROM agendas a
+            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+            WHERE aa.autor_id = :idComision
+              AND a.deleted_at IS NULL
+              AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
+            ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
+            LIMIT 5
+        `, { replacements: { idComision, fechaHoy } });
+        // Eventos pasados (últimas 5 sesiones)
+        const [pasados] = yield registrocomisiones_1.default.query(`
+            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+            FROM agendas a
+            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+            WHERE aa.autor_id = :idComision
+              AND a.deleted_at IS NULL
+              AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
+            ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
+            LIMIT 5
+        `, { replacements: { idComision, fechaHoy } });
+        // Integrantes con nombre y cargo
+        const integrantesRaw = yield integrante_comisions_1.default.findAll({
+            where: { comision_id: idComision, fecha_fin: null },
+            include: [{ model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['valor'] }],
+            order: [['orden', 'ASC']],
+        });
+        const integrantes = yield Promise.all(integrantesRaw.map((ic) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e, _f;
+            const il = yield integrante_legislaturas_1.default.findByPk(ic.integrante_legislatura_id, { raw: true });
+            let nombre = 'Diputado/a';
+            if (il === null || il === void 0 ? void 0 : il.diputado_id) {
+                const dip = yield diputado_1.default.findByPk(il.diputado_id, { raw: true });
+                if (dip)
+                    nombre = (_a = dip.alias) !== null && _a !== void 0 ? _a : `${(_b = dip.nombres) !== null && _b !== void 0 ? _b : ''} ${(_c = dip.apaterno) !== null && _c !== void 0 ? _c : ''} ${(_d = dip.amaterno) !== null && _d !== void 0 ? _d : ''}`.trim();
+            }
+            return { id: ic.id, nombre, cargo: (_f = (_e = ic.tipo_cargo) === null || _e === void 0 ? void 0 : _e.valor) !== null && _f !== void 0 ? _f : '', orden: ic.orden };
+        })));
+        return res.json({ proximos, pasados, integrantes });
+    }
+    catch (error) {
+        return res.status(500).json({ msg: 'Error al obtener info de comisión', error: error.message });
+    }
+});
+exports.getComisionInfo = getComisionInfo;
 // Retorna sesiones de comisión activas con su idComision.
 // Para sesiones antiguas (sin idComision guardado) lo resuelve via AnfitrionAgenda.
 const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
