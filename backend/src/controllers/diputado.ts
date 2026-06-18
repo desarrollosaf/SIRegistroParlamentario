@@ -13,6 +13,8 @@ import Comision from '../models/comisions';
 import TipoCargoComision from '../models/tipo_cargo_comisions';
 import PuntosOrden from '../models/puntos_ordens';
 import AnfitrionAgenda from '../models/anfitrion_agendas';
+import Agenda from '../models/agendas';
+import Sedes from '../models/sedes';
 
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
@@ -618,7 +620,19 @@ export const getSesionesComisionesActivas = async (req: Request, res: Response):
 
             if (idComisiones.length === 0 && idComision) idComisiones = [idComision];
 
-            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones };
+            // Obtener sede desde la tabla agendas → sedes
+            let sede: string | null = null;
+            if (s.idAgenda) {
+                try {
+                    const agenda = await Agenda.findByPk(s.idAgenda, {
+                        include: [{ model: Sedes, as: 'sede', attributes: ['sede'] }],
+                        attributes: ['id'],
+                    }) as any;
+                    sede = agenda?.sede?.sede ?? null;
+                } catch {}
+            }
+
+            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones, sede };
         }));
 
         return res.json({ sesiones: resultado.filter(s => s.idComision || s.idComisiones?.length) });

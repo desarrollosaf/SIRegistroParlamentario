@@ -27,6 +27,8 @@ const comisions_1 = __importDefault(require("../models/comisions"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
+const agendas_1 = __importDefault(require("../models/agendas"));
+const sedes_1 = __importDefault(require("../models/sedes"));
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
 function getDiputadoId(integranteLegislaturaId) {
@@ -543,7 +545,7 @@ const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, voi
             .filter(([, s]) => s.esComision)
             .map(([clave, s]) => (Object.assign({ clave }, s)));
         const resultado = yield Promise.all(comisionSessions.map((s) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b;
+            var _a, _b, _c, _d;
             let idComision = (_a = s.idComision) !== null && _a !== void 0 ? _a : null;
             let idComisiones = ((_b = s.idComisiones) === null || _b === void 0 ? void 0 : _b.length) ? [...s.idComisiones] : [];
             // Si idComision no es UUID, intentar resolver por nombre
@@ -565,11 +567,23 @@ const getSesionesComisionesActivas = (req, res) => __awaiter(void 0, void 0, voi
                     if (!esUUID(idComision) && idComisiones.length > 0)
                         idComision = idComisiones[0];
                 }
-                catch (_c) { }
+                catch (_e) { }
             }
             if (idComisiones.length === 0 && idComision)
                 idComisiones = [idComision];
-            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones };
+            // Obtener sede desde la tabla agendas → sedes
+            let sede = null;
+            if (s.idAgenda) {
+                try {
+                    const agenda = yield agendas_1.default.findByPk(s.idAgenda, {
+                        include: [{ model: sedes_1.default, as: 'sede', attributes: ['sede'] }],
+                        attributes: ['id'],
+                    });
+                    sede = (_d = (_c = agenda === null || agenda === void 0 ? void 0 : agenda.sede) === null || _c === void 0 ? void 0 : _c.sede) !== null && _d !== void 0 ? _d : null;
+                }
+                catch (_f) { }
+            }
+            return { idAgenda: s.idAgenda, titulo: s.titulo, fecha: s.fecha, idComision, idComisiones, sede };
         })));
         return res.json({ sesiones: resultado.filter(s => { var _a; return s.idComision || ((_a = s.idComisiones) === null || _a === void 0 ? void 0 : _a.length); }) });
     }
