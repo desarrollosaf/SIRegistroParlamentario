@@ -1,0 +1,87 @@
+<div class="container-xxl">
+  <div class="row">
+    <div class="col-12">
+
+      <!-- Encabezado -->
+      <div class="tr-header d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="tr-live-indicator"></div>
+          <div>
+            <h4 class="tr-title mb-0">Transmisión en Vivo</h4>
+            <p class="tr-subtitle mb-0">
+              @if (sesionesActivas.length === 0) { Sin sesiones activas }
+              @else { {{ sesionesActivas.length }} sesión{{ sesionesActivas.length !== 1 ? 'es' : '' }} de comisión en curso }
+            </p>
+          </div>
+        </div>
+        <div class="tr-count-badge">
+          {{ sesionesActivas.length }}
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      @if (sesionesActivas.length === 0) {
+        <div class="tr-empty">
+          <i class="feather icon-radio tr-empty-icon" appFeatherIcon data-feather="radio"></i>
+          <p class="tr-empty-title">Sin transmisiones activas</p>
+          <p class="tr-empty-sub">Las sesiones de comisión iniciadas desde la agenda aparecerán aquí y podrás cerrarlas desde este panel.</p>
+        </div>
+      }
+
+      <!-- Cards de sesiones -->
+      <div class="row g-3">
+        @for (sesion of sesionesActivas; track sesion.clave) {
+          <div class="col-md-6 col-xl-4">
+            <div class="tr-card">
+
+              <div class="tr-card-top">
+                <span class="tr-live-badge">
+                  <span class="tr-pulse-dot"></span>
+                  EN VIVO
+                </span>
+                @if (sesion.iniciadaEn) {
+                  <span class="tr-tiempo">{{ formatTiempo(sesion.iniciadaEn) }}</span>
+                }
+              </div>
+
+              <div class="tr-card-body">
+                <h5 class="tr-card-titulo">{{ sesion.titulo }}</h5>
+
+                @if (sesion.fecha) {
+                  <div class="tr-card-meta">
+                    <i class="feather icon-calendar" appFeatherIcon data-feather="calendar"></i>
+                    <span>{{ formatFecha(sesion.fecha) }}</span>
+                  </div>
+                }
+
+                @if ((sesion.idComisiones?.length ?? 0) > 1) {
+                  <div class="tr-card-meta tr-card-meta-joint">
+                    <i class="feather icon-users" appFeatherIcon data-feather="users"></i>
+                    <span>Evento conjunto · {{ sesion.idComisiones.length }} comisiones</span>
+                  </div>
+                }
+              </div>
+
+              <div class="tr-card-footer">
+                <button class="tr-btn-cerrar"
+                        [class.tr-cerrando]="cerrando.has(sesion.clave)"
+                        [disabled]="cerrando.has(sesion.clave)"
+                        (click)="cerrarSesion(sesion)">
+                  @if (cerrando.has(sesion.clave)) {
+                    <i class="feather icon-loader" appFeatherIcon data-feather="loader"></i>
+                    Cerrando sesión...
+                  } @else {
+                    <i class="feather icon-stop-circle" appFeatherIcon data-feather="stop-circle"></i>
+                    Cerrar Sesión
+                  }
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+      </div>
+
+    </div>
+  </div>
+</div>

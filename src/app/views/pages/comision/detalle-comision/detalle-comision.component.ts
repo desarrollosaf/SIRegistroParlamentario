@@ -2732,9 +2732,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
     this._eventoService.saveVotacion(datos).subscribe({
       next: (response: any) => {
+        this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error al votar:', e);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -2802,10 +2804,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         return 'votacion-abstencion';
       case 3:
         return 'votacion-contra';
-      case 0:
-        return 'votacion-pendiente';
       default:
-        return '';
+        return 'votacion-pendiente'; // 0 y null = pendiente
     }
   }
 

@@ -29,6 +29,11 @@ export const MENU: MenuItem[] = [
     ]
   },
   {
+    label: 'Transmisión',
+    icon: 'radio',
+    link: '/transmision'
+  },
+  {
     label: 'Catalogos',
     icon: 'book',
     subMenus: [
