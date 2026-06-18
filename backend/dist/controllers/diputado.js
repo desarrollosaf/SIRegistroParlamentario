@@ -211,10 +211,9 @@ const registrarVoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return res.status(404).json({ msg: 'No se encontró el registro de votación para este diputado.' });
         }
         const sentido = Number(sentido_voto);
-        // sentido 0 = Sin Registro → reset a null
-        const sentidoDb = sentido === 0 ? null : sentido;
-        const mensajeVoto = sentido === 0 ? 'Sin Registro' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
-        yield votoRegistro.update({ sentido: sentidoDb, mensaje: mensajeVoto });
+        // sentido 0 = Sin Registro del diputado → mismo estado que pendiente (0 / PENDIENTE)
+        const mensajeVoto = sentido === 0 ? 'PENDIENTE' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
+        yield votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
         const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
         const io = req.app.get('io');
         if (io && roomIdVoto) {
@@ -247,9 +246,12 @@ const getEstadoPanel = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         const asistenciasAbiertas = req.app.get('asistenciasAbiertas') || new Map();
         const votacionesAbiertas = req.app.get('votacionesAbiertas') || new Map();
+        const filtroAgenda = req.query.idAgenda;
         let asistenciaPanel = null;
         let votacionPanel = null;
         for (const [idComision, estado] of asistenciasAbiertas.entries()) {
+            if (filtroAgenda && estado.idAgenda !== filtroAgenda)
+                continue;
             const registro = yield asistencia_votos_1.default.findOne({
                 where: { id_diputado: diputadoIdPanel, id_agenda: estado.idAgenda }
             });
@@ -267,6 +269,8 @@ const getEstadoPanel = (req, res) => __awaiter(void 0, void 0, void 0, function*
             }
         }
         for (const [idComision, estado] of votacionesAbiertas.entries()) {
+            if (filtroAgenda && estado.idAgenda !== filtroAgenda)
+                continue;
             const { idPunto, idReserva, idIniciativa } = estado;
             let whereVoto = { id_diputado: diputadoIdPanel };
             if (idReserva) {

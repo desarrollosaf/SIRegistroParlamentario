@@ -229,11 +229,10 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
         }
 
         const sentido = Number(sentido_voto);
-        // sentido 0 = Sin Registro → reset a null
-        const sentidoDb = sentido === 0 ? null : sentido;
-        const mensajeVoto = sentido === 0 ? 'Sin Registro' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
+        // sentido 0 = Sin Registro del diputado → mismo estado que pendiente (0 / PENDIENTE)
+        const mensajeVoto = sentido === 0 ? 'PENDIENTE' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
 
-        await votoRegistro.update({ sentido: sentidoDb, mensaje: mensajeVoto });
+        await votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
 
         const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
         const io = req.app.get('io');
@@ -272,10 +271,13 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
         const votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null }> =
             req.app.get('votacionesAbiertas') || new Map();
 
+        const filtroAgenda = req.query.idAgenda as string | undefined;
+
         let asistenciaPanel: any = null;
         let votacionPanel: any = null;
 
         for (const [idComision, estado] of asistenciasAbiertas.entries()) {
+            if (filtroAgenda && estado.idAgenda !== filtroAgenda) continue;
             const registro = await AsistenciaVoto.findOne({
                 where: { id_diputado: diputadoIdPanel, id_agenda: estado.idAgenda }
             });
@@ -294,6 +296,7 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
         }
 
         for (const [idComision, estado] of votacionesAbiertas.entries()) {
+            if (filtroAgenda && estado.idAgenda !== filtroAgenda) continue;
             const { idPunto, idReserva, idIniciativa } = estado;
 
             let whereVoto: any = { id_diputado: diputadoIdPanel };

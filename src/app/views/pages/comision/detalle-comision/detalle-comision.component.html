@@ -1525,7 +1525,7 @@
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-secondary flex-fill"
-                                                                            [class.active]="votante.sentido === 0"
+                                                                            [class.active]="!votante.sentido"
                                                                             (click)="marcarVotacion(votante, 0)"
                                                                             title="Pendiente">
                                                                             <i class="bi bi-hourglass-split"></i>
@@ -1577,7 +1577,7 @@
                                                                         </button>
                                                                         <button type="button"
                                                                             class="btn btn-outline-secondary flex-fill"
-                                                                            [class.active]="votante.sentido === 0"
+                                                                            [class.active]="!votante.sentido"
                                                                             (click)="marcarVotacion(votante, 0)"
                                                                             title="Pendiente">
                                                                             <i class="bi bi-hourglass-split"></i>

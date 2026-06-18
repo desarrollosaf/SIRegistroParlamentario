@@ -78,6 +78,10 @@ export const routes: Routes = [
        path: 'reporte-iniciativas',
        loadChildren: () => import('./views/pages/reporte-iniciativas/reporte-iniciativas.route')
       },
+      {
+       path: 'transmision',
+       loadChildren: () => import('./views/pages/transmision/transmision.route')
+      },
     ]
   },
   {
