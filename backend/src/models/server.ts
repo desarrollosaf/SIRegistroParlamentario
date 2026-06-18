@@ -16,6 +16,8 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import Comision from './comisions';
 import AnfitrionAgenda from './anfitrion_agendas';
+import Agenda from './agendas';
+import Sedes from './sedes';
 
 class Server {
 
@@ -254,6 +256,17 @@ class Server {
                 } catch {}
             }
 
+            let sedeNombre: string | null = null;
+            if (data.idAgenda) {
+                try {
+                    const agenda = await Agenda.findByPk(data.idAgenda, {
+                        include: [{ model: Sedes, as: 'sede', attributes: ['sede'] }],
+                        attributes: ['id'],
+                    }) as any;
+                    sedeNombre = agenda?.sede?.sede ?? null;
+                } catch {}
+            }
+
             const sesion = {
                 idAgenda: data.idAgenda,
                 titulo: data.titulo,
@@ -262,6 +275,7 @@ class Server {
                 idComision: idComisionUUID,
                 idComisiones,
                 ordenDia: data.ordenDia,
+                sede: sedeNombre,
                 iniciadaEn: new Date().toISOString()
             };
 
@@ -307,8 +321,21 @@ class Server {
         });
 
         // Un cliente recién conectado pregunta qué sesiones están activas
-        socket.on('get-sesiones-activas', () => {
-            const lista = Array.from(this.sesionesActivas.entries()).map(([clave, s]) => ({ clave, ...s }));
+        socket.on('get-sesiones-activas', async () => {
+            const entries = Array.from(this.sesionesActivas.entries());
+            const lista = await Promise.all(entries.map(async ([clave, s]) => {
+                let sede: string | null = null;
+                if (s.idAgenda) {
+                    try {
+                        const agenda = await Agenda.findByPk(s.idAgenda, {
+                            include: [{ model: Sedes, as: 'sede', attributes: ['sede'] }],
+                            attributes: ['id'],
+                        }) as any;
+                        sede = agenda?.sede?.sede ?? null;
+                    } catch {}
+                }
+                return { clave, ...s, sede };
+            }));
             socket.emit('sesiones-activas', lista);
         });
 

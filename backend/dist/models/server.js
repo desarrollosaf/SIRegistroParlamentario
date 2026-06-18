@@ -30,6 +30,8 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const comisions_1 = __importDefault(require("./comisions"));
 const anfitrion_agendas_1 = __importDefault(require("./anfitrion_agendas"));
+const agendas_1 = __importDefault(require("./agendas"));
+const sedes_1 = __importDefault(require("./sedes"));
 class Server {
     constructor() {
         this.asistenciasAbiertas = new Map();
@@ -185,6 +187,7 @@ class Server {
             });
             // ── Sesiones activas ────────────────────────────────────────────
             socket.on('iniciar-sesion', (data) => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b;
                 const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
                 // Para sesión plenaria solo puede haber una activa
                 if (!data.esComision && this.sesionesActivas.has('sesion-plenaria')) {
@@ -216,7 +219,7 @@ class Server {
                                 this.safIdToUUID.set(data.idComision, idComisiones[0]);
                         }
                     }
-                    catch (_a) { }
+                    catch (_c) { }
                 }
                 // Fallback: si no hubo anfitriones, intentar resolver por nombre
                 if (idComisiones.length === 0 && data.esComision && data.titulo) {
@@ -229,7 +232,18 @@ class Server {
                             idComisiones.push(com.id);
                         }
                     }
-                    catch (_b) { }
+                    catch (_d) { }
+                }
+                let sedeNombre = null;
+                if (data.idAgenda) {
+                    try {
+                        const agenda = yield agendas_1.default.findByPk(data.idAgenda, {
+                            include: [{ model: sedes_1.default, as: 'sede', attributes: ['sede'] }],
+                            attributes: ['id'],
+                        });
+                        sedeNombre = (_b = (_a = agenda === null || agenda === void 0 ? void 0 : agenda.sede) === null || _a === void 0 ? void 0 : _a.sede) !== null && _b !== void 0 ? _b : null;
+                    }
+                    catch (_e) { }
                 }
                 const sesion = {
                     idAgenda: data.idAgenda,
@@ -239,6 +253,7 @@ class Server {
                     idComision: idComisionUUID,
                     idComisiones,
                     ordenDia: data.ordenDia,
+                    sede: sedeNombre,
                     iniciadaEn: new Date().toISOString()
                 };
                 this.sesionesActivas.set(clave, sesion);
@@ -278,10 +293,25 @@ class Server {
                 this.io.to(`proyeccion-${data.idAgenda}`).emit('sesion-terminada', payload);
             }));
             // Un cliente recién conectado pregunta qué sesiones están activas
-            socket.on('get-sesiones-activas', () => {
-                const lista = Array.from(this.sesionesActivas.entries()).map(([clave, s]) => (Object.assign({ clave }, s)));
+            socket.on('get-sesiones-activas', () => __awaiter(this, void 0, void 0, function* () {
+                const entries = Array.from(this.sesionesActivas.entries());
+                const lista = yield Promise.all(entries.map((_a) => __awaiter(this, [_a], void 0, function* ([clave, s]) {
+                    var _b, _c;
+                    let sede = null;
+                    if (s.idAgenda) {
+                        try {
+                            const agenda = yield agendas_1.default.findByPk(s.idAgenda, {
+                                include: [{ model: sedes_1.default, as: 'sede', attributes: ['sede'] }],
+                                attributes: ['id'],
+                            });
+                            sede = (_c = (_b = agenda === null || agenda === void 0 ? void 0 : agenda.sede) === null || _b === void 0 ? void 0 : _b.sede) !== null && _c !== void 0 ? _c : null;
+                        }
+                        catch (_d) { }
+                    }
+                    return Object.assign(Object.assign({ clave }, s), { sede });
+                })));
                 socket.emit('sesiones-activas', lista);
-            });
+            }));
             // Consulta el estado actual de asistencias y votaciones abiertas
             socket.on('get-estado-eventos', () => {
                 const asistencias = Array.from(this.asistenciasAbiertas.entries()).map(([idComision, data]) => (Object.assign({ idComision }, data)));
