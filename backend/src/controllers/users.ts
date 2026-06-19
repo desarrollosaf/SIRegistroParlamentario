@@ -47,14 +47,14 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
     const accessToken = jwt.sign(
         { rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null },
         process.env.SECRET_KEY || 'TSE-Poder-legislativo',
-        { expiresIn: '2h' }
+        { expiresIn: '10h' }
     );
 
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 2 * 60 * 60 * 1000,
+        maxAge: 10 * 60 * 60 * 1000,
         path: '/',
     });
 
