@@ -5,7 +5,7 @@ import { verifyToken } from "../middlewares/auth";
 const router = Router();
 
 router.post("/api/user/login", LoginUser);
-router.get("/api/user/getusers", ReadUser);
+router.get("/api/user/getusers", verifyToken, ReadUser);
 router.get("/api/user/me", verifyToken, getCurrentUser);
 router.post('/api/user/cerrarsesion',  cerrarsesion);
 

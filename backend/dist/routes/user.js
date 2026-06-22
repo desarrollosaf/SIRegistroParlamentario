@@ -5,7 +5,7 @@ const users_1 = require("../controllers/users");
 const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 router.post("/api/user/login", users_1.LoginUser);
-router.get("/api/user/getusers", users_1.ReadUser);
+router.get("/api/user/getusers", auth_1.verifyToken, users_1.ReadUser);
 router.get("/api/user/me", auth_1.verifyToken, users_1.getCurrentUser);
 router.post('/api/user/cerrarsesion', users_1.cerrarsesion);
 exports.default = router;
