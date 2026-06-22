@@ -6,14 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const verifyAccessToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    console.log('Headers:', req.headers);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         res.status(401).json({ message: 'Token no proporcionado' });
-        return; // terminamos aquí
+        return;
     }
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.SECRET_KEY || 'TSE-Poder-legislativo');
         req.user = decoded;
         next();
     }
