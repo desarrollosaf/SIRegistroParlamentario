@@ -279,6 +279,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   getColorSentido(sentido: number): string {
     if (this.modo === 'asistencia') {
+      if (!this.esComision && (sentido === 2 || sentido === 3)) return 'presente';
       switch (sentido) {
         case 1: return 'presente';
         case 2: return 'remota';
@@ -299,6 +300,13 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       return this.listaComisiones.reduce((acc, c) => acc + c.integrantes.filter((i: any) => i.sentido === tipo).length, 0);
     }
     return this.participantes.filter(v => v.sentido === tipo).length;
+  }
+
+  contarPresentes(): number {
+    if (this.esComision) {
+      return this.listaComisiones.reduce((acc, c) => acc + c.integrantes.filter((i: any) => i.sentido === 1 || i.sentido === 2 || i.sentido === 3).length, 0);
+    }
+    return this.participantes.filter(v => v.sentido === 1 || v.sentido === 2 || v.sentido === 3).length;
   }
 
   totalParticipantes(): number {

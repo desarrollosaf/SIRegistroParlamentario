@@ -46,12 +46,12 @@ const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         return res.status(402).json({ msg: `Password Incorrecto` });
     }
     const roleName = ((_b = (_a = user.rol_users) === null || _a === void 0 ? void 0 : _a.role) === null || _b === void 0 ? void 0 : _b.name) || 'admin';
-    const accessToken = jsonwebtoken_1.default.sign({ rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', { expiresIn: '10h' });
+    const accessToken = jsonwebtoken_1.default.sign({ rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', { expiresIn: '18h' });
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 10 * 60 * 60 * 1000,
+        maxAge: 18 * 60 * 60 * 1000,
         path: '/',
     });
     // Obtener nombre completo del diputado vinculado

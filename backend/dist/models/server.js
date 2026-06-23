@@ -311,6 +311,12 @@ class Server {
                 })));
                 socket.emit('sesiones-activas', lista);
             }));
+            // Devuelve solo la sesión plenaria activa (no comisiones)
+            socket.on('get-sesion-plenaria', () => {
+                var _a;
+                const sesion = (_a = this.sesionesActivas.get('sesion-plenaria')) !== null && _a !== void 0 ? _a : null;
+                socket.emit('sesion-plenaria', sesion);
+            });
             // Consulta el estado actual de asistencias y votaciones abiertas
             socket.on('get-estado-eventos', () => {
                 const asistencias = Array.from(this.asistenciasAbiertas.entries()).map(([idComision, data]) => (Object.assign({ idComision }, data)));
