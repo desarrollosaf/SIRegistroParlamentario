@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
+exports.eventosRecientes = exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
 const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
@@ -32,6 +32,9 @@ const comisions_1 = __importDefault(require("../models/comisions"));
 const integrante_comisions_1 = __importDefault(require("../models/integrante_comisions"));
 const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_comisions"));
 const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
+const agendas_1 = __importDefault(require("../models/agendas"));
+const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
+const sedes_1 = __importDefault(require("../models/sedes"));
 const estadistico_1 = require("./estadistico");
 require("../models/associations");
 // Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
@@ -458,3 +461,44 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.buscarIniciativa = buscarIniciativa;
+const eventosRecientes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    // ?limite=5 (por defecto 5, máximo 20)
+    const limiteRaw = parseInt((_a = req.query.limite) !== null && _a !== void 0 ? _a : '5', 10);
+    const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
+    try {
+        const eventos = yield agendas_1.default.findAll({
+            attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
+            include: [
+                { model: sedes_1.default, as: 'sede', attributes: ['sede'] },
+                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] },
+            ],
+            order: [['fecha', 'DESC']],
+            limit: limite,
+        });
+        if (!eventos.length) {
+            return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+        }
+        const resultados = eventos.map((e) => {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+            return ({
+                id: e.id,
+                tipo_evento: (_b = (_a = e.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : null,
+                descripcion: (_c = e.descripcion) !== null && _c !== void 0 ? _c : null,
+                fecha: (_d = e.fecha) !== null && _d !== void 0 ? _d : null,
+                hora: (_e = e.hora) !== null && _e !== void 0 ? _e : null,
+                fecha_hora_inicio: (_f = e.fecha_hora_inicio) !== null && _f !== void 0 ? _f : null,
+                sede: (_h = (_g = e.sede) === null || _g === void 0 ? void 0 : _g.sede) !== null && _h !== void 0 ? _h : null,
+                orden_dia: (_j = e.orden_dia) !== null && _j !== void 0 ? _j : null,
+                transmision: !!e.transmision,
+                liga: (_k = e.liga) !== null && _k !== void 0 ? _k : null,
+            });
+        });
+        return res.status(200).json({ msg: 'Exito', total: resultados.length, eventos: resultados });
+    }
+    catch (error) {
+        console.error('Error obteniendo eventos recientes:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error al obtener los eventos recientes', error: error.message });
+    }
+});
+exports.eventosRecientes = eventosRecientes;
