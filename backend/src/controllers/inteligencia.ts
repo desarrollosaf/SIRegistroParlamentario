@@ -105,11 +105,44 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
     let partido = null;
     let comisiones: { id: string; nombre: string; cargo: string | null }[] = [];
 
+    
+    const periodos = await IntegranteLegislatura.findAll({
+      where: { diputado_id: diputado.id },
+      attributes: ['id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
+    }) as any[];
+
+    
+    const registroActual = periodos.find((p) => p.fecha_fin === null) ?? null;
+    const legislaturaVigente = registroActual?.legislatura_id ?? null;
+    const periodosVigentes = legislaturaVigente
+      ? periodos.filter((p) => p.legislatura_id === legislaturaVigente)
+      : periodos;
+
+    
+    const partidoIds = [...new Set(periodosVigentes.map((p) => p.partido_id).filter(Boolean))];
+    const partidosInvolucrados = partidoIds.length
+      ? (await Partidos.findAll({ where: { id: partidoIds }, attributes: ['id', 'nombre', 'siglas'] }) as any[])
+      : [];
+    const partidoPorId = new Map(
+      partidosInvolucrados.map((p) => [p.id, { id: p.id, nombre: p.nombre, siglas: p.siglas }])
+    );
+
+    const claveFecha = (p: any) => String(p.fecha_inicio ?? p.fecha_ingreso ?? '');
+    const historial_partidos = [...periodosVigentes]
+      .sort((a, b) => claveFecha(a).localeCompare(claveFecha(b)))
+      .map((p) => ({
+        partido:      partidoPorId.get(p.partido_id) ?? null,
+        fecha_inicio: p.fecha_inicio ?? p.fecha_ingreso ?? null,
+        fecha_fin:    p.fecha_fin ?? null,
+        actual:       p.fecha_fin === null,
+      }));
+
     if (integranteData?.partido_id) {
-      partido = await Partidos.findOne({
-        where: { id: integranteData.partido_id },
-        attributes: ['id', 'nombre', 'siglas'],
-      });
+      partido = partidoPorId.get(integranteData.partido_id)
+        ?? await Partidos.findOne({
+          where: { id: integranteData.partido_id },
+          attributes: ['id', 'nombre', 'siglas'],
+        });
     }
 
     if (integranteData?.id) {
@@ -143,6 +176,7 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
         twitter:     diputado.twitter,
         instagram:   diputado.instagram,
         partido:     partido ? { id: (partido as any).id, nombre: (partido as any).nombre, siglas: (partido as any).siglas } : null,
+        historial_partidos,
         comisiones,
       },
     });

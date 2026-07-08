@@ -89,7 +89,7 @@ const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.getIntegrantesPartido = getIntegrantesPartido;
 const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f, _g;
     const q = ((_b = ((_a = req.query.q) !== null && _a !== void 0 ? _a : req.params.q)) !== null && _b !== void 0 ? _b : '').trim();
     if (!q || q.length < 3) {
         return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
@@ -114,8 +114,34 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const integranteData = (_c = diputado.integrante) !== null && _c !== void 0 ? _c : null;
         let partido = null;
         let comisiones = [];
+        const periodos = yield integrante_legislaturas_1.default.findAll({
+            where: { diputado_id: diputado.id },
+            attributes: ['id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
+        });
+        const registroActual = (_d = periodos.find((p) => p.fecha_fin === null)) !== null && _d !== void 0 ? _d : null;
+        const legislaturaVigente = (_e = registroActual === null || registroActual === void 0 ? void 0 : registroActual.legislatura_id) !== null && _e !== void 0 ? _e : null;
+        const periodosVigentes = legislaturaVigente
+            ? periodos.filter((p) => p.legislatura_id === legislaturaVigente)
+            : periodos;
+        const partidoIds = [...new Set(periodosVigentes.map((p) => p.partido_id).filter(Boolean))];
+        const partidosInvolucrados = partidoIds.length
+            ? yield partidos_1.default.findAll({ where: { id: partidoIds }, attributes: ['id', 'nombre', 'siglas'] })
+            : [];
+        const partidoPorId = new Map(partidosInvolucrados.map((p) => [p.id, { id: p.id, nombre: p.nombre, siglas: p.siglas }]));
+        const claveFecha = (p) => { var _a, _b; return String((_b = (_a = p.fecha_inicio) !== null && _a !== void 0 ? _a : p.fecha_ingreso) !== null && _b !== void 0 ? _b : ''); };
+        const historial_partidos = [...periodosVigentes]
+            .sort((a, b) => claveFecha(a).localeCompare(claveFecha(b)))
+            .map((p) => {
+            var _a, _b, _c, _d;
+            return ({
+                partido: (_a = partidoPorId.get(p.partido_id)) !== null && _a !== void 0 ? _a : null,
+                fecha_inicio: (_c = (_b = p.fecha_inicio) !== null && _b !== void 0 ? _b : p.fecha_ingreso) !== null && _c !== void 0 ? _c : null,
+                fecha_fin: (_d = p.fecha_fin) !== null && _d !== void 0 ? _d : null,
+                actual: p.fecha_fin === null,
+            });
+        });
         if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.partido_id) {
-            partido = yield partidos_1.default.findOne({
+            partido = (_f = partidoPorId.get(integranteData.partido_id)) !== null && _f !== void 0 ? _f : yield partidos_1.default.findOne({
                 where: { id: integranteData.partido_id },
                 attributes: ['id', 'nombre', 'siglas'],
             });
@@ -145,13 +171,14 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             data: {
                 id: diputado.id,
                 nombre: `${diputado.apaterno} ${diputado.amaterno} ${diputado.nombres}`.trim(),
-                descripcion: (_d = diputado.descripcion) !== null && _d !== void 0 ? _d : null,
+                descripcion: (_g = diputado.descripcion) !== null && _g !== void 0 ? _g : null,
                 email: diputado.email,
                 telefono: diputado.telefono,
                 facebook: diputado.facebook,
                 twitter: diputado.twitter,
                 instagram: diputado.instagram,
                 partido: partido ? { id: partido.id, nombre: partido.nombre, siglas: partido.siglas } : null,
+                historial_partidos,
                 comisiones,
             },
         });
