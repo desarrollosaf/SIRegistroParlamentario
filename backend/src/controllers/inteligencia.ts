@@ -7,6 +7,9 @@ import Comision from '../models/comisions';
 import IntegranteComision from '../models/integrante_comisions';
 import TipoCargoComision from '../models/tipo_cargo_comisions';
 import TipoComisions from '../models/tipo_comisions';
+import Agenda from '../models/agendas';
+import TipoEventos from '../models/tipo_eventos';
+import Sedes from '../models/sedes';
 import { construirReporteBase } from './estadistico';
 import '../models/associations';
 
@@ -476,5 +479,45 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
   } catch (error) {
     console.error('Error buscando iniciativa:', error);
     return res.status(500).json({ msg: 'Ocurrió un error al buscar la iniciativa', error: (error as Error).message });
+  }
+};
+
+export const eventosRecientes = async (req: Request, res: Response): Promise<Response> => {
+  // ?limite=5 (por defecto 5, máximo 20)
+  const limiteRaw = parseInt((req.query.limite as string) ?? '5', 10);
+  const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
+
+  try {
+    const eventos = await Agenda.findAll({
+      attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
+      include: [
+        { model: Sedes,       as: 'sede',       attributes: ['sede'] },
+        { model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] },
+      ],
+      order: [['fecha', 'DESC']],
+      limit: limite,
+    }) as any[];
+
+    if (!eventos.length) {
+      return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+    }
+
+    const resultados = eventos.map((e) => ({
+      id:                e.id,
+      tipo_evento:       e.tipoevento?.nombre ?? null,
+      descripcion:       e.descripcion ?? null,
+      fecha:             e.fecha ?? null,
+      hora:              e.hora ?? null,
+      fecha_hora_inicio: e.fecha_hora_inicio ?? null,
+      sede:              e.sede?.sede ?? null,
+      orden_dia:         e.orden_dia ?? null,
+      transmision:       !!e.transmision,
+      liga:              e.liga ?? null,
+    }));
+
+    return res.status(200).json({ msg: 'Exito', total: resultados.length, eventos: resultados });
+  } catch (error) {
+    console.error('Error obteniendo eventos recientes:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error al obtener los eventos recientes', error: (error as Error).message });
   }
 };
