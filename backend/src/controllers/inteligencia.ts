@@ -654,3 +654,148 @@ export const iniciativasPorPeriodo = async (req: Request, res: Response): Promis
     return res.status(500).json({ msg: 'Ocurrió un error al consultar iniciativas por periodo', error: (error as Error).message });
   }
 };
+
+export const integrantesDiputacionPermanente = async (req: Request, res: Response): Promise<Response> => {
+  // Filtro opcional por periodo/nombre, ej. ?q=segundo año  (si se omite, devuelve todos los periodos)
+  const q = ((req.query.q as string) ?? '').trim();
+
+  try {
+    // La Diputación Permanente se identifica por su TIPO de comisión, no por su nombre
+    // (cada periodo tiene un nombre distinto: "DIP PERMANENTE DEL PRIMER AÑO...", etc.).
+    const tipo = await TipoComisions.findOne({
+      where: { valor: { [Op.like]: '%ermanente%' } },
+      attributes: ['id', 'valor'],
+    }) as any;
+
+    if (!tipo) {
+      return res.status(404).json({ msg: 'No existe el tipo de comisión "Diputación Permanente".' });
+    }
+
+    const comisiones = await Comision.findAll({
+      where: { tipo_comision_id: tipo.id },
+      attributes: ['id', 'nombre', 'alias'],
+    }) as any[];
+
+    if (!comisiones.length) {
+      return res.status(200).json({ msg: 'Sin resultados', total: 0, periodos: [] });
+    }
+
+    // Filtro opcional: todos los términos deben aparecer en el nombre del periodo.
+    let comisionesFiltradas = comisiones;
+    if (q) {
+      const terminos = quitarAcentos(q.toLowerCase()).split(/\s+/).filter(Boolean);
+      const match = comisiones.filter((c) => {
+        const nombre = quitarAcentos(String(c.nombre ?? '').toLowerCase());
+        return terminos.every((t) => nombre.includes(t));
+      });
+      if (match.length) comisionesFiltradas = match; // si el filtro no acota nada, se devuelven todos
+    }
+
+    const periodos = await Promise.all(
+      comisionesFiltradas.map(async (comision) => {
+        // Sin filtro de fecha_fin: queremos el roster completo de cada periodo (incluye los ya concluidos).
+        const miembros = await IntegranteComision.findAll({
+          where: { comision_id: comision.id },
+          include: [
+            {
+              model: IntegranteLegislatura,
+              as: 'integranteLegislatura',
+              include: [{ model: Diputado, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+            },
+            { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['id', 'valor', 'nivel'] },
+          ],
+          order: [['orden', 'ASC']],
+        }) as any[];
+
+        const integrantes = miembros
+          .map((m) => {
+            const d = m.integranteLegislatura?.diputado;
+            return {
+              nombre: d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '',
+              cargo:  m.tipo_cargo?.valor ?? null,
+              _nivel: m.tipo_cargo?.nivel ?? 99,
+              _orden: m.orden ?? 99,
+            };
+          })
+          .sort((a, b) => a._nivel - b._nivel || a._orden - b._orden)
+          .map(({ _nivel, _orden, ...rest }) => rest);
+
+        return {
+          id:          comision.id,
+          nombre:      comision.nombre,
+          alias:       comision.alias ?? null,
+          total:       integrantes.length,
+          integrantes,
+        };
+      })
+    );
+
+    return res.status(200).json({ msg: 'Exito', total: periodos.length, periodos });
+  } catch (error) {
+    console.error('Error obteniendo Diputación Permanente:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error al obtener la Diputación Permanente', error: (error as Error).message });
+  }
+};
+
+export const integrantesJucopo = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    // Guardada como comisión "Junta de Coordinación Política".
+    // Se buscan los tokens "coordinaci" y "politic" para tolerar acentos/variantes.
+    const comision = await Comision.findOne({
+      where: {
+        [Op.and]: [
+          { nombre: { [Op.like]: '%oordinaci%' } },
+          { nombre: { [Op.like]: '%olitic%' } },
+        ],
+      },
+      attributes: ['id', 'nombre', 'alias'],
+    }) as any;
+
+    if (!comision) {
+      return res.status(404).json({ msg: 'No se encontró la Junta de Coordinación Política.' });
+    }
+
+    // Integrantes vigentes (fecha_fin null o '').
+    const miembros = await IntegranteComision.findAll({
+      where: { comision_id: comision.id, [Op.or]: [{ fecha_fin: null }, { fecha_fin: '' }] },
+      include: [
+        {
+          model: IntegranteLegislatura,
+          as: 'integranteLegislatura',
+          include: [{ model: Diputado, as: 'diputado', attributes: ['id', 'apaterno', 'amaterno', 'nombres'] }],
+        },
+        { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['id', 'valor', 'nivel'] },
+      ],
+      order: [['orden', 'ASC']],
+    }) as any[];
+
+    const integrantes = miembros
+      .map((m) => {
+        const d = m.integranteLegislatura?.diputado;
+        return {
+          nombre: d ? `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim() : '',
+          cargo:  m.tipo_cargo?.valor ?? null,
+          _nivel: m.tipo_cargo?.nivel ?? 99,
+          _orden: m.orden ?? 99,
+        };
+      })
+      .sort((a, b) => a._nivel - b._nivel || a._orden - b._orden)
+      .map(({ _nivel, _orden, ...rest }) => rest);
+
+    // Presidencia = integrante cuyo cargo menciona "presiden".
+    const presidente = integrantes.find((i) =>
+      quitarAcentos(String(i.cargo ?? '').toLowerCase()).includes('presiden')
+    ) ?? null;
+
+    return res.status(200).json({
+      msg: 'Exito',
+      comision: { id: comision.id, nombre: comision.nombre, alias: comision.alias ?? null },
+      presidente,
+      total: integrantes.length,
+      integrantes,
+    });
+  } catch (error) {
+    console.error('Error obteniendo la Junta de Coordinación Política:', error);
+    return res.status(500).json({ msg: 'Ocurrió un error al obtener la Junta de Coordinación Política', error: (error as Error).message });
+  }
+};
