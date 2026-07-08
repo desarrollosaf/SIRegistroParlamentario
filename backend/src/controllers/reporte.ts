@@ -374,7 +374,7 @@ const obtenerIniciativasBase = async () => {
   });
 };
 
-const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+export const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
   const iniciativas = await obtenerIniciativasBase();
 
  
