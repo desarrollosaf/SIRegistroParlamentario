@@ -34,6 +34,9 @@ const tipo_cargo_comisions_1 = __importDefault(require("../models/tipo_cargo_com
 const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const estadistico_1 = require("./estadistico");
 require("../models/associations");
+// Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
+// fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
+const esVigente = (fechaFin) => fechaFin == null || fechaFin === '';
 const PARTIDOS = {
     morena: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480', coordinador: { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' } },
     verde: { id: '1342c104-d5ec-4eda-b5ca-7d653b440a5e', coordinador: { apaterno: 'Couttolenc', amaterno: 'Buentello', nombres: 'José Alberto' } },
@@ -89,7 +92,7 @@ const getIntegrantesPartido = (req, res) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.getIntegrantesPartido = getIntegrantesPartido;
 const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e;
     const q = ((_b = ((_a = req.query.q) !== null && _a !== void 0 ? _a : req.params.q)) !== null && _b !== void 0 ? _b : '').trim();
     if (!q || q.length < 3) {
         return res.status(400).json({ msg: 'El parámetro q debe tener al menos 3 caracteres' });
@@ -103,26 +106,36 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 { nombres: { [sequelize_1.Op.like]: `%${p}%` } },
             ],
         }));
-        const diputado = yield diputado_1.default.findOne({
+        // Cada cambio de partido genera un NUEVO registro en `diputados` (mismo nombre, distinto id),
+        // y su correspondiente registro en `integrante_legislaturas`. Por eso buscamos TODOS los
+        // registros que coincidan con el nombre, no solo uno.
+        const diputados = yield diputado_1.default.findAll({
             where: { [sequelize_1.Op.and]: condiciones },
             attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'descripcion', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
-            include: [{ model: integrante_legislaturas_1.default, as: 'integrante', where: { fecha_fin: null }, required: false }],
         });
-        if (!diputado) {
+        if (!diputados.length) {
             return res.status(404).json({ msg: `No se encontró diputado con '${q}'` });
         }
-        const integranteData = (_c = diputado.integrante) !== null && _c !== void 0 ? _c : null;
         let partido = null;
         let comisiones = [];
+        // Traemos los periodos de TODOS los registros encontrados. El vigente es el que tiene
+        // fecha_fin "vacía" (null o ''); de ahí sale el partido y las comisiones actuales.
+        const diputadoIds = diputados.map((d) => d.id);
         const periodos = yield integrante_legislaturas_1.default.findAll({
-            where: { diputado_id: diputado.id },
-            attributes: ['id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
+            where: { diputado_id: diputadoIds },
+            attributes: ['id', 'diputado_id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
         });
-        const registroActual = (_d = periodos.find((p) => p.fecha_fin === null)) !== null && _d !== void 0 ? _d : null;
-        const legislaturaVigente = (_e = registroActual === null || registroActual === void 0 ? void 0 : registroActual.legislatura_id) !== null && _e !== void 0 ? _e : null;
-        const periodosVigentes = legislaturaVigente
-            ? periodos.filter((p) => p.legislatura_id === legislaturaVigente)
-            : periodos;
+        const registroActual = (_c = periodos.find((p) => esVigente(p.fecha_fin))) !== null && _c !== void 0 ? _c : null;
+        // El "diputado vigente" es el dueño del registro activo; si no hay activo, el primero.
+        const diputado = (registroActual && diputados.find((d) => d.id === registroActual.diputado_id)) || diputados[0];
+        // Nos quedamos solo con los periodos de la MISMA persona (mismo nombre completo),
+        // por si la búsqueda por nombre trajo homónimos.
+        const mismaPersona = (d) => d.apaterno === diputado.apaterno &&
+            d.amaterno === diputado.amaterno &&
+            d.nombres === diputado.nombres;
+        const idsPersona = new Set(diputados.filter(mismaPersona).map((d) => d.id));
+        const periodosVigentes = periodos.filter((p) => idsPersona.has(p.diputado_id));
+        // Cargamos todos los partidos involucrados (historial) en una sola consulta.
         const partidoIds = [...new Set(periodosVigentes.map((p) => p.partido_id).filter(Boolean))];
         const partidosInvolucrados = partidoIds.length
             ? yield partidos_1.default.findAll({ where: { id: partidoIds }, attributes: ['id', 'nombre', 'siglas'] })
@@ -132,23 +145,23 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const historial_partidos = [...periodosVigentes]
             .sort((a, b) => claveFecha(a).localeCompare(claveFecha(b)))
             .map((p) => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c;
             return ({
                 partido: (_a = partidoPorId.get(p.partido_id)) !== null && _a !== void 0 ? _a : null,
                 fecha_inicio: (_c = (_b = p.fecha_inicio) !== null && _b !== void 0 ? _b : p.fecha_ingreso) !== null && _c !== void 0 ? _c : null,
-                fecha_fin: (_d = p.fecha_fin) !== null && _d !== void 0 ? _d : null,
-                actual: p.fecha_fin === null,
+                fecha_fin: esVigente(p.fecha_fin) ? null : p.fecha_fin,
+                actual: esVigente(p.fecha_fin),
             });
         });
-        if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.partido_id) {
-            partido = (_f = partidoPorId.get(integranteData.partido_id)) !== null && _f !== void 0 ? _f : yield partidos_1.default.findOne({
-                where: { id: integranteData.partido_id },
+        if (registroActual === null || registroActual === void 0 ? void 0 : registroActual.partido_id) {
+            partido = (_d = partidoPorId.get(registroActual.partido_id)) !== null && _d !== void 0 ? _d : yield partidos_1.default.findOne({
+                where: { id: registroActual.partido_id },
                 attributes: ['id', 'nombre', 'siglas'],
             });
         }
-        if (integranteData === null || integranteData === void 0 ? void 0 : integranteData.id) {
+        if (registroActual === null || registroActual === void 0 ? void 0 : registroActual.id) {
             const memberships = yield integrante_comisions_1.default.findAll({
-                where: { integrante_legislatura_id: integranteData.id, fecha_fin: null },
+                where: { integrante_legislatura_id: registroActual.id, [sequelize_1.Op.or]: [{ fecha_fin: null }, { fecha_fin: '' }] },
                 include: [
                     { model: comisions_1.default, as: 'comision', attributes: ['id', 'nombre'] },
                     { model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['valor', 'nivel'] },
@@ -171,7 +184,7 @@ const getIntegrante = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             data: {
                 id: diputado.id,
                 nombre: `${diputado.apaterno} ${diputado.amaterno} ${diputado.nombres}`.trim(),
-                descripcion: (_g = diputado.descripcion) !== null && _g !== void 0 ? _g : null,
+                descripcion: (_e = diputado.descripcion) !== null && _e !== void 0 ? _e : null,
                 email: diputado.email,
                 telefono: diputado.telefono,
                 facebook: diputado.facebook,
