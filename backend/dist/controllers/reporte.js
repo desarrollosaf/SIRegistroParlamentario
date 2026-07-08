@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getExcelVotacionesDetalle = exports.getReporteEstudiosProgresivo = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getExcelVotacionesDetalle = exports.getReporteEstudiosProgresivo = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.construirReporteBase = void 0;
 const sequelize_1 = require("sequelize");
 const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
@@ -501,6 +501,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
     })));
     return reporte;
 });
+exports.construirReporteBase = construirReporteBase;
 const aplicarEstiloHoja = (worksheet) => {
     const headerRow = worksheet.getRow(1);
     headerRow.height = 22;
@@ -577,7 +578,7 @@ const generarExcelSimple = (res, nombreHoja, nombreArchivo, columnas, data) => _
 });
 const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         return yield generarExcelSimple(res, "Reporte Iniciativas", "reporte_iniciativas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
@@ -607,7 +608,7 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getifnini = getifnini;
 const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const filtrado = reporte.filter((item) => item.observac === "En estudio");
         return yield generarExcelSimple(res, "En estudio", "reporte_iniciativas_en_estudio.xlsx", [
             { header: "NO.", key: "no", width: 8 },
@@ -635,7 +636,7 @@ const getIniciativasEnEstudio = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getIniciativasEnEstudio = getIniciativasEnEstudio;
 const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const filtrado = reporte.filter((item) => item.observac === "Aprobada");
         return yield generarExcelSimple(res, "Aprobadas", "reporte_iniciativas_aprobadas.xlsx", [
             { header: "NO.", key: "no", width: 8 },
@@ -664,7 +665,7 @@ const getIniciativasAprobadas = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getIniciativasAprobadas = getIniciativasAprobadas;
 const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const mapa = new Map();
         for (const item of reporte) {
             const diputado = item.diputado || "-";
@@ -728,7 +729,7 @@ const getIniciativasPorGrupoYDiputado = (req, res) => __awaiter(void 0, void 0, 
 exports.getIniciativasPorGrupoYDiputado = getIniciativasPorGrupoYDiputado;
 const getTotalesPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const mapa = new Map();
         for (const item of reporte) {
             const periodo = item.periodo || "-";
@@ -994,7 +995,7 @@ const getReporteIniciativasIntegrantes = (req, res) => __awaiter(void 0, void 0,
             });
         }
         const iniciativasIds = [...new Set(relaciones.map((r) => String(r.id_iniciativa)).filter(Boolean))];
-        let reporte = yield construirReporteBase();
+        let reporte = yield (0, exports.construirReporteBase)();
         reporte = reporte.filter((item) => iniciativasIds.includes(String(item.id)));
         if (!reporte.length) {
             return res.status(404).json({
@@ -1233,7 +1234,7 @@ const getReportePorPeriodoLegislativo = (req, res) => __awaiter(void 0, void 0, 
         if (!periodos.length) {
             return res.status(404).json({ message: "Periodos legislativos no encontrados" });
         }
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const columnas = [
             { header: "NO.", key: "no", width: 8 },
             { header: "ID", key: "id", width: 40 },
@@ -1297,7 +1298,7 @@ const getReportePorPeriodoLegislativo = (req, res) => __awaiter(void 0, void 0, 
 exports.getReportePorPeriodoLegislativo = getReportePorPeriodoLegislativo;
 const getIniciativasTurnadasComision = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const filtrado = reporte.filter((item) => item.se_turna_comision && item.comisiones && item.comisiones !== "-");
         const rows = filtrado.map((item) => ({
             comisiones: item.comisiones !== "-" ? item.comisiones.replace(/, /g, " / ") : "-",
@@ -1634,7 +1635,7 @@ const getEstadisticasIniciativas = (_req, res) => __awaiter(void 0, void 0, void
     var _a, _b;
     try {
         // ── 1. construirReporteBase: source of truth for observac/tipo/comisiones ─
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const iniIds = reporte.map(r => r.id).filter(Boolean);
         // ── 2. Simple aggregations from reporte fields ────────────────────────────
         const conteoEstatus = {};
@@ -2001,7 +2002,7 @@ exports.getReporteEstudiosProgresivo = getReporteEstudiosProgresivo;
 const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     try {
-        const reporte = yield construirReporteBase();
+        const reporte = yield (0, exports.construirReporteBase)();
         const aprobadas = reporte.filter(r => r.observac === "Aprobada");
         const puntoIds = [...new Set(aprobadas.map(r => r.votingPuntoIntId).filter((id) => id != null))];
         const votosRaw = puntoIds.length > 0

@@ -9,6 +9,7 @@ router.get('/api/inteligencia/eventos/recientes/', inteligencia_1.eventosRecient
 router.get('/api/inteligencia/diputacion-permanente/', inteligencia_1.integrantesDiputacionPermanente);
 router.get('/api/inteligencia/jucopo/', inteligencia_1.integrantesJucopo);
 router.get('/api/inteligencia/iniciativa/periodo/', inteligencia_1.iniciativasPorPeriodo);
+router.get('/api/inteligencia/sesion/votacion/', inteligencia_1.iniciativasVotadasEnSesion);
 router.get('/api/inteligencia/:slug/integrantes/', inteligencia_1.getIntegrantesPartido);
 router.get('/api/inteligencia/iniciativa/buscar/', inteligencia_1.buscarIniciativa);
 router.get('/api/inteligencia/comisiones/', inteligencia_1.listarComisiones);

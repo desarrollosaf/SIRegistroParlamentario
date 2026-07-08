@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.integrantesJucopo = exports.integrantesDiputacionPermanente = exports.iniciativasPorPeriodo = exports.eventosRecientes = exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
+exports.integrantesJucopo = exports.integrantesDiputacionPermanente = exports.iniciativasVotadasEnSesion = exports.iniciativasPorPeriodo = exports.eventosRecientes = exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
 const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
@@ -35,7 +35,9 @@ const tipo_comisions_1 = __importDefault(require("../models/tipo_comisions"));
 const agendas_1 = __importDefault(require("../models/agendas"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 const sedes_1 = __importDefault(require("../models/sedes"));
+const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const estadistico_1 = require("./estadistico");
+const reporte_1 = require("./reporte");
 require("../models/associations");
 // Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
 // fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
@@ -612,6 +614,117 @@ const iniciativasPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.iniciativasPorPeriodo = iniciativasPorPeriodo;
+// ─── Votaciones por sesión ───────────────────────────────────────────────────
+// La fecha se compara contra `expedicion` del reporte, que se formatea como "DD-Mmm-YY"
+// (mismos meses que formatearFechaCorta en reporte.ts).
+const MESES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MESES_NOMBRE = {
+    enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+    julio: 6, agosto: 7, septiembre: 8, setiembre: 8, octubre: 9, noviembre: 10, diciembre: 11,
+};
+const formatoCorto = (dia, mesIdx, anio) => mesIdx < 0 || mesIdx > 11 ? null : `${String(dia).padStart(2, '0')}-${MESES_ABBR[mesIdx]}-${anio.slice(-2)}`;
+// Convierte "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "13-May-26".
+function fechaSesionAFormato(texto) {
+    var _a;
+    const q = quitarAcentos(texto.toLowerCase().trim());
+    let m = q.match(/\b(\d{1,2})\s+de\s+([a-z]+)\s+del?\s+(\d{4})\b/);
+    if (m)
+        return formatoCorto(parseInt(m[1], 10), (_a = MESES_NOMBRE[m[2]]) !== null && _a !== void 0 ? _a : -1, m[3]);
+    m = q.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+    if (m)
+        return formatoCorto(parseInt(m[3], 10), parseInt(m[2], 10) - 1, m[1]);
+    m = q.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/);
+    if (m)
+        return formatoCorto(parseInt(m[1], 10), parseInt(m[2], 10) - 1, m[3]);
+    return null;
+}
+const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const fechaTexto = ((_b = ((_a = req.query.fecha) !== null && _a !== void 0 ? _a : req.query.q)) !== null && _b !== void 0 ? _b : '').trim();
+    if (!fechaTexto) {
+        return res.status(400).json({ msg: 'Debes indicar la fecha de la sesión, ej. "13 de mayo de 2026".' });
+    }
+    const objetivo = fechaSesionAFormato(fechaTexto);
+    if (!objetivo) {
+        return res.status(400).json({
+            msg: `No pude interpretar la fecha "${fechaTexto}". Usa "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
+        });
+    }
+    try {
+        // Reporte con votingPuntoIntId (PuntosOrden.id) para cruzar contra VotosPunto.
+        const reporte = yield (0, reporte_1.construirReporteBase)();
+        // Iniciativas cuyo cierre en sesión (aprobación/rechazo) ocurrió en esa fecha.
+        const enSesion = reporte.filter((r) => r.expedicion === objetivo && (r.observac === 'Aprobada' || r.observac === 'Rechazada en sesión'));
+        if (!enSesion.length) {
+            return res.status(200).json({
+                msg: `No encontré iniciativas votadas en sesión con fecha ${objetivo}.`,
+                fecha: objetivo,
+                total: 0,
+                iniciativas: [],
+            });
+        }
+        // Votos individuales de todos los puntos de esta sesión.
+        const puntoIds = [...new Set(enSesion.map((r) => r.votingPuntoIntId).filter((id) => id != null))];
+        const votosRaw = puntoIds.length
+            ? yield votos_punto_1.default.findAll({
+                where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] } },
+                attributes: ['id_punto', 'sentido', 'id_diputado', 'id_partido'],
+                paranoid: false,
+                raw: true,
+            })
+            : [];
+        // Catálogos de nombres.
+        const dipIds = [...new Set(votosRaw.map((v) => v.id_diputado).filter(Boolean))];
+        const parIds = [...new Set(votosRaw.map((v) => v.id_partido).filter(Boolean))];
+        const [dips, pars] = yield Promise.all([
+            dipIds.length ? diputado_1.default.findAll({ where: { id: dipIds }, attributes: ['id', 'apaterno', 'amaterno', 'nombres'], paranoid: false, raw: true }) : [],
+            parIds.length ? partidos_1.default.findAll({ where: { id: parIds }, attributes: ['id', 'siglas'], raw: true }) : [],
+        ]);
+        const dipMap = new Map(dips.map((d) => [d.id, `${d.apaterno} ${d.amaterno} ${d.nombres}`.trim()]));
+        const parMap = new Map(pars.map((p) => [p.id, p.siglas]));
+        const votosPorPunto = new Map();
+        for (const v of votosRaw) {
+            const pid = Number(v.id_punto);
+            if (!votosPorPunto.has(pid))
+                votosPorPunto.set(pid, []);
+            votosPorPunto.get(pid).push(v);
+        }
+        const iniciativas = enSesion.map((r) => {
+            var _a, _b, _c, _d, _e;
+            const votos = r.votingPuntoIntId != null ? (_a = votosPorPunto.get(r.votingPuntoIntId)) !== null && _a !== void 0 ? _a : [] : [];
+            let a_favor = 0, en_contra = 0, abstencion = 0;
+            const votaronContra = [];
+            const seAbstuvieron = [];
+            for (const v of votos) {
+                if (v.sentido === 1)
+                    a_favor++;
+                else if (v.sentido === 2) {
+                    abstencion++;
+                    seAbstuvieron.push({ diputado: (_b = dipMap.get(v.id_diputado)) !== null && _b !== void 0 ? _b : '-', partido: (_c = parMap.get(v.id_partido)) !== null && _c !== void 0 ? _c : null });
+                }
+                else if (v.sentido === 3) {
+                    en_contra++;
+                    votaronContra.push({ diputado: (_d = dipMap.get(v.id_diputado)) !== null && _d !== void 0 ? _d : '-', partido: (_e = parMap.get(v.id_partido)) !== null && _e !== void 0 ? _e : null });
+                }
+            }
+            return {
+                iniciativa: r.iniciativa,
+                proponente: r.diputado,
+                grupo_parlamentario: r.grupo_parlamentario,
+                resultado: r.observac,
+                votacion: { a_favor, en_contra, abstencion, total: a_favor + en_contra + abstencion },
+                en_contra: votaronContra,
+                abstenciones: seAbstuvieron,
+            };
+        });
+        return res.status(200).json({ msg: 'Exito', fecha: objetivo, total: iniciativas.length, iniciativas });
+    }
+    catch (error) {
+        console.error('Error consultando votaciones de la sesión:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error al consultar las votaciones de la sesión', error: error.message });
+    }
+});
+exports.iniciativasVotadasEnSesion = iniciativasVotadasEnSesion;
 const integrantesDiputacionPermanente = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     // Filtro opcional por periodo/nombre, ej. ?q=segundo año  (si se omite, devuelve todos los periodos)
