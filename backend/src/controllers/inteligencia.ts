@@ -10,6 +10,10 @@ import TipoComisions from '../models/tipo_comisions';
 import { construirReporteBase } from './estadistico';
 import '../models/associations';
 
+// Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
+// fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
+const esVigente = (fechaFin: unknown): boolean => fechaFin == null || fechaFin === '';
+
 type CoordinadorDef = { apaterno: string; amaterno: string; nombres: string } | null;
 
 const PARTIDOS: Record<string, { id: string; coordinador: CoordinadorDef }> = {
@@ -91,34 +95,45 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
       ],
     }));
 
-    const diputado = await Diputado.findOne({
+    // Cada cambio de partido genera un NUEVO registro en `diputados` (mismo nombre, distinto id),
+    // y su correspondiente registro en `integrante_legislaturas`. Por eso buscamos TODOS los
+    // registros que coincidan con el nombre, no solo uno.
+    const diputados = await Diputado.findAll({
       where: { [Op.and]: condiciones },
       attributes: ['id', 'apaterno', 'amaterno', 'nombres', 'descripcion', 'email', 'telefono', 'facebook', 'twitter', 'instagram'],
-      include: [{ model: IntegranteLegislatura, as: 'integrante', where: { fecha_fin: null }, required: false }],
-    }) as any;
+    }) as any[];
 
-    if (!diputado) {
+    if (!diputados.length) {
       return res.status(404).json({ msg: `No se encontró diputado con '${q}'` });
     }
 
-    const integranteData = diputado.integrante ?? null;
     let partido = null;
     let comisiones: { id: string; nombre: string; cargo: string | null }[] = [];
 
-    
+    // Traemos los periodos de TODOS los registros encontrados. El vigente es el que tiene
+    // fecha_fin "vacía" (null o ''); de ahí sale el partido y las comisiones actuales.
+    const diputadoIds = diputados.map((d) => d.id);
     const periodos = await IntegranteLegislatura.findAll({
-      where: { diputado_id: diputado.id },
-      attributes: ['id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
+      where: { diputado_id: diputadoIds },
+      attributes: ['id', 'diputado_id', 'partido_id', 'legislatura_id', 'fecha_ingreso', 'fecha_inicio', 'fecha_fin'],
     }) as any[];
 
-    
-    const registroActual = periodos.find((p) => p.fecha_fin === null) ?? null;
-    const legislaturaVigente = registroActual?.legislatura_id ?? null;
-    const periodosVigentes = legislaturaVigente
-      ? periodos.filter((p) => p.legislatura_id === legislaturaVigente)
-      : periodos;
+    const registroActual = periodos.find((p) => esVigente(p.fecha_fin)) ?? null;
 
-    
+    // El "diputado vigente" es el dueño del registro activo; si no hay activo, el primero.
+    const diputado =
+      (registroActual && diputados.find((d) => d.id === registroActual.diputado_id)) || diputados[0];
+
+    // Nos quedamos solo con los periodos de la MISMA persona (mismo nombre completo),
+    // por si la búsqueda por nombre trajo homónimos.
+    const mismaPersona = (d: any) =>
+      d.apaterno === diputado.apaterno &&
+      d.amaterno === diputado.amaterno &&
+      d.nombres === diputado.nombres;
+    const idsPersona = new Set(diputados.filter(mismaPersona).map((d) => d.id));
+    const periodosVigentes = periodos.filter((p) => idsPersona.has(p.diputado_id));
+
+    // Cargamos todos los partidos involucrados (historial) en una sola consulta.
     const partidoIds = [...new Set(periodosVigentes.map((p) => p.partido_id).filter(Boolean))];
     const partidosInvolucrados = partidoIds.length
       ? (await Partidos.findAll({ where: { id: partidoIds }, attributes: ['id', 'nombre', 'siglas'] }) as any[])
@@ -133,21 +148,21 @@ export const getIntegrante = async (req: Request, res: Response): Promise<Respon
       .map((p) => ({
         partido:      partidoPorId.get(p.partido_id) ?? null,
         fecha_inicio: p.fecha_inicio ?? p.fecha_ingreso ?? null,
-        fecha_fin:    p.fecha_fin ?? null,
-        actual:       p.fecha_fin === null,
+        fecha_fin:    esVigente(p.fecha_fin) ? null : p.fecha_fin,
+        actual:       esVigente(p.fecha_fin),
       }));
 
-    if (integranteData?.partido_id) {
-      partido = partidoPorId.get(integranteData.partido_id)
+    if (registroActual?.partido_id) {
+      partido = partidoPorId.get(registroActual.partido_id)
         ?? await Partidos.findOne({
-          where: { id: integranteData.partido_id },
+          where: { id: registroActual.partido_id },
           attributes: ['id', 'nombre', 'siglas'],
         });
     }
 
-    if (integranteData?.id) {
+    if (registroActual?.id) {
       const memberships = await IntegranteComision.findAll({
-        where: { integrante_legislatura_id: integranteData.id, fecha_fin: null },
+        where: { integrante_legislatura_id: registroActual.id, [Op.or]: [{ fecha_fin: null }, { fecha_fin: '' }] },
         include: [
           { model: Comision, as: 'comision', attributes: ['id', 'nombre'] },
           { model: TipoCargoComision, as: 'tipo_cargo', attributes: ['valor', 'nivel'] },
