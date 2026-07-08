@@ -17,6 +17,9 @@ import '../models/associations';
 // fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
 const esVigente = (fechaFin: unknown): boolean => fechaFin == null || fechaFin === '';
 
+// Id del tipo de comisión "Diputación Permanente" (tabla tipo_comisions).
+const TIPO_DIPUTACION_PERMANENTE_ID = 'e41e1bea-c646-11f0-9230-fa163e5be1f8';
+
 type CoordinadorDef = { apaterno: string; amaterno: string; nombres: string } | null;
 
 const PARTIDOS: Record<string, { id: string; coordinador: CoordinadorDef }> = {
@@ -662,17 +665,9 @@ export const integrantesDiputacionPermanente = async (req: Request, res: Respons
   try {
     // La Diputación Permanente se identifica por su TIPO de comisión, no por su nombre
     // (cada periodo tiene un nombre distinto: "DIP PERMANENTE DEL PRIMER AÑO...", etc.).
-    const tipo = await TipoComisions.findOne({
-      where: { valor: { [Op.like]: '%ermanente%' } },
-      attributes: ['id', 'valor'],
-    }) as any;
-
-    if (!tipo) {
-      return res.status(404).json({ msg: 'No existe el tipo de comisión "Diputación Permanente".' });
-    }
-
+    // Se usa el id EXACTO del tipo; un LIKE laxo traía por error los "Comités".
     const comisiones = await Comision.findAll({
-      where: { tipo_comision_id: tipo.id },
+      where: { tipo_comision_id: TIPO_DIPUTACION_PERMANENTE_ID },
       attributes: ['id', 'nombre', 'alias'],
     }) as any[];
 

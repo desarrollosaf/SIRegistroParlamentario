@@ -40,6 +40,8 @@ require("../models/associations");
 // Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
 // fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
 const esVigente = (fechaFin) => fechaFin == null || fechaFin === '';
+// Id del tipo de comisión "Diputación Permanente" (tabla tipo_comisions).
+const TIPO_DIPUTACION_PERMANENTE_ID = 'e41e1bea-c646-11f0-9230-fa163e5be1f8';
 const PARTIDOS = {
     morena: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480', coordinador: { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' } },
     verde: { id: '1342c104-d5ec-4eda-b5ca-7d653b440a5e', coordinador: { apaterno: 'Couttolenc', amaterno: 'Buentello', nombres: 'José Alberto' } },
@@ -617,15 +619,9 @@ const integrantesDiputacionPermanente = (req, res) => __awaiter(void 0, void 0, 
     try {
         // La Diputación Permanente se identifica por su TIPO de comisión, no por su nombre
         // (cada periodo tiene un nombre distinto: "DIP PERMANENTE DEL PRIMER AÑO...", etc.).
-        const tipo = yield tipo_comisions_1.default.findOne({
-            where: { valor: { [sequelize_1.Op.like]: '%ermanente%' } },
-            attributes: ['id', 'valor'],
-        });
-        if (!tipo) {
-            return res.status(404).json({ msg: 'No existe el tipo de comisión "Diputación Permanente".' });
-        }
+        // Se usa el id EXACTO del tipo; un LIKE laxo traía por error los "Comités".
         const comisiones = yield comisions_1.default.findAll({
-            where: { tipo_comision_id: tipo.id },
+            where: { tipo_comision_id: TIPO_DIPUTACION_PERMANENTE_ID },
             attributes: ['id', 'nombre', 'alias'],
         });
         if (!comisiones.length) {
