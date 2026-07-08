@@ -36,8 +36,9 @@ const agendas_1 = __importDefault(require("../models/agendas"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
+const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
+const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
 const estadistico_1 = require("./estadistico");
-const reporte_1 = require("./reporte");
 require("../models/associations");
 // Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
 // fecha_fin está "vacía": null, undefined o cadena vacía. Así lo maneja el resto del sistema.
@@ -614,57 +615,67 @@ const iniciativasPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.iniciativasPorPeriodo = iniciativasPorPeriodo;
-// ─── Votaciones por sesión ───────────────────────────────────────────────────
-// La fecha se compara contra `expedicion` del reporte, que se formatea como "DD-Mmm-YY"
-// (mismos meses que formatearFechaCorta en reporte.ts).
-const MESES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+// ─── Votaciones por sesión / evento ──────────────────────────────────────────
 const MESES_NOMBRE = {
     enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
     julio: 6, agosto: 7, septiembre: 8, setiembre: 8, octubre: 9, noviembre: 10, diciembre: 11,
 };
-const formatoCorto = (dia, mesIdx, anio) => mesIdx < 0 || mesIdx > 11 ? null : `${String(dia).padStart(2, '0')}-${MESES_ABBR[mesIdx]}-${anio.slice(-2)}`;
-// Convierte "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "13-May-26".
-function fechaSesionAFormato(texto) {
+// IniciativaPuntoOrden.tipo: 1 = Iniciativa, 2 = Punto de acuerdo, 3 = Minuta.
+const TIPO_INICIATIVA_LABEL = { 1: 'Iniciativa', 2: 'Punto de acuerdo', 3: 'Minuta' };
+// Convierte "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "YYYY-MM-DD".
+function fechaAISO(texto) {
     var _a;
     const q = quitarAcentos(texto.toLowerCase().trim());
+    const iso = (dia, mesIdx, anio) => mesIdx < 0 || mesIdx > 11 ? null : `${anio}-${String(mesIdx + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
     let m = q.match(/\b(\d{1,2})\s+de\s+([a-z]+)\s+del?\s+(\d{4})\b/);
     if (m)
-        return formatoCorto(parseInt(m[1], 10), (_a = MESES_NOMBRE[m[2]]) !== null && _a !== void 0 ? _a : -1, m[3]);
+        return iso(parseInt(m[1], 10), (_a = MESES_NOMBRE[m[2]]) !== null && _a !== void 0 ? _a : -1, m[3]);
     m = q.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
     if (m)
-        return formatoCorto(parseInt(m[3], 10), parseInt(m[2], 10) - 1, m[1]);
+        return iso(parseInt(m[3], 10), parseInt(m[2], 10) - 1, m[1]);
     m = q.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/);
     if (m)
-        return formatoCorto(parseInt(m[1], 10), parseInt(m[2], 10) - 1, m[3]);
+        return iso(parseInt(m[1], 10), parseInt(m[2], 10) - 1, m[3]);
     return null;
 }
 const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     const fechaTexto = ((_b = ((_a = req.query.fecha) !== null && _a !== void 0 ? _a : req.query.q)) !== null && _b !== void 0 ? _b : '').trim();
     if (!fechaTexto) {
         return res.status(400).json({ msg: 'Debes indicar la fecha de la sesión, ej. "13 de mayo de 2026".' });
     }
-    const objetivo = fechaSesionAFormato(fechaTexto);
-    if (!objetivo) {
+    const iso = fechaAISO(fechaTexto);
+    if (!iso) {
         return res.status(400).json({
             msg: `No pude interpretar la fecha "${fechaTexto}". Usa "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
         });
     }
+    // Filtro opcional por tipo de evento, ej. ?tipo=sesion  o  ?tipo=comision
+    const tipoFiltro = quitarAcentos(((_c = req.query.tipo) !== null && _c !== void 0 ? _c : '').toLowerCase().trim());
     try {
-        // Reporte con votingPuntoIntId (PuntosOrden.id) para cruzar contra VotosPunto.
-        const reporte = yield (0, reporte_1.construirReporteBase)();
-        // Iniciativas cuyo cierre en sesión (aprobación/rechazo) ocurrió en esa fecha.
-        const enSesion = reporte.filter((r) => r.expedicion === objetivo && (r.observac === 'Aprobada' || r.observac === 'Rechazada en sesión'));
-        if (!enSesion.length) {
-            return res.status(200).json({
-                msg: `No encontré iniciativas votadas en sesión con fecha ${objetivo}.`,
-                fecha: objetivo,
-                total: 0,
-                iniciativas: [],
-            });
+        // 1) Eventos de la agenda en esa fecha.
+        const eventos = yield agendas_1.default.findAll({
+            where: { fecha: { [sequelize_1.Op.gte]: `${iso} 00:00:00`, [sequelize_1.Op.lte]: `${iso} 23:59:59` } },
+            attributes: ['id', 'fecha', 'descripcion'],
+            include: [{ model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] }],
+            order: [['fecha', 'ASC']],
+        });
+        const eventosFiltrados = tipoFiltro
+            ? eventos.filter((e) => { var _a, _b; return quitarAcentos(String((_b = (_a = e.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : '').toLowerCase()).includes(tipoFiltro); })
+            : eventos;
+        if (!eventosFiltrados.length) {
+            return res.status(200).json({ msg: `No encontré eventos en la agenda con fecha ${iso}.`, fecha: iso, total_eventos: 0, eventos: [] });
         }
-        // Votos individuales de todos los puntos de esta sesión.
-        const puntoIds = [...new Set(enSesion.map((r) => r.votingPuntoIntId).filter((id) => id != null))];
+        // 2) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
+        const eventoIds = eventosFiltrados.map((e) => e.id);
+        const puntos = yield puntos_ordens_1.default.findAll({
+            where: { id_evento: { [sequelize_1.Op.in]: eventoIds } },
+            attributes: ['id', 'id_evento', 'nopunto', 'punto'],
+            order: [['nopunto', 'ASC']],
+            include: [{ model: inciativas_puntos_ordens_1.default, as: 'iniciativas', attributes: ['id', 'iniciativa', 'tipo'], required: false }],
+        });
+        // 3) Votos de todos esos puntos (sentido 1=favor, 2=abstención, 3=contra).
+        const puntoIds = puntos.map((p) => p.id);
         const votosRaw = puntoIds.length
             ? yield votos_punto_1.default.findAll({
                 where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] } },
@@ -673,7 +684,7 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
                 raw: true,
             })
             : [];
-        // Catálogos de nombres.
+        // Catálogos de nombres (Diputado/Partidos viven en otra BD → consulta aparte).
         const dipIds = [...new Set(votosRaw.map((v) => v.id_diputado).filter(Boolean))];
         const parIds = [...new Set(votosRaw.map((v) => v.id_partido).filter(Boolean))];
         const [dips, pars] = yield Promise.all([
@@ -689,9 +700,12 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
                 votosPorPunto.set(pid, []);
             votosPorPunto.get(pid).push(v);
         }
-        const iniciativas = enSesion.map((r) => {
+        // Resumen de votación de un punto (null si no se votó).
+        const construirVotacion = (puntoId) => {
             var _a, _b, _c, _d, _e;
-            const votos = r.votingPuntoIntId != null ? (_a = votosPorPunto.get(r.votingPuntoIntId)) !== null && _a !== void 0 ? _a : [] : [];
+            const votos = (_a = votosPorPunto.get(puntoId)) !== null && _a !== void 0 ? _a : [];
+            if (!votos.length)
+                return null;
             let a_favor = 0, en_contra = 0, abstencion = 0;
             const votaronContra = [];
             const seAbstuvieron = [];
@@ -707,17 +721,54 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
                     votaronContra.push({ diputado: (_d = dipMap.get(v.id_diputado)) !== null && _d !== void 0 ? _d : '-', partido: (_e = parMap.get(v.id_partido)) !== null && _e !== void 0 ? _e : null });
                 }
             }
+            const total = a_favor + en_contra + abstencion;
             return {
-                iniciativa: r.iniciativa,
-                proponente: r.diputado,
-                grupo_parlamentario: r.grupo_parlamentario,
-                resultado: r.observac,
-                votacion: { a_favor, en_contra, abstencion, total: a_favor + en_contra + abstencion },
-                en_contra: votaronContra,
+                resultado: a_favor > total / 2 ? 'Aprobado' : 'No aprobado', // por mayoría simple de votos emitidos
+                a_favor,
+                en_contra,
+                abstencion,
+                total,
+                en_contra_detalle: votaronContra,
                 abstenciones: seAbstuvieron,
             };
+        };
+        const puntosPorEvento = new Map();
+        for (const p of puntos) {
+            const key = String(p.id_evento);
+            if (!puntosPorEvento.has(key))
+                puntosPorEvento.set(key, []);
+            puntosPorEvento.get(key).push(p);
+        }
+        const eventosSalida = eventosFiltrados.map((e) => {
+            var _a, _b, _c, _d;
+            const ptos = ((_a = puntosPorEvento.get(String(e.id))) !== null && _a !== void 0 ? _a : []).map((p) => {
+                var _a, _b, _c;
+                const iniciativas = ((_a = p.iniciativas) !== null && _a !== void 0 ? _a : []).map((ini) => {
+                    var _a, _b;
+                    return ({
+                        titulo: (_a = ini.iniciativa) !== null && _a !== void 0 ? _a : null,
+                        tipo: (_b = TIPO_INICIATIVA_LABEL[Number(ini.tipo)]) !== null && _b !== void 0 ? _b : null,
+                    });
+                });
+                const votacion = construirVotacion(Number(p.id));
+                return {
+                    nopunto: (_b = p.nopunto) !== null && _b !== void 0 ? _b : null,
+                    punto: (_c = p.punto) !== null && _c !== void 0 ? _c : null,
+                    iniciativas, // vacío = "solo se votó el punto"
+                    se_voto: votacion != null,
+                    votacion, // null = sin votación registrada
+                };
+            });
+            return {
+                id: e.id,
+                tipo_evento: (_c = (_b = e.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) !== null && _c !== void 0 ? _c : null,
+                descripcion: (_d = e.descripcion) !== null && _d !== void 0 ? _d : null,
+                total_puntos: ptos.length,
+                puntos_votados: ptos.filter((x) => x.se_voto).length,
+                puntos: ptos,
+            };
         });
-        return res.status(200).json({ msg: 'Exito', fecha: objetivo, total: iniciativas.length, iniciativas });
+        return res.status(200).json({ msg: 'Exito', fecha: iso, total_eventos: eventosSalida.length, eventos: eventosSalida });
     }
     catch (error) {
         console.error('Error consultando votaciones de la sesión:', error);
