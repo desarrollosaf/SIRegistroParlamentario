@@ -6,6 +6,7 @@ const router = (0, express_1.Router)();
 router.get('/api/inteligencia/todos/integrantes/', inteligencia_1.getTodosLosIntegrantes);
 router.get('/api/inteligencia/diputado/buscar/', inteligencia_1.getIntegrante);
 router.get('/api/inteligencia/eventos/recientes/', inteligencia_1.eventosRecientes);
+router.get('/api/inteligencia/iniciativa/periodo/', inteligencia_1.iniciativasPorPeriodo);
 router.get('/api/inteligencia/:slug/integrantes/', inteligencia_1.getIntegrantesPartido);
 router.get('/api/inteligencia/iniciativa/buscar/', inteligencia_1.buscarIniciativa);
 router.get('/api/inteligencia/comisiones/', inteligencia_1.listarComisiones);

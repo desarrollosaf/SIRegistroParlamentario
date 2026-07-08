@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.eventosRecientes = exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
+exports.iniciativasPorPeriodo = exports.eventosRecientes = exports.buscarIniciativa = exports.buscarComision = exports.listarComisiones = exports.getTodosLosIntegrantes = exports.getIntegrante = exports.getIntegrantesPartido = void 0;
 const sequelize_1 = require("sequelize");
 const partidos_1 = __importDefault(require("../models/partidos"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
@@ -502,3 +502,111 @@ const eventosRecientes = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.eventosRecientes = eventosRecientes;
+const PERIODOS_LEGISLATIVOS = [
+    { numero: 1, tipo: 'ordinario', anio: 1, nombre: 'Primer Periodo Ordinario de Sesiones del Primer Año', inicio: '2024-09-04', fin: '2024-12-19' },
+    { numero: 2, tipo: 'ordinario', anio: 1, nombre: 'Segundo Periodo Ordinario de Sesiones del Primer Año', inicio: '2025-01-31', fin: '2025-05-13' },
+    { numero: 1, tipo: 'extraordinario', anio: 1, nombre: 'Primer Periodo Extraordinario de Sesiones del Primer Año', inicio: '2025-01-14', fin: '2025-01-14' },
+    { numero: 1, tipo: 'receso', anio: 1, nombre: 'Primer Periodo de Receso del Primer Año', inicio: '2024-12-19', fin: '2025-01-20' },
+    { numero: 2, tipo: 'receso', anio: 1, nombre: 'Segundo Periodo de Receso del Primer Año', inicio: '2025-05-13', fin: '2025-08-27' },
+    { numero: 2, tipo: 'extraordinario', anio: 1, nombre: 'Segundo Periodo Extraordinario de Sesiones del Primer Año', inicio: '2025-06-26', fin: '2025-06-26' },
+    { numero: 3, tipo: 'extraordinario', anio: 1, nombre: 'Tercer Periodo Extraordinario de Sesiones del Primer Año', inicio: '2025-08-08', fin: '2025-08-08' },
+    { numero: 4, tipo: 'extraordinario', anio: 1, nombre: 'Cuarto Periodo Extraordinario de Sesiones del Primer Año', inicio: '2025-09-02', fin: '2025-09-02' },
+    // OJO: el dato original decía fin 10/05/2025 (anterior al inicio). Se asume 2026-05-10; confirmar.
+    { numero: 1, tipo: 'ordinario', anio: 2, nombre: 'Primer Periodo Ordinario de Sesiones del Segundo Año', inicio: '2025-09-05', fin: '2026-05-10' },
+    { numero: 5, tipo: 'extraordinario', anio: 2, nombre: 'Quinto Periodo Extraordinario de Sesiones del Segundo Año', inicio: '2026-01-15', fin: '2026-01-15' },
+    { numero: 1, tipo: 'receso', anio: 2, nombre: 'Primer Periodo de Receso del Segundo Año', inicio: '2025-12-10', fin: '2026-01-22' },
+    { numero: 2, tipo: 'ordinario', anio: 2, nombre: 'Segundo Periodo Ordinario de Sesiones del Segundo Año', inicio: '2026-01-31', fin: '2026-05-13' },
+];
+const ORDINALES = {
+    primer: 1, primero: 1, primera: 1,
+    segundo: 2, segunda: 2,
+    tercer: 3, tercero: 3, tercera: 3,
+    cuarto: 4, cuarta: 4,
+    quinto: 5, quinta: 5,
+};
+// Intenta identificar a qué periodo(s) se refiere un texto libre.
+function identificarPeriodos(texto) {
+    var _a, _b;
+    const q = quitarAcentos(texto.toLowerCase());
+    // 'extraordinario' contiene 'ordinario', por eso se evalúa primero.
+    let tipo = null;
+    if (q.includes('extraordinari'))
+        tipo = 'extraordinario';
+    else if (q.includes('receso'))
+        tipo = 'receso';
+    else if (q.includes('ordinari'))
+        tipo = 'ordinario';
+    const mNumero = q.match(/(primer[oa]?|segund[oa]|tercer[oa]?|cuart[oa]|quint[oa])\s+periodo/);
+    const numero = mNumero ? (_a = ORDINALES[mNumero[1]]) !== null && _a !== void 0 ? _a : null : null;
+    const mAnio = q.match(/(primer[oa]?|segund[oa])\s+ano/);
+    const anio = mAnio ? (_b = ORDINALES[mAnio[1]]) !== null && _b !== void 0 ? _b : null : null;
+    const candidatos = PERIODOS_LEGISLATIVOS.filter((p) => (numero == null || p.numero === numero) &&
+        (tipo == null || p.tipo === tipo) &&
+        (anio == null || p.anio === anio));
+    return { candidatos, filtros: { numero, tipo, anio } };
+}
+const iniciativasPorPeriodo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const q = ((_a = req.query.q) !== null && _a !== void 0 ? _a : '').trim();
+    if (!q) {
+        return res.status(400).json({
+            msg: 'Debes indicar el periodo, por ejemplo "primer periodo ordinario del primer año".',
+            periodos_disponibles: PERIODOS_LEGISLATIVOS.map((p) => p.nombre),
+        });
+    }
+    const { candidatos } = identificarPeriodos(q);
+    if (!candidatos.length) {
+        return res.status(200).json({
+            msg: `No identifiqué el periodo solicitado: "${q}".`,
+            periodos_disponibles: PERIODOS_LEGISLATIVOS.map((p) => p.nombre),
+        });
+    }
+    if (candidatos.length > 1) {
+        return res.status(200).json({
+            msg: 'El periodo es ambiguo. Especifica el año de ejercicio (primer o segundo año).',
+            coincidencias: candidatos.map((p) => p.nombre),
+        });
+    }
+    const periodo = candidatos[0];
+    try {
+        const reporte = yield (0, estadistico_1.construirReporteBase)();
+        const dentroDelPeriodo = (raw) => {
+            if (!raw)
+                return false;
+            const fecha = new Date(raw);
+            if (isNaN(fecha.getTime()))
+                return false;
+            const iso = fecha.toISOString().slice(0, 10);
+            return iso >= periodo.inicio && iso <= periodo.fin;
+        };
+        const coincidencias = reporte
+            .filter((item) => dentroDelPeriodo(item.fecha_evento_raw))
+            .sort((a, b) => String(a.fecha_evento_raw).localeCompare(String(b.fecha_evento_raw)));
+        const iniciativas = coincidencias.map((item) => {
+            var _a;
+            return ({
+                id: item.id,
+                iniciativa: item.iniciativa,
+                autor: item.autor,
+                autor_detalle: item.autor_detalle,
+                grupo_parlamentario: item.grupo_parlamentario,
+                estado_actual: item.observac,
+                aprobada: item.aprobada,
+                presentacion: item.presentac,
+                expedicion: item.expedicion,
+                documento: (_a = item.documento) !== null && _a !== void 0 ? _a : null,
+            });
+        });
+        return res.status(200).json({
+            msg: 'Exito',
+            periodo: { nombre: periodo.nombre, inicio: periodo.inicio, fin: periodo.fin },
+            total: iniciativas.length,
+            iniciativas,
+        });
+    }
+    catch (error) {
+        console.error('Error consultando iniciativas por periodo:', error);
+        return res.status(500).json({ msg: 'Ocurrió un error al consultar iniciativas por periodo', error: error.message });
+    }
+});
+exports.iniciativasPorPeriodo = iniciativasPorPeriodo;
