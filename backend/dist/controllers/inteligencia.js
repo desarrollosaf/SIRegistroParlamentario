@@ -495,23 +495,40 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.buscarIniciativa = buscarIniciativa;
+// Patrones para filtrar por tipo de evento. Se incluyen las variantes con y sin acento
+// por si la colación de la BD es sensible a acentos.
+const TIPO_EVENTO_PATRONES = {
+    sesion: ['%sesion%', '%sesión%'],
+    comision: ['%comision%', '%comisión%'],
+};
 const eventosRecientes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    // ?limite=5 (por defecto 5, máximo 20)
+    var _a, _b, _c;
+    // ?limite=5 (por defecto 5, máximo 20)   ?tipo=sesion | comision (opcional)
     const limiteRaw = parseInt((_a = req.query.limite) !== null && _a !== void 0 ? _a : '5', 10);
     const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
+    const tipoRaw = ((_b = req.query.tipo) !== null && _b !== void 0 ? _b : '').trim();
+    const tipoClave = quitarAcentos(tipoRaw.toLowerCase());
     try {
+        // El filtro por tipo va en el JOIN (required: true) para que `limit` cuente
+        // solo los eventos del tipo pedido, no los de todos los tipos.
+        const patrones = tipoClave ? (_c = TIPO_EVENTO_PATRONES[tipoClave]) !== null && _c !== void 0 ? _c : [`%${tipoClave}%`] : null;
+        const tipoEventoInclude = { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] };
+        if (patrones) {
+            tipoEventoInclude.required = true;
+            tipoEventoInclude.where = { [sequelize_1.Op.or]: patrones.map((p) => ({ nombre: { [sequelize_1.Op.like]: p } })) };
+        }
         const eventos = yield agendas_1.default.findAll({
             attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['sede'] },
-                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] },
+                tipoEventoInclude,
             ],
             order: [['fecha', 'DESC']],
             limit: limite,
         });
         if (!eventos.length) {
-            return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+            const detalle = tipoRaw ? ` de tipo "${tipoRaw}"` : '';
+            return res.status(200).json({ msg: `Sin resultados: no hay eventos${detalle}.`, total: 0, eventos: [] });
         }
         const comisionesPorEvento = yield comisionesAnfitrionasPorEvento(eventos.map((e) => e.id));
         const resultados = eventos.map((e) => {

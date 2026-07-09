@@ -518,24 +518,44 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
   }
 };
 
+// Patrones para filtrar por tipo de evento. Se incluyen las variantes con y sin acento
+// por si la colación de la BD es sensible a acentos.
+const TIPO_EVENTO_PATRONES: Record<string, string[]> = {
+  sesion:    ['%sesion%', '%sesión%'],
+  comision:  ['%comision%', '%comisión%'],
+};
+
 export const eventosRecientes = async (req: Request, res: Response): Promise<Response> => {
-  // ?limite=5 (por defecto 5, máximo 20)
+  // ?limite=5 (por defecto 5, máximo 20)   ?tipo=sesion | comision (opcional)
   const limiteRaw = parseInt((req.query.limite as string) ?? '5', 10);
   const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
 
+  const tipoRaw = ((req.query.tipo as string) ?? '').trim();
+  const tipoClave = quitarAcentos(tipoRaw.toLowerCase());
+
   try {
+    // El filtro por tipo va en el JOIN (required: true) para que `limit` cuente
+    // solo los eventos del tipo pedido, no los de todos los tipos.
+    const patrones = tipoClave ? TIPO_EVENTO_PATRONES[tipoClave] ?? [`%${tipoClave}%`] : null;
+    const tipoEventoInclude: any = { model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] };
+    if (patrones) {
+      tipoEventoInclude.required = true;
+      tipoEventoInclude.where = { [Op.or]: patrones.map((p) => ({ nombre: { [Op.like]: p } })) };
+    }
+
     const eventos = await Agenda.findAll({
       attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
       include: [
-        { model: Sedes,       as: 'sede',       attributes: ['sede'] },
-        { model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] },
+        { model: Sedes, as: 'sede', attributes: ['sede'] },
+        tipoEventoInclude,
       ],
       order: [['fecha', 'DESC']],
       limit: limite,
     }) as any[];
 
     if (!eventos.length) {
-      return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+      const detalle = tipoRaw ? ` de tipo "${tipoRaw}"` : '';
+      return res.status(200).json({ msg: `Sin resultados: no hay eventos${detalle}.`, total: 0, eventos: [] });
     }
 
     const comisionesPorEvento = await comisionesAnfitrionasPorEvento(eventos.map((e) => e.id));
