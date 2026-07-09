@@ -678,9 +678,9 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
         const puntoIds = puntos.map((p) => p.id);
         const votosRaw = puntoIds.length
             ? yield votos_punto_1.default.findAll({
-                where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] } },
+                where: { id_punto: { [sequelize_1.Op.in]: puntoIds }, sentido: { [sequelize_1.Op.in]: [1, 2, 3] }, },
                 attributes: ['id_punto', 'sentido', 'id_diputado', 'id_partido'],
-                paranoid: false,
+                paranoid: true,
                 raw: true,
             })
             : [];

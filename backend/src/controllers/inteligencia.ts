@@ -735,9 +735,9 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
     const puntoIds = puntos.map((p) => p.id);
     const votosRaw = puntoIds.length
       ? (await VotosPunto.findAll({
-          where: { id_punto: { [Op.in]: puntoIds }, sentido: { [Op.in]: [1, 2, 3] } },
+          where: { id_punto: { [Op.in]: puntoIds }, sentido: { [Op.in]: [1, 2, 3] }, },
           attributes: ['id_punto', 'sentido', 'id_diputado', 'id_partido'],
-          paranoid: false,
+          paranoid: true,
           raw: true,
         }) as any[])
       : [];
