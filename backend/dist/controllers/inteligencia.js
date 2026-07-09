@@ -46,6 +46,34 @@ require("../models/associations");
 const esVigente = (fechaFin) => fechaFin == null || fechaFin === '';
 // Id del tipo de comisión "Diputación Permanente" (tabla tipo_comisions).
 const TIPO_DIPUTACION_PERMANENTE_ID = 'e41e1bea-c646-11f0-9230-fa163e5be1f8';
+// Comisión(es) anfitriona(s) por evento de agenda: anfitrion_agendas.autor_id → Comision.nombre.
+// Devuelve Map<agenda_id, [{ id, nombre }]>.
+function comisionesAnfitrionasPorEvento(eventoIds) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        const resultado = new Map();
+        if (!eventoIds.length)
+            return resultado;
+        const anfitriones = (yield anfitrion_agendas_1.default.findAll({
+            where: { agenda_id: { [sequelize_1.Op.in]: eventoIds } },
+            attributes: ['agenda_id', 'autor_id'],
+            raw: true,
+        }));
+        const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
+        const comisionesCat = comisionIds.length
+            ? (yield comisions_1.default.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true }))
+            : [];
+        const nombrePorId = new Map(comisionesCat.map((c) => [c.id, c.nombre]));
+        for (const a of anfitriones) {
+            if (!nombrePorId.has(a.autor_id))
+                continue; // el anfitrión no es una comisión conocida
+            const lista = (_a = resultado.get(String(a.agenda_id))) !== null && _a !== void 0 ? _a : [];
+            lista.push({ id: a.autor_id, nombre: (_b = nombrePorId.get(a.autor_id)) !== null && _b !== void 0 ? _b : null });
+            resultado.set(String(a.agenda_id), lista);
+        }
+        return resultado;
+    });
+}
 const PARTIDOS = {
     morena: { id: '947b16d0-1803-4c64-be3f-7b4e83a60480', coordinador: { apaterno: 'Vázquez', amaterno: 'Rodríguez', nombres: 'José Francisco' } },
     verde: { id: '1342c104-d5ec-4eda-b5ca-7d653b440a5e', coordinador: { apaterno: 'Couttolenc', amaterno: 'Buentello', nombres: 'José Alberto' } },
@@ -467,38 +495,58 @@ const buscarIniciativa = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.buscarIniciativa = buscarIniciativa;
+// Patrones para filtrar por tipo de evento. Se incluyen las variantes con y sin acento
+// por si la colación de la BD es sensible a acentos.
+const TIPO_EVENTO_PATRONES = {
+    sesion: ['%sesion%', '%sesión%'],
+    comision: ['%comision%', '%comisión%'],
+};
 const eventosRecientes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    // ?limite=5 (por defecto 5, máximo 20)
+    var _a, _b, _c;
+    // ?limite=5 (por defecto 5, máximo 20)   ?tipo=sesion | comision (opcional)
     const limiteRaw = parseInt((_a = req.query.limite) !== null && _a !== void 0 ? _a : '5', 10);
     const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
+    const tipoRaw = ((_b = req.query.tipo) !== null && _b !== void 0 ? _b : '').trim();
+    const tipoClave = quitarAcentos(tipoRaw.toLowerCase());
     try {
+        // El filtro por tipo va en el JOIN (required: true) para que `limit` cuente
+        // solo los eventos del tipo pedido, no los de todos los tipos.
+        const patrones = tipoClave ? (_c = TIPO_EVENTO_PATRONES[tipoClave]) !== null && _c !== void 0 ? _c : [`%${tipoClave}%`] : null;
+        const tipoEventoInclude = { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] };
+        if (patrones) {
+            tipoEventoInclude.required = true;
+            tipoEventoInclude.where = { [sequelize_1.Op.or]: patrones.map((p) => ({ nombre: { [sequelize_1.Op.like]: p } })) };
+        }
         const eventos = yield agendas_1.default.findAll({
             attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
             include: [
                 { model: sedes_1.default, as: 'sede', attributes: ['sede'] },
-                { model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] },
+                tipoEventoInclude,
             ],
             order: [['fecha', 'DESC']],
             limit: limite,
         });
         if (!eventos.length) {
-            return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+            const detalle = tipoRaw ? ` de tipo "${tipoRaw}"` : '';
+            return res.status(200).json({ msg: `Sin resultados: no hay eventos${detalle}.`, total: 0, eventos: [] });
         }
+        const comisionesPorEvento = yield comisionesAnfitrionasPorEvento(eventos.map((e) => e.id));
         const resultados = eventos.map((e) => {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-            return ({
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+            const comisiones = (_a = comisionesPorEvento.get(String(e.id))) !== null && _a !== void 0 ? _a : [];
+            return {
                 id: e.id,
-                tipo_evento: (_b = (_a = e.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : null,
-                descripcion: (_c = e.descripcion) !== null && _c !== void 0 ? _c : null,
-                fecha: (_d = e.fecha) !== null && _d !== void 0 ? _d : null,
-                hora: (_e = e.hora) !== null && _e !== void 0 ? _e : null,
-                fecha_hora_inicio: (_f = e.fecha_hora_inicio) !== null && _f !== void 0 ? _f : null,
-                sede: (_h = (_g = e.sede) === null || _g === void 0 ? void 0 : _g.sede) !== null && _h !== void 0 ? _h : null,
-                orden_dia: (_j = e.orden_dia) !== null && _j !== void 0 ? _j : null,
+                tipo_evento: (_c = (_b = e.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) !== null && _c !== void 0 ? _c : null,
+                comisiones, // comisión(es) anfitriona(s)
+                descripcion: (_d = e.descripcion) !== null && _d !== void 0 ? _d : null,
+                fecha: (_e = e.fecha) !== null && _e !== void 0 ? _e : null,
+                hora: (_f = e.hora) !== null && _f !== void 0 ? _f : null,
+                fecha_hora_inicio: (_g = e.fecha_hora_inicio) !== null && _g !== void 0 ? _g : null,
+                sede: (_j = (_h = e.sede) === null || _h === void 0 ? void 0 : _h.sede) !== null && _j !== void 0 ? _j : null,
+                orden_dia: (_k = e.orden_dia) !== null && _k !== void 0 ? _k : null,
                 transmision: !!e.transmision,
-                liga: (_k = e.liga) !== null && _k !== void 0 ? _k : null,
-            });
+                liga: (_l = e.liga) !== null && _l !== void 0 ? _l : null,
+            };
         });
         return res.status(200).json({ msg: 'Exito', total: resultados.length, eventos: resultados });
     }
@@ -653,7 +701,7 @@ function fechaAISO(texto) {
     return null;
 }
 const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     // Sin fecha → "hoy".
     const fechaTexto = ((_b = ((_a = req.query.fecha) !== null && _a !== void 0 ? _a : req.query.q)) !== null && _b !== void 0 ? _b : '').trim();
     const iso = fechaAISO(fechaTexto);
@@ -679,24 +727,8 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
             return res.status(200).json({ msg: `No encontré eventos en la agenda con fecha ${iso}.`, fecha: iso, total_eventos: 0, eventos: [] });
         }
         const eventoIds = eventosFiltrados.map((e) => e.id);
-        // 2) Comisión(es) anfitriona(s) de cada evento (anfitrion_agendas.autor_id → Comision).
-        const anfitriones = yield anfitrion_agendas_1.default.findAll({
-            where: { agenda_id: { [sequelize_1.Op.in]: eventoIds } },
-            attributes: ['agenda_id', 'autor_id'],
-            raw: true,
-        });
-        const comisionIdsPorEvento = new Map();
-        for (const a of anfitriones) {
-            const lista = (_d = comisionIdsPorEvento.get(String(a.agenda_id))) !== null && _d !== void 0 ? _d : [];
-            if (a.autor_id)
-                lista.push(a.autor_id);
-            comisionIdsPorEvento.set(String(a.agenda_id), lista);
-        }
-        const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
-        const comisionesCat = comisionIds.length
-            ? yield comisions_1.default.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true })
-            : [];
-        const comisionNombrePorId = new Map(comisionesCat.map((c) => [c.id, c.nombre]));
+        // 2) Comisión(es) anfitriona(s) de cada evento.
+        const comisionesPorEvento = yield comisionesAnfitrionasPorEvento(eventoIds);
         // 3) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
         const puntos = yield puntos_ordens_1.default.findAll({
             where: { id_evento: { [sequelize_1.Op.in]: eventoIds } },
@@ -789,14 +821,12 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
                     votacion, // null = sin votación registrada
                 };
             });
-            const comisiones = ((_b = comisionIdsPorEvento.get(String(e.id))) !== null && _b !== void 0 ? _b : [])
-                .filter((id) => comisionNombrePorId.has(id))
-                .map((id) => { var _a; return ({ id, nombre: (_a = comisionNombrePorId.get(id)) !== null && _a !== void 0 ? _a : null }); });
+            const comisiones = (_b = comisionesPorEvento.get(String(e.id))) !== null && _b !== void 0 ? _b : [];
             return {
                 id: e.id,
                 tipo_evento: (_d = (_c = e.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre) !== null && _d !== void 0 ? _d : null,
                 comisiones, // comisión(es) anfitriona(s)
-                titulo: comisiones.map((c) => c.nombre).join(', ') || ((_e = e.descripcion) !== null && _e !== void 0 ? _e : null),
+                titulo: comisiones.map((c) => c.nombre).filter(Boolean).join(', ') || ((_e = e.descripcion) !== null && _e !== void 0 ? _e : null),
                 descripcion: (_f = e.descripcion) !== null && _f !== void 0 ? _f : null,
                 total_puntos: ptos.length,
                 puntos_votados: ptos.filter((x) => x.se_voto).length,

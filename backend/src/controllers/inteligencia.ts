@@ -24,6 +24,35 @@ const esVigente = (fechaFin: unknown): boolean => fechaFin == null || fechaFin =
 // Id del tipo de comisión "Diputación Permanente" (tabla tipo_comisions).
 const TIPO_DIPUTACION_PERMANENTE_ID = 'e41e1bea-c646-11f0-9230-fa163e5be1f8';
 
+// Comisión(es) anfitriona(s) por evento de agenda: anfitrion_agendas.autor_id → Comision.nombre.
+// Devuelve Map<agenda_id, [{ id, nombre }]>.
+async function comisionesAnfitrionasPorEvento(
+  eventoIds: string[]
+): Promise<Map<string, { id: string; nombre: string | null }[]>> {
+  const resultado = new Map<string, { id: string; nombre: string | null }[]>();
+  if (!eventoIds.length) return resultado;
+
+  const anfitriones = (await AnfitrionAgenda.findAll({
+    where: { agenda_id: { [Op.in]: eventoIds } },
+    attributes: ['agenda_id', 'autor_id'],
+    raw: true,
+  })) as any[];
+
+  const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
+  const comisionesCat = comisionIds.length
+    ? ((await Comision.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true })) as any[])
+    : [];
+  const nombrePorId = new Map<string, string>(comisionesCat.map((c) => [c.id, c.nombre]));
+
+  for (const a of anfitriones) {
+    if (!nombrePorId.has(a.autor_id)) continue; // el anfitrión no es una comisión conocida
+    const lista = resultado.get(String(a.agenda_id)) ?? [];
+    lista.push({ id: a.autor_id, nombre: nombrePorId.get(a.autor_id) ?? null });
+    resultado.set(String(a.agenda_id), lista);
+  }
+  return resultado;
+}
+
 type CoordinadorDef = { apaterno: string; amaterno: string; nombres: string } | null;
 
 const PARTIDOS: Record<string, { id: string; coordinador: CoordinadorDef }> = {
@@ -489,38 +518,64 @@ export const buscarIniciativa = async (req: Request, res: Response): Promise<Res
   }
 };
 
+// Patrones para filtrar por tipo de evento. Se incluyen las variantes con y sin acento
+// por si la colación de la BD es sensible a acentos.
+const TIPO_EVENTO_PATRONES: Record<string, string[]> = {
+  sesion:    ['%sesion%', '%sesión%'],
+  comision:  ['%comision%', '%comisión%'],
+};
+
 export const eventosRecientes = async (req: Request, res: Response): Promise<Response> => {
-  // ?limite=5 (por defecto 5, máximo 20)
+  // ?limite=5 (por defecto 5, máximo 20)   ?tipo=sesion | comision (opcional)
   const limiteRaw = parseInt((req.query.limite as string) ?? '5', 10);
   const limite = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 20) : 5;
 
+  const tipoRaw = ((req.query.tipo as string) ?? '').trim();
+  const tipoClave = quitarAcentos(tipoRaw.toLowerCase());
+
   try {
+    // El filtro por tipo va en el JOIN (required: true) para que `limit` cuente
+    // solo los eventos del tipo pedido, no los de todos los tipos.
+    const patrones = tipoClave ? TIPO_EVENTO_PATRONES[tipoClave] ?? [`%${tipoClave}%`] : null;
+    const tipoEventoInclude: any = { model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] };
+    if (patrones) {
+      tipoEventoInclude.required = true;
+      tipoEventoInclude.where = { [Op.or]: patrones.map((p) => ({ nombre: { [Op.like]: p } })) };
+    }
+
     const eventos = await Agenda.findAll({
       attributes: ['id', 'fecha', 'hora', 'fecha_hora_inicio', 'descripcion', 'orden_dia', 'liga', 'transmision'],
       include: [
-        { model: Sedes,       as: 'sede',       attributes: ['sede'] },
-        { model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] },
+        { model: Sedes, as: 'sede', attributes: ['sede'] },
+        tipoEventoInclude,
       ],
       order: [['fecha', 'DESC']],
       limit: limite,
     }) as any[];
 
     if (!eventos.length) {
-      return res.status(200).json({ msg: 'Sin resultados', total: 0, eventos: [] });
+      const detalle = tipoRaw ? ` de tipo "${tipoRaw}"` : '';
+      return res.status(200).json({ msg: `Sin resultados: no hay eventos${detalle}.`, total: 0, eventos: [] });
     }
 
-    const resultados = eventos.map((e) => ({
-      id:                e.id,
-      tipo_evento:       e.tipoevento?.nombre ?? null,
-      descripcion:       e.descripcion ?? null,
-      fecha:             e.fecha ?? null,
-      hora:              e.hora ?? null,
-      fecha_hora_inicio: e.fecha_hora_inicio ?? null,
-      sede:              e.sede?.sede ?? null,
-      orden_dia:         e.orden_dia ?? null,
-      transmision:       !!e.transmision,
-      liga:              e.liga ?? null,
-    }));
+    const comisionesPorEvento = await comisionesAnfitrionasPorEvento(eventos.map((e) => e.id));
+
+    const resultados = eventos.map((e) => {
+      const comisiones = comisionesPorEvento.get(String(e.id)) ?? [];
+      return {
+        id:                e.id,
+        tipo_evento:       e.tipoevento?.nombre ?? null,
+        comisiones,                                                       // comisión(es) anfitriona(s)
+        descripcion:       e.descripcion ?? null,
+        fecha:             e.fecha ?? null,
+        hora:              e.hora ?? null,
+        fecha_hora_inicio: e.fecha_hora_inicio ?? null,
+        sede:              e.sede?.sede ?? null,
+        orden_dia:         e.orden_dia ?? null,
+        transmision:       !!e.transmision,
+        liga:              e.liga ?? null,
+      };
+    });
 
     return res.status(200).json({ msg: 'Exito', total: resultados.length, eventos: resultados });
   } catch (error) {
@@ -735,25 +790,8 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
 
     const eventoIds = eventosFiltrados.map((e) => e.id);
 
-    // 2) Comisión(es) anfitriona(s) de cada evento (anfitrion_agendas.autor_id → Comision).
-    const anfitriones = await AnfitrionAgenda.findAll({
-      where: { agenda_id: { [Op.in]: eventoIds } },
-      attributes: ['agenda_id', 'autor_id'],
-      raw: true,
-    }) as any[];
-
-    const comisionIdsPorEvento = new Map<string, string[]>();
-    for (const a of anfitriones) {
-      const lista = comisionIdsPorEvento.get(String(a.agenda_id)) ?? [];
-      if (a.autor_id) lista.push(a.autor_id);
-      comisionIdsPorEvento.set(String(a.agenda_id), lista);
-    }
-
-    const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
-    const comisionesCat = comisionIds.length
-      ? (await Comision.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true }) as any[])
-      : [];
-    const comisionNombrePorId = new Map<string, string>(comisionesCat.map((c) => [c.id, c.nombre]));
+    // 2) Comisión(es) anfitriona(s) de cada evento.
+    const comisionesPorEvento = await comisionesAnfitrionasPorEvento(eventoIds);
 
     // 3) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
     const puntos = await PuntosOrden.findAll({
@@ -846,15 +884,13 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
         };
       });
 
-      const comisiones = (comisionIdsPorEvento.get(String(e.id)) ?? [])
-        .filter((id) => comisionNombrePorId.has(id))
-        .map((id) => ({ id, nombre: comisionNombrePorId.get(id) ?? null }));
+      const comisiones = comisionesPorEvento.get(String(e.id)) ?? [];
 
       return {
         id:             e.id,
         tipo_evento:    e.tipoevento?.nombre ?? null,
         comisiones,                                         // comisión(es) anfitriona(s)
-        titulo:         comisiones.map((c) => c.nombre).join(', ') || (e.descripcion ?? null),
+        titulo:         comisiones.map((c) => c.nombre).filter(Boolean).join(', ') || (e.descripcion ?? null),
         descripcion:    e.descripcion ?? null,
         total_puntos:   ptos.length,
         puntos_votados: ptos.filter((x) => x.se_voto).length,
