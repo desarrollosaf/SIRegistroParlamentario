@@ -13,6 +13,7 @@ import Sedes from '../models/sedes';
 import VotosPunto from '../models/votos_punto';
 import PuntosOrden from '../models/puntos_ordens';
 import IniciativaPuntoOrden from '../models/inciativas_puntos_ordens';
+import AnfitrionAgenda from '../models/anfitrion_agendas';
 import { construirReporteBase } from './estadistico';
 import '../models/associations';
 
@@ -732,8 +733,29 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
       return res.status(200).json({ msg: `No encontré eventos en la agenda con fecha ${iso}.`, fecha: iso, total_eventos: 0, eventos: [] });
     }
 
-    // 2) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
     const eventoIds = eventosFiltrados.map((e) => e.id);
+
+    // 2) Comisión(es) anfitriona(s) de cada evento (anfitrion_agendas.autor_id → Comision).
+    const anfitriones = await AnfitrionAgenda.findAll({
+      where: { agenda_id: { [Op.in]: eventoIds } },
+      attributes: ['agenda_id', 'autor_id'],
+      raw: true,
+    }) as any[];
+
+    const comisionIdsPorEvento = new Map<string, string[]>();
+    for (const a of anfitriones) {
+      const lista = comisionIdsPorEvento.get(String(a.agenda_id)) ?? [];
+      if (a.autor_id) lista.push(a.autor_id);
+      comisionIdsPorEvento.set(String(a.agenda_id), lista);
+    }
+
+    const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
+    const comisionesCat = comisionIds.length
+      ? (await Comision.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true }) as any[])
+      : [];
+    const comisionNombrePorId = new Map<string, string>(comisionesCat.map((c) => [c.id, c.nombre]));
+
+    // 3) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
     const puntos = await PuntosOrden.findAll({
       where: { id_evento: { [Op.in]: eventoIds } },
       attributes: ['id', 'id_evento', 'nopunto', 'punto'],
@@ -741,7 +763,7 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
       include: [{ model: IniciativaPuntoOrden, as: 'iniciativas', attributes: ['id', 'iniciativa', 'tipo'], required: false }],
     }) as any[];
 
-    // 3) Votos de todos esos puntos (sentido 1=favor, 2=abstención, 3=contra).
+    // 4) Votos de todos esos puntos (sentido 1=favor, 2=abstención, 3=contra).
     const puntoIds = puntos.map((p) => p.id);
     const votosRaw = puntoIds.length
       ? (await VotosPunto.findAll({
@@ -824,9 +846,15 @@ export const iniciativasVotadasEnSesion = async (req: Request, res: Response): P
         };
       });
 
+      const comisiones = (comisionIdsPorEvento.get(String(e.id)) ?? [])
+        .filter((id) => comisionNombrePorId.has(id))
+        .map((id) => ({ id, nombre: comisionNombrePorId.get(id) ?? null }));
+
       return {
         id:             e.id,
         tipo_evento:    e.tipoevento?.nombre ?? null,
+        comisiones,                                         // comisión(es) anfitriona(s)
+        titulo:         comisiones.map((c) => c.nombre).join(', ') || (e.descripcion ?? null),
         descripcion:    e.descripcion ?? null,
         total_puntos:   ptos.length,
         puntos_votados: ptos.filter((x) => x.se_voto).length,
