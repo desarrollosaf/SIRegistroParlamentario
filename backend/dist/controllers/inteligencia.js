@@ -38,6 +38,7 @@ const sedes_1 = __importDefault(require("../models/sedes"));
 const votos_punto_1 = __importDefault(require("../models/votos_punto"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const inciativas_puntos_ordens_1 = __importDefault(require("../models/inciativas_puntos_ordens"));
+const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
 const estadistico_1 = require("./estadistico");
 require("../models/associations");
 // Un registro (integrante_legislatura / integrante_comision) está vigente cuando su
@@ -652,7 +653,7 @@ function fechaAISO(texto) {
     return null;
 }
 const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     // Sin fecha → "hoy".
     const fechaTexto = ((_b = ((_a = req.query.fecha) !== null && _a !== void 0 ? _a : req.query.q)) !== null && _b !== void 0 ? _b : '').trim();
     const iso = fechaAISO(fechaTexto);
@@ -677,15 +678,33 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
         if (!eventosFiltrados.length) {
             return res.status(200).json({ msg: `No encontré eventos en la agenda con fecha ${iso}.`, fecha: iso, total_eventos: 0, eventos: [] });
         }
-        // 2) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
         const eventoIds = eventosFiltrados.map((e) => e.id);
+        // 2) Comisión(es) anfitriona(s) de cada evento (anfitrion_agendas.autor_id → Comision).
+        const anfitriones = yield anfitrion_agendas_1.default.findAll({
+            where: { agenda_id: { [sequelize_1.Op.in]: eventoIds } },
+            attributes: ['agenda_id', 'autor_id'],
+            raw: true,
+        });
+        const comisionIdsPorEvento = new Map();
+        for (const a of anfitriones) {
+            const lista = (_d = comisionIdsPorEvento.get(String(a.agenda_id))) !== null && _d !== void 0 ? _d : [];
+            if (a.autor_id)
+                lista.push(a.autor_id);
+            comisionIdsPorEvento.set(String(a.agenda_id), lista);
+        }
+        const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
+        const comisionesCat = comisionIds.length
+            ? yield comisions_1.default.findAll({ where: { id: comisionIds }, attributes: ['id', 'nombre'], raw: true })
+            : [];
+        const comisionNombrePorId = new Map(comisionesCat.map((c) => [c.id, c.nombre]));
+        // 3) Puntos del orden del día de esos eventos, con su iniciativa/PA/minuta (si tiene).
         const puntos = yield puntos_ordens_1.default.findAll({
             where: { id_evento: { [sequelize_1.Op.in]: eventoIds } },
             attributes: ['id', 'id_evento', 'nopunto', 'punto'],
             order: [['nopunto', 'ASC']],
             include: [{ model: inciativas_puntos_ordens_1.default, as: 'iniciativas', attributes: ['id', 'iniciativa', 'tipo'], required: false }],
         });
-        // 3) Votos de todos esos puntos (sentido 1=favor, 2=abstención, 3=contra).
+        // 4) Votos de todos esos puntos (sentido 1=favor, 2=abstención, 3=contra).
         const puntoIds = puntos.map((p) => p.id);
         const votosRaw = puntoIds.length
             ? yield votos_punto_1.default.findAll({
@@ -751,7 +770,7 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
             puntosPorEvento.get(key).push(p);
         }
         const eventosSalida = eventosFiltrados.map((e) => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f;
             const ptos = ((_a = puntosPorEvento.get(String(e.id))) !== null && _a !== void 0 ? _a : []).map((p) => {
                 var _a, _b, _c;
                 const iniciativas = ((_a = p.iniciativas) !== null && _a !== void 0 ? _a : []).map((ini) => {
@@ -770,10 +789,15 @@ const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 
                     votacion, // null = sin votación registrada
                 };
             });
+            const comisiones = ((_b = comisionIdsPorEvento.get(String(e.id))) !== null && _b !== void 0 ? _b : [])
+                .filter((id) => comisionNombrePorId.has(id))
+                .map((id) => { var _a; return ({ id, nombre: (_a = comisionNombrePorId.get(id)) !== null && _a !== void 0 ? _a : null }); });
             return {
                 id: e.id,
-                tipo_evento: (_c = (_b = e.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) !== null && _c !== void 0 ? _c : null,
-                descripcion: (_d = e.descripcion) !== null && _d !== void 0 ? _d : null,
+                tipo_evento: (_d = (_c = e.tipoevento) === null || _c === void 0 ? void 0 : _c.nombre) !== null && _d !== void 0 ? _d : null,
+                comisiones, // comisión(es) anfitriona(s)
+                titulo: comisiones.map((c) => c.nombre).join(', ') || ((_e = e.descripcion) !== null && _e !== void 0 ? _e : null),
+                descripcion: (_f = e.descripcion) !== null && _f !== void 0 ? _f : null,
                 total_puntos: ptos.length,
                 puntos_votados: ptos.filter((x) => x.se_voto).length,
                 puntos: ptos,
