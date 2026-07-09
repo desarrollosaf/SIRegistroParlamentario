@@ -670,9 +670,22 @@ const MESES_NOMBRE: Record<string, number> = {
 // IniciativaPuntoOrden.tipo: 1 = Iniciativa, 2 = Punto de acuerdo, 3 = Minuta.
 const TIPO_INICIATIVA_LABEL: Record<number, string> = { 1: 'Iniciativa', 2: 'Punto de acuerdo', 3: 'Minuta' };
 
-// Convierte "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "YYYY-MM-DD".
+// Fecha local (servidor) desplazada `offset` días, como "YYYY-MM-DD".
+function fechaRelativaISO(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Convierte "hoy"/"ayer"/"mañana", "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "YYYY-MM-DD".
 function fechaAISO(texto: string): string | null {
   const q = quitarAcentos(texto.toLowerCase().trim());
+
+  // Fechas relativas.
+  if (!q || /\bhoy\b/.test(q)) return fechaRelativaISO(0);
+  if (/\bayer\b/.test(q)) return fechaRelativaISO(-1);
+  if (/\bmanana\b/.test(q)) return fechaRelativaISO(1);
+
   const iso = (dia: number, mesIdx: number, anio: string): string | null =>
     mesIdx < 0 || mesIdx > 11 ? null : `${anio}-${String(mesIdx + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
@@ -689,16 +702,13 @@ function fechaAISO(texto: string): string | null {
 }
 
 export const iniciativasVotadasEnSesion = async (req: Request, res: Response): Promise<Response> => {
+  // Sin fecha → "hoy".
   const fechaTexto = (((req.query.fecha as string) ?? (req.query.q as string)) ?? '').trim();
-
-  if (!fechaTexto) {
-    return res.status(400).json({ msg: 'Debes indicar la fecha de la sesión, ej. "13 de mayo de 2026".' });
-  }
 
   const iso = fechaAISO(fechaTexto);
   if (!iso) {
     return res.status(400).json({
-      msg: `No pude interpretar la fecha "${fechaTexto}". Usa "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
+      msg: `No pude interpretar la fecha "${fechaTexto}". Usa "hoy", "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
     });
   }
 

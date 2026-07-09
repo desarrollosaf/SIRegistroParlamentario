@@ -622,10 +622,23 @@ const MESES_NOMBRE = {
 };
 // IniciativaPuntoOrden.tipo: 1 = Iniciativa, 2 = Punto de acuerdo, 3 = Minuta.
 const TIPO_INICIATIVA_LABEL = { 1: 'Iniciativa', 2: 'Punto de acuerdo', 3: 'Minuta' };
-// Convierte "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "YYYY-MM-DD".
+// Fecha local (servidor) desplazada `offset` días, como "YYYY-MM-DD".
+function fechaRelativaISO(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// Convierte "hoy"/"ayer"/"mañana", "13 de mayo de 2026", "2026-05-13" o "13/05/2026" a "YYYY-MM-DD".
 function fechaAISO(texto) {
     var _a;
     const q = quitarAcentos(texto.toLowerCase().trim());
+    // Fechas relativas.
+    if (!q || /\bhoy\b/.test(q))
+        return fechaRelativaISO(0);
+    if (/\bayer\b/.test(q))
+        return fechaRelativaISO(-1);
+    if (/\bmanana\b/.test(q))
+        return fechaRelativaISO(1);
     const iso = (dia, mesIdx, anio) => mesIdx < 0 || mesIdx > 11 ? null : `${anio}-${String(mesIdx + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
     let m = q.match(/\b(\d{1,2})\s+de\s+([a-z]+)\s+del?\s+(\d{4})\b/);
     if (m)
@@ -640,14 +653,12 @@ function fechaAISO(texto) {
 }
 const iniciativasVotadasEnSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
+    // Sin fecha → "hoy".
     const fechaTexto = ((_b = ((_a = req.query.fecha) !== null && _a !== void 0 ? _a : req.query.q)) !== null && _b !== void 0 ? _b : '').trim();
-    if (!fechaTexto) {
-        return res.status(400).json({ msg: 'Debes indicar la fecha de la sesión, ej. "13 de mayo de 2026".' });
-    }
     const iso = fechaAISO(fechaTexto);
     if (!iso) {
         return res.status(400).json({
-            msg: `No pude interpretar la fecha "${fechaTexto}". Usa "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
+            msg: `No pude interpretar la fecha "${fechaTexto}". Usa "hoy", "13 de mayo de 2026", "2026-05-13" o "13/05/2026".`,
         });
     }
     // Filtro opcional por tipo de evento, ej. ?tipo=sesion  o  ?tipo=comision
