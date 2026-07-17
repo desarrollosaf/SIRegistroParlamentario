@@ -5,6 +5,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbAccordionModule, NgbModal, NgbModalRef, } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
+import { ProyeccionService } from '../../../../service/proyeccion.service';
+import { AliasDiputadoService } from '../../../../service/alias-diputado.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SocketService } from '../../../../core/services/socket.service';
 import { enviroment } from '../../../../../enviroments/enviroment';
@@ -122,6 +124,20 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   listaIntervenciones: any;
   agendaPunto: '';
   proyeccionWindow: Window | null = null;
+
+  // ── Proyector rápido (paso Resumen) ──────────────────────────────────────
+  tipoContenido: 'imagen' | 'video' | 'mesa' = 'imagen';
+  contenidoTitulo: string = '';
+  contenidoUrl: string = '';
+  mesaIntegrantes: { foto: string; nombre: string; cargo: string }[] = [];
+  mesaResultado: string = '';
+  contenidoProyectado: boolean = false;
+  private _proyeccionService = inject(ProyeccionService);
+  private _aliasService = inject(AliasDiputadoService);
+  guardadas: any[] = [];
+  diputadosNombres: string[] = [];
+  subiendoArchivo: boolean = false;
+  guardandoComposicion: boolean = false;
   isUpdatingAsistencia: boolean = false;
   isUpdatingVotacion: boolean = false;
   asistenciaAbiertaDiputados: boolean = false;
@@ -263,6 +279,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._socketService.conectar();
+
+    // Composiciones guardadas del proyector rápido
+    this.cargarGuardadas();
+    this.cargarDiputadosNombres();
 
     // Recuperar sesión activa al recargar y guardar sus datos reales
     this._socketService.onSesionesActivas((lista: any[]) => {
@@ -3024,6 +3044,203 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Proyector rápido (paso Resumen) ──────────────────────────────────────
+
+  /** Carga los nombres de los 75 diputados activos para el buscador de la mesa. */
+  cargarDiputadosNombres(): void {
+    this._aliasService.listarDiputados().subscribe({
+      next: (res: any) => {
+        this.diputadosNombres = (res.data || [])
+          .map((d: any) => d.alias?.trim() || `${d.nombres ?? ''} ${d.apaterno ?? ''} ${d.amaterno ?? ''}`.trim())
+          .filter((n: string) => n)
+          .sort((a: string, b: string) => a.localeCompare(b));
+      },
+      error: () => { this.diputadosNombres = []; }
+    });
+  }
+
+  agregarIntegranteMesa(): void {
+    this.mesaIntegrantes.push({ foto: '', nombre: '', cargo: '' });
+  }
+
+  quitarIntegranteMesa(i: number): void {
+    this.mesaIntegrantes.splice(i, 1);
+  }
+
+  /** Precarga en la mesa los integrantes actuales de la asistencia (nombre y partido). */
+  cargarIntegrantesEnMesa(): void {
+    this.mesaIntegrantes = (this.integrantes || []).map((i: any) => ({
+      foto: '',
+      nombre: i.diputado || '',
+      cargo: i.partido || ''
+    }));
+    if (this.mesaIntegrantes.length === 0) {
+      this.agregarIntegranteMesa();
+    }
+  }
+
+  private abrirVentanaProyeccion(): void {
+    if (!this.proyeccionWindow || this.proyeccionWindow.closed) {
+      const token = this.codificarParams({ id: this.idComisionRuta, modo: 'contenido', idPunto: '', idReserva: '' });
+      this.proyeccionWindow = window.open(`/proyeccion-votacion?t=${token}`, `proyeccion-${this.idComisionRuta}`);
+    } else {
+      this.proyeccionWindow.focus();
+    }
+  }
+
+  /** Construye el objeto de contenido a partir del formulario; null si falta información. */
+  private construirContenido(): any | null {
+    if (this.tipoContenido === 'mesa') {
+      const integrantes = this.mesaIntegrantes
+        .filter(m => (m.nombre || '').trim())
+        .map(m => ({
+          foto: (m.foto || '').trim(),
+          nombre: (m.nombre || '').trim(),
+          cargo: (m.cargo || '').trim()
+        }));
+
+      if (integrantes.length === 0) {
+        Swal.fire('Falta información', 'Agrega al menos un integrante con nombre.', 'warning');
+        return null;
+      }
+      return {
+        tipo: 'mesa',
+        titulo: (this.contenidoTitulo || '').trim() || null,
+        resultado: (this.mesaResultado || '').trim() || null,
+        integrantes
+      };
+    }
+
+    if (!(this.contenidoUrl || '').trim()) {
+      Swal.fire('Falta información', 'Ingresa la URL o adjunta un archivo.', 'warning');
+      return null;
+    }
+    return {
+      tipo: this.tipoContenido,
+      titulo: (this.contenidoTitulo || '').trim() || null,
+      url: this.contenidoUrl.trim()
+    };
+  }
+
+  proyectarContenido(): void {
+    const contenido = this.construirContenido();
+    if (!contenido) return;
+    this._socketService.emitProyectarContenido(this.idComisionRuta, contenido);
+    this.contenidoProyectado = true;
+    this.abrirVentanaProyeccion();
+  }
+
+  quitarContenido(): void {
+    this._socketService.emitLimpiarContenido(this.idComisionRuta);
+    this.contenidoProyectado = false;
+  }
+
+  // ── Adjuntar archivo (imagen/video) desde la computadora ──────────────────
+
+  /** Sube el archivo del input principal y lo pone como URL del contenido. */
+  onArchivoSeleccionado(event: any): void {
+    const archivo: File = event.target?.files?.[0];
+    if (!archivo) return;
+    this.subiendoArchivo = true;
+    this._proyeccionService.subirArchivo(archivo).subscribe({
+      next: (res: any) => {
+        this.contenidoUrl = this._proyeccionService.urlAbsoluta(res.path);
+        if (res.tipo === 'video' || res.tipo === 'imagen') this.tipoContenido = res.tipo;
+        this.subiendoArchivo = false;
+        event.target.value = '';
+      },
+      error: (e: HttpErrorResponse) => {
+        this.subiendoArchivo = false;
+        Swal.fire('Error', e.error?.msg || 'No se pudo subir el archivo', 'error');
+      }
+    });
+  }
+
+  /** Sube la foto de un integrante de la mesa y la pone en su fila. */
+  onFotoMesaSeleccionada(event: any, index: number): void {
+    const archivo: File = event.target?.files?.[0];
+    if (!archivo) return;
+    this.subiendoArchivo = true;
+    this._proyeccionService.subirArchivo(archivo).subscribe({
+      next: (res: any) => {
+        this.mesaIntegrantes[index].foto = this._proyeccionService.urlAbsoluta(res.path);
+        this.subiendoArchivo = false;
+        event.target.value = '';
+      },
+      error: (e: HttpErrorResponse) => {
+        this.subiendoArchivo = false;
+        Swal.fire('Error', e.error?.msg || 'No se pudo subir la foto', 'error');
+      }
+    });
+  }
+
+  // ── Composiciones guardadas ───────────────────────────────────────────────
+
+  cargarGuardadas(): void {
+    if (!this.idComisionRuta) return;
+    this._proyeccionService.listarGuardadas(this.idComisionRuta).subscribe({
+      next: (res: any) => { this.guardadas = res.data || []; },
+      error: () => { this.guardadas = []; }
+    });
+  }
+
+  guardarComposicion(): void {
+    const contenido = this.construirContenido();
+    if (!contenido) return;
+
+    Swal.fire({
+      title: 'Guardar composición',
+      input: 'text',
+      inputValue: this.contenidoTitulo || '',
+      inputPlaceholder: 'Nombre para identificarla (ej. Mesa Directiva)',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#800048',
+      inputValidator: (value) => (!value?.trim() ? 'Escribe un nombre' : null),
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const titulo = String(result.value).trim();
+      this.guardandoComposicion = true;
+      this._proyeccionService.guardar({ comision_id: this.idComisionRuta, titulo, contenido }).subscribe({
+        next: () => {
+          this.guardandoComposicion = false;
+          this.cargarGuardadas();
+          Swal.fire('Guardada', 'La composición se guardó correctamente.', 'success');
+        },
+        error: (e: HttpErrorResponse) => {
+          this.guardandoComposicion = false;
+          Swal.fire('Error', e.error?.msg || 'No se pudo guardar', 'error');
+        }
+      });
+    });
+  }
+
+  /** Proyecta directamente una composición guardada. */
+  proyectarGuardada(g: any): void {
+    this._socketService.emitProyectarContenido(this.idComisionRuta, g.contenido);
+    this.contenidoProyectado = true;
+    this.abrirVentanaProyeccion();
+  }
+
+  eliminarGuardada(g: any): void {
+    Swal.fire({
+      title: '¿Eliminar composición?',
+      text: g.titulo,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this._proyeccionService.eliminar(g.id).subscribe({
+        next: () => this.cargarGuardadas(),
+        error: (e: HttpErrorResponse) => Swal.fire('Error', e.error?.msg || 'No se pudo eliminar', 'error')
+      });
+    });
+  }
+
   imprimirVotacion(): void {
     this._eventoService.generarPDFVotacion(this.idpto).subscribe({
       next: (blob: Blob) => {
@@ -3164,6 +3381,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         const idAgendaTerminar   = this.sesionActivaIdAgenda   || this.idEvento;
         const esComisionTerminar = this.sesionActivaIdAgenda ? this.sesionActivaEsComision : this.esComision;
         this._socketService.emitTerminarSesion(idAgendaTerminar, esComisionTerminar);
+        // Manda el tablero de proyección a pantalla neutra "finalizado" (persiste al recargar).
+        this._socketService.emitTerminarTablero(this.idComisionRuta, 'Sesión finalizada');
+        this.contenidoProyectado = false;
         this.sesionActiva           = false;
         this.sesionActivaIdAgenda   = '';
         this.sesionActivaEsComision = false;

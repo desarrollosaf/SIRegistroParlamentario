@@ -82,6 +82,10 @@ export const routes: Routes = [
        path: 'transmision',
        loadChildren: () => import('./views/pages/transmision/transmision.route')
       },
+      {
+       path: 'alias-diputado',
+       loadChildren: () => import('./views/pages/alias-diputado/alias-diputado.route')
+      },
     ]
   },
   {

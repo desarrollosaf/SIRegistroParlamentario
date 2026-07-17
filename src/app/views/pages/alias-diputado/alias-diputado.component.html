@@ -1,0 +1,126 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Diputados: alias y cuenta</h6>
+                <p class="text-muted mb-3">Edita el alias, el usuario y el correo, o restablece la contraseña.</p>
+
+                <div class="row">
+                    <div class="col-xl-3 col-md-4">
+                        <input type="text" class="form-control form-control-sm"
+                            placeholder="Buscar por nombre, alias, usuario o correo..." (keyup)="updateFilter($event)" />
+                    </div>
+                </div>
+                <br>
+                <div class="table-responsive">
+                    <div *ngIf="rows().length === 0 && !loading()" class="text-center my-3">
+                        <p><strong>No hay datos para mostrar</strong></p>
+                    </div>
+                    <ngx-datatable #table class="bootstrap" [rows]="rows()" [columnMode]="'force'" [headerHeight]="50"
+                        *ngIf="rows().length > 0" [footerHeight]="50" [externalPaging]="true" [rowHeight]="'auto'"
+                        [limit]="pageSize()" [count]="filteredCount()" [offset]="page()" (page)="setPage($event)"
+                        [loadingIndicator]="loading()">
+
+                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Nombre">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{ nombreCompleto(row) }}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column prop="alias" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="Alias">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <span *ngIf="row.alias">{{ row.alias }}</span>
+                                <span *ngIf="!row.alias" class="text-muted fst-italic">Sin alias</span>
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column prop="name" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="Usuario">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <span *ngIf="row.name">{{ row.name }}</span>
+                                <span *ngIf="!row.name" class="text-muted fst-italic">Sin usuario</span>
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column prop="email" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="Correo">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <span *ngIf="row.email">{{ row.email }}</span>
+                                <span *ngIf="!row.email" class="text-muted fst-italic">—</span>
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-center'" name="Acciones"
+                            [sortable]="false">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <a class="btn btn-primary action-btn" (click)="abrirModal(row)" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </ng-template>
+                        </ngx-datatable-column>
+                    </ngx-datatable>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #modalEditar let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">Editar diputado</h5>
+        <button type="button" class="btn-close" (click)="modal.close()" aria-label="Close"></button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="forms-sample">
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label negri">Diputado:</label>
+                <p class="mb-2"><strong>{{ nombreCompleto(diputadoSeleccionado()) }}</strong></p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label negri">Alias:</label>
+                <input formControlName="alias" type="text" class="form-control" placeholder="Escribe el alias" />
+                <small class="text-muted">Déjalo vacío para quitar el alias.</small>
+            </div>
+
+            <div *ngIf="diputadoSeleccionado()?.tiene_usuario; else sinUsuario">
+                <div class="mb-3">
+                    <label class="form-label negri">Usuario:</label>
+                    <input formControlName="name" type="text" class="form-control" placeholder="Usuario de acceso"
+                        [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched" />
+                    <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+                        <small>Máximo 255 caracteres.</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label negri">Correo:</label>
+                    <input formControlName="email" type="email" class="form-control" placeholder="correo@ejemplo.com"
+                        [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched" />
+                    <div class="invalid-feedback" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+                        <small>Correo no válido.</small>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="resetearPassword()">
+                    <i class="bi bi-key"></i> Restablecer contraseña
+                </button>
+            </div>
+
+            <ng-template #sinUsuario>
+                <div class="alert alert-warning py-2 mb-0">
+                    <small>Este diputado no tiene un usuario asignado. Solo puedes editar el alias.</small>
+                </div>
+            </ng-template>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+            <button type="submit" class="btn" style="background-color: #800048; color: white;"
+                [disabled]="form.invalid || guardando()">
+                {{ guardando() ? 'Guardando...' : 'Guardar' }}
+            </button>
+        </div>
+    </form>
+</ng-template>

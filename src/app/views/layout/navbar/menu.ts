@@ -46,6 +46,10 @@ export const MENU: MenuItem[] = [
           {
             label: 'proponentes',
             link: '/catalogos'
+          },
+          {
+            label: 'Alias de diputados',
+            link: '/alias-diputado'
           }
         ]
       },

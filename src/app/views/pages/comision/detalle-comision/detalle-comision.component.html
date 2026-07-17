@@ -1898,10 +1898,192 @@
 
                                 </div>
 
-                                <!-- PASO 4 -->
+                                <!-- PASO 4: PROYECTOR RÁPIDO -->
                                 <div *ngSwitchCase="4">
-                                    <h5>Paso 4</h5>
-                                    <p>Contenido del paso 4</p>
+                                    <h5 class="mb-1"><i class="bi bi-easel me-1"></i> Proyector rápido</h5>
+                                    <p class="text-muted">Manda una imagen, un video o la mesa (foto, cargo y voto)
+                                        al tablero de proyección de esta comisión.</p>
+
+                                    <!-- Selector de tipo -->
+                                    <div class="btn-group mb-3" role="group">
+                                        <button type="button" class="btn"
+                                            [ngClass]="tipoContenido === 'imagen' ? 'btn-primary' : 'btn-outline-primary'"
+                                            (click)="tipoContenido = 'imagen'">
+                                            <i class="bi bi-image me-1"></i> Imagen
+                                        </button>
+                                        <button type="button" class="btn"
+                                            [ngClass]="tipoContenido === 'video' ? 'btn-primary' : 'btn-outline-primary'"
+                                            (click)="tipoContenido = 'video'">
+                                            <i class="bi bi-play-btn me-1"></i> Video
+                                        </button>
+                                        <button type="button" class="btn"
+                                            [ngClass]="tipoContenido === 'mesa' ? 'btn-primary' : 'btn-outline-primary'"
+                                            (click)="tipoContenido = 'mesa'">
+                                            <i class="bi bi-people me-1"></i> Mesa / Votación
+                                        </button>
+                                    </div>
+
+                                    <!-- Título opcional -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Título (opcional)</label>
+                                        <input type="text" class="form-control" [(ngModel)]="contenidoTitulo"
+                                            [ngModelOptions]="{standalone: true}"
+                                            placeholder="Ej. Integración de la Mesa Directiva" />
+                                    </div>
+
+                                    <!-- IMAGEN / VIDEO: URL o archivo -->
+                                    <div class="mb-3" *ngIf="tipoContenido !== 'mesa'">
+                                        <label class="form-label fw-semibold">
+                                            URL de la {{ tipoContenido === 'imagen' ? 'imagen' : 'del video' }}
+                                        </label>
+                                        <input type="text" class="form-control" [(ngModel)]="contenidoUrl"
+                                            [ngModelOptions]="{standalone: true}"
+                                            placeholder="https://..." />
+                                        <small class="text-muted" *ngIf="tipoContenido === 'video'">
+                                            Acepta enlaces de YouTube, Vimeo o archivos de video directos (.mp4).
+                                        </small>
+
+                                        <div class="mt-2 d-flex align-items-center gap-2">
+                                            <label class="btn btn-sm btn-outline-secondary mb-0">
+                                                <i class="bi bi-upload me-1"></i> Adjuntar desde mi computadora
+                                                <input type="file" hidden
+                                                    [accept]="tipoContenido === 'imagen' ? 'image/*' : 'video/*'"
+                                                    (change)="onArchivoSeleccionado($event)" />
+                                            </label>
+                                            <span class="text-muted" *ngIf="subiendoArchivo">
+                                                <span class="spinner-border spinner-border-sm"></span> Subiendo...
+                                            </span>
+                                        </div>
+
+                                        <div class="mt-3 text-center" *ngIf="tipoContenido === 'imagen' && contenidoUrl">
+                                            <img [src]="contenidoUrl" alt="Vista previa"
+                                                style="max-height: 220px; max-width: 100%; border-radius: 8px; border: 1px solid #ddd;" />
+                                        </div>
+                                    </div>
+
+                                    <!-- MESA: constructor -->
+                                    <div *ngIf="tipoContenido === 'mesa'">
+                                        <div class="d-flex gap-2 mb-3 flex-wrap">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                (click)="cargarIntegrantesEnMesa()">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Traer integrantes actuales
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                (click)="agregarIntegranteMesa()">
+                                                <i class="bi bi-plus-lg me-1"></i> Agregar integrante
+                                            </button>
+                                        </div>
+
+                                        <!-- Texto de votación / resultado general de la mesa -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Texto de votación (opcional)</label>
+                                            <input type="text" class="form-control" [(ngModel)]="mesaResultado"
+                                                [ngModelOptions]="{standalone: true}"
+                                                placeholder="Ej. Votación por mayoría · Aprobado a favor" />
+                                            <small class="text-muted">Se muestra como leyenda debajo de la mesa en el
+                                                tablero.</small>
+                                        </div>
+
+                                        <div class="text-muted mb-2" *ngIf="mesaIntegrantes.length === 0">
+                                            <small>Aún no hay integrantes. Agrega uno o trae los actuales.</small>
+                                        </div>
+
+                                        <div class="mesa-builder" *ngIf="mesaIntegrantes.length > 0">
+                                            <div class="mesa-fila" *ngFor="let m of mesaIntegrantes; let i = index">
+
+                                                <!-- Avatar + subir -->
+                                                <div class="mesa-fila-avatar">
+                                                    <div class="avatar">
+                                                        <img *ngIf="m.foto" [src]="m.foto" alt="" />
+                                                        <i *ngIf="!m.foto" class="bi bi-person"></i>
+                                                    </div>
+                                                    <label class="btn btn-sm btn-outline-secondary mb-0" title="Subir foto">
+                                                        <i class="bi bi-upload"></i>
+                                                        <input type="file" hidden accept="image/*"
+                                                            (change)="onFotoMesaSeleccionada($event, i)" />
+                                                    </label>
+                                                </div>
+
+                                                <!-- Campos -->
+                                                <div class="mesa-fila-campos">
+                                                    <div class="campo campo-nombre">
+                                                        <label class="mini-label">Nombre</label>
+                                                        <ng-select class="ngselect-mesa" [items]="diputadosNombres"
+                                                            [(ngModel)]="m.nombre" [ngModelOptions]="{standalone: true}"
+                                                            [addTag]="true" [clearable]="true"
+                                                            placeholder="Busca un diputado..."
+                                                            notFoundText="Sin coincidencias (puedes escribir un nombre)"
+                                                            addTagText="Usar: ">
+                                                        </ng-select>
+                                                    </div>
+                                                    <div class="campo campo-cargo">
+                                                        <label class="mini-label">Cargo</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            [(ngModel)]="m.cargo" [ngModelOptions]="{standalone: true}"
+                                                            placeholder="Presidente, Vocal..." />
+                                                    </div>
+                                                    <div class="campo campo-url">
+                                                        <label class="mini-label">URL de la foto (opcional)</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            [(ngModel)]="m.foto" [ngModelOptions]="{standalone: true}"
+                                                            placeholder="https://sistema.congresoedomex.gob.mx/storage/img/..." />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Quitar -->
+                                                <button type="button" class="btn btn-sm btn-outline-danger mesa-fila-del"
+                                                    (click)="quitarIntegranteMesa(i)" title="Quitar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acciones -->
+                                    <div class="d-flex gap-2 mt-3 flex-wrap">
+                                        <button type="button" class="btn btn-primary" (click)="proyectarContenido()">
+                                            <i class="bi bi-cast me-1"></i> Proyectar en el tablero
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            (click)="guardarComposicion()" [disabled]="guardandoComposicion">
+                                            <i class="bi bi-save me-1"></i> Guardar para después
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger"
+                                            (click)="quitarContenido()" [disabled]="!contenidoProyectado">
+                                            <i class="bi bi-x-circle me-1"></i> Quitar del tablero
+                                        </button>
+                                    </div>
+
+                                    <!-- COMPOSICIONES GUARDADAS -->
+                                    <div class="mt-4" *ngIf="guardadas.length > 0">
+                                        <hr>
+                                        <h6 class="fw-semibold"><i class="bi bi-collection me-1"></i> Guardadas</h6>
+                                        <div class="list-group">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center"
+                                                *ngFor="let g of guardadas">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="bi"
+                                                        [ngClass]="{
+                                                            'bi-image': g.tipo === 'imagen',
+                                                            'bi-play-btn': g.tipo === 'video',
+                                                            'bi-people': g.tipo === 'mesa'
+                                                        }"></i>
+                                                    <span class="fw-semibold">{{ g.titulo }}</span>
+                                                    <span class="badge bg-light text-dark text-uppercase">{{ g.tipo }}</span>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-primary"
+                                                        (click)="proyectarGuardada(g)">
+                                                        <i class="bi bi-cast me-1"></i> Proyectar
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        (click)="eliminarGuardada(g)" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>

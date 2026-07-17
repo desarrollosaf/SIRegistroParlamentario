@@ -384,3 +384,170 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── CONTENIDO LIBRE (imagen / video / mesa) ─────────────────────────────── */
+.contenido-custom {
+  position: absolute;
+  inset: 0;
+  background: #0b1a2b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  z-index: 50;
+}
+
+/* Modo mesa: fondo gris claro y menos separación, como el directorio oficial */
+.contenido-custom.fondo-mesa {
+  background: #e9eaee;
+  gap: 12px;
+  padding: 20px 26px;
+
+  .contenido-titulo {
+    color: #1b1b2b;
+    font-size: 1.9rem;
+    margin: 0;
+  }
+}
+
+.contenido-titulo {
+  color: #fff;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.contenido-media {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+
+  img, video, iframe {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  iframe {
+    width: 90vw;
+    height: 80vh;
+  }
+}
+
+.contenido-mesa {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: grid;                 /* columnas las fija el componente (grid-template-columns inline) */
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  /* variables por defecto (se ajustan según el nº de integrantes) */
+  --nombre: 1.15rem;
+  --cargo: 0.9rem;
+  --cardmax: 220px;
+}
+
+.mesa-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 10px 12px;
+  width: 100%;
+  max-width: var(--cardmax);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+  min-width: 0;
+}
+
+.mesa-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e5ea;
+  flex: 0 0 auto;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mesa-foto-vacia {
+  font-size: 3rem;
+  color: #b7b7c0;
+  line-height: 1;
+}
+
+.mesa-nombre {
+  font-size: var(--nombre);
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  width: 100%;
+}
+
+.mesa-cargo {
+  font-size: var(--cargo);
+  color: #6a6a72;
+  text-align: center;
+  overflow-wrap: anywhere;
+  width: 100%;
+}
+
+/* Tamaños automáticos según cuántos integrantes hay (más compacto = más juntos) */
+.contenido-mesa.mesa-xl { --nombre: 1.3rem;  --cargo: 1rem;    --cardmax: 250px; }
+.contenido-mesa.mesa-lg { --nombre: 1.15rem; --cargo: 0.9rem;  --cardmax: 210px; }
+.contenido-mesa.mesa-md { --nombre: 1.05rem; --cargo: 0.85rem; --cardmax: 185px; }
+.contenido-mesa.mesa-sm { --nombre: 0.92rem; --cargo: 0.76rem; --cardmax: 158px; }
+.contenido-mesa.mesa-xs { --nombre: 0.8rem;  --cargo: 0.68rem; --cardmax: 134px; }
+
+.mesa-voto {
+  margin-top: 4px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+
+  &.voto-favor      { background: #1e8e3e; }
+  &.voto-contra     { background: #d93025; }
+  &.voto-abstencion { background: #f9ab00; color: #1a1a1a; }
+  &.voto-presente   { background: #1e8e3e; }
+}
+
+.mesa-resultado {
+  margin-top: 8px;
+  padding: 14px 40px;
+  background: #800048;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  border-radius: 12px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}

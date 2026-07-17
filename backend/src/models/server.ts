@@ -10,6 +10,8 @@ import diputados from "../routes/diputados";
 import iniciativas from "../routes/iniciativas";
 import inteligencia from "../routes/inteligencia";
 import diputadoRoutes from "../routes/diputado";
+import aliasDiputado from "../routes/aliasDiputado";
+import proyeccion from "../routes/proyeccion";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -32,6 +34,9 @@ class Server {
 
     // Mapa SAF-ID → UUID de registrocomisiones para comisiones
     private safIdToUUID: Map<string, string> = new Map();
+
+    // Contenido libre proyectado por comisión (imagen/video/mesa) para el tablero.
+    private contenidoProyectado: Map<string, any> = new Map();
 
     // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
     private sesionesActivas: Map<string, {
@@ -115,17 +120,49 @@ class Server {
 
         socket.on('unirse-sesion', (idComision: string) => {
             socket.join(`proyeccion-${idComision}`);
+            // Si hay contenido libre activo para esta comisión, se lo envía al recién unido.
+            const contenido = this.contenidoProyectado.get(idComision);
+            if (contenido) {
+                socket.emit('contenido-proyectado', contenido);
+            }
+        });
+
+        // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
+        socket.on('proyectar-contenido', (data: { idComision: string; contenido: any }) => {
+            this.contenidoProyectado.set(data.idComision, data.contenido);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', data.contenido);
+        });
+
+        // Quitar el contenido libre del tablero → pantalla neutra (idle), no regresa al evento.
+        socket.on('limpiar-contenido', (data: { idComision: string }) => {
+            const idle = { tipo: 'idle' };
+            this.contenidoProyectado.set(data.idComision, idle);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
+        });
+
+        // Terminar el tablero al finalizar la sesión (pantalla neutra persistente).
+        socket.on('terminar-tablero', (data: { idComision: string; mensaje?: string }) => {
+            const idle = { tipo: 'idle', mensaje: data.mensaje || 'Sesión finalizada' };
+            this.contenidoProyectado.set(data.idComision, idle);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
         });
 
         socket.on('terminar-votacion', (data: { idComision: string }) => {
+            // Persiste el estado "terminado" para que al recargar no vuelva a la votación.
+            this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Votación finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-terminada');
         });
 
         socket.on('terminar-asistencia', (data: { idComision: string }) => {
+            // Persiste el estado "terminado" para que al recargar no vuelva a la asistencia.
+            this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Asistencia finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-terminada');
         });
 
         socket.on('iniciar-proyeccion', (data: { idComision: string, params: any }) => {
+            // Al proyectar votación/asistencia se limpia cualquier idle/contenido previo,
+            // para que al recargar el tablero muestre el evento en curso.
+            this.contenidoProyectado.delete(data.idComision);
             this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
         });
 
@@ -378,6 +415,8 @@ class Server {
        this.app.use(estadistico);
        this.app.use(diputadoRoutes);
        this.app.use(inteligencia);
+       this.app.use(aliasDiputado);
+       this.app.use(proyeccion);
     }
 
     

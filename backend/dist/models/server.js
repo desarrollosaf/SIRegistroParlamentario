@@ -24,6 +24,8 @@ const diputados_1 = __importDefault(require("../routes/diputados"));
 const iniciativas_1 = __importDefault(require("../routes/iniciativas"));
 const inteligencia_1 = __importDefault(require("../routes/inteligencia"));
 const diputado_1 = __importDefault(require("../routes/diputado"));
+const aliasDiputado_1 = __importDefault(require("../routes/aliasDiputado"));
+const proyeccion_1 = __importDefault(require("../routes/proyeccion"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -38,6 +40,8 @@ class Server {
         this.votacionesAbiertas = new Map();
         // Mapa SAF-ID → UUID de registrocomisiones para comisiones
         this.safIdToUUID = new Map();
+        // Contenido libre proyectado por comisión (imagen/video/mesa) para el tablero.
+        this.contenidoProyectado = new Map();
         // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
         this.sesionesActivas = new Map();
         this.app = (0, express_1.default)();
@@ -109,14 +113,43 @@ class Server {
             console.log('Socket conectado:', socket.id);
             socket.on('unirse-sesion', (idComision) => {
                 socket.join(`proyeccion-${idComision}`);
+                // Si hay contenido libre activo para esta comisión, se lo envía al recién unido.
+                const contenido = this.contenidoProyectado.get(idComision);
+                if (contenido) {
+                    socket.emit('contenido-proyectado', contenido);
+                }
+            });
+            // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
+            socket.on('proyectar-contenido', (data) => {
+                this.contenidoProyectado.set(data.idComision, data.contenido);
+                this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', data.contenido);
+            });
+            // Quitar el contenido libre del tablero → pantalla neutra (idle), no regresa al evento.
+            socket.on('limpiar-contenido', (data) => {
+                const idle = { tipo: 'idle' };
+                this.contenidoProyectado.set(data.idComision, idle);
+                this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
+            });
+            // Terminar el tablero al finalizar la sesión (pantalla neutra persistente).
+            socket.on('terminar-tablero', (data) => {
+                const idle = { tipo: 'idle', mensaje: data.mensaje || 'Sesión finalizada' };
+                this.contenidoProyectado.set(data.idComision, idle);
+                this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
             });
             socket.on('terminar-votacion', (data) => {
+                // Persiste el estado "terminado" para que al recargar no vuelva a la votación.
+                this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Votación finalizada' });
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-terminada');
             });
             socket.on('terminar-asistencia', (data) => {
+                // Persiste el estado "terminado" para que al recargar no vuelva a la asistencia.
+                this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Asistencia finalizada' });
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-terminada');
             });
             socket.on('iniciar-proyeccion', (data) => {
+                // Al proyectar votación/asistencia se limpia cualquier idle/contenido previo,
+                // para que al recargar el tablero muestre el evento en curso.
+                this.contenidoProyectado.delete(data.idComision);
                 this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
             });
             // El diputado se une a la sala general y a su sala personal
@@ -348,6 +381,8 @@ class Server {
         this.app.use(estadistico_1.default);
         this.app.use(diputado_1.default);
         this.app.use(inteligencia_1.default);
+        this.app.use(aliasDiputado_1.default);
+        this.app.use(proyeccion_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
