@@ -10,6 +10,8 @@ import diputados from "../routes/diputados";
 import iniciativas from "../routes/iniciativas";
 import inteligencia from "../routes/inteligencia";
 import diputadoRoutes from "../routes/diputado";
+import aliasDiputado from "../routes/aliasDiputado";
+import proyeccion from "../routes/proyeccion";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -32,6 +34,9 @@ class Server {
 
     // Mapa SAF-ID → UUID de registrocomisiones para comisiones
     private safIdToUUID: Map<string, string> = new Map();
+
+    // Contenido libre proyectado por comisión (imagen/video/mesa) para el tablero.
+    private contenidoProyectado: Map<string, any> = new Map();
 
     // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
     private sesionesActivas: Map<string, {
@@ -115,6 +120,23 @@ class Server {
 
         socket.on('unirse-sesion', (idComision: string) => {
             socket.join(`proyeccion-${idComision}`);
+            // Si hay contenido libre activo para esta comisión, se lo envía al recién unido.
+            const contenido = this.contenidoProyectado.get(idComision);
+            if (contenido) {
+                socket.emit('contenido-proyectado', contenido);
+            }
+        });
+
+        // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
+        socket.on('proyectar-contenido', (data: { idComision: string; contenido: any }) => {
+            this.contenidoProyectado.set(data.idComision, data.contenido);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', data.contenido);
+        });
+
+        // Quitar el contenido libre del tablero.
+        socket.on('limpiar-contenido', (data: { idComision: string }) => {
+            this.contenidoProyectado.delete(data.idComision);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-limpiado');
         });
 
         socket.on('terminar-votacion', (data: { idComision: string }) => {
@@ -378,6 +400,8 @@ class Server {
        this.app.use(estadistico);
        this.app.use(diputadoRoutes);
        this.app.use(inteligencia);
+       this.app.use(aliasDiputado);
+       this.app.use(proyeccion);
     }
 
     

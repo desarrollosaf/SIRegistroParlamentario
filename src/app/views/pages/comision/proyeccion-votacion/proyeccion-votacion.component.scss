@@ -384,3 +384,122 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── CONTENIDO LIBRE (imagen / video / mesa) ─────────────────────────────── */
+.contenido-custom {
+  position: absolute;
+  inset: 0;
+  background: #0b1a2b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  z-index: 50;
+}
+
+.contenido-titulo {
+  color: #fff;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.contenido-media {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+
+  img, video, iframe {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  iframe {
+    width: 90vw;
+    height: 80vh;
+  }
+}
+
+.contenido-mesa {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 28px;
+  overflow: auto;
+}
+
+.mesa-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mesa-foto {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #800048;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eee;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mesa-foto-vacia {
+  font-size: 4rem;
+  color: #b0b0b0;
+}
+
+.mesa-nombre {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.mesa-cargo {
+  font-size: 1.05rem;
+  color: #555;
+  text-align: center;
+}
+
+.mesa-voto {
+  margin-top: 4px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+
+  &.voto-favor      { background: #1e8e3e; }
+  &.voto-contra     { background: #d93025; }
+  &.voto-abstencion { background: #f9ab00; color: #1a1a1a; }
+  &.voto-presente   { background: #1e8e3e; }
+}

@@ -81,6 +81,31 @@ export class SocketService {
     this.socket?.off('proyeccion-iniciada');
   }
 
+  // ── Contenido libre (imagen/video/mesa) en el tablero ─────────────────────
+  emitProyectarContenido(idComision: string, contenido: any): void {
+    this.socket?.emit('proyectar-contenido', { idComision, contenido });
+  }
+
+  emitLimpiarContenido(idComision: string): void {
+    this.socket?.emit('limpiar-contenido', { idComision });
+  }
+
+  onContenidoProyectado(cb: (contenido: any) => void): void {
+    this.socket?.on('contenido-proyectado', cb);
+  }
+
+  offContenidoProyectado(): void {
+    this.socket?.off('contenido-proyectado');
+  }
+
+  onContenidoLimpiado(cb: () => void): void {
+    this.socket?.on('contenido-limpiado', cb);
+  }
+
+  offContenidoLimpiado(): void {
+    this.socket?.off('contenido-limpiado');
+  }
+
   // Admin abre/cierra la asistencia para que los diputados registren
   emitAbrirAsistencia(idComision: string, idAgenda: string): void {
     this.socket?.emit('abrir-asistencia', { idComision, idAgenda });

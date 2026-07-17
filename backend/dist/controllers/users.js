@@ -29,7 +29,7 @@ const ReadUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.ReadUser = ReadUser;
 const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const { name, password } = req.body;
     let passwordValid = false;
     let bandera = true;
@@ -46,12 +46,21 @@ const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         return res.status(402).json({ msg: `Password Incorrecto` });
     }
     const roleName = ((_b = (_a = user.rol_users) === null || _a === void 0 ? void 0 : _a.role) === null || _b === void 0 ? void 0 : _b.name) || 'admin';
-    const accessToken = jsonwebtoken_1.default.sign({ rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', { expiresIn: '18h' });
+    // Duración de la sesión, configurable con SESSION_HOURS (default 15 horas).
+    // SESSION_HOURS=0 (o "never") → la sesión no expira nunca.
+    const rawHours = ((_c = process.env.SESSION_HOURS) !== null && _c !== void 0 ? _c : '15').trim().toLowerCase();
+    const neverExpires = rawHours === '0' || rawHours === 'never';
+    const sessionHours = neverExpires ? 0 : (Number(rawHours) || 15);
+    const accessToken = jsonwebtoken_1.default.sign({ rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null }, process.env.SECRET_KEY || 'TSE-Poder-legislativo', 
+    // Sin expiresIn el JWT no caduca nunca.
+    neverExpires ? {} : { expiresIn: `${sessionHours}h` });
+    // Si no expira, se fija una cookie de ~10 años para que sobreviva reinicios del navegador/app.
+    const cookieMaxAge = neverExpires ? 10 * 365 * 24 * 60 * 60 * 1000 : sessionHours * 60 * 60 * 1000;
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 18 * 60 * 60 * 1000,
+        maxAge: cookieMaxAge,
         path: '/',
     });
     // Obtener nombre completo del diputado vinculado
@@ -62,11 +71,11 @@ const LoginUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             if (integrante === null || integrante === void 0 ? void 0 : integrante.diputado_id) {
                 const diputado = yield diputado_1.default.findByPk(integrante.diputado_id);
                 if (diputado) {
-                    nombreCompleto = (_c = diputado.alias) !== null && _c !== void 0 ? _c : `${diputado.nombres} ${diputado.apaterno} ${diputado.amaterno}`.trim();
+                    nombreCompleto = (_d = diputado.alias) !== null && _d !== void 0 ? _d : `${diputado.nombres} ${diputado.apaterno} ${diputado.amaterno}`.trim();
                 }
             }
         }
-        catch (_d) { }
+        catch (_e) { }
     }
     return res.json({ user: Object.assign(Object.assign({}, user.toJSON()), { nombreCompleto }), bandera, role: roleName, token: accessToken });
 });

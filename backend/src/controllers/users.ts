@@ -44,17 +44,27 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
 
     const roleName: string = user.rol_users?.role?.name || 'admin';
 
+    // Duración de la sesión, configurable con SESSION_HOURS (default 15 horas).
+    // SESSION_HOURS=0 (o "never") → la sesión no expira nunca.
+    const rawHours = (process.env.SESSION_HOURS ?? '15').trim().toLowerCase();
+    const neverExpires = rawHours === '0' || rawHours === 'never';
+    const sessionHours = neverExpires ? 0 : (Number(rawHours) || 15);
+
     const accessToken = jwt.sign(
         { rfc: name, role: roleName, integrante_legislatura_id: user.integrante_legislatura_id || null },
         process.env.SECRET_KEY || 'TSE-Poder-legislativo',
-        { expiresIn: '18h' }
+        // Sin expiresIn el JWT no caduca nunca.
+        neverExpires ? {} : { expiresIn: `${sessionHours}h` }
     );
+
+    // Si no expira, se fija una cookie de ~10 años para que sobreviva reinicios del navegador/app.
+    const cookieMaxAge = neverExpires ? 10 * 365 * 24 * 60 * 60 * 1000 : sessionHours * 60 * 60 * 1000;
 
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 18 * 60 * 60 * 1000,
+        maxAge: cookieMaxAge,
         path: '/',
     });
 
