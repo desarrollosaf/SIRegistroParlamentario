@@ -6,6 +6,7 @@ import { NgbAccordionModule, NgbModal, NgbModalRef, } from '@ng-bootstrap/ng-boo
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { ProyeccionService } from '../../../../service/proyeccion.service';
+import { AliasDiputadoService } from '../../../../service/alias-diputado.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SocketService } from '../../../../core/services/socket.service';
 import { enviroment } from '../../../../../enviroments/enviroment';
@@ -128,10 +129,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   tipoContenido: 'imagen' | 'video' | 'mesa' = 'imagen';
   contenidoTitulo: string = '';
   contenidoUrl: string = '';
-  mesaIntegrantes: { foto: string; nombre: string; cargo: string; voto: string }[] = [];
+  mesaIntegrantes: { foto: string; nombre: string; cargo: string }[] = [];
+  mesaResultado: string = '';
   contenidoProyectado: boolean = false;
   private _proyeccionService = inject(ProyeccionService);
+  private _aliasService = inject(AliasDiputadoService);
   guardadas: any[] = [];
+  diputadosNombres: string[] = [];
   subiendoArchivo: boolean = false;
   guardandoComposicion: boolean = false;
   isUpdatingAsistencia: boolean = false;
@@ -278,6 +282,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     // Composiciones guardadas del proyector rápido
     this.cargarGuardadas();
+    this.cargarDiputadosNombres();
 
     // Recuperar sesión activa al recargar y guardar sus datos reales
     this._socketService.onSesionesActivas((lista: any[]) => {
@@ -3041,22 +3046,33 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   // ── Proyector rápido (paso Resumen) ──────────────────────────────────────
 
+  /** Carga los nombres de los 75 diputados activos para el buscador de la mesa. */
+  cargarDiputadosNombres(): void {
+    this._aliasService.listarDiputados().subscribe({
+      next: (res: any) => {
+        this.diputadosNombres = (res.data || [])
+          .map((d: any) => d.alias?.trim() || `${d.nombres ?? ''} ${d.apaterno ?? ''} ${d.amaterno ?? ''}`.trim())
+          .filter((n: string) => n)
+          .sort((a: string, b: string) => a.localeCompare(b));
+      },
+      error: () => { this.diputadosNombres = []; }
+    });
+  }
+
   agregarIntegranteMesa(): void {
-    this.mesaIntegrantes.push({ foto: '', nombre: '', cargo: '', voto: '' });
+    this.mesaIntegrantes.push({ foto: '', nombre: '', cargo: '' });
   }
 
   quitarIntegranteMesa(i: number): void {
     this.mesaIntegrantes.splice(i, 1);
   }
 
-  /** Precarga en la mesa los integrantes actuales de la asistencia (nombre y sentido). */
+  /** Precarga en la mesa los integrantes actuales de la asistencia (nombre y partido). */
   cargarIntegrantesEnMesa(): void {
-    const mapaVoto: Record<number, string> = { 1: 'favor', 2: 'abstencion', 3: 'contra' };
     this.mesaIntegrantes = (this.integrantes || []).map((i: any) => ({
       foto: '',
       nombre: i.diputado || '',
-      cargo: i.partido || '',
-      voto: mapaVoto[i.sentido_voto] || ''
+      cargo: i.partido || ''
     }));
     if (this.mesaIntegrantes.length === 0) {
       this.agregarIntegranteMesa();
@@ -3080,15 +3096,19 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         .map(m => ({
           foto: (m.foto || '').trim(),
           nombre: (m.nombre || '').trim(),
-          cargo: (m.cargo || '').trim(),
-          voto: m.voto || ''
+          cargo: (m.cargo || '').trim()
         }));
 
       if (integrantes.length === 0) {
         Swal.fire('Falta información', 'Agrega al menos un integrante con nombre.', 'warning');
         return null;
       }
-      return { tipo: 'mesa', titulo: (this.contenidoTitulo || '').trim() || null, integrantes };
+      return {
+        tipo: 'mesa',
+        titulo: (this.contenidoTitulo || '').trim() || null,
+        resultado: (this.mesaResultado || '').trim() || null,
+        integrantes
+      };
     }
 
     if (!(this.contenidoUrl || '').trim()) {
@@ -3361,6 +3381,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         const idAgendaTerminar   = this.sesionActivaIdAgenda   || this.idEvento;
         const esComisionTerminar = this.sesionActivaIdAgenda ? this.sesionActivaEsComision : this.esComision;
         this._socketService.emitTerminarSesion(idAgendaTerminar, esComisionTerminar);
+        // Manda el tablero de proyección a pantalla neutra "finalizado" (persiste al recargar).
+        this._socketService.emitTerminarTablero(this.idComisionRuta, 'Sesión finalizada');
+        this.contenidoProyectado = false;
         this.sesionActiva           = false;
         this.sesionActivaIdAgenda   = '';
         this.sesionActivaEsComision = false;

@@ -2,7 +2,8 @@
 <div class="tablero-container">
 
   <!-- CONTENIDO LIBRE (imagen / video / mesa) — tapa el tablero mientras esté activo -->
-  <div class="contenido-custom" *ngIf="contenidoCustom">
+  <div class="contenido-custom" *ngIf="contenidoCustom"
+    [ngClass]="{ 'fondo-mesa': contenidoCustom.tipo === 'mesa' }">
     <div class="contenido-titulo" *ngIf="contenidoCustom.titulo">{{ contenidoCustom.titulo }}</div>
 
     <!-- IMAGEN -->
@@ -21,31 +22,43 @@
       <video [src]="contenidoCustom.url" controls autoplay></video>
     </div>
 
-    <!-- MESA: fotos + cargo + voto -->
-    <div class="contenido-mesa" *ngIf="contenidoCustom.tipo === 'mesa'">
-      <div class="mesa-card" *ngFor="let m of contenidoCustom.integrantes">
-        <div class="mesa-foto">
-          <img *ngIf="m.foto" [src]="m.foto" [alt]="m.nombre" />
-          <div class="mesa-foto-vacia" *ngIf="!m.foto"><i class="bi bi-person-fill"></i></div>
-        </div>
-        <div class="mesa-nombre">{{ m.nombre }}</div>
-        <div class="mesa-cargo" *ngIf="m.cargo">{{ m.cargo }}</div>
-        <div class="mesa-voto" *ngIf="m.voto" [ngClass]="'voto-' + m.voto">
-          {{ getVotoMesaLabel(m.voto) }}
+    <!-- MESA: fotos + cargo -->
+    <ng-container *ngIf="contenidoCustom.tipo === 'mesa'">
+      <div class="contenido-mesa" [ngClass]="getMesaSizeClase()"
+        [style.grid-template-columns]="'repeat(' + getMesaColumnas() + ', minmax(0, 1fr))'">
+        <div class="mesa-card" *ngFor="let m of contenidoCustom.integrantes">
+          <div class="mesa-foto">
+            <img *ngIf="m.foto" [src]="m.foto" [alt]="m.nombre" />
+            <div class="mesa-foto-vacia" *ngIf="!m.foto"><i class="bi bi-person-fill"></i></div>
+          </div>
+          <div class="mesa-nombre">{{ m.nombre }}</div>
+          <div class="mesa-cargo" *ngIf="m.cargo">{{ m.cargo }}</div>
+          <div class="mesa-voto" *ngIf="m.voto" [ngClass]="'voto-' + m.voto">
+            {{ getVotoMesaLabel(m.voto) }}
+          </div>
         </div>
       </div>
-    </div>
+
+      <!-- Leyenda de votación / resultado -->
+      <div class="mesa-resultado" *ngIf="contenidoCustom.resultado">{{ contenidoCustom.resultado }}</div>
+    </ng-container>
   </div>
 
-  <!-- PANTALLA IDLE (se muestra cuando termina votación o asistencia) -->
+  <!-- PANTALLA IDLE (tablero terminado o sin contenido) -->
   <div class="pantalla-idle" *ngIf="terminado && !contenidoCustom">
     <img src="https://www.congresoedomex.gob.mx/images/congreso_logo_horizontal-p-2000.png" alt="Congreso" class="idle-logo" />
     <div class="idle-titulo" *ngIf="tituloEvento">{{ tituloEvento }}</div>
-    <div class="idle-mensaje">{{ modo === 'asistencia' ? 'Asistencia finalizada' : 'Votación finalizada' }}</div>
+    <div class="idle-mensaje" *ngIf="mensajeIdle">{{ mensajeIdle }}</div>
   </div>
 
-  <!-- CONTENIDO NORMAL -->
-  <ng-container *ngIf="!terminado && !contenidoCustom">
+  <!-- PANTALLA DE ESPERA (modo contenido, aún sin contenido) -->
+  <div class="pantalla-idle" *ngIf="modo === 'contenido' && !contenidoCustom && !terminado">
+    <img src="https://www.congresoedomex.gob.mx/images/congreso_logo_horizontal-p-2000.png" alt="Congreso" class="idle-logo" />
+    <div class="idle-mensaje">En espera de contenido…</div>
+  </div>
+
+  <!-- CONTENIDO NORMAL (votación / asistencia) -->
+  <ng-container *ngIf="!terminado && !contenidoCustom && modo !== 'contenido'">
 
   <!-- ENCABEZADO -->
   <div class="tablero-header">

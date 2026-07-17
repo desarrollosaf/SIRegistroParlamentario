@@ -1974,67 +1974,68 @@
                                             </button>
                                         </div>
 
+                                        <!-- Texto de votación / resultado general de la mesa -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Texto de votación (opcional)</label>
+                                            <input type="text" class="form-control" [(ngModel)]="mesaResultado"
+                                                [ngModelOptions]="{standalone: true}"
+                                                placeholder="Ej. Votación por mayoría · Aprobado a favor" />
+                                            <small class="text-muted">Se muestra como leyenda debajo de la mesa en el
+                                                tablero.</small>
+                                        </div>
+
                                         <div class="text-muted mb-2" *ngIf="mesaIntegrantes.length === 0">
                                             <small>Aún no hay integrantes. Agrega uno o trae los actuales.</small>
                                         </div>
 
-                                        <div class="table-responsive" *ngIf="mesaIntegrantes.length > 0">
-                                            <table class="table table-sm align-middle">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="min-width: 220px;">URL de la foto</th>
-                                                        <th style="min-width: 160px;">Nombre</th>
-                                                        <th style="min-width: 140px;">Cargo</th>
-                                                        <th style="min-width: 140px;">Voto</th>
-                                                        <th></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr *ngFor="let m of mesaIntegrantes; let i = index">
-                                                        <td>
-                                                            <div class="d-flex align-items-center gap-1">
-                                                                <input type="text" class="form-control form-control-sm"
-                                                                    [(ngModel)]="m.foto" [ngModelOptions]="{standalone: true}"
-                                                                    placeholder="https://sistema.congresoedomex.gob.mx/storage/img/..." />
-                                                                <label class="btn btn-sm btn-outline-secondary mb-0"
-                                                                    title="Subir foto">
-                                                                    <i class="bi bi-upload"></i>
-                                                                    <input type="file" hidden accept="image/*"
-                                                                        (change)="onFotoMesaSeleccionada($event, i)" />
-                                                                </label>
-                                                            </div>
-                                                            <img *ngIf="m.foto" [src]="m.foto" alt=""
-                                                                style="height: 34px; width: 34px; object-fit: cover; border-radius: 50%; margin-top: 4px;" />
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" class="form-control form-control-sm"
-                                                                [(ngModel)]="m.nombre" [ngModelOptions]="{standalone: true}"
-                                                                placeholder="Nombre" />
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" class="form-control form-control-sm"
-                                                                [(ngModel)]="m.cargo" [ngModelOptions]="{standalone: true}"
-                                                                placeholder="Presidente, Vocal..." />
-                                                        </td>
-                                                        <td>
-                                                            <select class="form-select form-select-sm" [(ngModel)]="m.voto"
-                                                                [ngModelOptions]="{standalone: true}">
-                                                                <option value="">— Sin voto —</option>
-                                                                <option value="favor">A Favor</option>
-                                                                <option value="contra">En Contra</option>
-                                                                <option value="abstencion">Abstención</option>
-                                                                <option value="presente">Presente</option>
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                                (click)="quitarIntegranteMesa(i)" title="Quitar">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                        <div class="mesa-builder" *ngIf="mesaIntegrantes.length > 0">
+                                            <div class="mesa-fila" *ngFor="let m of mesaIntegrantes; let i = index">
+
+                                                <!-- Avatar + subir -->
+                                                <div class="mesa-fila-avatar">
+                                                    <div class="avatar">
+                                                        <img *ngIf="m.foto" [src]="m.foto" alt="" />
+                                                        <i *ngIf="!m.foto" class="bi bi-person"></i>
+                                                    </div>
+                                                    <label class="btn btn-sm btn-outline-secondary mb-0" title="Subir foto">
+                                                        <i class="bi bi-upload"></i>
+                                                        <input type="file" hidden accept="image/*"
+                                                            (change)="onFotoMesaSeleccionada($event, i)" />
+                                                    </label>
+                                                </div>
+
+                                                <!-- Campos -->
+                                                <div class="mesa-fila-campos">
+                                                    <div class="campo campo-nombre">
+                                                        <label class="mini-label">Nombre</label>
+                                                        <ng-select class="ngselect-mesa" [items]="diputadosNombres"
+                                                            [(ngModel)]="m.nombre" [ngModelOptions]="{standalone: true}"
+                                                            [addTag]="true" [clearable]="true"
+                                                            placeholder="Busca un diputado..."
+                                                            notFoundText="Sin coincidencias (puedes escribir un nombre)"
+                                                            addTagText="Usar: ">
+                                                        </ng-select>
+                                                    </div>
+                                                    <div class="campo campo-cargo">
+                                                        <label class="mini-label">Cargo</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            [(ngModel)]="m.cargo" [ngModelOptions]="{standalone: true}"
+                                                            placeholder="Presidente, Vocal..." />
+                                                    </div>
+                                                    <div class="campo campo-url">
+                                                        <label class="mini-label">URL de la foto (opcional)</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            [(ngModel)]="m.foto" [ngModelOptions]="{standalone: true}"
+                                                            placeholder="https://sistema.congresoedomex.gob.mx/storage/img/..." />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Quitar -->
+                                                <button type="button" class="btn btn-sm btn-outline-danger mesa-fila-del"
+                                                    (click)="quitarIntegranteMesa(i)" title="Quitar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 

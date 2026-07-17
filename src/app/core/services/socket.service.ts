@@ -90,6 +90,11 @@ export class SocketService {
     this.socket?.emit('limpiar-contenido', { idComision });
   }
 
+  /** Termina el tablero (pantalla neutra "finalizado"); persiste al recargar. */
+  emitTerminarTablero(idComision: string, mensaje?: string): void {
+    this.socket?.emit('terminar-tablero', { idComision, mensaje });
+  }
+
   onContenidoProyectado(cb: (contenido: any) => void): void {
     this.socket?.on('contenido-proyectado', cb);
   }

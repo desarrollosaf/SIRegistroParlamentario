@@ -133,21 +133,36 @@ class Server {
             this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', data.contenido);
         });
 
-        // Quitar el contenido libre del tablero.
+        // Quitar el contenido libre del tablero → pantalla neutra (idle), no regresa al evento.
         socket.on('limpiar-contenido', (data: { idComision: string }) => {
-            this.contenidoProyectado.delete(data.idComision);
-            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-limpiado');
+            const idle = { tipo: 'idle' };
+            this.contenidoProyectado.set(data.idComision, idle);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
+        });
+
+        // Terminar el tablero al finalizar la sesión (pantalla neutra persistente).
+        socket.on('terminar-tablero', (data: { idComision: string; mensaje?: string }) => {
+            const idle = { tipo: 'idle', mensaje: data.mensaje || 'Sesión finalizada' };
+            this.contenidoProyectado.set(data.idComision, idle);
+            this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
         });
 
         socket.on('terminar-votacion', (data: { idComision: string }) => {
+            // Persiste el estado "terminado" para que al recargar no vuelva a la votación.
+            this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Votación finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-terminada');
         });
 
         socket.on('terminar-asistencia', (data: { idComision: string }) => {
+            // Persiste el estado "terminado" para que al recargar no vuelva a la asistencia.
+            this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Asistencia finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-terminada');
         });
 
         socket.on('iniciar-proyeccion', (data: { idComision: string, params: any }) => {
+            // Al proyectar votación/asistencia se limpia cualquier idle/contenido previo,
+            // para que al recargar el tablero muestre el evento en curso.
+            this.contenidoProyectado.delete(data.idComision);
             this.io.to(`proyeccion-${data.idComision}`).emit('proyeccion-iniciada', data.params);
         });
 
