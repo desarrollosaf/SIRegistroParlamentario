@@ -386,39 +386,56 @@
 }
 
 /* ── CONTENIDO LIBRE (imagen / video / mesa) ─────────────────────────────── */
+/* Contenido proyectado (imagen / video / mesa): fondo claro formal con acento vino */
 .contenido-custom {
   position: absolute;
   inset: 0;
-  background: #0b1a2b;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(128, 0, 72, 0.10), transparent 70%),
+    linear-gradient(165deg, #fbfaf9 0%, #f0edec 55%, #e8e4e3 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  padding: 32px;
+  gap: 18px;
+  padding: 28px 34px 34px;
   z-index: 50;
-}
 
-/* Modo mesa: fondo gris claro y menos separación, como el directorio oficial */
-.contenido-custom.fondo-mesa {
-  background: #e9eaee;
-  gap: 12px;
-  padding: 20px 26px;
-
-  .contenido-titulo {
-    color: #1b1b2b;
-    font-size: 1.9rem;
-    margin: 0;
+  /* Filete superior institucional */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #800048 0%, #b0166a 50%, #800048 100%);
   }
 }
 
 .contenido-titulo {
-  color: #fff;
-  font-size: 2.4rem;
+  color: #221b20;
+  font-size: 2.1rem;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  margin: 0;
+  padding-bottom: 12px;
+  position: relative;
+
+  /* Subrayado corto con el vino institucional */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 84px;
+    height: 4px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #800048, #c21f7c);
+  }
 }
 
 .contenido-media {
@@ -434,8 +451,12 @@
     max-height: 100%;
     width: auto;
     height: auto;
-    border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid rgba(34, 27, 32, 0.06);
+    box-shadow:
+      0 1px 2px rgba(34, 27, 32, 0.05),
+      0 18px 40px -12px rgba(34, 27, 32, 0.28);
   }
 
   iframe {
@@ -450,41 +471,58 @@
   min-height: 0;
   display: grid;                 /* columnas las fija el componente (grid-template-columns inline) */
   align-content: center;
-  justify-items: center;
-  gap: 12px;
+  justify-content: center;       /* el grupo de columnas va centrado, sin huecos enormes */
+  justify-items: stretch;
+  gap: 18px;
   overflow-x: hidden;
   overflow-y: auto;
 
   /* variables por defecto (se ajustan según el nº de integrantes) */
   --nombre: 1.15rem;
-  --cargo: 0.9rem;
+  --cargo: 0.82rem;
   --cardmax: 220px;
 }
 
 .mesa-card {
+  position: relative;
   background: #fff;
-  border-radius: 14px;
-  padding: 10px 10px 12px;
+  border-radius: 16px;
+  padding: 12px 12px 16px;
   width: 100%;
-  max-width: var(--cardmax);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+  gap: 8px;
   min-width: 0;
+  border: 1px solid rgba(34, 27, 32, 0.06);
+  box-shadow:
+    0 1px 2px rgba(34, 27, 32, 0.05),
+    0 12px 28px -8px rgba(34, 27, 32, 0.18);
+  overflow: hidden;
+
+  /* Acento vino superior */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #800048, #c21f7c);
+  }
 }
 
 .mesa-foto {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 10px;
+  aspect-ratio: 4 / 5;           /* retrato, como las fotos oficiales */
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e5e5ea;
+  background: linear-gradient(160deg, #eceaec, #dedbe0);
   flex: 0 0 auto;
+  margin-top: 4px;
 
   img {
     width: 100%;
@@ -495,34 +533,39 @@
 
 .mesa-foto-vacia {
   font-size: 3rem;
-  color: #b7b7c0;
+  color: #b7b0b8;
   line-height: 1;
 }
 
 .mesa-nombre {
   font-size: var(--nombre);
   font-weight: 700;
-  color: #1a1a1a;
+  color: #221b20;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.2;
   overflow-wrap: anywhere;
   width: 100%;
 }
 
 .mesa-cargo {
   font-size: var(--cargo);
-  color: #6a6a72;
+  color: #800048;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
   text-align: center;
   overflow-wrap: anywhere;
   width: 100%;
+  padding-top: 6px;
+  border-top: 1px solid rgba(34, 27, 32, 0.08);
 }
 
 /* Tamaños automáticos según cuántos integrantes hay (más compacto = más juntos) */
-.contenido-mesa.mesa-xl { --nombre: 1.3rem;  --cargo: 1rem;    --cardmax: 250px; }
-.contenido-mesa.mesa-lg { --nombre: 1.15rem; --cargo: 0.9rem;  --cardmax: 210px; }
-.contenido-mesa.mesa-md { --nombre: 1.05rem; --cargo: 0.85rem; --cardmax: 185px; }
-.contenido-mesa.mesa-sm { --nombre: 0.92rem; --cargo: 0.76rem; --cardmax: 158px; }
-.contenido-mesa.mesa-xs { --nombre: 0.8rem;  --cargo: 0.68rem; --cardmax: 134px; }
+.contenido-mesa.mesa-xl { --nombre: 1.25rem; --cargo: 0.82rem; --cardmax: 230px; gap: 20px; }
+.contenido-mesa.mesa-lg { --nombre: 1rem;    --cargo: 0.72rem; --cardmax: 178px; gap: 16px; }
+.contenido-mesa.mesa-md { --nombre: 0.92rem; --cargo: 0.68rem; --cardmax: 162px; gap: 14px; }
+.contenido-mesa.mesa-sm { --nombre: 0.82rem; --cargo: 0.62rem; --cardmax: 140px; gap: 12px; }
+.contenido-mesa.mesa-xs { --nombre: 0.72rem; --cargo: 0.56rem; --cardmax: 120px; gap: 10px; }
 
 .mesa-voto {
   margin-top: 4px;
@@ -539,15 +582,15 @@
 }
 
 .mesa-resultado {
-  margin-top: 8px;
-  padding: 14px 40px;
-  background: #800048;
+  margin-top: 4px;
+  padding: 12px 44px;
+  background: linear-gradient(135deg, #800048 0%, #9d0f5c 100%);
   color: #fff;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: 999px;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  letter-spacing: 2px;
+  box-shadow: 0 10px 26px -8px rgba(128, 0, 72, 0.55);
 }

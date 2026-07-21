@@ -3135,6 +3135,29 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.contenidoProyectado = false;
   }
 
+  /** Vacía el formulario del proyector (título, URL, texto y todos los integrantes). */
+  limpiarComposicion(): void {
+    const hayDatos = !!(this.contenidoTitulo || this.contenidoUrl || this.mesaResultado
+      || this.mesaIntegrantes.length);
+    if (!hayDatos) return;
+
+    Swal.fire({
+      title: '¿Limpiar todo?',
+      text: 'Se borrará lo que tienes capturado en el proyector (no afecta lo ya proyectado ni lo guardado).',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, limpiar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.contenidoTitulo = '';
+      this.contenidoUrl = '';
+      this.mesaResultado = '';
+      this.mesaIntegrantes = [];
+    });
+  }
+
   // ── Adjuntar archivo (imagen/video) desde la computadora ──────────────────
 
   /** Sube el archivo del input principal y lo pone como URL del contenido. */
