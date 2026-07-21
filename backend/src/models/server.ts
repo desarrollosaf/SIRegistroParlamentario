@@ -445,6 +445,10 @@ class Server {
         }));
 
         this.app.use(cookieParser());
+        // Los archivos se guardan con rutas basadas en __dirname (ver multer), así que se sirve
+        // esa ruta primero; la de process.cwd() queda como respaldo por si el proceso arranca
+        // desde otro directorio de trabajo.
+        this.app.use('/storage', express.static(path.join(__dirname, '../../storage')));
         this.app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 
         this.app.use((req: Request, res: Response, next: NextFunction) => {

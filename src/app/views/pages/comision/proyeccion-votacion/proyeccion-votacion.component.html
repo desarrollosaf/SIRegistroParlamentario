@@ -2,8 +2,7 @@
 <div class="tablero-container">
 
   <!-- CONTENIDO LIBRE (imagen / video / mesa) — tapa el tablero mientras esté activo -->
-  <div class="contenido-custom" *ngIf="contenidoCustom"
-    [ngClass]="{ 'fondo-mesa': contenidoCustom.tipo === 'mesa' }">
+  <div class="contenido-custom" *ngIf="contenidoCustom">
     <div class="contenido-titulo" *ngIf="contenidoCustom.titulo">{{ contenidoCustom.titulo }}</div>
 
     <!-- IMAGEN -->
@@ -25,7 +24,7 @@
     <!-- MESA: fotos + cargo -->
     <ng-container *ngIf="contenidoCustom.tipo === 'mesa'">
       <div class="contenido-mesa" [ngClass]="getMesaSizeClase()"
-        [style.grid-template-columns]="'repeat(' + getMesaColumnas() + ', minmax(0, 1fr))'">
+        [style.grid-template-columns]="'repeat(' + getMesaColumnas() + ', var(--cardmax))'">
         <div class="mesa-card" *ngFor="let m of contenidoCustom.integrantes">
           <div class="mesa-foto">
             <img *ngIf="m.foto" [src]="m.foto" [alt]="m.nombre" />

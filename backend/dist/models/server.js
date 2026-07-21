@@ -409,6 +409,10 @@ class Server {
             credentials: true
         }));
         this.app.use((0, cookie_parser_1.default)());
+        // Los archivos se guardan con rutas basadas en __dirname (ver multer), así que se sirve
+        // esa ruta primero; la de process.cwd() queda como respaldo por si el proceso arranca
+        // desde otro directorio de trabajo.
+        this.app.use('/storage', express_1.default.static(path_1.default.join(__dirname, '../../storage')));
         this.app.use('/storage', express_1.default.static(path_1.default.join(process.cwd(), 'storage')));
         this.app.use((req, res, next) => {
             const publicPaths = [
