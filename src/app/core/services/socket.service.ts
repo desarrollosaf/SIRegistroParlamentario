@@ -236,6 +236,38 @@ export class SocketService {
     this.socket?.off('estado-eventos');
   }
 
+  // ── Transcripción en vivo ─────────────────────────────────────────────────
+
+  /** Se une a la sala de la sesión para recibir las líneas transcritas. */
+  unirseTranscripcion(idAgenda: string): void {
+    const socket = this.ensureConnected();
+    if (socket.connected) {
+      socket.emit('unirse-transcripcion', idAgenda);
+    } else {
+      socket.once('connect', () => socket.emit('unirse-transcripcion', idAgenda));
+    }
+  }
+
+  salirTranscripcion(idAgenda: string): void {
+    this.socket?.emit('salir-transcripcion', idAgenda);
+  }
+
+  onTranscripcionLinea(cb: (linea: any) => void): void {
+    this.socket?.on('transcripcion-linea', cb);
+  }
+
+  offTranscripcionLinea(): void {
+    this.socket?.off('transcripcion-linea');
+  }
+
+  onTranscripcionEstado(cb: (data: { idAgenda: string; transcribiendo: boolean }) => void): void {
+    this.socket?.on('transcripcion-estado', cb);
+  }
+
+  offTranscripcionEstado(): void {
+    this.socket?.off('transcripcion-estado');
+  }
+
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = undefined;

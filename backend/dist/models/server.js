@@ -26,6 +26,7 @@ const inteligencia_1 = __importDefault(require("../routes/inteligencia"));
 const diputado_1 = __importDefault(require("../routes/diputado"));
 const aliasDiputado_1 = __importDefault(require("../routes/aliasDiputado"));
 const proyeccion_1 = __importDefault(require("../routes/proyeccion"));
+const transcripcion_1 = __importDefault(require("../routes/transcripcion"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -34,6 +35,9 @@ const comisions_1 = __importDefault(require("./comisions"));
 const anfitrion_agendas_1 = __importDefault(require("./anfitrion_agendas"));
 const agendas_1 = __importDefault(require("./agendas"));
 const sedes_1 = __importDefault(require("./sedes"));
+const transcripcion_sesiones_1 = __importDefault(require("./transcripcion_sesiones"));
+const transcripcion_participaciones_1 = __importDefault(require("./transcripcion_participaciones"));
+const transcripcion_resumenes_1 = __importDefault(require("./transcripcion_resumenes"));
 class Server {
     constructor() {
         this.asistenciasAbiertas = new Map();
@@ -118,6 +122,14 @@ class Server {
                 if (contenido) {
                     socket.emit('contenido-proyectado', contenido);
                 }
+            });
+            // Transcripción en vivo: el cliente se une a la sala de su sesión
+            // para recibir cada intervención que emite el transcriptor.
+            socket.on('unirse-transcripcion', (idAgenda) => {
+                socket.join(`transcripcion-${idAgenda}`);
+            });
+            socket.on('salir-transcripcion', (idAgenda) => {
+                socket.leave(`transcripcion-${idAgenda}`);
             });
             // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
             socket.on('proyectar-contenido', (data) => {
@@ -383,6 +395,7 @@ class Server {
         this.app.use(inteligencia_1.default);
         this.app.use(aliasDiputado_1.default);
         this.app.use(proyeccion_1.default);
+        this.app.use(transcripcion_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -449,6 +462,7 @@ class Server {
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
                 '/api/inteligencia/',
+                '/api/transcripcion/linea', // webhook del transcriptor (sin JWT)
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {
@@ -463,6 +477,11 @@ class Server {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log("Conexion de DB exitoso");
+                // Crea (si no existen) las tablas de la transcripción en MySQL.
+                yield transcripcion_sesiones_1.default.sync();
+                yield transcripcion_participaciones_1.default.sync();
+                yield transcripcion_resumenes_1.default.sync();
+                console.log("Tablas de transcripción listas");
             }
             catch (error) {
                 console.log("Conexion de DB errorena => " + error);

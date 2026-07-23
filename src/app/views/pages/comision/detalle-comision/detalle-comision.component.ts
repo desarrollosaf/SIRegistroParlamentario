@@ -7,6 +7,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EventoService } from '../../../../service/evento.service';
 import { ProyeccionService } from '../../../../service/proyeccion.service';
 import { AliasDiputadoService } from '../../../../service/alias-diputado.service';
+import { TranscripcionService } from '../../../../service/transcripcion.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SocketService } from '../../../../core/services/socket.service';
 import { enviroment } from '../../../../../enviroments/enviroment';
@@ -61,8 +62,24 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     { numero: 1, nombre: 'Asistencia' },
     { numero: 2, nombre: 'Orden del día' },
     { numero: 3, nombre: 'Votaciones' },
-    { numero: 4, nombre: 'Resumen' }
+    { numero: 4, nombre: 'Resumen' },
+    { numero: 5, nombre: 'Transcripción' }
   ];
+
+  // ── Transcripción en vivo ──────────────────────────────────────────────
+  transcripcionLineas: { orador: string; inicioHms: string; texto: string; nuevoOrador: boolean }[] = [];
+  transcribiendo = false;
+  cargandoTranscripcion = false;
+  // Revisión de la sesión ya transcrita (intervenciones + resúmenes).
+  modoRevision = false;
+  cargandoRevision = false;
+  turnos: {
+    anclaId: string; ids: string[]; orador: string; inicioHms: string; texto: string;
+    resumen?: string; promptResumen?: string; cargandoResumen?: boolean;
+    editando?: boolean; nuevoOrador?: string;
+    editandoTexto?: boolean; nuevoTexto?: string;
+    agregando?: boolean; puntoSel?: string; diputadosSel?: string[]; guardandoOD?: boolean;
+  }[] = [];
   //VOTACION
   votantes: Votante[] = [];
   columnaVotantes1: Votante[] = [];
@@ -134,6 +151,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   contenidoProyectado: boolean = false;
   private _proyeccionService = inject(ProyeccionService);
   private _aliasService = inject(AliasDiputadoService);
+  private _transcripcionService = inject(TranscripcionService);
   guardadas: any[] = [];
   diputadosNombres: string[] = [];
   subiendoArchivo: boolean = false;
@@ -308,6 +326,26 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
     this._socketService.emitGetEstadoEventos();
 
+    // Transcripción en vivo: cada línea que llega se agrega al panel.
+    this._socketService.onTranscripcionLinea((linea: any) => {
+      this.transcribiendo = true;
+      const orador = linea?.orador ?? '—';
+      const previa = this.transcripcionLineas[this.transcripcionLineas.length - 1];
+      // Solo se muestra el nombre del orador cuando cambia respecto a la línea anterior.
+      const nuevoOrador = !previa || previa.orador !== orador;
+      this.transcripcionLineas.push({
+        orador,
+        inicioHms: linea?.inicioHms ?? '',
+        texto: linea?.texto ?? '',
+        nuevoOrador,
+      });
+    });
+    this._socketService.onTranscripcionEstado((data: any) => {
+      if (data?.idAgenda === this.idEvento) {
+        this.transcribiendo = !!data.transcribiendo;
+      }
+    });
+
     this.cargarDatosIniciales();
     this.cargarCatalogosBase();
 
@@ -375,12 +413,14 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     console.log('Limpiando');
     this.detenerSegPlano();
+    this._socketService.offTranscripcionLinea();
+    this._socketService.offTranscripcionEstado();
     this._socketService.disconnect();
   }
 
 
   nextStep() {
-    if (this.step < 4) {
+    if (this.step < 5) {
       this.step++;
       this.cargarDatosSeccion(this.step);
     }
@@ -420,7 +460,272 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       case 4:
         this.cargarDatosResumen();
         break;
+      case 5:
+        this.entrarTranscripcion();
+        break;
     }
+  }
+
+  // ── Transcripción en vivo ────────────────────────────────────────────────
+
+  /** Al abrir la pestaña: se une a la sala, consulta el estado y recupera de la
+   *  base de datos lo que ya se había transcrito (para no ver la pantalla vacía). */
+  private entrarTranscripcion(): void {
+    if (!this.idEvento) return;
+    this._socketService.unirseTranscripcion(this.idEvento);
+    this._transcripcionService.estado(this.idEvento).subscribe({
+      next: (r: any) => { this.transcribiendo = !!r?.transcribiendo; },
+      error: () => { this.transcribiendo = false; },
+    });
+    this.cargarLineasGuardadas();
+    // Los puntos del orden del día se necesitan para vincular intervenciones.
+    if (!this.listaPuntos || this.listaPuntos.length === 0) {
+      this.cargarPuntosRegistrados();
+    }
+  }
+
+  /** Trae de la base lo ya transcrito y lo pinta en el panel en vivo. */
+  private cargarLineasGuardadas(): void {
+    this._transcripcionService.sesion(this.idEvento).subscribe({
+      next: (r: any) => {
+        const filas: any[] = r?.filas || [];
+        let previo = '';
+        this.transcripcionLineas = filas.map((f: any) => {
+          const nuevoOrador = f.orador !== previo;
+          previo = f.orador;
+          return {
+            orador: f.orador ?? '—',
+            inicioHms: f.inicio_hms ?? '',
+            texto: f.texto ?? '',
+            nuevoOrador,
+          };
+        });
+      },
+      error: () => { /* si aún no hay nada guardado, se queda vacío */ },
+    });
+  }
+
+  /** Borra en la base TODA la transcripción de esta sesión para empezar de nuevo. */
+  borrarTranscripcion(): void {
+    Swal.fire({
+      title: '¿Borrar la transcripción?',
+      text: 'Se eliminarán de la base de datos todas las intervenciones y resúmenes de esta sesión. No se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this._transcripcionService.borrarSesion(this.idEvento).subscribe({
+        next: () => {
+          this.transcripcionLineas = [];
+          this.turnos = [];
+          Swal.fire('Listo', 'La transcripción fue borrada.', 'success');
+        },
+        error: () => Swal.fire('Error', 'No se pudo borrar la transcripción.', 'error'),
+      });
+    });
+  }
+
+  /** Botón "Iniciar transcripción": usa la liga de YouTube guardada en la sesión. */
+  iniciarTranscripcion(): void {
+    if (!this.idEvento || this.cargandoTranscripcion) return;
+    this.cargandoTranscripcion = true;
+    this._socketService.unirseTranscripcion(this.idEvento);
+    this._transcripcionService.iniciar(this.idEvento).subscribe({
+      next: (r: any) => {
+        this.cargandoTranscripcion = false;
+        this.transcribiendo = true;
+        if (r?.yaEnCurso) {
+          Swal.fire('Transcripción', 'La transcripción ya estaba en curso.', 'info');
+        }
+      },
+      error: (e: HttpErrorResponse) => {
+        this.cargandoTranscripcion = false;
+        Swal.fire('No se pudo iniciar',
+          e?.error?.msg || 'Revisa que la sesión tenga liga de YouTube y que el servicio de transcripción esté activo.',
+          'error');
+      },
+    });
+  }
+
+  /** Botón "Detener transcripción". */
+  detenerTranscripcion(): void {
+    if (!this.idEvento || this.cargandoTranscripcion) return;
+    this.cargandoTranscripcion = true;
+    this._transcripcionService.detener(this.idEvento).subscribe({
+      next: () => {
+        this.cargandoTranscripcion = false;
+        this.transcribiendo = false;
+      },
+      error: () => {
+        this.cargandoTranscripcion = false;
+        Swal.fire('Error', 'No se pudo detener la transcripción.', 'error');
+      },
+    });
+  }
+
+  /** Vacía el panel de transcripción en pantalla (no borra lo guardado). */
+  limpiarTranscripcion(): void {
+    this.transcripcionLineas = [];
+  }
+
+  // ── Revisión de la sesión (intervenciones guardadas + resúmenes) ──────────
+
+  /** Alterna entre la vista en vivo y la de revisión; al entrar, carga los datos. */
+  alternarRevision(): void {
+    this.modoRevision = !this.modoRevision;
+    if (this.modoRevision && this.turnos.length === 0) {
+      this.cargarRevision();
+    }
+  }
+
+  /** Carga las intervenciones guardadas y las agrupa en turnos por orador. */
+  cargarRevision(): void {
+    if (!this.idEvento || this.cargandoRevision) return;
+    this.cargandoRevision = true;
+    this._transcripcionService.sesion(this.idEvento).subscribe({
+      next: (r: any) => {
+        this.cargandoRevision = false;
+        const filas: any[] = r?.filas || [];
+        const resumenes: Record<string, string> = r?.resumenes || {};
+        const turnos: typeof this.turnos = [];
+        for (const f of filas) {
+          const ultimo = turnos[turnos.length - 1];
+          if (ultimo && ultimo.orador === f.orador) {
+            ultimo.ids.push(f.id);
+            ultimo.texto += ' ' + (f.texto || '');
+          } else {
+            turnos.push({
+              anclaId: f.id, ids: [f.id], orador: f.orador,
+              inicioHms: f.inicio_hms, texto: f.texto || '',
+            });
+          }
+        }
+        // Adjunta los resúmenes ya guardados a su turno (por el id ancla).
+        for (const t of turnos) {
+          if (resumenes[t.anclaId]) t.resumen = resumenes[t.anclaId];
+        }
+        this.turnos = turnos;
+      },
+      error: (e: HttpErrorResponse) => {
+        this.cargandoRevision = false;
+        this.turnos = [];
+        Swal.fire('Sin datos',
+          e?.error?.detail || 'Esta sesión aún no tiene una transcripción guardada.',
+          'info');
+      },
+    });
+  }
+
+  /** Genera (con Claude) el resumen ejecutivo de un turno. */
+  generarResumen(t: any): void {
+    if (t.cargandoResumen) return;
+    t.cargandoResumen = true;
+    this._transcripcionService.resumen(this.idEvento, t.anclaId, t.orador, t.texto).subscribe({
+      next: (r: any) => {
+        t.cargandoResumen = false;
+        if (r?.modo === 'auto' && r?.resumen) {
+          t.resumen = r.resumen;
+        } else {
+          // Sin clave de Claude: deja el prompt listo para copiarlo a mano.
+          t.promptResumen = r?.prompt || '';
+          Swal.fire('Resumen manual',
+            'No hay clave de Claude configurada; se preparó el texto para pegarlo en Claude.',
+            'info');
+        }
+      },
+      error: () => {
+        t.cargandoResumen = false;
+        Swal.fire('Error', 'No se pudo generar el resumen.', 'error');
+      },
+    });
+  }
+
+  /** Guarda la corrección del orador de un turno. */
+  guardarOrador(t: any): void {
+    const nuevo = (t.nuevoOrador || '').trim();
+    if (!nuevo || nuevo === t.orador) { t.editando = false; return; }
+    this._transcripcionService.actualizarOrador(this.idEvento, t.ids, nuevo).subscribe({
+      next: () => { t.editando = false; this.cargarRevision(); },
+      error: () => Swal.fire('Error', 'No se pudo corregir el orador.', 'error'),
+    });
+  }
+
+  /** Guarda el texto editado de un turno. */
+  guardarTexto(t: any): void {
+    const nuevo = (t.nuevoTexto ?? '').trim();
+    if (!nuevo) { t.editandoTexto = false; return; }
+    this._transcripcionService.editarTexto(this.idEvento, t.ids, nuevo).subscribe({
+      next: () => { t.texto = nuevo; t.editandoTexto = false; },
+      error: () => Swal.fire('Error', 'No se pudo guardar el texto.', 'error'),
+    });
+  }
+
+  /** Abre el mini-formulario para llevar el turno al orden del día, con el
+   *  diputado sugerido a partir del nombre del orador. */
+  abrirAgregarOD(t: any): void {
+    t.agregando = true;
+    t.puntoSel = t.puntoSel || null;
+    t.diputadosSel = this._sugerirDiputados(t.orador);
+  }
+
+  /** Busca en la tribuna el diputado cuyo nombre coincide con el orador. */
+  private _sugerirDiputados(orador: string): string[] {
+    const lista: any[] = this.slcTribunaDip || [];
+    if (!orador || !lista.length) return [];
+    const norm = (s: string) => (s || '')
+      .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\bdip(utad[oa])?\.?\b/g, '').replace(/[^a-z\s]/g, ' ').trim();
+    const tokensOrador = new Set(norm(orador).split(/\s+/).filter(w => w.length > 2));
+    let mejor: any = null, mejorPuntaje = 0;
+    for (const d of lista) {
+      const tokensDip = norm(d.nombre).split(/\s+/).filter(w => w.length > 2);
+      if (!tokensDip.length) continue;
+      const coinc = tokensDip.filter(w => tokensOrador.has(w)).length;
+      const puntaje = coinc / tokensDip.length;
+      if (coinc >= 2 && puntaje > mejorPuntaje) { mejor = d; mejorPuntaje = puntaje; }
+    }
+    return mejor ? [mejor.id] : [];
+  }
+
+  /** Guarda el turno como una intervención (tipo Comentario) en el punto elegido. */
+  guardarEnOrdenDia(t: any): void {
+    if (!t.puntoSel) { Swal.fire('Falta el punto', 'Elige a qué punto del orden del día pertenece.', 'warning'); return; }
+    if (!t.diputadosSel || !t.diputadosSel.length) { Swal.fire('Falta el diputado', 'Selecciona al menos un diputado.', 'warning'); return; }
+
+    // El tipo de intervención siempre es "Comentario".
+    const tipoComentario = (this.slcTipIntervencion || [])
+      .find((x: any) => (x.valor || '').toLowerCase().includes('comentario'));
+
+    const datos = {
+      id_diputado: t.diputadosSel,
+      id_tipo_intervencion: tipoComentario?.id || null,
+      comentario: t.texto,
+      resumen: t.resumen || '',
+      // tipo 2 = "Intervención del Punto" (la 1 son las generales, sin punto).
+      // Debe ser 2 para que aparezca en el modal de intervenciones del punto.
+      tipo: 2,
+      id_punto: t.puntoSel,
+      id_evento: this.idComisionRuta,
+      liga: '',
+      destacada: 0,
+    };
+
+    t.guardandoOD = true;
+    this._eventoService.saveIntervencion(datos).subscribe({
+      next: () => {
+        t.guardandoOD = false;
+        t.agregando = false;
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success',
+          title: 'Intervención agregada al orden del día.', showConfirmButton: false, timer: 2500 });
+      },
+      error: () => {
+        t.guardandoOD = false;
+        Swal.fire('Error', 'No se pudo agregar la intervención.', 'error');
+      },
+    });
   }
 
   private iniciarSegPlano(): void {
