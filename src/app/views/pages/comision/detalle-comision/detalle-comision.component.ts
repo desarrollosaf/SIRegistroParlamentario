@@ -80,6 +80,12 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     editandoTexto?: boolean; nuevoTexto?: string;
     agregando?: boolean; puntoSel?: string; diputadosSel?: string[]; guardandoOD?: boolean;
   }[] = [];
+  /** Oradores de la sesión con cuántas veces intervino cada uno. */
+  oradores: { nombre: string; cuenta: number }[] = [];
+  /** Orador seleccionado en el filtro; null = todos. */
+  oradorFiltro: string | null = null;
+  /** Turnos visibles según el filtro (lo que se pinta). */
+  turnosFiltrados: typeof this.turnos = [];
   //VOTACION
   votantes: Votante[] = [];
   columnaVotantes1: Votante[] = [];
@@ -521,6 +527,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         next: () => {
           this.transcripcionLineas = [];
           this.turnos = [];
+          this.turnosFiltrados = [];
+          this.oradores = [];
+          this.oradorFiltro = null;
           Swal.fire('Listo', 'La transcripción fue borrada.', 'success');
         },
         error: () => Swal.fire('Error', 'No se pudo borrar la transcripción.', 'error'),
@@ -608,6 +617,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           if (resumenes[t.anclaId]) t.resumen = resumenes[t.anclaId];
         }
         this.turnos = turnos;
+        this.recalcularOradores();
+        this.aplicarFiltroOrador();
       },
       error: (e: HttpErrorResponse) => {
         this.cargandoRevision = false;
@@ -617,6 +628,33 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           'info');
       },
     });
+  }
+
+  /** Arma la lista de oradores con su número de intervenciones (de más a menos). */
+  private recalcularOradores(): void {
+    const cuenta = new Map<string, number>();
+    for (const t of this.turnos) {
+      const n = (t.orador || '').trim() || '—';
+      cuenta.set(n, (cuenta.get(n) || 0) + 1);
+    }
+    this.oradores = [...cuenta.entries()]
+      .map(([nombre, c]) => ({ nombre, cuenta: c }))
+      .sort((a, b) => b.cuenta - a.cuenta || a.nombre.localeCompare(b.nombre));
+    // Si el orador filtrado ya no existe (tras una corrección), se limpia.
+    if (this.oradorFiltro && !cuenta.has(this.oradorFiltro)) this.oradorFiltro = null;
+  }
+
+  /** Deja en turnosFiltrados solo lo que corresponde al filtro activo. */
+  private aplicarFiltroOrador(): void {
+    this.turnosFiltrados = this.oradorFiltro
+      ? this.turnos.filter(t => (t.orador || '').trim() === this.oradorFiltro)
+      : this.turnos;
+  }
+
+  /** Click en un orador de la lista; el mismo click lo deselecciona. */
+  filtrarPorOrador(nombre: string | null): void {
+    this.oradorFiltro = (nombre && nombre !== this.oradorFiltro) ? nombre : null;
+    this.aplicarFiltroOrador();
   }
 
   /** Genera (con Claude) el resumen ejecutivo de un turno. */
