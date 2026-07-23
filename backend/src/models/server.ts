@@ -12,6 +12,7 @@ import inteligencia from "../routes/inteligencia";
 import diputadoRoutes from "../routes/diputado";
 import aliasDiputado from "../routes/aliasDiputado";
 import proyeccion from "../routes/proyeccion";
+import transcripcion from "../routes/transcripcion";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -20,6 +21,9 @@ import Comision from './comisions';
 import AnfitrionAgenda from './anfitrion_agendas';
 import Agenda from './agendas';
 import Sedes from './sedes';
+import TranscripcionSesion from './transcripcion_sesiones';
+import TranscripcionParticipacion from './transcripcion_participaciones';
+import TranscripcionResumen from './transcripcion_resumenes';
 
 class Server {
 
@@ -125,6 +129,16 @@ class Server {
             if (contenido) {
                 socket.emit('contenido-proyectado', contenido);
             }
+        });
+
+        // Transcripción en vivo: el cliente se une a la sala de su sesión
+        // para recibir cada intervención que emite el transcriptor.
+        socket.on('unirse-transcripcion', (idAgenda: string) => {
+            socket.join(`transcripcion-${idAgenda}`);
+        });
+
+        socket.on('salir-transcripcion', (idAgenda: string) => {
+            socket.leave(`transcripcion-${idAgenda}`);
         });
 
         // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
@@ -417,6 +431,7 @@ class Server {
        this.app.use(inteligencia);
        this.app.use(aliasDiputado);
        this.app.use(proyeccion);
+       this.app.use(transcripcion);
     }
 
     
@@ -486,6 +501,7 @@ class Server {
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
                 '/api/inteligencia/',
+                '/api/transcripcion/linea',   // webhook del transcriptor (sin JWT)
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;
@@ -504,12 +520,18 @@ class Server {
 
     async DBconnetc(){
         try {
-            
+
             console.log("Conexion de DB exitoso");
+
+            // Crea (si no existen) las tablas de la transcripción en MySQL.
+            await TranscripcionSesion.sync();
+            await TranscripcionParticipacion.sync();
+            await TranscripcionResumen.sync();
+            console.log("Tablas de transcripción listas");
 
         } catch (error) {
             console.log("Conexion de DB errorena => "+error);
-            
+
         }
     }
 
