@@ -53,7 +53,6 @@ function sesionActual(idAgenda) {
 }
 /** Inicia la transcripción y crea la sesión en MySQL. */
 router.post('/api/transcripcion/iniciar', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
         const { idAgenda, modelo, voz } = req.body || {};
         if (!idAgenda)
@@ -87,10 +86,13 @@ router.post('/api/transcripcion/iniciar', (req, res) => __awaiter(void 0, void 0
         return res.json(Object.assign({ ok: true }, data));
     }
     catch (err) {
-        console.error('[transcripcion/iniciar]', (err === null || err === void 0 ? void 0 : err.message) || err);
+        // Detalle explícito: sin esto un fallo de red se ve como un simple "Error".
+        const detalle = (err === null || err === void 0 ? void 0 : err.response)
+            ? { http: err.response.status, cuerpo: err.response.data }
+            : { codigo: err === null || err === void 0 ? void 0 : err.code, mensaje: err === null || err === void 0 ? void 0 : err.message, url: `${TRANSCRIPTOR_URL}/iniciar` };
+        console.error('[transcripcion/iniciar]', detalle);
         return res.status(500).json({
-            ok: false, msg: 'No se pudo iniciar la transcripción.',
-            detalle: ((_a = err === null || err === void 0 ? void 0 : err.response) === null || _a === void 0 ? void 0 : _a.data) || (err === null || err === void 0 ? void 0 : err.message),
+            ok: false, msg: 'No se pudo iniciar la transcripción.', detalle,
         });
     }
 }));

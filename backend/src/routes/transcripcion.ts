@@ -72,10 +72,13 @@ router.post('/api/transcripcion/iniciar', async (req: Request, res: Response): P
         io?.to(`transcripcion-${idAgenda}`).emit('transcripcion-estado', { idAgenda, transcribiendo: true });
         return res.json({ ok: true, ...data });
     } catch (err: any) {
-        console.error('[transcripcion/iniciar]', err?.message || err);
+        // Detalle explícito: sin esto un fallo de red se ve como un simple "Error".
+        const detalle = err?.response
+            ? { http: err.response.status, cuerpo: err.response.data }
+            : { codigo: err?.code, mensaje: err?.message, url: `${TRANSCRIPTOR_URL}/iniciar` };
+        console.error('[transcripcion/iniciar]', detalle);
         return res.status(500).json({
-            ok: false, msg: 'No se pudo iniciar la transcripción.',
-            detalle: err?.response?.data || err?.message,
+            ok: false, msg: 'No se pudo iniciar la transcripción.', detalle,
         });
     }
 });
