@@ -172,6 +172,7 @@ router.post('/api/transcripcion/linea', (req, res) => __awaiter(void 0, void 0, 
 // ─────────────────────────────────────────────────────────────────────────
 /** Intervenciones + resúmenes guardados de la sesión más reciente. */
 router.get('/api/transcripcion/sesion/:idAgenda', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const sesion = yield sesionActual(req.params.idAgenda);
         if (!sesion)
@@ -183,7 +184,7 @@ router.get('/api/transcripcion/sesion/:idAgenda', (req, res) => __awaiter(void 0
         });
         const filas = parts.map((p) => ({
             id: p.id, orador: p.orador, inicio_hms: p.inicio_hms,
-            inicio_seg: p.inicio_seg, texto: p.texto,
+            inicio_seg: p.inicio_seg, fin_seg: p.fin_seg, texto: p.texto,
         }));
         const resArr = yield transcripcion_resumenes_1.default.findAll({
             where: { id_sesion: sesion.id }, raw: true,
@@ -191,7 +192,7 @@ router.get('/api/transcripcion/sesion/:idAgenda', (req, res) => __awaiter(void 0
         const resumenes = {};
         for (const r of resArr)
             resumenes[r.ancla_id] = r.resumen;
-        return res.json({ sesionId: sesion.id, filas, resumenes });
+        return res.json({ sesionId: sesion.id, sesionUrl: (_a = sesion.url) !== null && _a !== void 0 ? _a : null, filas, resumenes });
     }
     catch (err) {
         console.error('[transcripcion/sesion]', (err === null || err === void 0 ? void 0 : err.message) || err);
