@@ -62,7 +62,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     { numero: 1, nombre: 'Asistencia' },
     { numero: 2, nombre: 'Orden del día' },
     { numero: 3, nombre: 'Votaciones' },
-    { numero: 4, nombre: 'Resumen' },
+    { numero: 4, nombre: 'Proyecciones' },
     { numero: 5, nombre: 'Transcripción' }
   ];
 
@@ -74,14 +74,23 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   modoRevision = false;
   cargandoRevision = false;
   turnos: {
-    anclaId: string; ids: string[]; orador: string; inicioHms: string; texto: string;
+    anclaId: string; ids: string[]; orador: string; inicioHms: string; inicioSeg: number; texto: string;
+    ligaYt?: string | null;
     resumen?: string; promptResumen?: string; cargandoResumen?: boolean;
     editando?: boolean; nuevoOrador?: string;
     editandoTexto?: boolean; nuevoTexto?: string;
     agregando?: boolean; puntoSel?: string; diputadosSel?: string[]; guardandoOD?: boolean;
   }[] = [];
-  /** Oradores de la sesión con cuántas veces intervino cada uno. */
-  oradores: { nombre: string; cuenta: number }[] = [];
+  /** Oradores de la sesión con cuántas veces intervino y cuántos minutos habló. */
+  oradores: { nombre: string; cuenta: number; segundos: number; duracion: string; pendiente: boolean }[] = [];
+  /** Liga de YouTube de la sesión transcrita, para saltar a un minuto exacto. */
+  sesionUrlVideo: string | null = null;
+  /** Duración total hablada de la sesión, ya formateada. */
+  duracionSesion = '';
+  /** Nombres del catálogo de diputados (del transcriptor), sin prefijo. */
+  catalogoOradores: string[] = [];
+  /** Opciones del desplegable al corregir un orador (catálogo + los de la sesión). */
+  opcionesOradores: string[] = [];
   /** Orador seleccionado en el filtro; null = todos. */
   oradorFiltro: string | null = null;
   /** Turnos visibles según el filtro (lo que se pinta). */
@@ -425,20 +434,6 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   }
 
 
-  nextStep() {
-    if (this.step < 5) {
-      this.step++;
-      this.cargarDatosSeccion(this.step);
-    }
-  }
-
-  prevStep() {
-    if (this.step > 1) {
-      this.step--;
-      this.cargarDatosSeccion(this.step);
-    }
-  }
-
   goToStep(stepNumber: number) {
     this.step = stepNumber;
     this.cargarDatosSeccion(stepNumber);
@@ -587,7 +582,28 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.modoRevision = !this.modoRevision;
     if (this.modoRevision && this.turnos.length === 0) {
       this.cargarRevision();
+      this.cargarCatalogoOradores();
     }
+  }
+
+  /** Trae los nombres del catálogo para sugerirlos al corregir un orador. */
+  private cargarCatalogoOradores(): void {
+    if (!this.idEvento || this.catalogoOradores.length) return;
+    this._transcripcionService.catalogo(this.idEvento).subscribe({
+      next: (r: any) => {
+        this.catalogoOradores = (r?.catalogo || []).map((n: string) => (n || '').trim()).filter(Boolean);
+        this.recalcularOpcionesOradores();
+      },
+      error: () => { /* sin catálogo se puede escribir el nombre a mano */ },
+    });
+  }
+
+  /** Junta catálogo y oradores ya presentes en la sesión, sin repetir. */
+  private recalcularOpcionesOradores(): void {
+    const set = new Set<string>(['Presidencia / Mesa Directiva']);
+    for (const n of this.catalogoOradores) set.add(n.startsWith('Dip.') ? n : `Dip. ${n}`);
+    for (const t of this.turnos) { const n = (t.orador || '').trim(); if (n) set.add(n); }
+    this.opcionesOradores = [...set].sort((a, b) => a.localeCompare(b));
   }
 
   /** Carga las intervenciones guardadas y las agrupa en turnos por orador. */
@@ -599,6 +615,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.cargandoRevision = false;
         const filas: any[] = r?.filas || [];
         const resumenes: Record<string, string> = r?.resumenes || {};
+        this.sesionUrlVideo = r?.sesionUrl || null;
         const turnos: typeof this.turnos = [];
         for (const f of filas) {
           const ultimo = turnos[turnos.length - 1];
@@ -608,16 +625,20 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           } else {
             turnos.push({
               anclaId: f.id, ids: [f.id], orador: f.orador,
-              inicioHms: f.inicio_hms, texto: f.texto || '',
+              inicioHms: f.inicio_hms, inicioSeg: Number(f.inicio_seg) || 0,
+              texto: f.texto || '',
             });
           }
         }
+        this.calcularSegundosPorOrador(filas);
         // Adjunta los resúmenes ya guardados a su turno (por el id ancla).
         for (const t of turnos) {
           if (resumenes[t.anclaId]) t.resumen = resumenes[t.anclaId];
+          t.ligaYt = this.enlaceYouTube(t.inicioSeg);
         }
         this.turnos = turnos;
         this.recalcularOradores();
+        this.recalcularOpcionesOradores();
         this.aplicarFiltroOrador();
       },
       error: (e: HttpErrorResponse) => {
@@ -630,7 +651,47 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Arma la lista de oradores con su número de intervenciones (de más a menos). */
+  /** Segundos hablados por orador, sumando la duración de cada participación. */
+  private segundosPorOrador = new Map<string, number>();
+
+  /** Duración de una participación. Si no se guardó `fin_seg`, se estima con el
+   *  arranque de la siguiente (topada a 10 min para no inflar con los huecos). */
+  private duracionDe(fila: any, siguiente: any): number {
+    const ini = Number(fila?.inicio_seg);
+    if (!isFinite(ini)) return 0;
+    const fin = Number(fila?.fin_seg);
+    if (isFinite(fin) && fin > ini) return fin - ini;
+    const iniSig = Number(siguiente?.inicio_seg);
+    if (isFinite(iniSig) && iniSig > ini) return Math.min(iniSig - ini, 600);
+    return 0;
+  }
+
+  private calcularSegundosPorOrador(filas: any[]): void {
+    const acc = new Map<string, number>();
+    for (let i = 0; i < filas.length; i++) {
+      const n = (filas[i].orador || '').trim() || '—';
+      acc.set(n, (acc.get(n) || 0) + this.duracionDe(filas[i], filas[i + 1]));
+    }
+    this.segundosPorOrador = acc;
+  }
+
+  /** "1 h 20 min", "13 min", "45 s" — evita que todo se vea como "0 min". */
+  private duracionLegible(segundos: number): string {
+    const s = Math.max(0, Math.round(segundos || 0));
+    if (s < 60) return `${s} s`;
+    const min = Math.round(s / 60);
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const resto = min % 60;
+    return resto ? `${h} h ${resto} min` : `${h} h`;
+  }
+
+  /** ¿Es un orador sin identificar? Va primero en la lista, marcado en ámbar. */
+  private esPendiente(nombre: string): boolean {
+    return /desconocido/i.test(nombre || '') || nombre === '—';
+  }
+
+  /** Arma la lista lateral: los pendientes primero y luego por minutos hablados. */
   private recalcularOradores(): void {
     const cuenta = new Map<string, number>();
     for (const t of this.turnos) {
@@ -638,10 +699,35 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       cuenta.set(n, (cuenta.get(n) || 0) + 1);
     }
     this.oradores = [...cuenta.entries()]
-      .map(([nombre, c]) => ({ nombre, cuenta: c }))
-      .sort((a, b) => b.cuenta - a.cuenta || a.nombre.localeCompare(b.nombre));
+      .map(([nombre, c]) => {
+        const seg = Math.round(this.segundosPorOrador.get(nombre) || 0);
+        return {
+          nombre, cuenta: c, segundos: seg,
+          duracion: this.duracionLegible(seg),
+          pendiente: this.esPendiente(nombre),
+        };
+      })
+      .sort((a, b) => {
+        if (a.pendiente !== b.pendiente) return a.pendiente ? -1 : 1;
+        return b.segundos - a.segundos || b.cuenta - a.cuenta || a.nombre.localeCompare(b.nombre);
+      });
+    this.duracionSesion = this.duracionLegible(
+      this.oradores.reduce((suma, o) => suma + o.segundos, 0));
     // Si el orador filtrado ya no existe (tras una corrección), se limpia.
     if (this.oradorFiltro && !cuenta.has(this.oradorFiltro)) this.oradorFiltro = null;
+  }
+
+  /** Liga al minuto exacto del video; null si la sesión no tiene YouTube. */
+  enlaceYouTube(segundos: number): string | null {
+    const url = this.sesionUrlVideo;
+    if (!url || !/youtu\.?be/i.test(url)) return null;
+    const s = Math.max(0, Math.floor(segundos || 0));
+    let id = '';
+    const corta = url.match(/youtu\.be\/([\w-]{6,})/i);
+    const larga = url.match(/[?&]v=([\w-]{6,})/i);
+    const live = url.match(/\/live\/([\w-]{6,})/i);
+    id = (corta?.[1] || larga?.[1] || live?.[1] || '');
+    return id ? `https://www.youtube.com/watch?v=${id}&t=${s}s` : null;
   }
 
   /** Deja en turnosFiltrados solo lo que corresponde al filtro activo. */
@@ -681,13 +767,82 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Guarda la corrección del orador de un turno. */
+  // ── Corrección del orador de un bloque ───────────────────────────────────
+
+  /** Abre el editor de orador de un turno (solo uno abierto a la vez). */
+  abrirEditorOrador(t: any): void {
+    for (const otro of this.turnos) if (otro !== t) otro.editando = false;
+    t.nuevoOrador = t.orador;
+    t.editando = true;
+    this.cargarCatalogoOradores();
+  }
+
+  /** Turno inmediatamente anterior en la sesión completa (ignora el filtro). */
+  turnoAnterior(t: any): any {
+    const i = this.turnos.indexOf(t);
+    return i > 0 ? this.turnos[i - 1] : null;
+  }
+
+  /** Turno inmediatamente siguiente en la sesión completa (ignora el filtro). */
+  turnoSiguiente(t: any): any {
+    const i = this.turnos.indexOf(t);
+    return (i >= 0 && i < this.turnos.length - 1) ? this.turnos[i + 1] : null;
+  }
+
+  /** Reasigna el turno al orador indicado; el backend une lo consecutivo. */
+  private asignarOrador(t: any, orador: string, mensaje: string): void {
+    this._transcripcionService.actualizarOrador(this.idEvento, t.ids, orador).subscribe({
+      next: (r: any) => {
+        t.editando = false;
+        this.mostrarAviso(`${mensaje}: ${r?.cambios ?? t.ids.length} segmento(s)`
+          + (r?.unidos ? ` · ${r.unidos} unidos` : '') + '.');
+        this.cargarRevision();
+      },
+      error: () => Swal.fire('Error', 'No se pudo corregir el orador.', 'error'),
+    });
+  }
+
+  /** "Cambiar solo este bloque": aplica el nombre escrito a este turno. */
   guardarOrador(t: any): void {
     const nuevo = (t.nuevoOrador || '').trim();
     if (!nuevo || nuevo === t.orador) { t.editando = false; return; }
-    this._transcripcionService.actualizarOrador(this.idEvento, t.ids, nuevo).subscribe({
-      next: () => { t.editando = false; this.cargarRevision(); },
-      error: () => Swal.fire('Error', 'No se pudo corregir el orador.', 'error'),
+    this.asignarOrador(t, nuevo, 'Listo');
+  }
+
+  /** "Unir con el anterior": este bloque pasa al orador del turno de arriba. */
+  unirConAnterior(t: any): void {
+    const prev = this.turnoAnterior(t);
+    if (!prev) return;
+    this.asignarOrador(t, prev.orador, `Unido con ${prev.orador}`);
+  }
+
+  /** "Unir con el siguiente": este bloque pasa al orador del turno de abajo. */
+  unirConSiguiente(t: any): void {
+    const next = this.turnoSiguiente(t);
+    if (!next) return;
+    this.asignarOrador(t, next.orador, `Unido con ${next.orador}`);
+  }
+
+  /** "Cambiar en toda la sesión": renombra ese orador en todos sus turnos. */
+  cambiarEnTodaLaSesion(t: any): void {
+    const nuevo = (t.nuevoOrador || '').trim();
+    if (!nuevo || nuevo === t.orador) { t.editando = false; return; }
+    this._transcripcionService.renombrar(this.idEvento, t.orador, nuevo).subscribe({
+      next: (r: any) => {
+        t.editando = false;
+        this.mostrarAviso(`Listo: ${r?.cambios ?? 0} renombrados`
+          + (r?.unidos ? ` · ${r.unidos} unidos` : '') + '.');
+        this.cargarRevision();
+      },
+      error: () => Swal.fire('Error', 'No se pudo renombrar en toda la sesión.', 'error'),
+    });
+  }
+
+  /** Aviso breve, sin bloquear la revisión. */
+  private mostrarAviso(texto: string): void {
+    Swal.fire({
+      toast: true, position: 'top-end', icon: 'success', title: texto,
+      showConfirmButton: false, timer: 2500, timerProgressBar: true,
     });
   }
 

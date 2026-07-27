@@ -174,7 +174,7 @@ router.get('/api/transcripcion/sesion/:idAgenda', async (req: Request, res: Resp
         });
         const filas = parts.map((p) => ({
             id: p.id, orador: p.orador, inicio_hms: p.inicio_hms,
-            inicio_seg: p.inicio_seg, texto: p.texto,
+            inicio_seg: p.inicio_seg, fin_seg: p.fin_seg, texto: p.texto,
         }));
         const resArr: any[] = await TranscripcionResumen.findAll({
             where: { id_sesion: sesion.id }, raw: true,
@@ -182,7 +182,7 @@ router.get('/api/transcripcion/sesion/:idAgenda', async (req: Request, res: Resp
         const resumenes: Record<string, string> = {};
         for (const r of resArr) resumenes[r.ancla_id] = r.resumen;
 
-        return res.json({ sesionId: sesion.id, filas, resumenes });
+        return res.json({ sesionId: sesion.id, sesionUrl: sesion.url ?? null, filas, resumenes });
     } catch (err: any) {
         console.error('[transcripcion/sesion]', err?.message || err);
         return res.status(500).json({ ok: false, msg: 'Error al leer la transcripción.' });

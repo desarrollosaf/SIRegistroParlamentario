@@ -19,14 +19,6 @@ export class SesionComponent {
 
  step = 1;
 
-  nextStep() {
-    if (this.step < 4) this.step++;
-  }
-
-  prevStep() {
-    if (this.step > 1) this.step--;
-  }
-
   goToStep(stepNumber: number) {
     this.step = stepNumber;
   }
