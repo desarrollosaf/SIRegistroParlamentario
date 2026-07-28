@@ -537,7 +537,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     if (!this.idEvento || this.cargandoTranscripcion) return;
     this.cargandoTranscripcion = true;
     this._socketService.unirseTranscripcion(this.idEvento);
-    this._transcripcionService.iniciar(this.idEvento).subscribe({
+    // voz: true activa la identificación por huella de voz (voces_perfiles.json).
+    // Sin esta bandera el transcriptor corre sin --voz y solo etiqueta por protocolo.
+    this._transcripcionService.iniciar(this.idEvento, { voz: true }).subscribe({
       next: (r: any) => {
         this.cargandoTranscripcion = false;
         this.transcribiendo = true;
