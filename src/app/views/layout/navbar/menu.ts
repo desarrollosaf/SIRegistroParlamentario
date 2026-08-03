@@ -76,6 +76,14 @@ export const MENU: MenuItem[] = [
           {
             label: 'Métricas ',
             link: '/reporte-iniciativas'
+          },
+          {
+            label: 'Orden del día de sesiones',
+            link: '/orden-dia/sesiones'
+          },
+          {
+            label: 'Orden del día de comisiones',
+            link: '/orden-dia/comisiones'
           }
         ]
       },
