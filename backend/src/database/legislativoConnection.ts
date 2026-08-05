@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize"
 
-const sequelizeCuestionarios = new Sequelize('legislativo', 'root', '', {
+const sequelizeCuestionarios = new Sequelize('adminplem_congresoedomex', 'root', 'root', {
     host: 'localhost',
     dialect: 'mysql',
     define: {
