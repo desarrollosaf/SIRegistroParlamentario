@@ -268,7 +268,7 @@ const obtenerIniciativasBase = async () =>
       }
     ],
     where: { publico: 1 },
-    order: [["createdAt","ASC"]]
+    order: [[{ model: Agenda, as: "evento" }, "fecha", "DESC"]]
   });
 
 // ─────────────────────────────────────────────────────────────────────────────

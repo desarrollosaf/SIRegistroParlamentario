@@ -63,8 +63,11 @@ function main() {
         lineas.push('-- Aplicar dentro de una transacción; hacer respaldo antes.');
         lineas.push('START TRANSACTION;');
         lineas.push('');
-        // 1) inciativas_puntos_ordens
-        const inis = yield inciativas_puntos_ordens_1.default.findAll({ where: { folio_historico: { [sequelize_1.Op.ne]: null } } });
+        // 1) inciativas_puntos_ordens (incluye folio_historico no nulo -las del
+        // Excel- y tipo 2/3 -Minutas/Puntos de Acuerdo del backup, sin folio-)
+        const inis = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { [sequelize_1.Op.or]: [{ folio_historico: { [sequelize_1.Op.ne]: null } }, { tipo: { [sequelize_1.Op.in]: [2, 3] } }] },
+        });
         let nuevas = 0, actualizadas = 0;
         const idsNuevas = new Set();
         lineas.push('-- === inciativas_puntos_ordens ===');
