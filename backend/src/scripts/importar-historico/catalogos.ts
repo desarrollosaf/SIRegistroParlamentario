@@ -8,8 +8,10 @@ import TipoEventos from '../../models/tipo_eventos';
 import Comision from '../../models/comisions';
 import Proponentes from '../../models/proponentes';
 
-// UUID fijo usado en controllers/agenda.ts para distinguir un evento tipo "Sesión".
-export const TIPO_EVENTO_SESION_ID = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+// Verificado contra la tabla real tipo_eventos: 'd5687f72-...' = "Sesión".
+// (el UUID 'a413e44b-...' que se ve en controllers/agenda.ts corresponde a
+// "Diputación permanente", NO a "Sesión" — confirmado con SELECT directo).
+export const TIPO_EVENTO_SESION_ID = 'd5687f72-a328-4be1-a23c-4c3575092163';
 
 const NOMBRE_SEDE_BUSCADA = process.env.SEDE_IMPORT_HISTORICO || 'Salón de Sesiones';
 
@@ -80,12 +82,48 @@ export function normalizarNombreFlexible(valor: string): string {
   return n;
 }
 
+async function cargarComisionesYProponentes(): Promise<
+  Pick<Catalogos, 'comisionesPorNombre' | 'comisionesPorNombreFlexible' | 'proponentesPorNombre'>
+> {
+  const [comisiones, proponentes] = await Promise.all([Comision.findAll(), Proponentes.findAll()]);
+
+  // --- Comisiones (tabla real "comisions", legislativoConnection) ---
+  const comisionesPorNombre = new Map<string, { id: string; nombre: string }>();
+  // Mapa "flexible" (sin prefijos de relleno) — solo se queda con claves que
+  // resuelven a UNA sola comisión, para no introducir matches ambiguos.
+  const flexibleTmp = new Map<string, { id: string; nombre: string } | 'AMBIGUO'>();
+  for (const c of comisiones as any[]) {
+    const nombre = c.nombre.replace(/\s+/g, ' ').trim(); // por si trae saltos de línea sueltos
+    comisionesPorNombre.set(normalizarNombre(nombre), { id: c.id, nombre });
+    if (c.alias) comisionesPorNombre.set(normalizarNombre(c.alias), { id: c.id, nombre });
+
+    const claveFlex = normalizarNombreFlexible(nombre);
+    const existente = flexibleTmp.get(claveFlex);
+    if (existente === undefined) {
+      flexibleTmp.set(claveFlex, { id: c.id, nombre });
+    } else if (existente !== 'AMBIGUO' && existente.id !== c.id) {
+      flexibleTmp.set(claveFlex, 'AMBIGUO');
+    }
+  }
+  const comisionesPorNombreFlexible = new Map<string, { id: string; nombre: string }>();
+  for (const [clave, valor] of flexibleTmp) {
+    if (valor !== 'AMBIGUO') comisionesPorNombreFlexible.set(clave, valor);
+  }
+
+  // --- Proponentes (catálogo fijo de 19 tipos) ---
+  const proponentesPorNombre = new Map<string, { id: number; valor: string }>();
+  for (const p of proponentes as any[]) {
+    proponentesPorNombre.set(normalizarNombre(p.valor), { id: p.id, valor: p.valor });
+  }
+
+  return { comisionesPorNombre, comisionesPorNombreFlexible, proponentesPorNombre };
+}
+
 export async function cargarCatalogos(): Promise<Catalogos> {
-  const [sedes, tiposEvento, comisiones, proponentes] = await Promise.all([
+  const [sedes, tiposEvento, resto] = await Promise.all([
     Sedes.findAll(),
     TipoEventos.findAll(),
-    Comision.findAll(),
-    Proponentes.findAll(),
+    cargarComisionesYProponentes(),
   ]);
 
   // --- Sede ---
@@ -117,44 +155,53 @@ export async function cargarCatalogos(): Promise<Catalogos> {
     );
   }
 
-  // --- Comisiones (tabla real "comisions", legislativoConnection) ---
-  const comisionesPorNombre = new Map<string, { id: string; nombre: string }>();
-  // Mapa "flexible" (sin prefijos de relleno) — solo se queda con claves que
-  // resuelven a UNA sola comisión, para no introducir matches ambiguos.
-  const flexibleTmp = new Map<string, { id: string; nombre: string } | 'AMBIGUO'>();
-  for (const c of comisiones as any[]) {
-    const nombre = c.nombre.replace(/\s+/g, ' ').trim(); // por si trae saltos de línea sueltos
-    comisionesPorNombre.set(normalizarNombre(nombre), { id: c.id, nombre });
-    if (c.alias) comisionesPorNombre.set(normalizarNombre(c.alias), { id: c.id, nombre });
-
-    const claveFlex = normalizarNombreFlexible(nombre);
-    const existente = flexibleTmp.get(claveFlex);
-    if (existente === undefined) {
-      flexibleTmp.set(claveFlex, { id: c.id, nombre });
-    } else if (existente !== 'AMBIGUO' && existente.id !== c.id) {
-      flexibleTmp.set(claveFlex, 'AMBIGUO');
-    }
-  }
-  const comisionesPorNombreFlexible = new Map<string, { id: string; nombre: string }>();
-  for (const [clave, valor] of flexibleTmp) {
-    if (valor !== 'AMBIGUO') comisionesPorNombreFlexible.set(clave, valor);
-  }
-
-  // --- Proponentes (catálogo fijo de 19 tipos) ---
-  const proponentesPorNombre = new Map<string, { id: number; valor: string }>();
-  for (const p of proponentes as any[]) {
-    proponentesPorNombre.set(normalizarNombre(p.valor), { id: p.id, valor: p.valor });
-  }
-
   return {
     sedeId: sede.id,
     sedeNombre: sede.sede,
     tipoEventoSesionId: TIPO_EVENTO_SESION_ID,
     tipoEventoComisionId: tipoComision.id,
-    comisionesPorNombre,
-    comisionesPorNombreFlexible,
-    proponentesPorNombre,
+    ...resto,
   };
+}
+
+/**
+ * Versión ligera para scripts que solo necesitan resolver comisiones y
+ * proponentes (ej. sembrar-reconciliado.ts) — nunca crean agendas, así que
+ * no necesitan sede ni tipo_evento.
+ */
+export async function cargarCatalogosComisionesYProponentes(): Promise<Catalogos> {
+  const resto = await cargarComisionesYProponentes();
+  return {
+    sedeId: '',
+    sedeNombre: '',
+    tipoEventoSesionId: TIPO_EVENTO_SESION_ID,
+    tipoEventoComisionId: '',
+    ...resto,
+  };
+}
+
+/**
+ * Versión ligera para el motor de reconciliación (reconciliar.ts): solo
+ * resuelve los ids de tipo_evento Sesión/Comisión contra la BD real. No
+ * exige ninguna sede — el reconciliador nunca crea agendas, solo busca
+ * entre las que ya existen.
+ */
+export async function cargarTipoEventosReales(): Promise<{ sesionId: string; comisionId: string }> {
+  const tiposEvento = await TipoEventos.findAll();
+
+  const sesionExiste = tiposEvento.some((t: any) => t.id === TIPO_EVENTO_SESION_ID);
+  if (!sesionExiste) {
+    const disponibles = tiposEvento.map((t: any) => `  - "${t.nombre}" (id: ${t.id})`).join('\n');
+    throw new Error(`El tipo_evento "Sesión" esperado (id ${TIPO_EVENTO_SESION_ID}) no existe.\nTipos disponibles:\n${disponibles}`);
+  }
+
+  const tipoComision = tiposEvento.find((t: any) => normalizarNombre(t.nombre).includes('comision'));
+  if (!tipoComision) {
+    const disponibles = tiposEvento.map((t: any) => `  - "${t.nombre}" (id: ${t.id})`).join('\n');
+    throw new Error(`No encontré ningún tipo_evento que contenga "comision".\nTipos disponibles:\n${disponibles}`);
+  }
+
+  return { sesionId: TIPO_EVENTO_SESION_ID, comisionId: tipoComision.id };
 }
 
 /** Busca una comisión del Excel contra el catálogo real: primero match exacto

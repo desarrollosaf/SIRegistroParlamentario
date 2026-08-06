@@ -1,0 +1,8184 @@
+[
+  {
+    "folio": "17",
+    "etapa": "Estudio",
+    "fecha": "2025-10-28",
+    "puntoId": 2342,
+    "via": "directo"
+  },
+  {
+    "folio": "530",
+    "etapa": "Estudio",
+    "fecha": "2025-10-28",
+    "puntoId": 2340,
+    "via": "directo"
+  },
+  {
+    "folio": "19",
+    "etapa": "Estudio",
+    "fecha": "2024-12-11",
+    "puntoId": 2018,
+    "via": "directo"
+  },
+  {
+    "folio": "429",
+    "etapa": "Estudio",
+    "fecha": "2024-12-11",
+    "puntoId": 2019,
+    "via": "directo"
+  },
+  {
+    "folio": "430",
+    "etapa": "Estudio",
+    "fecha": "2024-12-11",
+    "puntoId": 2024,
+    "via": "directo"
+  },
+  {
+    "folio": "431",
+    "etapa": "Estudio",
+    "fecha": "2024-12-11",
+    "puntoId": 2015,
+    "via": "directo"
+  },
+  {
+    "folio": "148",
+    "etapa": "Estudio",
+    "fecha": "2025-04-10",
+    "puntoId": 2141,
+    "via": "directo"
+  },
+  {
+    "folio": "446",
+    "etapa": "Estudio",
+    "fecha": "2025-04-10",
+    "puntoId": 2139,
+    "via": "directo"
+  },
+  {
+    "folio": "233",
+    "etapa": "Estudio",
+    "fecha": "2026-04-08",
+    "puntoId": 3025,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "352",
+    "etapa": "Estudio",
+    "fecha": "2026-04-08",
+    "puntoId": 3025,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "155",
+    "etapa": "Estudio",
+    "fecha": "2026-04-08",
+    "puntoId": 3025,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "703",
+    "etapa": "Estudio",
+    "fecha": "2026-04-08",
+    "puntoId": 3025,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "588",
+    "etapa": "Estudio",
+    "fecha": "2026-04-08",
+    "puntoId": 3027,
+    "via": "directo"
+  },
+  {
+    "folio": "551",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2602,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "578",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2602,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "158",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2602,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "468",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2602,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "636",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2602,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "580",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2178,
+    "via": "expediente",
+    "expedienteId": 204
+  },
+  {
+    "folio": "653",
+    "etapa": "Estudio",
+    "fecha": "2025-05-12",
+    "puntoId": 2178,
+    "via": "expediente",
+    "expedienteId": 204
+  },
+  {
+    "folio": "577",
+    "etapa": "Estudio",
+    "fecha": "2025-06-05",
+    "puntoId": 2189,
+    "via": "directo"
+  },
+  {
+    "folio": "319",
+    "etapa": "Estudio",
+    "fecha": "2025-04-09",
+    "puntoId": 2137,
+    "via": "directo"
+  },
+  {
+    "folio": "333",
+    "etapa": "Estudio",
+    "fecha": "2025-02-07",
+    "puntoId": 1417,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "353",
+    "etapa": "Estudio",
+    "fecha": "2025-02-07",
+    "puntoId": 1417,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "480",
+    "etapa": "Estudio",
+    "fecha": "2025-02-07",
+    "puntoId": 1417,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "479",
+    "etapa": "Estudio",
+    "fecha": "2025-02-07",
+    "puntoId": 2077,
+    "via": "directo"
+  },
+  {
+    "folio": "338",
+    "etapa": "Estudio",
+    "fecha": "2025-04-11",
+    "puntoId": 2143,
+    "via": "directo"
+  },
+  {
+    "folio": "341",
+    "etapa": "Estudio",
+    "fecha": "2025-06-12",
+    "puntoId": 2195,
+    "via": "directo"
+  },
+  {
+    "folio": "347",
+    "etapa": "Estudio",
+    "fecha": "2025-08-14",
+    "puntoId": 2242,
+    "via": "directo"
+  },
+  {
+    "folio": "692",
+    "etapa": "Estudio",
+    "fecha": "2025-08-14",
+    "puntoId": 2239,
+    "via": "directo"
+  },
+  {
+    "folio": "350",
+    "etapa": "Estudio",
+    "fecha": "2025-11-13",
+    "puntoId": 2393,
+    "via": "directo"
+  },
+  {
+    "folio": "361",
+    "etapa": "Estudio",
+    "fecha": "2024-11-26",
+    "puntoId": 1975,
+    "via": "directo"
+  },
+  {
+    "folio": "363",
+    "etapa": "Estudio",
+    "fecha": "2024-11-26",
+    "puntoId": 1977,
+    "via": "directo"
+  },
+  {
+    "folio": "362",
+    "etapa": "Estudio",
+    "fecha": "2024-11-28",
+    "puntoId": 1986,
+    "via": "directo"
+  },
+  {
+    "folio": "364",
+    "etapa": "Estudio",
+    "fecha": "2024-11-28",
+    "puntoId": 1988,
+    "via": "directo"
+  },
+  {
+    "folio": "389",
+    "etapa": "Estudio",
+    "fecha": "2026-03-17",
+    "puntoId": 2945,
+    "via": "directo"
+  },
+  {
+    "folio": "526",
+    "etapa": "Estudio",
+    "fecha": "2026-03-17",
+    "puntoId": 2942,
+    "via": "directo"
+  },
+  {
+    "folio": "404",
+    "etapa": "Estudio",
+    "fecha": "2024-12-16",
+    "puntoId": 2030,
+    "via": "directo"
+  },
+  {
+    "folio": "426",
+    "etapa": "Estudio",
+    "fecha": "2024-12-16",
+    "puntoId": 2035,
+    "via": "directo"
+  },
+  {
+    "folio": "444",
+    "etapa": "Estudio",
+    "fecha": "2024-12-16",
+    "puntoId": 2032,
+    "via": "directo"
+  },
+  {
+    "folio": "462",
+    "etapa": "Estudio",
+    "fecha": "2025-08-20",
+    "puntoId": 2245,
+    "via": "directo"
+  },
+  {
+    "folio": "475",
+    "etapa": "Estudio",
+    "fecha": "2025-02-11",
+    "puntoId": 2086,
+    "via": "directo"
+  },
+  {
+    "folio": "476",
+    "etapa": "Estudio",
+    "fecha": "2025-02-04",
+    "puntoId": 2061,
+    "via": "directo"
+  },
+  {
+    "folio": "478",
+    "etapa": "Estudio",
+    "fecha": "2025-02-04",
+    "puntoId": 2059,
+    "via": "directo"
+  },
+  {
+    "folio": "482",
+    "etapa": "Estudio",
+    "fecha": "2025-02-05",
+    "puntoId": 2073,
+    "via": "directo"
+  },
+  {
+    "folio": "504",
+    "etapa": "Estudio",
+    "fecha": "2026-02-24",
+    "puntoId": 1715,
+    "via": "directo"
+  },
+  {
+    "folio": "796",
+    "etapa": "Estudio",
+    "fecha": "2026-02-24",
+    "puntoId": 1718,
+    "via": "directo"
+  },
+  {
+    "folio": "1138",
+    "etapa": "Estudio",
+    "fecha": "2026-02-24",
+    "puntoId": 2612,
+    "via": "directo"
+  },
+  {
+    "folio": "1139",
+    "etapa": "Estudio",
+    "fecha": "2026-02-24",
+    "puntoId": 1717,
+    "via": "directo"
+  },
+  {
+    "folio": "516",
+    "etapa": "Estudio",
+    "fecha": "2025-05-06",
+    "puntoId": 2159,
+    "via": "directo"
+  },
+  {
+    "folio": "536",
+    "etapa": "Estudio",
+    "fecha": "2025-05-06",
+    "puntoId": 2157,
+    "via": "directo"
+  },
+  {
+    "folio": "518",
+    "etapa": "Estudio",
+    "fecha": "2025-10-23",
+    "puntoId": 2334,
+    "via": "directo"
+  },
+  {
+    "folio": "520",
+    "etapa": "Estudio",
+    "fecha": "2025-03-13",
+    "puntoId": 2101,
+    "via": "directo"
+  },
+  {
+    "folio": "525",
+    "etapa": "Estudio",
+    "fecha": "2025-04-29",
+    "puntoId": 2153,
+    "via": "expediente",
+    "expedienteId": 206
+  },
+  {
+    "folio": "620",
+    "etapa": "Estudio",
+    "fecha": "2025-04-29",
+    "puntoId": 2153,
+    "via": "expediente",
+    "expedienteId": 206
+  },
+  {
+    "folio": "531",
+    "etapa": "Estudio",
+    "fecha": "2025-10-06",
+    "puntoId": 2296,
+    "via": "directo"
+  },
+  {
+    "folio": "659",
+    "etapa": "Estudio",
+    "fecha": "2025-10-06",
+    "puntoId": 2298,
+    "via": "directo"
+  },
+  {
+    "folio": "775",
+    "etapa": "Estudio",
+    "fecha": "2025-10-06",
+    "puntoId": 2297,
+    "via": "directo"
+  },
+  {
+    "folio": "541",
+    "etapa": "Estudio",
+    "fecha": "2025-11-18",
+    "puntoId": 2398,
+    "via": "directo"
+  },
+  {
+    "folio": "663",
+    "etapa": "Estudio",
+    "fecha": "2025-11-18",
+    "puntoId": 2395,
+    "via": "directo"
+  },
+  {
+    "folio": "544",
+    "etapa": "Estudio",
+    "fecha": "2025-03-18",
+    "puntoId": 2105,
+    "via": "directo"
+  },
+  {
+    "folio": "545",
+    "etapa": "Estudio",
+    "fecha": "2025-03-18",
+    "puntoId": 2103,
+    "via": "expediente",
+    "expedienteId": 207
+  },
+  {
+    "folio": "566",
+    "etapa": "Estudio",
+    "fecha": "2025-03-18",
+    "puntoId": 2103,
+    "via": "expediente",
+    "expedienteId": 207
+  },
+  {
+    "folio": "608",
+    "etapa": "Estudio",
+    "fecha": "2025-10-02",
+    "puntoId": 2292,
+    "via": "directo"
+  },
+  {
+    "folio": "745",
+    "etapa": "Estudio",
+    "fecha": "2025-10-02",
+    "puntoId": 2293,
+    "via": "directo"
+  },
+  {
+    "folio": "557",
+    "etapa": "Estudio",
+    "fecha": "2025-03-25",
+    "puntoId": 2111,
+    "via": "directo"
+  },
+  {
+    "folio": "558",
+    "etapa": "Estudio",
+    "fecha": "2025-03-24",
+    "puntoId": 2109,
+    "via": "directo"
+  },
+  {
+    "folio": "561",
+    "etapa": "Estudio",
+    "fecha": "2025-12-01",
+    "puntoId": 2442,
+    "via": "directo"
+  },
+  {
+    "folio": "942",
+    "etapa": "Estudio",
+    "fecha": "2025-12-01",
+    "puntoId": 2445,
+    "via": "directo"
+  },
+  {
+    "folio": "1071",
+    "etapa": "Estudio",
+    "fecha": "2025-12-01",
+    "puntoId": 2439,
+    "via": "directo"
+  },
+  {
+    "folio": "579",
+    "etapa": "Estudio",
+    "fecha": "2026-04-13",
+    "puntoId": 3056,
+    "via": "directo"
+  },
+  {
+    "folio": "1207",
+    "etapa": "Estudio",
+    "fecha": "2026-04-13",
+    "puntoId": 3055,
+    "via": "directo"
+  },
+  {
+    "folio": "582",
+    "etapa": "Estudio",
+    "fecha": "2025-10-30",
+    "puntoId": 2346,
+    "via": "expediente",
+    "expedienteId": 208
+  },
+  {
+    "folio": "751",
+    "etapa": "Estudio",
+    "fecha": "2025-10-30",
+    "puntoId": 2346,
+    "via": "expediente",
+    "expedienteId": 208
+  },
+  {
+    "folio": "585",
+    "etapa": "Estudio",
+    "fecha": "2025-03-31",
+    "puntoId": 2123,
+    "via": "directo"
+  },
+  {
+    "folio": "586",
+    "etapa": "Estudio",
+    "fecha": "2025-03-31",
+    "puntoId": 2124,
+    "via": "directo"
+  },
+  {
+    "folio": "617",
+    "etapa": "Estudio",
+    "fecha": "2025-10-21",
+    "puntoId": 2328,
+    "via": "directo"
+  },
+  {
+    "folio": "622",
+    "etapa": "Estudio",
+    "fecha": "2025-10-21",
+    "puntoId": 2330,
+    "via": "directo"
+  },
+  {
+    "folio": "618",
+    "etapa": "Estudio",
+    "fecha": "2025-11-10",
+    "puntoId": 2366,
+    "via": "directo"
+  },
+  {
+    "folio": "685",
+    "etapa": "Estudio",
+    "fecha": "2025-06-18",
+    "puntoId": 2205,
+    "via": "directo"
+  },
+  {
+    "folio": "654",
+    "etapa": "Estudio",
+    "fecha": "2025-10-20",
+    "puntoId": 2321,
+    "via": "directo"
+  },
+  {
+    "folio": "691",
+    "etapa": "Estudio",
+    "fecha": "2025-10-20",
+    "puntoId": 2322,
+    "via": "directo"
+  },
+  {
+    "folio": "755",
+    "etapa": "Estudio",
+    "fecha": "2025-10-20",
+    "puntoId": 2324,
+    "via": "directo"
+  },
+  {
+    "folio": "672",
+    "etapa": "Estudio",
+    "fecha": "2026-03-25",
+    "puntoId": 3010,
+    "via": "directo"
+  },
+  {
+    "folio": "1183",
+    "etapa": "Estudio",
+    "fecha": "2026-03-25",
+    "puntoId": 3009,
+    "via": "directo"
+  },
+  {
+    "folio": "739",
+    "etapa": "Estudio",
+    "fecha": "2025-09-11",
+    "puntoId": 2275,
+    "via": "directo"
+  },
+  {
+    "folio": "742",
+    "etapa": "Estudio",
+    "fecha": "2025-08-29",
+    "puntoId": 2264,
+    "via": "directo"
+  },
+  {
+    "folio": "744",
+    "etapa": "Estudio",
+    "fecha": "2025-09-23",
+    "puntoId": 2281,
+    "via": "directo"
+  },
+  {
+    "folio": "750",
+    "etapa": "Estudio",
+    "fecha": "2025-09-30",
+    "puntoId": 2289,
+    "via": "directo"
+  },
+  {
+    "folio": "753",
+    "etapa": "Estudio",
+    "fecha": "2026-03-10",
+    "puntoId": 2655,
+    "via": "directo"
+  },
+  {
+    "folio": "1079",
+    "etapa": "Estudio",
+    "fecha": "2026-03-10",
+    "puntoId": 2654,
+    "via": "directo"
+  },
+  {
+    "folio": "760",
+    "etapa": "Estudio",
+    "fecha": "2025-10-14",
+    "puntoId": 2305,
+    "via": "directo"
+  },
+  {
+    "folio": "798",
+    "etapa": "Estudio",
+    "fecha": "2025-10-14",
+    "puntoId": 2304,
+    "via": "directo"
+  },
+  {
+    "folio": "762",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2358,
+    "via": "directo"
+  },
+  {
+    "folio": "807",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "808",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "809",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "810",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "811",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "812",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "813",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "814",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "815",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "816",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "817",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "818",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "819",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "820",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "821",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "822",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "823",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "824",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "825",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "826",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "827",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "828",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "829",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "830",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "831",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "832",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "833",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "834",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "835",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "836",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "837",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "838",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "839",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "840",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "841",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "842",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "843",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "844",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "845",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "846",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "847",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "848",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "849",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "850",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "851",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "852",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "853",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "854",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "855",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "856",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "857",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "858",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "859",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "860",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "861",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "862",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "863",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "864",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "865",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "866",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "867",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "868",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "869",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "870",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "871",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "872",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "873",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "874",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "875",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "876",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "877",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "878",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "879",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "880",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "881",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "882",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "883",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "884",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "885",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "886",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "887",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "888",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "889",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "890",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "891",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "892",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "893",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "894",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "895",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "896",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "897",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "898",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "899",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "900",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "901",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "902",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "903",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "904",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "905",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "906",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "907",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "908",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "909",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "910",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "911",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "912",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "913",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "914",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "915",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "916",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "917",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "918",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "919",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "920",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "921",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "922",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "923",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "924",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "925",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "926",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "927",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "928",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "929",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "930",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "931",
+    "etapa": "Estudio",
+    "fecha": "2025-11-06",
+    "puntoId": 2360,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "778",
+    "etapa": "Estudio",
+    "fecha": "2026-04-16",
+    "puntoId": 3118,
+    "via": "directo"
+  },
+  {
+    "folio": "932",
+    "etapa": "Estudio",
+    "fecha": "2026-04-16",
+    "puntoId": 3120,
+    "via": "directo"
+  },
+  {
+    "folio": "1239",
+    "etapa": "Estudio",
+    "fecha": "2026-04-16",
+    "puntoId": 3119,
+    "via": "directo"
+  },
+  {
+    "folio": "797",
+    "etapa": "Estudio",
+    "fecha": "2026-04-23",
+    "puntoId": 3159,
+    "via": "directo"
+  },
+  {
+    "folio": "959",
+    "etapa": "Estudio",
+    "fecha": "2026-04-23",
+    "puntoId": 3160,
+    "via": "directo"
+  },
+  {
+    "folio": "934",
+    "etapa": "Estudio",
+    "fecha": "2025-11-05",
+    "puntoId": 2354,
+    "via": "directo"
+  },
+  {
+    "folio": "935",
+    "etapa": "Estudio",
+    "fecha": "2025-11-28",
+    "puntoId": 2435,
+    "via": "directo"
+  },
+  {
+    "folio": "939",
+    "etapa": "Estudio",
+    "fecha": "2026-04-29",
+    "puntoId": 3183,
+    "via": "directo"
+  },
+  {
+    "folio": "1076",
+    "etapa": "Estudio",
+    "fecha": "2026-04-29",
+    "puntoId": 3184,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "1187",
+    "etapa": "Estudio",
+    "fecha": "2026-04-29",
+    "puntoId": 3184,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "1259",
+    "etapa": "Estudio",
+    "fecha": "2026-04-29",
+    "puntoId": 3184,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "962",
+    "etapa": "Estudio",
+    "fecha": "2025-12-02",
+    "puntoId": 2449,
+    "via": "directo"
+  },
+  {
+    "folio": "1025",
+    "etapa": "Estudio",
+    "fecha": "2025-12-02",
+    "puntoId": 2457,
+    "via": "directo"
+  },
+  {
+    "folio": "1004",
+    "etapa": "Estudio",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "directo"
+  },
+  {
+    "folio": "1051",
+    "etapa": "Estudio",
+    "fecha": "2026-02-10",
+    "puntoId": 2491,
+    "via": "directo"
+  },
+  {
+    "folio": "1090",
+    "etapa": "Estudio",
+    "fecha": "2025-12-04",
+    "puntoId": 2467,
+    "via": "directo"
+  },
+  {
+    "folio": "1095",
+    "etapa": "Estudio",
+    "fecha": "2026-03-03",
+    "puntoId": 2607,
+    "via": "directo"
+  },
+  {
+    "folio": "1158",
+    "etapa": "Estudio",
+    "fecha": "2026-02-26",
+    "puntoId": 1723,
+    "via": "directo"
+  },
+  {
+    "folio": "1190",
+    "etapa": "Estudio",
+    "fecha": "2026-03-23",
+    "puntoId": 2980,
+    "via": "directo"
+  },
+  {
+    "folio": "1200",
+    "etapa": "Estudio",
+    "fecha": "2026-03-23",
+    "puntoId": 2982,
+    "via": "directo"
+  },
+  {
+    "folio": "2",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "3",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "4",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "6",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "7",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "8",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "9",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "10",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "11",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "12",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "13",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "14",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "21",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "22",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "23",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "24",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "25",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "26",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "27",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "28",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "29",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "30",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "31",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "32",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "33",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "34",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "35",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "36",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "37",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "38",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "39",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "40",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "41",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "53",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "54",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "55",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "56",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "57",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "58",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "59",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "60",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "61",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "62",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "63",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "64",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "65",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "66",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "67",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "68",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "69",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "70",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "71",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "72",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "73",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "74",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "75",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "76",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "77",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "78",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "79",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "80",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "81",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "82",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "83",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "84",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "85",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "86",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "87",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "88",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "89",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "90",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "91",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "92",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "93",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "94",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "95",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "96",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "97",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "98",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "99",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "100",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "101",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "102",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "103",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "104",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "105",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "106",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "107",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "108",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "109",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "110",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "111",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "112",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "113",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "114",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "115",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "116",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "117",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "118",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "119",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "120",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "121",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "122",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "123",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "124",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "125",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "126",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "127",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "128",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "129",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "130",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "131",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "132",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "133",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "134",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "135",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "136",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "137",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "138",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "139",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "140",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "141",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "142",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "143",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "144",
+    "etapa": "Dictamen",
+    "fecha": "2024-11-06",
+    "puntoId": 1952,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "17",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-11",
+    "puntoId": 2371,
+    "via": "directo"
+  },
+  {
+    "folio": "338",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-11",
+    "puntoId": 2369,
+    "via": "directo"
+  },
+  {
+    "folio": "691",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-11",
+    "puntoId": 2368,
+    "via": "directo"
+  },
+  {
+    "folio": "740",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-11",
+    "puntoId": 2373,
+    "via": "directo"
+  },
+  {
+    "folio": "19",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-17",
+    "puntoId": 2037,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "215",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-17",
+    "puntoId": 2037,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "429",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-17",
+    "puntoId": 2037,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "428",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-17",
+    "puntoId": 2039,
+    "via": "directo"
+  },
+  {
+    "folio": "148",
+    "etapa": "Dictamen",
+    "fecha": "2025-04-29",
+    "puntoId": 2151,
+    "via": "directo"
+  },
+  {
+    "folio": "167",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "537",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "800",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "1169",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "155",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "233",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "352",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "588",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "614",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "703",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "1094",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "1255",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3125,
+    "via": "expediente",
+    "expedienteId": 202
+  },
+  {
+    "folio": "617",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3121,
+    "via": "expediente",
+    "expedienteId": 213
+  },
+  {
+    "folio": "1248",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3121,
+    "via": "expediente",
+    "expedienteId": 213
+  },
+  {
+    "folio": "639",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3122,
+    "via": "expediente",
+    "expedienteId": 214
+  },
+  {
+    "folio": "932",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3122,
+    "via": "expediente",
+    "expedienteId": 214
+  },
+  {
+    "folio": "789",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3123,
+    "via": "expediente",
+    "expedienteId": 215
+  },
+  {
+    "folio": "1239",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3123,
+    "via": "expediente",
+    "expedienteId": 215
+  },
+  {
+    "folio": "1054",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-21",
+    "puntoId": 3124,
+    "via": "directo"
+  },
+  {
+    "folio": "156",
+    "etapa": "Dictamen",
+    "fecha": "2025-04-01",
+    "puntoId": 2126,
+    "via": "directo"
+  },
+  {
+    "folio": "590",
+    "etapa": "Dictamen",
+    "fecha": "2025-04-01",
+    "puntoId": 2131,
+    "via": "directo"
+  },
+  {
+    "folio": "163",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-17",
+    "puntoId": 2498,
+    "via": "directo"
+  },
+  {
+    "folio": "185",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2640,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "538",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2640,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "547",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2640,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "796",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2640,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "1098",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2640,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "504",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-05",
+    "puntoId": 2641,
+    "via": "directo"
+  },
+  {
+    "folio": "191",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-05",
+    "puntoId": 2070,
+    "via": "expediente",
+    "expedienteId": 217
+  },
+  {
+    "folio": "476",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-05",
+    "puntoId": 2070,
+    "via": "expediente",
+    "expedienteId": 217
+  },
+  {
+    "folio": "319",
+    "etapa": "Dictamen",
+    "fecha": "2025-04-25",
+    "puntoId": 2145,
+    "via": "directo"
+  },
+  {
+    "folio": "333",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-17",
+    "puntoId": 2095,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "353",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-17",
+    "puntoId": 2095,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "450",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-17",
+    "puntoId": 2095,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "480",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-17",
+    "puntoId": 2095,
+    "via": "expediente",
+    "expedienteId": 205
+  },
+  {
+    "folio": "341",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-19",
+    "puntoId": 2210,
+    "via": "directo"
+  },
+  {
+    "folio": "441",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-19",
+    "puntoId": 2208,
+    "via": "directo"
+  },
+  {
+    "folio": "385",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "702",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "347",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "528",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "603",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "692",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-21",
+    "puntoId": 2247,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "350",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-19",
+    "puntoId": 1712,
+    "via": "expediente",
+    "expedienteId": 219
+  },
+  {
+    "folio": "1051",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-19",
+    "puntoId": 1712,
+    "via": "expediente",
+    "expedienteId": 219
+  },
+  {
+    "folio": "361",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-02",
+    "puntoId": 1992,
+    "via": "directo"
+  },
+  {
+    "folio": "362",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-02",
+    "puntoId": 1322,
+    "via": "directo"
+  },
+  {
+    "folio": "425",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-02",
+    "puntoId": 1323,
+    "via": "directo"
+  },
+  {
+    "folio": "427",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-02",
+    "puntoId": 1324,
+    "via": "directo"
+  },
+  {
+    "folio": "432",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-02",
+    "puntoId": 1325,
+    "via": "directo"
+  },
+  {
+    "folio": "363",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-04",
+    "puntoId": 2005,
+    "via": "directo"
+  },
+  {
+    "folio": "364",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-04",
+    "puntoId": 2008,
+    "via": "directo"
+  },
+  {
+    "folio": "404",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-18",
+    "puntoId": 2053,
+    "via": "directo"
+  },
+  {
+    "folio": "444",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-18",
+    "puntoId": 2055,
+    "via": "directo"
+  },
+  {
+    "folio": "431",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-16",
+    "puntoId": 2028,
+    "via": "directo"
+  },
+  {
+    "folio": "437",
+    "etapa": "Dictamen",
+    "fecha": "2024-12-13",
+    "puntoId": 2026,
+    "via": "directo"
+  },
+  {
+    "folio": "1079",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-08",
+    "puntoId": 3030,
+    "via": "directo"
+  },
+  {
+    "folio": "1139",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-08",
+    "puntoId": 3029,
+    "via": "directo"
+  },
+  {
+    "folio": "1200",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-08",
+    "puntoId": 3027,
+    "via": "directo"
+  },
+  {
+    "folio": "446",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-15",
+    "puntoId": 2180,
+    "via": "expediente",
+    "expedienteId": 220
+  },
+  {
+    "folio": "660",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-15",
+    "puntoId": 2180,
+    "via": "expediente",
+    "expedienteId": 220
+  },
+  {
+    "folio": "462",
+    "etapa": "Dictamen",
+    "fecha": "2025-08-27",
+    "puntoId": 2262,
+    "via": "directo"
+  },
+  {
+    "folio": "468",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-11",
+    "puntoId": 2603,
+    "via": "expediente",
+    "expedienteId": 221
+  },
+  {
+    "folio": "551",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-11",
+    "puntoId": 2603,
+    "via": "expediente",
+    "expedienteId": 221
+  },
+  {
+    "folio": "653",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-11",
+    "puntoId": 2603,
+    "via": "expediente",
+    "expedienteId": 221
+  },
+  {
+    "folio": "578",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-11",
+    "puntoId": 2603,
+    "via": "expediente",
+    "expedienteId": 221
+  },
+  {
+    "folio": "470",
+    "etapa": "Dictamen",
+    "fecha": "2025-01-20",
+    "puntoId": 2057,
+    "via": "expediente",
+    "expedienteId": 222
+  },
+  {
+    "folio": "471",
+    "etapa": "Dictamen",
+    "fecha": "2025-01-20",
+    "puntoId": 2057,
+    "via": "expediente",
+    "expedienteId": 222
+  },
+  {
+    "folio": "472",
+    "etapa": "Dictamen",
+    "fecha": "2025-01-20",
+    "puntoId": 2057,
+    "via": "expediente",
+    "expedienteId": 222
+  },
+  {
+    "folio": "473",
+    "etapa": "Dictamen",
+    "fecha": "2025-01-20",
+    "puntoId": 2057,
+    "via": "expediente",
+    "expedienteId": 222
+  },
+  {
+    "folio": "474",
+    "etapa": "Dictamen",
+    "fecha": "2025-01-20",
+    "puntoId": 2057,
+    "via": "expediente",
+    "expedienteId": 222
+  },
+  {
+    "folio": "475",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-14",
+    "puntoId": 2090,
+    "via": "directo"
+  },
+  {
+    "folio": "479",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-11",
+    "puntoId": 2084,
+    "via": "directo"
+  },
+  {
+    "folio": "482",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-10",
+    "puntoId": 2081,
+    "via": "directo"
+  },
+  {
+    "folio": "506",
+    "etapa": "Dictamen",
+    "fecha": "2025-02-12",
+    "puntoId": 2088,
+    "via": "directo"
+  },
+  {
+    "folio": "512",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-10",
+    "puntoId": 2653,
+    "via": "directo"
+  },
+  {
+    "folio": "1095",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-10",
+    "puntoId": 2652,
+    "via": "directo"
+  },
+  {
+    "folio": "516",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-27",
+    "puntoId": 2187,
+    "via": "directo"
+  },
+  {
+    "folio": "575",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-27",
+    "puntoId": 2184,
+    "via": "directo"
+  },
+  {
+    "folio": "518",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-04",
+    "puntoId": 2348,
+    "via": "directo"
+  },
+  {
+    "folio": "530",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-04",
+    "puntoId": 2350,
+    "via": "directo"
+  },
+  {
+    "folio": "632",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-04",
+    "puntoId": 2352,
+    "via": "expediente",
+    "expedienteId": 223
+  },
+  {
+    "folio": "978",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-04",
+    "puntoId": 2352,
+    "via": "expediente",
+    "expedienteId": 223
+  },
+  {
+    "folio": "620",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-06",
+    "puntoId": 2163,
+    "via": "directo"
+  },
+  {
+    "folio": "526",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-26",
+    "puntoId": 3013,
+    "via": "directo"
+  },
+  {
+    "folio": "611",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-26",
+    "puntoId": 3012,
+    "via": "directo"
+  },
+  {
+    "folio": "531",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-21",
+    "puntoId": 2326,
+    "via": "directo"
+  },
+  {
+    "folio": "536",
+    "etapa": "Dictamen",
+    "fecha": "2025-05-07",
+    "puntoId": 2165,
+    "via": "directo"
+  },
+  {
+    "folio": "541",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-25",
+    "puntoId": 2415,
+    "via": "directo"
+  },
+  {
+    "folio": "663",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-25",
+    "puntoId": 2411,
+    "via": "directo"
+  },
+  {
+    "folio": "750",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-25",
+    "puntoId": 2417,
+    "via": "directo"
+  },
+  {
+    "folio": "544",
+    "etapa": "Dictamen",
+    "fecha": "2025-03-25",
+    "puntoId": 2111,
+    "via": "directo"
+  },
+  {
+    "folio": "566",
+    "etapa": "Dictamen",
+    "fecha": "2025-03-25",
+    "puntoId": 2115,
+    "via": "directo"
+  },
+  {
+    "folio": "548",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-16",
+    "puntoId": 2316,
+    "via": "directo"
+  },
+  {
+    "folio": "744",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-16",
+    "puntoId": 2319,
+    "via": "directo"
+  },
+  {
+    "folio": "759",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-16",
+    "puntoId": 2317,
+    "via": "directo"
+  },
+  {
+    "folio": "553",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-30",
+    "puntoId": 3185,
+    "via": "expediente",
+    "expedienteId": 224
+  },
+  {
+    "folio": "598",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-30",
+    "puntoId": 3185,
+    "via": "expediente",
+    "expedienteId": 224
+  },
+  {
+    "folio": "1004",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-30",
+    "puntoId": 3185,
+    "via": "expediente",
+    "expedienteId": 224
+  },
+  {
+    "folio": "557",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-09",
+    "puntoId": 3032,
+    "via": "expediente",
+    "expedienteId": 225
+  },
+  {
+    "folio": "1222",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-09",
+    "puntoId": 3032,
+    "via": "expediente",
+    "expedienteId": 225
+  },
+  {
+    "folio": "558",
+    "etapa": "Dictamen",
+    "fecha": "2025-03-31",
+    "puntoId": 2121,
+    "via": "directo"
+  },
+  {
+    "folio": "560",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-12",
+    "puntoId": 2197,
+    "via": "directo"
+  },
+  {
+    "folio": "561",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-02",
+    "puntoId": 2453,
+    "via": "directo"
+  },
+  {
+    "folio": "565",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-02",
+    "puntoId": 2447,
+    "via": "directo"
+  },
+  {
+    "folio": "760",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-02",
+    "puntoId": 2459,
+    "via": "directo"
+  },
+  {
+    "folio": "942",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-02",
+    "puntoId": 2451,
+    "via": "directo"
+  },
+  {
+    "folio": "580",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-20",
+    "puntoId": 2213,
+    "via": "directo"
+  },
+  {
+    "folio": "685",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-20",
+    "puntoId": 2215,
+    "via": "directo"
+  },
+  {
+    "folio": "586",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "609",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "646",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "636",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "651",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "670",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "686",
+    "etapa": "Dictamen",
+    "fecha": "2025-06-23",
+    "puntoId": 2219,
+    "via": "expediente",
+    "expedienteId": 203
+  },
+  {
+    "folio": "595",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-13",
+    "puntoId": 2302,
+    "via": "directo"
+  },
+  {
+    "folio": "792",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-13",
+    "puntoId": 2300,
+    "via": "directo"
+  },
+  {
+    "folio": "602",
+    "etapa": "Dictamen",
+    "fecha": "2026-06-04",
+    "puntoId": 3243,
+    "via": "directo"
+  },
+  {
+    "folio": "635",
+    "etapa": "Dictamen",
+    "fecha": "2026-06-04",
+    "puntoId": 3244,
+    "via": "directo"
+  },
+  {
+    "folio": "1257",
+    "etapa": "Dictamen",
+    "fecha": "2026-06-04",
+    "puntoId": 3245,
+    "via": "directo"
+  },
+  {
+    "folio": "605",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2309,
+    "via": "directo"
+  },
+  {
+    "folio": "766",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "767",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "768",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "769",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "770",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "771",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "772",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "773",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "774",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-15",
+    "puntoId": 2310,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "608",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-27",
+    "puntoId": 2336,
+    "via": "directo"
+  },
+  {
+    "folio": "618",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-01",
+    "puntoId": 2441,
+    "via": "directo"
+  },
+  {
+    "folio": "935",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-01",
+    "puntoId": 2444,
+    "via": "directo"
+  },
+  {
+    "folio": "622",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-10",
+    "puntoId": 2364,
+    "via": "directo"
+  },
+  {
+    "folio": "648",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-18",
+    "puntoId": 2400,
+    "via": "directo"
+  },
+  {
+    "folio": "649",
+    "etapa": "Dictamen",
+    "fecha": "2026-05-06",
+    "puntoId": 3211,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "1187",
+    "etapa": "Dictamen",
+    "fecha": "2026-05-06",
+    "puntoId": 3211,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "1076",
+    "etapa": "Dictamen",
+    "fecha": "2026-05-06",
+    "puntoId": 3211,
+    "via": "expediente",
+    "expedienteId": 210
+  },
+  {
+    "folio": "1259",
+    "etapa": "Dictamen",
+    "fecha": "2026-05-06",
+    "puntoId": 3209,
+    "via": "directo"
+  },
+  {
+    "folio": "654",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-12",
+    "puntoId": 2683,
+    "via": "expediente",
+    "expedienteId": 227
+  },
+  {
+    "folio": "1120",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-12",
+    "puntoId": 2683,
+    "via": "expediente",
+    "expedienteId": 227
+  },
+  {
+    "folio": "1121",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-12",
+    "puntoId": 2683,
+    "via": "expediente",
+    "expedienteId": 227
+  },
+  {
+    "folio": "659",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-14",
+    "puntoId": 2307,
+    "via": "directo"
+  },
+  {
+    "folio": "775",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-14",
+    "puntoId": 2304,
+    "via": "directo"
+  },
+  {
+    "folio": "739",
+    "etapa": "Dictamen",
+    "fecha": "2025-09-23",
+    "puntoId": 2279,
+    "via": "directo"
+  },
+  {
+    "folio": "741",
+    "etapa": "Dictamen",
+    "fecha": "2025-09-02",
+    "puntoId": 2268,
+    "via": "directo"
+  },
+  {
+    "folio": "742",
+    "etapa": "Dictamen",
+    "fecha": "2025-09-01",
+    "puntoId": 2266,
+    "via": "directo"
+  },
+  {
+    "folio": "745",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-05",
+    "puntoId": 2356,
+    "via": "directo"
+  },
+  {
+    "folio": "751",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-03",
+    "puntoId": 2461,
+    "via": "directo"
+  },
+  {
+    "folio": "753",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-17",
+    "puntoId": 2947,
+    "via": "directo"
+  },
+  {
+    "folio": "797",
+    "etapa": "Dictamen",
+    "fecha": "2026-06-10",
+    "puntoId": 3246,
+    "via": "directo"
+  },
+  {
+    "folio": "807",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "808",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "809",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "810",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "811",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "812",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "813",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "814",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "815",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "816",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "817",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "818",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "819",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "820",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "821",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "822",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "823",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "824",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "825",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "826",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "827",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "828",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "829",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "830",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "831",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "832",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "833",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "834",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "835",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "836",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "837",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "838",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "839",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "840",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "841",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "842",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "843",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "844",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "845",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "846",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "847",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "848",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "849",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "850",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "851",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "852",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "853",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "854",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "855",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "856",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "857",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "858",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "859",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "860",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "861",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "862",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "863",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "864",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "865",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "866",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "867",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "868",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "869",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "870",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "871",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "872",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "873",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "874",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "875",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "876",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "877",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "878",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "879",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "880",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "881",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "882",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "883",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "884",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "885",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "886",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "887",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "888",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "889",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "890",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "891",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "892",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "893",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "894",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "895",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "896",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "897",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "898",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "899",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "900",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "901",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "902",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "903",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "904",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "905",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "906",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "907",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "908",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "909",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "910",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "911",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "912",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "913",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "914",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "915",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "916",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "917",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "918",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "919",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "920",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "921",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "922",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "923",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "924",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "925",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "926",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "927",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "928",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "929",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "930",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "931",
+    "etapa": "Dictamen",
+    "fecha": "2025-11-12",
+    "puntoId": 2382,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "949",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "950",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "951",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "952",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "953",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "954",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "955",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "956",
+    "etapa": "Dictamen",
+    "fecha": "2025-10-29",
+    "puntoId": 2344,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "962",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-09",
+    "puntoId": 2478,
+    "via": "expediente",
+    "expedienteId": 229
+  },
+  {
+    "folio": "1072",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-09",
+    "puntoId": 2478,
+    "via": "expediente",
+    "expedienteId": 229
+  },
+  {
+    "folio": "1025",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-09",
+    "puntoId": 2478,
+    "via": "expediente",
+    "expedienteId": 229
+  },
+  {
+    "folio": "1071",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-09",
+    "puntoId": 2474,
+    "via": "directo"
+  },
+  {
+    "folio": "1010",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-26",
+    "puntoId": 1722,
+    "via": "expediente",
+    "expedienteId": 230
+  },
+  {
+    "folio": "1123",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-26",
+    "puntoId": 1722,
+    "via": "expediente",
+    "expedienteId": 230
+  },
+  {
+    "folio": "1138",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-26",
+    "puntoId": 1724,
+    "via": "directo"
+  },
+  {
+    "folio": "1107",
+    "etapa": "Dictamen",
+    "fecha": "2026-01-13",
+    "puntoId": 2482,
+    "via": "directo"
+  },
+  {
+    "folio": "1109",
+    "etapa": "Dictamen",
+    "fecha": "2026-01-13",
+    "puntoId": 2485,
+    "via": "directo"
+  },
+  {
+    "folio": "1090",
+    "etapa": "Dictamen",
+    "fecha": "2025-12-08",
+    "puntoId": 2471,
+    "via": "directo"
+  },
+  {
+    "folio": "1137",
+    "etapa": "Dictamen",
+    "fecha": "2026-02-24",
+    "puntoId": 1716,
+    "via": "directo"
+  },
+  {
+    "folio": "1156",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-03",
+    "puntoId": 2601,
+    "via": "directo"
+  },
+  {
+    "folio": "1158",
+    "etapa": "Dictamen",
+    "fecha": "2026-03-03",
+    "puntoId": 2607,
+    "via": "directo"
+  },
+  {
+    "folio": "1207",
+    "etapa": "Dictamen",
+    "fecha": "2026-04-16",
+    "puntoId": 3117,
+    "via": "directo"
+  },
+  {
+    "folio": "2",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "3",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "4",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "6",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "7",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "8",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "9",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "10",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "11",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "12",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "13",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "14",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "21",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "22",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "23",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "24",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "25",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "26",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "27",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "28",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "29",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "30",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "31",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "32",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "33",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "34",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "35",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "36",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "37",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "38",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "39",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "40",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "41",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "53",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "54",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "55",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "56",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "57",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "58",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "59",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "60",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "61",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "62",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "63",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "64",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "65",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "66",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "67",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "68",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "69",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "70",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "71",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "72",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "73",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "74",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "75",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "76",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "77",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "78",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "79",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "80",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "81",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "82",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "83",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "84",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "85",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "86",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "87",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "88",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "89",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "90",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "91",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "92",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "93",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "94",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "95",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "96",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "97",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "98",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "99",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "100",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "101",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "102",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "103",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "104",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "105",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "106",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "107",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "108",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "109",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "110",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "111",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "112",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "113",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "114",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "115",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "116",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "117",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "118",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "119",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "120",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "121",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "122",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "123",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "124",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "125",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "126",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "127",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "128",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "129",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "130",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "131",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "132",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "133",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "134",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "135",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "136",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "137",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "138",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "139",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "140",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "141",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "142",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "143",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "144",
+    "etapa": "Cierre",
+    "fecha": "2024-11-12",
+    "puntoId": 131,
+    "via": "expediente",
+    "expedienteId": 211
+  },
+  {
+    "folio": "17",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1079,
+    "via": "directo"
+  },
+  {
+    "folio": "338",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1076,
+    "via": "directo"
+  },
+  {
+    "folio": "622",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1077,
+    "via": "directo"
+  },
+  {
+    "folio": "691",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1078,
+    "via": "directo"
+  },
+  {
+    "folio": "740",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1074,
+    "via": "directo"
+  },
+  {
+    "folio": "807",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "808",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "809",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "810",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "811",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "812",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "813",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "814",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "815",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "816",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "817",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "818",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "819",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "820",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "821",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "822",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "823",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "824",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "825",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "826",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "827",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "828",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "829",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "830",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "831",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "832",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "833",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "834",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "835",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "836",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "837",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "838",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "839",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "840",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "841",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "842",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "843",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "844",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "845",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "846",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "847",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "848",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "849",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "850",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "851",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "852",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "853",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "854",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "855",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "856",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "857",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "858",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "859",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "860",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "861",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "862",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "863",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "864",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "865",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "866",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "867",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "868",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "869",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "870",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "871",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "872",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "873",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "874",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "875",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "876",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "877",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "878",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "879",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "880",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "881",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "882",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "883",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "884",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "885",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "886",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "887",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "888",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "889",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "890",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "891",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "892",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "893",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "894",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "895",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "896",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "897",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "898",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "899",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "900",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "901",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "902",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "903",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "904",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "905",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "906",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "907",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "908",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "909",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "910",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "911",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "912",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "913",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "914",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "915",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "916",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "917",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "918",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "919",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "920",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "921",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "922",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "923",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "924",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "925",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "926",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "927",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "928",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "929",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "930",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "931",
+    "etapa": "Cierre",
+    "fecha": "2025-11-12",
+    "puntoId": 1075,
+    "via": "expediente",
+    "expedienteId": 209
+  },
+  {
+    "folio": "19",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 315,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "215",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 315,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "429",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 315,
+    "via": "expediente",
+    "expedienteId": 212
+  },
+  {
+    "folio": "404",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 318,
+    "via": "directo"
+  },
+  {
+    "folio": "428",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 316,
+    "via": "directo"
+  },
+  {
+    "folio": "431",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 312,
+    "via": "directo"
+  },
+  {
+    "folio": "444",
+    "etapa": "Cierre",
+    "fecha": "2024-12-19",
+    "puntoId": 313,
+    "via": "directo"
+  },
+  {
+    "folio": "148",
+    "etapa": "Cierre",
+    "fecha": "2025-04-30",
+    "puntoId": 648,
+    "via": "directo"
+  },
+  {
+    "folio": "319",
+    "etapa": "Cierre",
+    "fecha": "2025-04-30",
+    "puntoId": 647,
+    "via": "directo"
+  },
+  {
+    "folio": "233",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3142,
+    "via": "directo"
+  },
+  {
+    "folio": "789",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "1239",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "155",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "167",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "352",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "537",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "588",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "614",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "617",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "639",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "703",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "800",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "1094",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "1169",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "1207",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "1248",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3128,
+    "via": "expediente",
+    "expedienteId": 231
+  },
+  {
+    "folio": "932",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3131,
+    "via": "directo"
+  },
+  {
+    "folio": "1054",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3132,
+    "via": "directo"
+  },
+  {
+    "folio": "1255",
+    "etapa": "Cierre",
+    "fecha": "2026-04-22",
+    "puntoId": 3144,
+    "via": "directo"
+  },
+  {
+    "folio": "156",
+    "etapa": "Cierre",
+    "fecha": "2025-04-02",
+    "puntoId": 567,
+    "via": "directo"
+  },
+  {
+    "folio": "558",
+    "etapa": "Cierre",
+    "fecha": "2025-04-02",
+    "puntoId": 565,
+    "via": "directo"
+  },
+  {
+    "folio": "163",
+    "etapa": "Cierre",
+    "fecha": "2026-02-25",
+    "puntoId": 2581,
+    "via": "directo"
+  },
+  {
+    "folio": "1051",
+    "etapa": "Cierre",
+    "fecha": "2026-02-25",
+    "puntoId": 2580,
+    "via": "directo"
+  },
+  {
+    "folio": "1137",
+    "etapa": "Cierre",
+    "fecha": "2026-02-25",
+    "puntoId": 2579,
+    "via": "directo"
+  },
+  {
+    "folio": "191",
+    "etapa": "Cierre",
+    "fecha": "2025-02-06",
+    "puntoId": 381,
+    "via": "expediente",
+    "expedienteId": 217
+  },
+  {
+    "folio": "476",
+    "etapa": "Cierre",
+    "fecha": "2025-02-06",
+    "puntoId": 381,
+    "via": "expediente",
+    "expedienteId": 217
+  },
+  {
+    "folio": "479",
+    "etapa": "Cierre",
+    "fecha": "2025-02-19",
+    "puntoId": 424,
+    "via": "directo"
+  },
+  {
+    "folio": "480",
+    "etapa": "Cierre",
+    "fecha": "2025-02-19",
+    "puntoId": 437,
+    "via": "directo"
+  },
+  {
+    "folio": "506",
+    "etapa": "Cierre",
+    "fecha": "2025-02-19",
+    "puntoId": 425,
+    "via": "directo"
+  },
+  {
+    "folio": "341",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 752,
+    "via": "directo"
+  },
+  {
+    "folio": "441",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 754,
+    "via": "directo"
+  },
+  {
+    "folio": "560",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 748,
+    "via": "directo"
+  },
+  {
+    "folio": "575",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 747,
+    "via": "directo"
+  },
+  {
+    "folio": "580",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 751,
+    "via": "directo"
+  },
+  {
+    "folio": "651",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 745,
+    "via": "expediente",
+    "expedienteId": 232
+  },
+  {
+    "folio": "670",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 745,
+    "via": "expediente",
+    "expedienteId": 232
+  },
+  {
+    "folio": "686",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 745,
+    "via": "expediente",
+    "expedienteId": 232
+  },
+  {
+    "folio": "446",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 745,
+    "via": "expediente",
+    "expedienteId": 232
+  },
+  {
+    "folio": "660",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 749,
+    "via": "directo"
+  },
+  {
+    "folio": "685",
+    "etapa": "Cierre",
+    "fecha": "2025-06-26",
+    "puntoId": 746,
+    "via": "directo"
+  },
+  {
+    "folio": "741",
+    "etapa": "Cierre",
+    "fecha": "2025-09-02",
+    "puntoId": 857,
+    "via": "directo"
+  },
+  {
+    "folio": "742",
+    "etapa": "Cierre",
+    "fecha": "2025-09-02",
+    "puntoId": 854,
+    "via": "directo"
+  },
+  {
+    "folio": "526",
+    "etapa": "Cierre",
+    "fecha": "2026-04-09",
+    "puntoId": 3041,
+    "via": "directo"
+  },
+  {
+    "folio": "611",
+    "etapa": "Cierre",
+    "fecha": "2026-04-09",
+    "puntoId": 3039,
+    "via": "directo"
+  },
+  {
+    "folio": "1079",
+    "etapa": "Cierre",
+    "fecha": "2026-04-09",
+    "puntoId": 3043,
+    "via": "directo"
+  },
+  {
+    "folio": "1200",
+    "etapa": "Cierre",
+    "fecha": "2026-04-09",
+    "puntoId": 3036,
+    "via": "directo"
+  },
+  {
+    "folio": "361",
+    "etapa": "Cierre",
+    "fecha": "2024-12-03",
+    "puntoId": 240,
+    "via": "directo"
+  },
+  {
+    "folio": "362",
+    "etapa": "Cierre",
+    "fecha": "2024-12-03",
+    "puntoId": 239,
+    "via": "directo"
+  },
+  {
+    "folio": "425",
+    "etapa": "Cierre",
+    "fecha": "2024-12-03",
+    "puntoId": 236,
+    "via": "directo"
+  },
+  {
+    "folio": "427",
+    "etapa": "Cierre",
+    "fecha": "2024-12-03",
+    "puntoId": 237,
+    "via": "directo"
+  },
+  {
+    "folio": "432",
+    "etapa": "Cierre",
+    "fecha": "2024-12-03",
+    "puntoId": 238,
+    "via": "directo"
+  },
+  {
+    "folio": "363",
+    "etapa": "Cierre",
+    "fecha": "2024-12-05",
+    "puntoId": 248,
+    "via": "directo"
+  },
+  {
+    "folio": "364",
+    "etapa": "Cierre",
+    "fecha": "2024-12-05",
+    "puntoId": 249,
+    "via": "directo"
+  },
+  {
+    "folio": "385",
+    "etapa": "Cierre",
+    "fecha": "2025-09-10",
+    "puntoId": 878,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "702",
+    "etapa": "Cierre",
+    "fecha": "2025-09-10",
+    "puntoId": 878,
+    "via": "expediente",
+    "expedienteId": 218
+  },
+  {
+    "folio": "462",
+    "etapa": "Cierre",
+    "fecha": "2025-09-10",
+    "puntoId": 879,
+    "via": "directo"
+  },
+  {
+    "folio": "437",
+    "etapa": "Cierre",
+    "fecha": "2024-12-13",
+    "puntoId": 288,
+    "via": "directo"
+  },
+  {
+    "folio": "551",
+    "etapa": "Cierre",
+    "fecha": "2026-03-04",
+    "puntoId": 2614,
+    "via": "directo"
+  },
+  {
+    "folio": "1010",
+    "etapa": "Cierre",
+    "fecha": "2026-03-04",
+    "puntoId": 2616,
+    "via": "directo"
+  },
+  {
+    "folio": "1138",
+    "etapa": "Cierre",
+    "fecha": "2026-03-04",
+    "puntoId": 2639,
+    "via": "directo"
+  },
+  {
+    "folio": "1156",
+    "etapa": "Cierre",
+    "fecha": "2026-03-04",
+    "puntoId": 2615,
+    "via": "directo"
+  },
+  {
+    "folio": "482",
+    "etapa": "Cierre",
+    "fecha": "2025-02-12",
+    "puntoId": 406,
+    "via": "directo"
+  },
+  {
+    "folio": "504",
+    "etapa": "Cierre",
+    "fecha": "2026-03-11",
+    "puntoId": 2660,
+    "via": "directo"
+  },
+  {
+    "folio": "512",
+    "etapa": "Cierre",
+    "fecha": "2026-03-11",
+    "puntoId": 2658,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "1095",
+    "etapa": "Cierre",
+    "fecha": "2026-03-11",
+    "puntoId": 2658,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "1098",
+    "etapa": "Cierre",
+    "fecha": "2026-03-11",
+    "puntoId": 2658,
+    "via": "expediente",
+    "expedienteId": 216
+  },
+  {
+    "folio": "796",
+    "etapa": "Cierre",
+    "fecha": "2026-03-11",
+    "puntoId": 2659,
+    "via": "directo"
+  },
+  {
+    "folio": "530",
+    "etapa": "Cierre",
+    "fecha": "2025-11-05",
+    "puntoId": 1060,
+    "via": "directo"
+  },
+  {
+    "folio": "632",
+    "etapa": "Cierre",
+    "fecha": "2025-11-05",
+    "puntoId": 1059,
+    "via": "expediente",
+    "expedienteId": 223
+  },
+  {
+    "folio": "978",
+    "etapa": "Cierre",
+    "fecha": "2025-11-05",
+    "puntoId": 1059,
+    "via": "expediente",
+    "expedienteId": 223
+  },
+  {
+    "folio": "745",
+    "etapa": "Cierre",
+    "fecha": "2025-11-05",
+    "puntoId": 1058,
+    "via": "directo"
+  },
+  {
+    "folio": "531",
+    "etapa": "Cierre",
+    "fecha": "2025-10-22",
+    "puntoId": 1005,
+    "via": "directo"
+  },
+  {
+    "folio": "744",
+    "etapa": "Cierre",
+    "fecha": "2025-10-22",
+    "puntoId": 1004,
+    "via": "directo"
+  },
+  {
+    "folio": "536",
+    "etapa": "Cierre",
+    "fecha": "2025-05-07",
+    "puntoId": 682,
+    "via": "directo"
+  },
+  {
+    "folio": "620",
+    "etapa": "Cierre",
+    "fecha": "2025-05-07",
+    "puntoId": 681,
+    "via": "directo"
+  },
+  {
+    "folio": "541",
+    "etapa": "Cierre",
+    "fecha": "2025-11-27",
+    "puntoId": 1141,
+    "via": "directo"
+  },
+  {
+    "folio": "663",
+    "etapa": "Cierre",
+    "fecha": "2025-11-27",
+    "puntoId": 1140,
+    "via": "directo"
+  },
+  {
+    "folio": "566",
+    "etapa": "Cierre",
+    "fecha": "2025-03-26",
+    "puntoId": 536,
+    "via": "directo"
+  },
+  {
+    "folio": "553",
+    "etapa": "Cierre",
+    "fecha": "2026-05-06",
+    "puntoId": 3190,
+    "via": "directo"
+  },
+  {
+    "folio": "1004",
+    "etapa": "Cierre",
+    "fecha": "2026-05-06",
+    "puntoId": 3197,
+    "via": "directo"
+  },
+  {
+    "folio": "1259",
+    "etapa": "Cierre",
+    "fecha": "2026-05-06",
+    "puntoId": 3204,
+    "via": "directo"
+  },
+  {
+    "folio": "561",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1186,
+    "via": "directo"
+  },
+  {
+    "folio": "565",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1174,
+    "via": "directo"
+  },
+  {
+    "folio": "605",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1170,
+    "via": "directo"
+  },
+  {
+    "folio": "618",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1176,
+    "via": "directo"
+  },
+  {
+    "folio": "751",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1173,
+    "via": "directo"
+  },
+  {
+    "folio": "760",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1172,
+    "via": "directo"
+  },
+  {
+    "folio": "935",
+    "etapa": "Cierre",
+    "fecha": "2025-12-03",
+    "puntoId": 1169,
+    "via": "directo"
+  },
+  {
+    "folio": "595",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 976,
+    "via": "directo"
+  },
+  {
+    "folio": "659",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 975,
+    "via": "directo"
+  },
+  {
+    "folio": "766",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "767",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "768",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "769",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "770",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "771",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "772",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "773",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "774",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 974,
+    "via": "expediente",
+    "expedienteId": 226
+  },
+  {
+    "folio": "792",
+    "etapa": "Cierre",
+    "fecha": "2025-10-15",
+    "puntoId": 1731,
+    "via": "directo"
+  },
+  {
+    "folio": "608",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1034,
+    "via": "directo"
+  },
+  {
+    "folio": "759",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1035,
+    "via": "directo"
+  },
+  {
+    "folio": "949",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "950",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "951",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "952",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "953",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "954",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "955",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "956",
+    "etapa": "Cierre",
+    "fecha": "2025-10-29",
+    "puntoId": 1033,
+    "via": "expediente",
+    "expedienteId": 228
+  },
+  {
+    "folio": "753",
+    "etapa": "Cierre",
+    "fecha": "2026-03-18",
+    "puntoId": 2952,
+    "via": "directo"
+  },
+  {
+    "folio": "1120",
+    "etapa": "Cierre",
+    "fecha": "2026-03-18",
+    "puntoId": 2950,
+    "via": "directo"
+  },
+  {
+    "folio": "1121",
+    "etapa": "Cierre",
+    "fecha": "2026-03-18",
+    "puntoId": 2949,
+    "via": "directo"
+  },
+  {
+    "folio": "739",
+    "etapa": "Cierre",
+    "fecha": "2025-09-24",
+    "puntoId": 913,
+    "via": "directo"
+  },
+  {
+    "folio": "962",
+    "etapa": "Cierre",
+    "fecha": "2025-12-10",
+    "puntoId": 1208,
+    "via": "directo"
+  },
+  {
+    "folio": "1071",
+    "etapa": "Cierre",
+    "fecha": "2025-12-10",
+    "puntoId": 1209,
+    "via": "directo"
+  },
+  {
+    "folio": "1090",
+    "etapa": "Cierre",
+    "fecha": "2025-12-10",
+    "puntoId": 1210,
+    "via": "directo"
+  },
+  {
+    "folio": "1107",
+    "etapa": "Cierre",
+    "fecha": "2026-01-15",
+    "puntoId": 2506,
+    "via": "directo"
+  },
+  {
+    "folio": "1109",
+    "etapa": "Cierre",
+    "fecha": "2026-01-15",
+    "puntoId": 2508,
+    "via": "directo"
+  }
+]

@@ -25,6 +25,7 @@ class IniciativaPuntoOrden extends Model {
   declare precluida: number | null;
   declare publico: number | null;
   declare folio_historico: number | null;
+  declare folios_agrupados: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -97,6 +98,10 @@ IniciativaPuntoOrden.init(
     },
     folio_historico: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    folios_agrupados: {
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
     createdAt: {

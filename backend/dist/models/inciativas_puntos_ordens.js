@@ -64,6 +64,14 @@ IniciativaPuntoOrden.init({
         allowNull: false,
         defaultValue: 0
     },
+    folio_historico: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+    },
+    folios_agrupados: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: true,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
