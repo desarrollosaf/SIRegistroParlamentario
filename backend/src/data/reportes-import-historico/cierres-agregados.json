@@ -1,0 +1,276 @@
+[
+  {
+    "folio": 456,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2024-12-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 1097,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 1118,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-02-11",
+    "candidatos": 27
+  },
+  {
+    "folio": 995,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-28",
+    "candidatos": 21
+  },
+  {
+    "folio": 1167,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 1176,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 585,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 1139,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 1306,
+    "resultado": "sin_agenda_real",
+    "fechaAprobacion": "2026-05-27"
+  },
+  {
+    "folio": 440,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 586,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 706,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 458,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2024-12-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 1307,
+    "resultado": "sin_agenda_real",
+    "fechaAprobacion": "2026-06-25"
+  },
+  {
+    "folio": 1014,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-01-15",
+    "candidatos": 16
+  },
+  {
+    "folio": 700,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-08-08",
+    "candidatos": 15
+  },
+  {
+    "folio": 1234,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 782,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 475,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-02-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 1170,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 450,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-02-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 798,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-12-03",
+    "candidatos": 35
+  },
+  {
+    "folio": 548,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-10-22",
+    "candidatos": 30
+  },
+  {
+    "folio": 1249,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-05-06",
+    "candidatos": 26
+  },
+  {
+    "folio": 1222,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 477,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-02-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 690,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-05-06",
+    "candidatos": 26
+  },
+  {
+    "folio": 750,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-11-27",
+    "candidatos": 30
+  },
+  {
+    "folio": 1084,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 533,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-09-02",
+    "candidatos": 17
+  },
+  {
+    "folio": 331,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-22",
+    "candidatos": 31
+  },
+  {
+    "folio": 457,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2024-12-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 555,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 568,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-05-06",
+    "candidatos": 26
+  },
+  {
+    "folio": 801,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2026-04-09",
+    "candidatos": 20
+  },
+  {
+    "folio": 934,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-11-27",
+    "candidatos": 30
+  },
+  {
+    "folio": 600,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-09-02",
+    "candidatos": 17
+  },
+  {
+    "folio": 516,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-09-10",
+    "candidatos": 32
+  },
+  {
+    "folio": 589,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-04-09",
+    "candidatos": 23
+  },
+  {
+    "folio": 942,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-12-03",
+    "candidatos": 35
+  },
+  {
+    "folio": 340,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-05-07",
+    "candidatos": 26
+  },
+  {
+    "folio": 701,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-08-08",
+    "candidatos": 15
+  },
+  {
+    "folio": 49,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-02-12",
+    "candidatos": 19
+  },
+  {
+    "folio": 518,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-11-05",
+    "candidatos": 17
+  },
+  {
+    "folio": 648,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-11-19",
+    "candidatos": 25
+  },
+  {
+    "folio": 775,
+    "resultado": "sin_match_texto",
+    "fechaAprobacion": "2025-10-15",
+    "candidatos": 28
+  }
+]

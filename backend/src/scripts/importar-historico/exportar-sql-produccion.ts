@@ -51,8 +51,11 @@ async function main() {
   lineas.push('START TRANSACTION;');
   lineas.push('');
 
-  // 1) inciativas_puntos_ordens
-  const inis = await IniciativaPuntoOrden.findAll({ where: { folio_historico: { [Op.ne]: null } } as any });
+  // 1) inciativas_puntos_ordens (incluye folio_historico no nulo -las del
+  // Excel- y tipo 2/3 -Minutas/Puntos de Acuerdo del backup, sin folio-)
+  const inis = await IniciativaPuntoOrden.findAll({
+    where: { [Op.or]: [{ folio_historico: { [Op.ne]: null } }, { tipo: { [Op.in]: [2, 3] } }] } as any,
+  });
   let nuevas = 0, actualizadas = 0;
   const idsNuevas = new Set<string>();
 
