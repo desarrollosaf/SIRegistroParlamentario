@@ -79,6 +79,10 @@ export const routes: Routes = [
        loadChildren: () => import('./views/pages/reporte-iniciativas/reporte-iniciativas.route')
       },
       {
+       path: 'orden-dia/:tipo',
+       loadChildren: () => import('./views/pages/orden-dia/orden-dia.route')
+      },
+      {
        path: 'transmision',
        loadChildren: () => import('./views/pages/transmision/transmision.route')
       },

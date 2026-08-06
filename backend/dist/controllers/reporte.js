@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getExcelVotacionesDetalle = exports.getReporteEstudiosProgresivo = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
+exports.getReporteOrdenDia = exports.getExcelVotacionesDetalle = exports.getReporteEstudiosProgresivo = exports.getEstadisticasIniciativas = exports.getDatosAsistenciaDiputado = exports.getReporteAsistenciaDiputado = exports.getComisionesDiputadoAsistencia = exports.getDiputadosAsistencia = exports.getIniciativasTurnadasComision = exports.getReportePorPeriodoLegislativo = exports.crearPeriodoLegislativo = exports.getPeriodosLegislativos = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = void 0;
 const sequelize_1 = require("sequelize");
 const periodo_legislativo_1 = __importDefault(require("../models/periodo_legislativo"));
 const ExcelJS = require("exceljs");
@@ -2148,3 +2148,75 @@ const getExcelVotacionesDetalle = (_req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getExcelVotacionesDetalle = getExcelVotacionesDetalle;
+// ─── Orden del día (sesiones / comisiones) ────────────────────────────────────
+const getReporteOrdenDia = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { tipo } = req.params;
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        let whereTipoEvento;
+        if (tipo === '1') {
+            whereTipoEvento = { id: uuidSesion };
+        }
+        else if (tipo === '0') {
+            whereTipoEvento = { id: { [sequelize_1.Op.ne]: uuidSesion } };
+        }
+        else {
+            whereTipoEvento = {};
+        }
+        const eventos = yield agendas_1.default.findAll({
+            include: [
+                { model: tipo_eventos_1.default, as: "tipoevento", attributes: ["id", "nombre"], where: whereTipoEvento }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+        const eventoIds = eventos.map(e => e.id);
+        const puntos = eventoIds.length > 0
+            ? yield puntos_ordens_1.default.findAll({
+                where: { id_evento: { [sequelize_1.Op.in]: eventoIds } },
+                attributes: ["id_evento", "punto", "nopunto"],
+                order: [['nopunto', 'ASC']],
+                raw: true
+            })
+            : [];
+        const puntosMap = new Map();
+        for (const p of puntos) {
+            const lista = (_a = puntosMap.get(p.id_evento)) !== null && _a !== void 0 ? _a : [];
+            if (p.punto)
+                lista.push(p.punto);
+            puntosMap.set(p.id_evento, lista);
+        }
+        const nombreHoja = tipo === '1' ? 'Orden del día - Sesiones' : 'Orden del día - Comisiones';
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(nombreHoja.substring(0, 31));
+        worksheet.columns = [
+            { header: "ID", key: "id", width: 38 },
+            { header: "FECHA", key: "fecha", width: 15 },
+            { header: "ORDEN DEL DÍA", key: "orden", width: 80 },
+        ];
+        eventos.forEach((evento) => {
+            var _a;
+            const puntosEvento = (_a = puntosMap.get(evento.id)) !== null && _a !== void 0 ? _a : [];
+            const orden = puntosEvento.length > 0
+                ? puntosEvento.map((p, i) => `${i + 1}. ${p}`).join("\n")
+                : "Sin orden del día";
+            const excelRow = worksheet.addRow({
+                id: evento.id,
+                fecha: evento.fecha ? new Date(evento.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-",
+                orden
+            });
+            if (puntosEvento.length === 0) {
+                excelRow.getCell("orden").font = { italic: true, color: { argb: "FF6B7280" } };
+            }
+        });
+        aplicarEstiloHoja(worksheet);
+        worksheet.autoFilter = { from: "A1", to: "C1" };
+        const nombreArchivo = tipo === '1' ? 'orden_dia_sesiones.xlsx' : 'orden_dia_comisiones.xlsx';
+        return yield enviarWorkbook(res, workbook, nombreArchivo);
+    }
+    catch (error) {
+        console.error("Error al generar reporte de orden del día:", error);
+        return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+exports.getReporteOrdenDia = getReporteOrdenDia;

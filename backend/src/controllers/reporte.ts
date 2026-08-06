@@ -2446,3 +2446,81 @@ export const getExcelVotacionesDetalle = async (_req: Request, res: Response): P
     return res.status(500).json({ message: "Error interno del servidor", error: error.message });
   }
 };
+
+// ─── Orden del día (sesiones / comisiones) ────────────────────────────────────
+export const getReporteOrdenDia = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { tipo } = req.params;
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+
+    let whereTipoEvento;
+    if (tipo === '1') {
+      whereTipoEvento = { id: uuidSesion };
+    } else if (tipo === '0') {
+      whereTipoEvento = { id: { [Op.ne]: uuidSesion } };
+    } else {
+      whereTipoEvento = {};
+    }
+
+    const eventos = await Agenda.findAll({
+      include: [
+        { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"], where: whereTipoEvento }
+      ],
+      order: [['fecha', 'DESC']]
+    }) as any[];
+
+    const eventoIds = eventos.map(e => e.id);
+
+    const puntos = eventoIds.length > 0
+      ? await PuntosOrden.findAll({
+          where: { id_evento: { [Op.in]: eventoIds } },
+          attributes: ["id_evento", "punto", "nopunto"],
+          order: [['nopunto', 'ASC']],
+          raw: true
+        }) as any[]
+      : [];
+
+    const puntosMap = new Map<string, string[]>();
+    for (const p of puntos) {
+      const lista = puntosMap.get(p.id_evento) ?? [];
+      if (p.punto) lista.push(p.punto);
+      puntosMap.set(p.id_evento, lista);
+    }
+
+    const nombreHoja = tipo === '1' ? 'Orden del día - Sesiones' : 'Orden del día - Comisiones';
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(nombreHoja.substring(0, 31));
+
+    worksheet.columns = [
+      { header: "ID",              key: "id",     width: 38 },
+      { header: "FECHA",           key: "fecha",  width: 15 },
+      { header: "ORDEN DEL DÍA",   key: "orden",  width: 80 },
+    ];
+
+    eventos.forEach((evento: any) => {
+      const puntosEvento = puntosMap.get(evento.id) ?? [];
+      const orden = puntosEvento.length > 0
+        ? puntosEvento.map((p, i) => `${i + 1}. ${p}`).join("\n")
+        : "Sin orden del día";
+
+      const excelRow = worksheet.addRow({
+        id:    evento.id,
+        fecha: evento.fecha ? new Date(evento.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-",
+        orden
+      });
+
+      if (puntosEvento.length === 0) {
+        excelRow.getCell("orden").font = { italic: true, color: { argb: "FF6B7280" } };
+      }
+    });
+
+    aplicarEstiloHoja(worksheet);
+    worksheet.autoFilter = { from: "A1", to: "C1" };
+
+    const nombreArchivo = tipo === '1' ? 'orden_dia_sesiones.xlsx' : 'orden_dia_comisiones.xlsx';
+    return await enviarWorkbook(res, workbook, nombreArchivo);
+  } catch (error: any) {
+    console.error("Error al generar reporte de orden del día:", error);
+    return res.status(500).json({ message: "Error interno del servidor", error: error.message });
+  }
+};

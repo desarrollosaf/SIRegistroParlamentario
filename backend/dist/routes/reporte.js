@@ -23,4 +23,6 @@ router.get("/api/reporte/asistencia/diputados", reporte_1.getDiputadosAsistencia
 router.get("/api/reporte/asistencia/comisiones/:diputado_id", reporte_1.getComisionesDiputadoAsistencia);
 router.post("/api/reporte/asistencia/por-diputado", reporte_1.getReporteAsistenciaDiputado);
 router.post("/api/reporte/asistencia/datos-diputado", reporte_1.getDatosAsistenciaDiputado);
+// Orden del día
+router.get("/api/reporte/orden-dia/:tipo", reporte_1.getReporteOrdenDia);
 exports.default = router;

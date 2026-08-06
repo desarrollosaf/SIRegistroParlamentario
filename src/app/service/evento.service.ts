@@ -347,4 +347,10 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getiniciativaspunto/${id}`)
   }
 
+  generarReporteOrdenDia(tipo: string): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}api/reporte/orden-dia/${tipo}`, {
+      responseType: 'blob'
+    });
+  }
+
 }
