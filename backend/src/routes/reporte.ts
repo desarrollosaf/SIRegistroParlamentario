@@ -16,7 +16,8 @@ import {
   getDatosAsistenciaDiputado,
   getEstadisticasIniciativas,
   getExcelVotacionesDetalle,
-  getReporteEstudiosProgresivo
+  getReporteEstudiosProgresivo,
+  getReporteOrdenDia
 } from "../controllers/reporte";
 
 const router = Router();
@@ -44,5 +45,8 @@ router.get("/api/reporte/asistencia/diputados", getDiputadosAsistencia);
 router.get("/api/reporte/asistencia/comisiones/:diputado_id", getComisionesDiputadoAsistencia);
 router.post("/api/reporte/asistencia/por-diputado", getReporteAsistenciaDiputado);
 router.post("/api/reporte/asistencia/datos-diputado", getDatosAsistenciaDiputado);
+
+// Orden del día
+router.get("/api/reporte/orden-dia/:tipo", getReporteOrdenDia);
 
 export default router;

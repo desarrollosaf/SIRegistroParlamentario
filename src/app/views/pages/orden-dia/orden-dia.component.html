@@ -1,0 +1,68 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<div class="row">
+    <div class="col-md-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h6 class="card-title mb-0">{{ titulo() }}</h6>
+                    <button class="btn btn-sm btn-success" [disabled]="generandoExcel()" (click)="descargarExcel()">
+                        <span *ngIf="generandoExcel()" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i *ngIf="!generandoExcel()" class="bi bi-file-earmark-excel"></i>
+                        {{ generandoExcel() ? 'Generando...' : 'Descargar Excel' }}
+                    </button>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-xl-3 col-md-4">
+                        <input type="text" class="form-control form-control-sm" placeholder="Buscar..."
+                            (keyup)="updateFilter($event)" />
+                    </div>
+                </div>
+                <br>
+                <div class="table-responsive">
+                    <!-- Skeleton -->
+                    <div *ngIf="loading()" class="skeleton-wrap">
+                        <div class="skeleton-header"></div>
+                        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]"></div>
+                    </div>
+
+                    <div *ngIf="rows().length === 0 && !loading()" class="text-center my-3">
+                        <p><strong>No hay datos para mostrar</strong></p>
+                    </div>
+
+                    <ngx-datatable class="bootstrap" [rows]="rows()" [columnMode]="'force'" [headerHeight]="50"
+                        *ngIf="rows().length > 0" [footerHeight]="50" [externalPaging]="true" [rowHeight]="'auto'"
+                        [limit]="pageSize()" [count]="filteredCount()" [offset]="page()" (page)="setPage($event)"
+                        [loadingIndicator]="loading()">
+
+                        <ngx-datatable-column prop="id" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="ID" [width]="100">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{ row.id }}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column prop="fecha" [headerClass]="'text-center'" [cellClass]="'text-center'"
+                            name="Fecha" [width]="150">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{ row.fecha | date:'dd/MM/yyyy' }}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-start'"
+                            name="Orden del día">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <ol *ngIf="row.ordenDelDia?.length > 0" class="mb-0 ps-3">
+                                    <li *ngFor="let punto of row.ordenDelDia">{{ punto }}</li>
+                                </ol>
+                                <span *ngIf="!row.ordenDelDia?.length" class="text-muted fst-italic">
+                                    Sin orden del día
+                                </span>
+                            </ng-template>
+                        </ngx-datatable-column>
+                    </ngx-datatable>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

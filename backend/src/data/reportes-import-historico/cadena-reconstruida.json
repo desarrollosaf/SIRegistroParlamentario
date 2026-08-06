@@ -1,0 +1,9491 @@
+[
+  {
+    "folio": "1",
+    "puntoPresentacionId": 19,
+    "eslabones": []
+  },
+  {
+    "folio": "2",
+    "puntoPresentacionId": 28,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "3",
+    "puntoPresentacionId": 28,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "4",
+    "puntoPresentacionId": 28,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "5",
+    "puntoPresentacionId": 35,
+    "eslabones": []
+  },
+  {
+    "folio": "6",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "7",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "8",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "9",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "10",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "11",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "12",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "13",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "14",
+    "puntoPresentacionId": 36,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "15",
+    "puntoPresentacionId": 46,
+    "eslabones": []
+  },
+  {
+    "folio": "16",
+    "puntoPresentacionId": 47,
+    "eslabones": []
+  },
+  {
+    "folio": "17",
+    "puntoPresentacionId": 48,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-11",
+        "puntoId": 2371,
+        "score": 0.5263157894736842
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1079,
+        "score": 0.4583333333333333
+      }
+    ]
+  },
+  {
+    "folio": "19",
+    "puntoPresentacionId": 50,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-11",
+        "puntoId": 2018,
+        "score": 1
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-17",
+        "puntoId": 2037,
+        "score": 0.40625
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 315,
+        "score": 0.39473684210526316
+      }
+    ]
+  },
+  {
+    "folio": "21",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "22",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "23",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "24",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "25",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "26",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "27",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "28",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "29",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "30",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "31",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "32",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "33",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "34",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "35",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "36",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "37",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "38",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "39",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "40",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "41",
+    "puntoPresentacionId": 52,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "42",
+    "puntoPresentacionId": 71,
+    "eslabones": []
+  },
+  {
+    "folio": "43",
+    "puntoPresentacionId": 72,
+    "eslabones": []
+  },
+  {
+    "folio": "44",
+    "puntoPresentacionId": 73,
+    "eslabones": []
+  },
+  {
+    "folio": "47",
+    "puntoPresentacionId": 76,
+    "eslabones": []
+  },
+  {
+    "folio": "53",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "54",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "55",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "56",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "57",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "58",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "59",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "60",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "61",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "62",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "63",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "64",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "65",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "66",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "67",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "68",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "69",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "70",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "71",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "72",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "73",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "74",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "75",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "76",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "77",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "78",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "79",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "80",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "81",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "82",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "83",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "84",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "85",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "86",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "87",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "88",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "89",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "90",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "91",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "92",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "93",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "94",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "95",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "96",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "97",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "98",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "99",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "100",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "101",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "102",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "103",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "104",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "105",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "106",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "107",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "108",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "109",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "110",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "111",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "112",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "113",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "114",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "115",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "116",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "117",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "118",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "119",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "120",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "121",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "122",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "123",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "124",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "125",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "126",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "127",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "128",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "129",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "130",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "131",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "132",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "133",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "134",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "135",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "136",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "137",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "138",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "139",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "140",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "141",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "142",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "143",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "144",
+    "puntoPresentacionId": 83,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-11-06",
+        "puntoId": 1952,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-11-12",
+        "puntoId": 131,
+        "score": 0.42105263157894735
+      }
+    ]
+  },
+  {
+    "folio": "145",
+    "puntoPresentacionId": 2686,
+    "eslabones": []
+  },
+  {
+    "folio": "146",
+    "puntoPresentacionId": 2687,
+    "eslabones": []
+  },
+  {
+    "folio": "147",
+    "puntoPresentacionId": 2688,
+    "eslabones": []
+  },
+  {
+    "folio": "148",
+    "puntoPresentacionId": 3216,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-04-10",
+        "puntoId": 2141,
+        "score": 0.6341463414634146
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-04-29",
+        "puntoId": 2151,
+        "score": 0.6341463414634146
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-04-30",
+        "puntoId": 648,
+        "score": 0.52
+      }
+    ]
+  },
+  {
+    "folio": "149",
+    "puntoPresentacionId": 2689,
+    "eslabones": []
+  },
+  {
+    "folio": "150",
+    "puntoPresentacionId": 3217,
+    "eslabones": []
+  },
+  {
+    "folio": "151",
+    "puntoPresentacionId": 2691,
+    "eslabones": []
+  },
+  {
+    "folio": "152",
+    "puntoPresentacionId": 2692,
+    "eslabones": []
+  },
+  {
+    "folio": "153",
+    "puntoPresentacionId": 2693,
+    "eslabones": []
+  },
+  {
+    "folio": "154",
+    "puntoPresentacionId": 2694,
+    "eslabones": []
+  },
+  {
+    "folio": "155",
+    "puntoPresentacionId": 2695,
+    "eslabones": []
+  },
+  {
+    "folio": "156",
+    "puntoPresentacionId": 2863,
+    "eslabones": []
+  },
+  {
+    "folio": "158",
+    "puntoPresentacionId": 2697,
+    "eslabones": []
+  },
+  {
+    "folio": "159",
+    "puntoPresentacionId": 2698,
+    "eslabones": []
+  },
+  {
+    "folio": "163",
+    "puntoPresentacionId": 2702,
+    "eslabones": []
+  },
+  {
+    "folio": "164",
+    "puntoPresentacionId": 2703,
+    "eslabones": []
+  },
+  {
+    "folio": "165",
+    "puntoPresentacionId": 2704,
+    "eslabones": []
+  },
+  {
+    "folio": "167",
+    "puntoPresentacionId": 2706,
+    "eslabones": []
+  },
+  {
+    "folio": "168",
+    "puntoPresentacionId": 2707,
+    "eslabones": []
+  },
+  {
+    "folio": "171",
+    "puntoPresentacionId": 2710,
+    "eslabones": []
+  },
+  {
+    "folio": "172",
+    "puntoPresentacionId": 2711,
+    "eslabones": []
+  },
+  {
+    "folio": "174",
+    "puntoPresentacionId": 2713,
+    "eslabones": []
+  },
+  {
+    "folio": "175",
+    "puntoPresentacionId": 2714,
+    "eslabones": []
+  },
+  {
+    "folio": "176",
+    "puntoPresentacionId": 2715,
+    "eslabones": []
+  },
+  {
+    "folio": "177",
+    "puntoPresentacionId": 2716,
+    "eslabones": []
+  },
+  {
+    "folio": "179",
+    "puntoPresentacionId": 2718,
+    "eslabones": []
+  },
+  {
+    "folio": "180",
+    "puntoPresentacionId": 2719,
+    "eslabones": []
+  },
+  {
+    "folio": "181",
+    "puntoPresentacionId": 2720,
+    "eslabones": []
+  },
+  {
+    "folio": "183",
+    "puntoPresentacionId": 2722,
+    "eslabones": []
+  },
+  {
+    "folio": "184",
+    "puntoPresentacionId": 2723,
+    "eslabones": []
+  },
+  {
+    "folio": "187",
+    "puntoPresentacionId": 2726,
+    "eslabones": []
+  },
+  {
+    "folio": "188",
+    "puntoPresentacionId": 2727,
+    "eslabones": []
+  },
+  {
+    "folio": "189",
+    "puntoPresentacionId": 2728,
+    "eslabones": []
+  },
+  {
+    "folio": "190",
+    "puntoPresentacionId": 2729,
+    "eslabones": []
+  },
+  {
+    "folio": "191",
+    "puntoPresentacionId": 3220,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-02-05",
+        "puntoId": 2070,
+        "score": 0.7142857142857143
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-02-06",
+        "puntoId": 381,
+        "score": 0.6666666666666666
+      }
+    ]
+  },
+  {
+    "folio": "192",
+    "puntoPresentacionId": 2730,
+    "eslabones": []
+  },
+  {
+    "folio": "193",
+    "puntoPresentacionId": 2731,
+    "eslabones": []
+  },
+  {
+    "folio": "194",
+    "puntoPresentacionId": 2732,
+    "eslabones": []
+  },
+  {
+    "folio": "195",
+    "puntoPresentacionId": 2733,
+    "eslabones": []
+  },
+  {
+    "folio": "196",
+    "puntoPresentacionId": 2734,
+    "eslabones": []
+  },
+  {
+    "folio": "197",
+    "puntoPresentacionId": 2735,
+    "eslabones": []
+  },
+  {
+    "folio": "198",
+    "puntoPresentacionId": 2736,
+    "eslabones": []
+  },
+  {
+    "folio": "199",
+    "puntoPresentacionId": 2737,
+    "eslabones": []
+  },
+  {
+    "folio": "200",
+    "puntoPresentacionId": 2738,
+    "eslabones": []
+  },
+  {
+    "folio": "201",
+    "puntoPresentacionId": 2739,
+    "eslabones": []
+  },
+  {
+    "folio": "202",
+    "puntoPresentacionId": 2740,
+    "eslabones": []
+  },
+  {
+    "folio": "203",
+    "puntoPresentacionId": 2741,
+    "eslabones": []
+  },
+  {
+    "folio": "204",
+    "puntoPresentacionId": 2742,
+    "eslabones": []
+  },
+  {
+    "folio": "205",
+    "puntoPresentacionId": 2743,
+    "eslabones": []
+  },
+  {
+    "folio": "206",
+    "puntoPresentacionId": 2744,
+    "eslabones": []
+  },
+  {
+    "folio": "207",
+    "puntoPresentacionId": 2745,
+    "eslabones": []
+  },
+  {
+    "folio": "208",
+    "puntoPresentacionId": 2746,
+    "eslabones": []
+  },
+  {
+    "folio": "209",
+    "puntoPresentacionId": 2747,
+    "eslabones": []
+  },
+  {
+    "folio": "211",
+    "puntoPresentacionId": 2749,
+    "eslabones": []
+  },
+  {
+    "folio": "212",
+    "puntoPresentacionId": 2750,
+    "eslabones": []
+  },
+  {
+    "folio": "213",
+    "puntoPresentacionId": 2751,
+    "eslabones": []
+  },
+  {
+    "folio": "214",
+    "puntoPresentacionId": 2752,
+    "eslabones": []
+  },
+  {
+    "folio": "215",
+    "puntoPresentacionId": 3218,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-17",
+        "puntoId": 2037,
+        "score": 0.49230769230769234
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 315,
+        "score": 0.4155844155844156
+      }
+    ]
+  },
+  {
+    "folio": "216",
+    "puntoPresentacionId": 2754,
+    "eslabones": []
+  },
+  {
+    "folio": "217",
+    "puntoPresentacionId": 2755,
+    "eslabones": []
+  },
+  {
+    "folio": "218",
+    "puntoPresentacionId": 2756,
+    "eslabones": []
+  },
+  {
+    "folio": "220",
+    "puntoPresentacionId": 2758,
+    "eslabones": []
+  },
+  {
+    "folio": "221",
+    "puntoPresentacionId": 2759,
+    "eslabones": []
+  },
+  {
+    "folio": "222",
+    "puntoPresentacionId": 2760,
+    "eslabones": []
+  },
+  {
+    "folio": "223",
+    "puntoPresentacionId": 2761,
+    "eslabones": []
+  },
+  {
+    "folio": "224",
+    "puntoPresentacionId": 2762,
+    "eslabones": []
+  },
+  {
+    "folio": "225",
+    "puntoPresentacionId": 2763,
+    "eslabones": []
+  },
+  {
+    "folio": "226",
+    "puntoPresentacionId": 2764,
+    "eslabones": []
+  },
+  {
+    "folio": "227",
+    "puntoPresentacionId": 2765,
+    "eslabones": []
+  },
+  {
+    "folio": "228",
+    "puntoPresentacionId": 2766,
+    "eslabones": []
+  },
+  {
+    "folio": "229",
+    "puntoPresentacionId": 2767,
+    "eslabones": []
+  },
+  {
+    "folio": "230",
+    "puntoPresentacionId": 2768,
+    "eslabones": []
+  },
+  {
+    "folio": "231",
+    "puntoPresentacionId": 2769,
+    "eslabones": []
+  },
+  {
+    "folio": "232",
+    "puntoPresentacionId": 2770,
+    "eslabones": []
+  },
+  {
+    "folio": "233",
+    "puntoPresentacionId": 2771,
+    "eslabones": []
+  },
+  {
+    "folio": "235",
+    "puntoPresentacionId": 2773,
+    "eslabones": []
+  },
+  {
+    "folio": "236",
+    "puntoPresentacionId": 2774,
+    "eslabones": []
+  },
+  {
+    "folio": "238",
+    "puntoPresentacionId": 2776,
+    "eslabones": []
+  },
+  {
+    "folio": "240",
+    "puntoPresentacionId": 2778,
+    "eslabones": []
+  },
+  {
+    "folio": "241",
+    "puntoPresentacionId": 2779,
+    "eslabones": []
+  },
+  {
+    "folio": "242",
+    "puntoPresentacionId": 2780,
+    "eslabones": []
+  },
+  {
+    "folio": "243",
+    "puntoPresentacionId": 2781,
+    "eslabones": []
+  },
+  {
+    "folio": "244",
+    "puntoPresentacionId": 2782,
+    "eslabones": []
+  },
+  {
+    "folio": "245",
+    "puntoPresentacionId": 2783,
+    "eslabones": []
+  },
+  {
+    "folio": "249",
+    "puntoPresentacionId": 2787,
+    "eslabones": []
+  },
+  {
+    "folio": "250",
+    "puntoPresentacionId": 2788,
+    "eslabones": []
+  },
+  {
+    "folio": "251",
+    "puntoPresentacionId": 2789,
+    "eslabones": []
+  },
+  {
+    "folio": "252",
+    "puntoPresentacionId": 2790,
+    "eslabones": []
+  },
+  {
+    "folio": "253",
+    "puntoPresentacionId": 2791,
+    "eslabones": []
+  },
+  {
+    "folio": "254",
+    "puntoPresentacionId": 2792,
+    "eslabones": []
+  },
+  {
+    "folio": "255",
+    "puntoPresentacionId": 2793,
+    "eslabones": []
+  },
+  {
+    "folio": "256",
+    "puntoPresentacionId": 2794,
+    "eslabones": []
+  },
+  {
+    "folio": "257",
+    "puntoPresentacionId": 2795,
+    "eslabones": []
+  },
+  {
+    "folio": "258",
+    "puntoPresentacionId": 2796,
+    "eslabones": []
+  },
+  {
+    "folio": "259",
+    "puntoPresentacionId": 2797,
+    "eslabones": []
+  },
+  {
+    "folio": "260",
+    "puntoPresentacionId": 2798,
+    "eslabones": []
+  },
+  {
+    "folio": "261",
+    "puntoPresentacionId": 2799,
+    "eslabones": []
+  },
+  {
+    "folio": "262",
+    "puntoPresentacionId": 2800,
+    "eslabones": []
+  },
+  {
+    "folio": "263",
+    "puntoPresentacionId": 2801,
+    "eslabones": []
+  },
+  {
+    "folio": "264",
+    "puntoPresentacionId": 2802,
+    "eslabones": []
+  },
+  {
+    "folio": "265",
+    "puntoPresentacionId": 2803,
+    "eslabones": []
+  },
+  {
+    "folio": "267",
+    "puntoPresentacionId": 2805,
+    "eslabones": []
+  },
+  {
+    "folio": "268",
+    "puntoPresentacionId": 2806,
+    "eslabones": []
+  },
+  {
+    "folio": "269",
+    "puntoPresentacionId": 2807,
+    "eslabones": []
+  },
+  {
+    "folio": "270",
+    "puntoPresentacionId": 2808,
+    "eslabones": []
+  },
+  {
+    "folio": "271",
+    "puntoPresentacionId": 2809,
+    "eslabones": []
+  },
+  {
+    "folio": "272",
+    "puntoPresentacionId": 2810,
+    "eslabones": []
+  },
+  {
+    "folio": "273",
+    "puntoPresentacionId": 2811,
+    "eslabones": []
+  },
+  {
+    "folio": "274",
+    "puntoPresentacionId": 2812,
+    "eslabones": []
+  },
+  {
+    "folio": "276",
+    "puntoPresentacionId": 2814,
+    "eslabones": []
+  },
+  {
+    "folio": "277",
+    "puntoPresentacionId": 2815,
+    "eslabones": []
+  },
+  {
+    "folio": "278",
+    "puntoPresentacionId": 2816,
+    "eslabones": []
+  },
+  {
+    "folio": "279",
+    "puntoPresentacionId": 2817,
+    "eslabones": []
+  },
+  {
+    "folio": "280",
+    "puntoPresentacionId": 2818,
+    "eslabones": []
+  },
+  {
+    "folio": "281",
+    "puntoPresentacionId": 2819,
+    "eslabones": []
+  },
+  {
+    "folio": "282",
+    "puntoPresentacionId": 2820,
+    "eslabones": []
+  },
+  {
+    "folio": "283",
+    "puntoPresentacionId": 2821,
+    "eslabones": []
+  },
+  {
+    "folio": "284",
+    "puntoPresentacionId": 2822,
+    "eslabones": []
+  },
+  {
+    "folio": "285",
+    "puntoPresentacionId": 2823,
+    "eslabones": []
+  },
+  {
+    "folio": "286",
+    "puntoPresentacionId": 2824,
+    "eslabones": []
+  },
+  {
+    "folio": "287",
+    "puntoPresentacionId": 2825,
+    "eslabones": []
+  },
+  {
+    "folio": "288",
+    "puntoPresentacionId": 2826,
+    "eslabones": []
+  },
+  {
+    "folio": "289",
+    "puntoPresentacionId": 2827,
+    "eslabones": []
+  },
+  {
+    "folio": "290",
+    "puntoPresentacionId": 2828,
+    "eslabones": []
+  },
+  {
+    "folio": "291",
+    "puntoPresentacionId": 2829,
+    "eslabones": []
+  },
+  {
+    "folio": "292",
+    "puntoPresentacionId": 2830,
+    "eslabones": []
+  },
+  {
+    "folio": "293",
+    "puntoPresentacionId": 2831,
+    "eslabones": []
+  },
+  {
+    "folio": "294",
+    "puntoPresentacionId": 2832,
+    "eslabones": []
+  },
+  {
+    "folio": "295",
+    "puntoPresentacionId": 2833,
+    "eslabones": []
+  },
+  {
+    "folio": "296",
+    "puntoPresentacionId": 2834,
+    "eslabones": []
+  },
+  {
+    "folio": "298",
+    "puntoPresentacionId": 2836,
+    "eslabones": []
+  },
+  {
+    "folio": "299",
+    "puntoPresentacionId": 2837,
+    "eslabones": []
+  },
+  {
+    "folio": "300",
+    "puntoPresentacionId": 2838,
+    "eslabones": []
+  },
+  {
+    "folio": "301",
+    "puntoPresentacionId": 2839,
+    "eslabones": []
+  },
+  {
+    "folio": "302",
+    "puntoPresentacionId": 2840,
+    "eslabones": []
+  },
+  {
+    "folio": "303",
+    "puntoPresentacionId": 2841,
+    "eslabones": []
+  },
+  {
+    "folio": "304",
+    "puntoPresentacionId": 2842,
+    "eslabones": []
+  },
+  {
+    "folio": "305",
+    "puntoPresentacionId": 2843,
+    "eslabones": []
+  },
+  {
+    "folio": "306",
+    "puntoPresentacionId": 2844,
+    "eslabones": []
+  },
+  {
+    "folio": "307",
+    "puntoPresentacionId": 2845,
+    "eslabones": []
+  },
+  {
+    "folio": "308",
+    "puntoPresentacionId": 2846,
+    "eslabones": []
+  },
+  {
+    "folio": "309",
+    "puntoPresentacionId": 2847,
+    "eslabones": []
+  },
+  {
+    "folio": "310",
+    "puntoPresentacionId": 2848,
+    "eslabones": []
+  },
+  {
+    "folio": "311",
+    "puntoPresentacionId": 2849,
+    "eslabones": []
+  },
+  {
+    "folio": "312",
+    "puntoPresentacionId": 2850,
+    "eslabones": []
+  },
+  {
+    "folio": "313",
+    "puntoPresentacionId": 2851,
+    "eslabones": []
+  },
+  {
+    "folio": "314",
+    "puntoPresentacionId": 2852,
+    "eslabones": []
+  },
+  {
+    "folio": "315",
+    "puntoPresentacionId": 2853,
+    "eslabones": []
+  },
+  {
+    "folio": "316",
+    "puntoPresentacionId": 2854,
+    "eslabones": []
+  },
+  {
+    "folio": "317",
+    "puntoPresentacionId": 2855,
+    "eslabones": []
+  },
+  {
+    "folio": "318",
+    "puntoPresentacionId": 2856,
+    "eslabones": []
+  },
+  {
+    "folio": "319",
+    "puntoPresentacionId": 3221,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-04-09",
+        "puntoId": 2137,
+        "score": 0.8076923076923077
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-04-25",
+        "puntoId": 2145,
+        "score": 0.8076923076923077
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-04-30",
+        "puntoId": 647,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "320",
+    "puntoPresentacionId": 2857,
+    "eslabones": []
+  },
+  {
+    "folio": "321",
+    "puntoPresentacionId": 2858,
+    "eslabones": []
+  },
+  {
+    "folio": "323",
+    "puntoPresentacionId": 2859,
+    "eslabones": []
+  },
+  {
+    "folio": "325",
+    "puntoPresentacionId": 2860,
+    "eslabones": []
+  },
+  {
+    "folio": "327",
+    "puntoPresentacionId": 2862,
+    "eslabones": []
+  },
+  {
+    "folio": "337",
+    "puntoPresentacionId": 115,
+    "eslabones": []
+  },
+  {
+    "folio": "338",
+    "puntoPresentacionId": 116,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-04-11",
+        "puntoId": 2143,
+        "score": 0.7083333333333334
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-11",
+        "puntoId": 2369,
+        "score": 0.6666666666666666
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1076,
+        "score": 0.5964912280701754
+      }
+    ]
+  },
+  {
+    "folio": "339",
+    "puntoPresentacionId": 117,
+    "eslabones": []
+  },
+  {
+    "folio": "341",
+    "puntoPresentacionId": 119,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-06-12",
+        "puntoId": 2195,
+        "score": 0.6071428571428571
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-06-19",
+        "puntoId": 2210,
+        "score": 0.5614035087719298
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-06-26",
+        "puntoId": 752,
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "folio": "342",
+    "puntoPresentacionId": 120,
+    "eslabones": []
+  },
+  {
+    "folio": "343",
+    "puntoPresentacionId": 121,
+    "eslabones": []
+  },
+  {
+    "folio": "347",
+    "puntoPresentacionId": 133,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-08-14",
+        "puntoId": 2242,
+        "score": 0.625
+      }
+    ]
+  },
+  {
+    "folio": "348",
+    "puntoPresentacionId": 134,
+    "eslabones": []
+  },
+  {
+    "folio": "350",
+    "puntoPresentacionId": 136,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-13",
+        "puntoId": 2393,
+        "score": 0.5806451612903226
+      }
+    ]
+  },
+  {
+    "folio": "352",
+    "puntoPresentacionId": 138,
+    "eslabones": []
+  },
+  {
+    "folio": "353",
+    "puntoPresentacionId": 139,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-02-07",
+        "puntoId": 1417,
+        "score": 0.72
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-02-17",
+        "puntoId": 2095,
+        "score": 0.4155844155844156
+      }
+    ]
+  },
+  {
+    "folio": "354",
+    "puntoPresentacionId": 140,
+    "eslabones": []
+  },
+  {
+    "folio": "356",
+    "puntoPresentacionId": 142,
+    "eslabones": []
+  },
+  {
+    "folio": "358",
+    "puntoPresentacionId": 144,
+    "eslabones": []
+  },
+  {
+    "folio": "359",
+    "puntoPresentacionId": 145,
+    "eslabones": []
+  },
+  {
+    "folio": "360",
+    "puntoPresentacionId": 156,
+    "eslabones": []
+  },
+  {
+    "folio": "361",
+    "puntoPresentacionId": 159,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-26",
+        "puntoId": 1975,
+        "score": 0.4489795918367347
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-02",
+        "puntoId": 1992,
+        "score": 0.4074074074074074
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-03",
+        "puntoId": 240,
+        "score": 0.36065573770491804
+      }
+    ]
+  },
+  {
+    "folio": "362",
+    "puntoPresentacionId": 160,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-28",
+        "puntoId": 1986,
+        "score": 0.6181818181818182
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-02",
+        "puntoId": 1322,
+        "score": 1
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-03",
+        "puntoId": 239,
+        "score": 0.6206896551724138
+      }
+    ]
+  },
+  {
+    "folio": "363",
+    "puntoPresentacionId": 161,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-26",
+        "puntoId": 1977,
+        "score": 0.7619047619047619
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-04",
+        "puntoId": 2005,
+        "score": 0.7619047619047619
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-05",
+        "puntoId": 248,
+        "score": 0.7441860465116279
+      }
+    ]
+  },
+  {
+    "folio": "364",
+    "puntoPresentacionId": 162,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-11-28",
+        "puntoId": 1988,
+        "score": 0.7619047619047619
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-04",
+        "puntoId": 2008,
+        "score": 0.7619047619047619
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-05",
+        "puntoId": 249,
+        "score": 0.6666666666666666
+      }
+    ]
+  },
+  {
+    "folio": "385",
+    "puntoPresentacionId": 166,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-08-21",
+        "puntoId": 2247,
+        "score": 0.4782608695652174
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-09-10",
+        "puntoId": 878,
+        "score": 0.4489795918367347
+      }
+    ]
+  },
+  {
+    "folio": "387",
+    "puntoPresentacionId": 168,
+    "eslabones": []
+  },
+  {
+    "folio": "389",
+    "puntoPresentacionId": 170,
+    "eslabones": []
+  },
+  {
+    "folio": "392",
+    "puntoPresentacionId": 173,
+    "eslabones": []
+  },
+  {
+    "folio": "396",
+    "puntoPresentacionId": 190,
+    "eslabones": []
+  },
+  {
+    "folio": "397",
+    "puntoPresentacionId": 191,
+    "eslabones": []
+  },
+  {
+    "folio": "399",
+    "puntoPresentacionId": 193,
+    "eslabones": []
+  },
+  {
+    "folio": "400",
+    "puntoPresentacionId": 194,
+    "eslabones": []
+  },
+  {
+    "folio": "401",
+    "puntoPresentacionId": 195,
+    "eslabones": []
+  },
+  {
+    "folio": "402",
+    "puntoPresentacionId": 196,
+    "eslabones": []
+  },
+  {
+    "folio": "403",
+    "puntoPresentacionId": 197,
+    "eslabones": []
+  },
+  {
+    "folio": "404",
+    "puntoPresentacionId": 198,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-16",
+        "puntoId": 2030,
+        "score": 0.7727272727272727
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-18",
+        "puntoId": 2053,
+        "score": 0.68
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 318,
+        "score": 0.5074626865671642
+      }
+    ]
+  },
+  {
+    "folio": "425",
+    "puntoPresentacionId": 221,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-02",
+        "puntoId": 1323,
+        "score": 1
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-03",
+        "puntoId": 236,
+        "score": 0.8484848484848485
+      }
+    ]
+  },
+  {
+    "folio": "426",
+    "puntoPresentacionId": 222,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-16",
+        "puntoId": 2035,
+        "score": 0.7142857142857143
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 314,
+        "score": 0.6666666666666666
+      }
+    ]
+  },
+  {
+    "folio": "427",
+    "puntoPresentacionId": 223,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-02",
+        "puntoId": 1324,
+        "score": 1
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-03",
+        "puntoId": 237,
+        "score": 0.847457627118644
+      }
+    ]
+  },
+  {
+    "folio": "428",
+    "puntoPresentacionId": 224,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-17",
+        "puntoId": 2039,
+        "score": 0.7555555555555555
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 316,
+        "score": 0.68
+      }
+    ]
+  },
+  {
+    "folio": "429",
+    "puntoPresentacionId": 225,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-11",
+        "puntoId": 2019,
+        "score": 1
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-17",
+        "puntoId": 2037,
+        "score": 0.5507246376811594
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 315,
+        "score": 0.49382716049382713
+      }
+    ]
+  },
+  {
+    "folio": "430",
+    "puntoPresentacionId": 226,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-11",
+        "puntoId": 2024,
+        "score": 0.7222222222222222
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 317,
+        "score": 0.5531914893617021
+      }
+    ]
+  },
+  {
+    "folio": "431",
+    "puntoPresentacionId": 227,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-11",
+        "puntoId": 2015,
+        "score": 0.8275862068965517
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-16",
+        "puntoId": 2028,
+        "score": 0.7058823529411765
+      }
+    ]
+  },
+  {
+    "folio": "432",
+    "puntoPresentacionId": 228,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-02",
+        "puntoId": 1325,
+        "score": 1
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-03",
+        "puntoId": 238,
+        "score": 0.7916666666666666
+      }
+    ]
+  },
+  {
+    "folio": "433",
+    "puntoPresentacionId": 245,
+    "eslabones": []
+  },
+  {
+    "folio": "434",
+    "puntoPresentacionId": 246,
+    "eslabones": []
+  },
+  {
+    "folio": "435",
+    "puntoPresentacionId": 247,
+    "eslabones": []
+  },
+  {
+    "folio": "436",
+    "puntoPresentacionId": 250,
+    "eslabones": []
+  },
+  {
+    "folio": "437",
+    "puntoPresentacionId": 251,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-13",
+        "puntoId": 2026,
+        "score": 0.5641025641025641
+      }
+    ]
+  },
+  {
+    "folio": "439",
+    "puntoPresentacionId": 253,
+    "eslabones": []
+  },
+  {
+    "folio": "440",
+    "puntoPresentacionId": 254,
+    "eslabones": []
+  },
+  {
+    "folio": "441",
+    "puntoPresentacionId": 255,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-06-19",
+        "puntoId": 2208,
+        "score": 0.6190476190476191
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-06-26",
+        "puntoId": 754,
+        "score": 0.5909090909090909
+      }
+    ]
+  },
+  {
+    "folio": "442",
+    "puntoPresentacionId": 264,
+    "eslabones": []
+  },
+  {
+    "folio": "443",
+    "puntoPresentacionId": 265,
+    "eslabones": []
+  },
+  {
+    "folio": "444",
+    "puntoPresentacionId": 266,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2024-12-16",
+        "puntoId": 2032,
+        "score": 0.8484848484848485
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2024-12-18",
+        "puntoId": 2055,
+        "score": 0.717948717948718
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 313,
+        "score": 0.5957446808510638
+      }
+    ]
+  },
+  {
+    "folio": "445",
+    "puntoPresentacionId": 267,
+    "eslabones": []
+  },
+  {
+    "folio": "446",
+    "puntoPresentacionId": 268,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-04-10",
+        "puntoId": 2139,
+        "score": 0.5882352941176471
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-05-15",
+        "puntoId": 2180,
+        "score": 0.45454545454545453
+      }
+    ]
+  },
+  {
+    "folio": "447",
+    "puntoPresentacionId": 269,
+    "eslabones": []
+  },
+  {
+    "folio": "448",
+    "puntoPresentacionId": 270,
+    "eslabones": []
+  },
+  {
+    "folio": "449",
+    "puntoPresentacionId": 271,
+    "eslabones": []
+  },
+  {
+    "folio": "450",
+    "puntoPresentacionId": 272,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-02-17",
+        "puntoId": 2095,
+        "score": 0.4358974358974359
+      }
+    ]
+  },
+  {
+    "folio": "451",
+    "puntoPresentacionId": 273,
+    "eslabones": []
+  },
+  {
+    "folio": "454",
+    "puntoPresentacionId": 278,
+    "eslabones": []
+  },
+  {
+    "folio": "455",
+    "puntoPresentacionId": 286,
+    "eslabones": []
+  },
+  {
+    "folio": "458",
+    "puntoPresentacionId": 292,
+    "eslabones": [
+      {
+        "etapa": "Cierre",
+        "fecha": "2024-12-19",
+        "puntoId": 329,
+        "score": 0.36363636363636365
+      }
+    ]
+  },
+  {
+    "folio": "461",
+    "puntoPresentacionId": 295,
+    "eslabones": []
+  },
+  {
+    "folio": "462",
+    "puntoPresentacionId": 296,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-08-20",
+        "puntoId": 2245,
+        "score": 0.6842105263157895
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-08-27",
+        "puntoId": 2262,
+        "score": 0.6842105263157895
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-09-10",
+        "puntoId": 879,
+        "score": 0.6046511627906976
+      }
+    ]
+  },
+  {
+    "folio": "464",
+    "puntoPresentacionId": 293,
+    "eslabones": []
+  },
+  {
+    "folio": "467",
+    "puntoPresentacionId": 319,
+    "eslabones": []
+  },
+  {
+    "folio": "468",
+    "puntoPresentacionId": 320,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-06-11",
+        "puntoId": 2603,
+        "score": 0.4666666666666667
+      }
+    ]
+  },
+  {
+    "folio": "469",
+    "puntoPresentacionId": 321,
+    "eslabones": []
+  },
+  {
+    "folio": "470",
+    "puntoPresentacionId": 324,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-01-20",
+        "puntoId": 2057,
+        "score": 0.35294117647058826
+      }
+    ]
+  },
+  {
+    "folio": "471",
+    "puntoPresentacionId": 324,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-01-20",
+        "puntoId": 2057,
+        "score": 0.35294117647058826
+      }
+    ]
+  },
+  {
+    "folio": "472",
+    "puntoPresentacionId": 324,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-01-20",
+        "puntoId": 2057,
+        "score": 0.36363636363636365
+      }
+    ]
+  },
+  {
+    "folio": "473",
+    "puntoPresentacionId": 324,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-01-20",
+        "puntoId": 2057,
+        "score": 0.35294117647058826
+      }
+    ]
+  },
+  {
+    "folio": "474",
+    "puntoPresentacionId": 324,
+    "eslabones": []
+  },
+  {
+    "folio": "484",
+    "puntoPresentacionId": 357,
+    "eslabones": []
+  },
+  {
+    "folio": "500",
+    "puntoPresentacionId": 376,
+    "eslabones": []
+  },
+  {
+    "folio": "501",
+    "puntoPresentacionId": 380,
+    "eslabones": []
+  },
+  {
+    "folio": "502",
+    "puntoPresentacionId": 382,
+    "eslabones": []
+  },
+  {
+    "folio": "503",
+    "puntoPresentacionId": 383,
+    "eslabones": []
+  },
+  {
+    "folio": "504",
+    "puntoPresentacionId": 384,
+    "eslabones": []
+  },
+  {
+    "folio": "505",
+    "puntoPresentacionId": 385,
+    "eslabones": []
+  },
+  {
+    "folio": "506",
+    "puntoPresentacionId": 386,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-02-12",
+        "puntoId": 2088,
+        "score": 0.6896551724137931
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-02-19",
+        "puntoId": 425,
+        "score": 0.6060606060606061
+      }
+    ]
+  },
+  {
+    "folio": "507",
+    "puntoPresentacionId": 387,
+    "eslabones": []
+  },
+  {
+    "folio": "508",
+    "puntoPresentacionId": 388,
+    "eslabones": []
+  },
+  {
+    "folio": "509",
+    "puntoPresentacionId": 389,
+    "eslabones": []
+  },
+  {
+    "folio": "510",
+    "puntoPresentacionId": 390,
+    "eslabones": []
+  },
+  {
+    "folio": "515",
+    "puntoPresentacionId": 409,
+    "eslabones": []
+  },
+  {
+    "folio": "516",
+    "puntoPresentacionId": 410,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-05-06",
+        "puntoId": 2159,
+        "score": 0.7037037037037037
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-05-27",
+        "puntoId": 2187,
+        "score": 0.6909090909090909
+      }
+    ]
+  },
+  {
+    "folio": "517",
+    "puntoPresentacionId": 411,
+    "eslabones": []
+  },
+  {
+    "folio": "519",
+    "puntoPresentacionId": 413,
+    "eslabones": []
+  },
+  {
+    "folio": "520",
+    "puntoPresentacionId": 414,
+    "eslabones": []
+  },
+  {
+    "folio": "521",
+    "puntoPresentacionId": 416,
+    "eslabones": []
+  },
+  {
+    "folio": "522",
+    "puntoPresentacionId": 417,
+    "eslabones": []
+  },
+  {
+    "folio": "524",
+    "puntoPresentacionId": 430,
+    "eslabones": []
+  },
+  {
+    "folio": "525",
+    "puntoPresentacionId": 431,
+    "eslabones": []
+  },
+  {
+    "folio": "526",
+    "puntoPresentacionId": 432,
+    "eslabones": []
+  },
+  {
+    "folio": "528",
+    "puntoPresentacionId": 434,
+    "eslabones": [
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-09-02",
+        "puntoId": 855,
+        "score": 0.36363636363636365
+      }
+    ]
+  },
+  {
+    "folio": "529",
+    "puntoPresentacionId": 435,
+    "eslabones": []
+  },
+  {
+    "folio": "530",
+    "puntoPresentacionId": 436,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-04",
+        "puntoId": 2350,
+        "score": 0.8125
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-05",
+        "puntoId": 1060,
+        "score": 0.6842105263157895
+      }
+    ]
+  },
+  {
+    "folio": "531",
+    "puntoPresentacionId": 437,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-06",
+        "puntoId": 2296,
+        "score": 0.5283018867924528
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-21",
+        "puntoId": 2326,
+        "score": 0.4827586206896552
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-22",
+        "puntoId": 1005,
+        "score": 0.5490196078431373
+      }
+    ]
+  },
+  {
+    "folio": "532",
+    "puntoPresentacionId": 438,
+    "eslabones": []
+  },
+  {
+    "folio": "535",
+    "puntoPresentacionId": 441,
+    "eslabones": []
+  },
+  {
+    "folio": "536",
+    "puntoPresentacionId": 452,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-05-06",
+        "puntoId": 2157,
+        "score": 0.7083333333333334
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-05-07",
+        "puntoId": 2165,
+        "score": 0.7083333333333334
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-05-07",
+        "puntoId": 682,
+        "score": 0.6666666666666666
+      }
+    ]
+  },
+  {
+    "folio": "537",
+    "puntoPresentacionId": 453,
+    "eslabones": []
+  },
+  {
+    "folio": "538",
+    "puntoPresentacionId": 455,
+    "eslabones": []
+  },
+  {
+    "folio": "540",
+    "puntoPresentacionId": 456,
+    "eslabones": []
+  },
+  {
+    "folio": "541",
+    "puntoPresentacionId": 457,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-18",
+        "puntoId": 2398,
+        "score": 0.5283018867924528
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-25",
+        "puntoId": 2415,
+        "score": 0.5925925925925926
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-27",
+        "puntoId": 1141,
+        "score": 0.49230769230769234
+      }
+    ]
+  },
+  {
+    "folio": "543",
+    "puntoPresentacionId": 464,
+    "eslabones": []
+  },
+  {
+    "folio": "544",
+    "puntoPresentacionId": 466,
+    "eslabones": []
+  },
+  {
+    "folio": "545",
+    "puntoPresentacionId": 467,
+    "eslabones": []
+  },
+  {
+    "folio": "546",
+    "puntoPresentacionId": 468,
+    "eslabones": []
+  },
+  {
+    "folio": "547",
+    "puntoPresentacionId": 469,
+    "eslabones": []
+  },
+  {
+    "folio": "548",
+    "puntoPresentacionId": 470,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-16",
+        "puntoId": 2316,
+        "score": 0.44
+      }
+    ]
+  },
+  {
+    "folio": "549",
+    "puntoPresentacionId": 471,
+    "eslabones": []
+  },
+  {
+    "folio": "550",
+    "puntoPresentacionId": 472,
+    "eslabones": []
+  },
+  {
+    "folio": "551",
+    "puntoPresentacionId": 473,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-05-12",
+        "puntoId": 2602,
+        "score": 0.40625
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-06-11",
+        "puntoId": 2603,
+        "score": 0.43333333333333335
+      }
+    ]
+  },
+  {
+    "folio": "553",
+    "puntoPresentacionId": 475,
+    "eslabones": []
+  },
+  {
+    "folio": "555",
+    "puntoPresentacionId": 477,
+    "eslabones": []
+  },
+  {
+    "folio": "620",
+    "puntoPresentacionId": 600,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-04-29",
+        "puntoId": 2153,
+        "score": 0.3880597014925373
+      }
+    ]
+  },
+  {
+    "folio": "622",
+    "puntoPresentacionId": 602,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-21",
+        "puntoId": 2330,
+        "score": 0.6382978723404256
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-10",
+        "puntoId": 2364,
+        "score": 0.6666666666666666
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1077,
+        "score": 0.5818181818181818
+      }
+    ]
+  },
+  {
+    "folio": "624",
+    "puntoPresentacionId": 604,
+    "eslabones": []
+  },
+  {
+    "folio": "625",
+    "puntoPresentacionId": 605,
+    "eslabones": []
+  },
+  {
+    "folio": "626",
+    "puntoPresentacionId": 606,
+    "eslabones": []
+  },
+  {
+    "folio": "628",
+    "puntoPresentacionId": 608,
+    "eslabones": []
+  },
+  {
+    "folio": "629",
+    "puntoPresentacionId": 609,
+    "eslabones": []
+  },
+  {
+    "folio": "631",
+    "puntoPresentacionId": 611,
+    "eslabones": []
+  },
+  {
+    "folio": "632",
+    "puntoPresentacionId": 612,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-04",
+        "puntoId": 2352,
+        "score": 0.375
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-05",
+        "puntoId": 1059,
+        "score": 0.3829787234042553
+      }
+    ]
+  },
+  {
+    "folio": "633",
+    "puntoPresentacionId": 616,
+    "eslabones": []
+  },
+  {
+    "folio": "634",
+    "puntoPresentacionId": 623,
+    "eslabones": []
+  },
+  {
+    "folio": "635",
+    "puntoPresentacionId": 624,
+    "eslabones": []
+  },
+  {
+    "folio": "636",
+    "puntoPresentacionId": 625,
+    "eslabones": []
+  },
+  {
+    "folio": "637",
+    "puntoPresentacionId": 626,
+    "eslabones": []
+  },
+  {
+    "folio": "638",
+    "puntoPresentacionId": 627,
+    "eslabones": []
+  },
+  {
+    "folio": "639",
+    "puntoPresentacionId": 628,
+    "eslabones": []
+  },
+  {
+    "folio": "640",
+    "puntoPresentacionId": 629,
+    "eslabones": []
+  },
+  {
+    "folio": "641",
+    "puntoPresentacionId": 630,
+    "eslabones": []
+  },
+  {
+    "folio": "642",
+    "puntoPresentacionId": 631,
+    "eslabones": []
+  },
+  {
+    "folio": "646",
+    "puntoPresentacionId": 638,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-06-23",
+        "puntoId": 2219,
+        "score": 0.4166666666666667
+      }
+    ]
+  },
+  {
+    "folio": "648",
+    "puntoPresentacionId": 646,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-18",
+        "puntoId": 2400,
+        "score": 0.42857142857142855
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-19",
+        "puntoId": 1106,
+        "score": 0.36363636363636365
+      }
+    ]
+  },
+  {
+    "folio": "649",
+    "puntoPresentacionId": 649,
+    "eslabones": []
+  },
+  {
+    "folio": "650",
+    "puntoPresentacionId": 650,
+    "eslabones": []
+  },
+  {
+    "folio": "651",
+    "puntoPresentacionId": 651,
+    "eslabones": [
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-06-26",
+        "puntoId": 745,
+        "score": 0.39344262295081966
+      }
+    ]
+  },
+  {
+    "folio": "652",
+    "puntoPresentacionId": 652,
+    "eslabones": []
+  },
+  {
+    "folio": "654",
+    "puntoPresentacionId": 654,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-20",
+        "puntoId": 2321,
+        "score": 0.6111111111111112
+      }
+    ]
+  },
+  {
+    "folio": "656",
+    "puntoPresentacionId": 656,
+    "eslabones": []
+  },
+  {
+    "folio": "659",
+    "puntoPresentacionId": 659,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-06",
+        "puntoId": 2298,
+        "score": 0.6736842105263158
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-14",
+        "puntoId": 2307,
+        "score": 0.5576923076923077
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 975,
+        "score": 0.7126436781609196
+      }
+    ]
+  },
+  {
+    "folio": "660",
+    "puntoPresentacionId": 660,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-05-15",
+        "puntoId": 2180,
+        "score": 0.37333333333333335
+      }
+    ]
+  },
+  {
+    "folio": "661",
+    "puntoPresentacionId": 661,
+    "eslabones": []
+  },
+  {
+    "folio": "662",
+    "puntoPresentacionId": 662,
+    "eslabones": []
+  },
+  {
+    "folio": "663",
+    "puntoPresentacionId": 663,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-18",
+        "puntoId": 2395,
+        "score": 0.7457627118644068
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-25",
+        "puntoId": 2411,
+        "score": 0.6875
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-27",
+        "puntoId": 1140,
+        "score": 0.5714285714285714
+      }
+    ]
+  },
+  {
+    "folio": "665",
+    "puntoPresentacionId": 665,
+    "eslabones": []
+  },
+  {
+    "folio": "668",
+    "puntoPresentacionId": 684,
+    "eslabones": []
+  },
+  {
+    "folio": "669",
+    "puntoPresentacionId": 685,
+    "eslabones": []
+  },
+  {
+    "folio": "670",
+    "puntoPresentacionId": 686,
+    "eslabones": [
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-06-26",
+        "puntoId": 745,
+        "score": 0.41935483870967744
+      }
+    ]
+  },
+  {
+    "folio": "671",
+    "puntoPresentacionId": 687,
+    "eslabones": []
+  },
+  {
+    "folio": "673",
+    "puntoPresentacionId": 689,
+    "eslabones": []
+  },
+  {
+    "folio": "675",
+    "puntoPresentacionId": 691,
+    "eslabones": []
+  },
+  {
+    "folio": "676",
+    "puntoPresentacionId": 692,
+    "eslabones": []
+  },
+  {
+    "folio": "678",
+    "puntoPresentacionId": 694,
+    "eslabones": []
+  },
+  {
+    "folio": "679",
+    "puntoPresentacionId": 695,
+    "eslabones": []
+  },
+  {
+    "folio": "681",
+    "puntoPresentacionId": 697,
+    "eslabones": []
+  },
+  {
+    "folio": "683",
+    "puntoPresentacionId": 706,
+    "eslabones": []
+  },
+  {
+    "folio": "684",
+    "puntoPresentacionId": 707,
+    "eslabones": []
+  },
+  {
+    "folio": "695",
+    "puntoPresentacionId": 743,
+    "eslabones": []
+  },
+  {
+    "folio": "696",
+    "puntoPresentacionId": 744,
+    "eslabones": []
+  },
+  {
+    "folio": "749",
+    "puntoPresentacionId": 870,
+    "eslabones": []
+  },
+  {
+    "folio": "750",
+    "puntoPresentacionId": 880,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-09-30",
+        "puntoId": 2289,
+        "score": 0.5945945945945946
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-25",
+        "puntoId": 2417,
+        "score": 1
+      }
+    ]
+  },
+  {
+    "folio": "751",
+    "puntoPresentacionId": 881,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-18",
+        "puntoId": 2403,
+        "score": 0.45454545454545453
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-03",
+        "puntoId": 2461,
+        "score": 0.39215686274509803
+      }
+    ]
+  },
+  {
+    "folio": "753",
+    "puntoPresentacionId": 883,
+    "eslabones": []
+  },
+  {
+    "folio": "754",
+    "puntoPresentacionId": 884,
+    "eslabones": []
+  },
+  {
+    "folio": "755",
+    "puntoPresentacionId": 885,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-20",
+        "puntoId": 2324,
+        "score": 0.7586206896551724
+      }
+    ]
+  },
+  {
+    "folio": "756",
+    "puntoPresentacionId": 886,
+    "eslabones": []
+  },
+  {
+    "folio": "758",
+    "puntoPresentacionId": 888,
+    "eslabones": []
+  },
+  {
+    "folio": "760",
+    "puntoPresentacionId": 890,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-14",
+        "puntoId": 2305,
+        "score": 0.6545454545454545
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-02",
+        "puntoId": 2459,
+        "score": 0.5352112676056338
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-12-03",
+        "puntoId": 1172,
+        "score": 0.4523809523809524
+      }
+    ]
+  },
+  {
+    "folio": "761",
+    "puntoPresentacionId": 891,
+    "eslabones": []
+  },
+  {
+    "folio": "762",
+    "puntoPresentacionId": 892,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2358,
+        "score": 0.5777777777777777
+      }
+    ]
+  },
+  {
+    "folio": "763",
+    "puntoPresentacionId": 893,
+    "eslabones": []
+  },
+  {
+    "folio": "765",
+    "puntoPresentacionId": 911,
+    "eslabones": []
+  },
+  {
+    "folio": "766",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6862745098039216
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.780952380952381
+      }
+    ]
+  },
+  {
+    "folio": "767",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6862745098039216
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.780952380952381
+      }
+    ]
+  },
+  {
+    "folio": "768",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6862745098039216
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.780952380952381
+      }
+    ]
+  },
+  {
+    "folio": "769",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6862745098039216
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.780952380952381
+      }
+    ]
+  },
+  {
+    "folio": "770",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6990291262135923
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "771",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6990291262135923
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "772",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6990291262135923
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "773",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6990291262135923
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "774",
+    "puntoPresentacionId": 914,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-15",
+        "puntoId": 2310,
+        "score": 0.6990291262135923
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 974,
+        "score": 0.7924528301886793
+      }
+    ]
+  },
+  {
+    "folio": "775",
+    "puntoPresentacionId": 915,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-06",
+        "puntoId": 2297,
+        "score": 0.5882352941176471
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-14",
+        "puntoId": 2304,
+        "score": 0.43243243243243246
+      }
+    ]
+  },
+  {
+    "folio": "776",
+    "puntoPresentacionId": 916,
+    "eslabones": []
+  },
+  {
+    "folio": "778",
+    "puntoPresentacionId": 917,
+    "eslabones": []
+  },
+  {
+    "folio": "779",
+    "puntoPresentacionId": 918,
+    "eslabones": []
+  },
+  {
+    "folio": "781",
+    "puntoPresentacionId": 920,
+    "eslabones": []
+  },
+  {
+    "folio": "782",
+    "puntoPresentacionId": 921,
+    "eslabones": []
+  },
+  {
+    "folio": "783",
+    "puntoPresentacionId": 922,
+    "eslabones": []
+  },
+  {
+    "folio": "787",
+    "puntoPresentacionId": 926,
+    "eslabones": []
+  },
+  {
+    "folio": "790",
+    "puntoPresentacionId": 929,
+    "eslabones": []
+  },
+  {
+    "folio": "791",
+    "puntoPresentacionId": 930,
+    "eslabones": []
+  },
+  {
+    "folio": "792",
+    "puntoPresentacionId": 945,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-10-13",
+        "puntoId": 2300,
+        "score": 0.5652173913043478
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-10-15",
+        "puntoId": 1731,
+        "score": 0.9285714285714286
+      }
+    ]
+  },
+  {
+    "folio": "793",
+    "puntoPresentacionId": 946,
+    "eslabones": []
+  },
+  {
+    "folio": "794",
+    "puntoPresentacionId": 947,
+    "eslabones": []
+  },
+  {
+    "folio": "795",
+    "puntoPresentacionId": 948,
+    "eslabones": []
+  },
+  {
+    "folio": "796",
+    "puntoPresentacionId": 949,
+    "eslabones": []
+  },
+  {
+    "folio": "797",
+    "puntoPresentacionId": 950,
+    "eslabones": []
+  },
+  {
+    "folio": "798",
+    "puntoPresentacionId": 951,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-10-14",
+        "puntoId": 2304,
+        "score": 0.65
+      }
+    ]
+  },
+  {
+    "folio": "799",
+    "puntoPresentacionId": 952,
+    "eslabones": []
+  },
+  {
+    "folio": "801",
+    "puntoPresentacionId": 954,
+    "eslabones": []
+  },
+  {
+    "folio": "802",
+    "puntoPresentacionId": 955,
+    "eslabones": []
+  },
+  {
+    "folio": "803",
+    "puntoPresentacionId": 956,
+    "eslabones": []
+  },
+  {
+    "folio": "804",
+    "puntoPresentacionId": 957,
+    "eslabones": []
+  },
+  {
+    "folio": "807",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "808",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "809",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "810",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "811",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "812",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "813",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "814",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "815",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "816",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "817",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "818",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "819",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "820",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "821",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "822",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "823",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "824",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "825",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "826",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "827",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "828",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "829",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "830",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "831",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "832",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "833",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "834",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "835",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "836",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "837",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "838",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "839",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "840",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "841",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "842",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "843",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "844",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "845",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "846",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "847",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "848",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "849",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "850",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "851",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "852",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "853",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "854",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "855",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "856",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "857",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "858",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "859",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "860",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "861",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "862",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "863",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "864",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "865",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "866",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "867",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "868",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "869",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "870",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "871",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "872",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "873",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "874",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "875",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "876",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "877",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "878",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "879",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "880",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "881",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "882",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "883",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "884",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "885",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "886",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "887",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "888",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "889",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "890",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "891",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "892",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "893",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "894",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "895",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "896",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "897",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "898",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "899",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "900",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "901",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "902",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "903",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "904",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "905",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "906",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "907",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "908",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "909",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "910",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "911",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "912",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "913",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "914",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "915",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "916",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "917",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "918",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "919",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "920",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "921",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "922",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "923",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "924",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "925",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "926",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "927",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "928",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "929",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "930",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "931",
+    "puntoPresentacionId": 977,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-06",
+        "puntoId": 2360,
+        "score": 0.37037037037037035
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-12",
+        "puntoId": 2382,
+        "score": 0.5185185185185185
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-11-12",
+        "puntoId": 1075,
+        "score": 0.48484848484848486
+      }
+    ]
+  },
+  {
+    "folio": "932",
+    "puntoPresentacionId": 978,
+    "eslabones": []
+  },
+  {
+    "folio": "933",
+    "puntoPresentacionId": 979,
+    "eslabones": []
+  },
+  {
+    "folio": "934",
+    "puntoPresentacionId": 980,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-05",
+        "puntoId": 2354,
+        "score": 0.6060606060606061
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-11-25",
+        "puntoId": 2417,
+        "score": 0.6666666666666666
+      }
+    ]
+  },
+  {
+    "folio": "935",
+    "puntoPresentacionId": 981,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-11-28",
+        "puntoId": 2435,
+        "score": 0.7
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-01",
+        "puntoId": 2444,
+        "score": 0.6222222222222222
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-12-03",
+        "puntoId": 1169,
+        "score": 0.49122807017543857
+      }
+    ]
+  },
+  {
+    "folio": "937",
+    "puntoPresentacionId": 983,
+    "eslabones": []
+  },
+  {
+    "folio": "938",
+    "puntoPresentacionId": 984,
+    "eslabones": []
+  },
+  {
+    "folio": "939",
+    "puntoPresentacionId": 985,
+    "eslabones": []
+  },
+  {
+    "folio": "940",
+    "puntoPresentacionId": 986,
+    "eslabones": []
+  },
+  {
+    "folio": "941",
+    "puntoPresentacionId": 987,
+    "eslabones": []
+  },
+  {
+    "folio": "944",
+    "puntoPresentacionId": 990,
+    "eslabones": []
+  },
+  {
+    "folio": "946",
+    "puntoPresentacionId": 992,
+    "eslabones": []
+  },
+  {
+    "folio": "949",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "950",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "951",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "952",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "953",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "954",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "955",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "956",
+    "puntoPresentacionId": 1006,
+    "eslabones": []
+  },
+  {
+    "folio": "957",
+    "puntoPresentacionId": 1007,
+    "eslabones": []
+  },
+  {
+    "folio": "958",
+    "puntoPresentacionId": 1008,
+    "eslabones": []
+  },
+  {
+    "folio": "960",
+    "puntoPresentacionId": 1010,
+    "eslabones": []
+  },
+  {
+    "folio": "961",
+    "puntoPresentacionId": 1011,
+    "eslabones": []
+  },
+  {
+    "folio": "962",
+    "puntoPresentacionId": 1012,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-12-02",
+        "puntoId": 2449,
+        "score": 0.631578947368421
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-09",
+        "puntoId": 2478,
+        "score": 0.6857142857142857
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-12-10",
+        "puntoId": 1208,
+        "score": 0.5714285714285714
+      }
+    ]
+  },
+  {
+    "folio": "964",
+    "puntoPresentacionId": 1014,
+    "eslabones": []
+  },
+  {
+    "folio": "965",
+    "puntoPresentacionId": 1016,
+    "eslabones": []
+  },
+  {
+    "folio": "967",
+    "puntoPresentacionId": 1018,
+    "eslabones": []
+  },
+  {
+    "folio": "970",
+    "puntoPresentacionId": 1021,
+    "eslabones": []
+  },
+  {
+    "folio": "971",
+    "puntoPresentacionId": 1022,
+    "eslabones": []
+  },
+  {
+    "folio": "972",
+    "puntoPresentacionId": 1024,
+    "eslabones": []
+  },
+  {
+    "folio": "991",
+    "puntoPresentacionId": 1061,
+    "eslabones": []
+  },
+  {
+    "folio": "992",
+    "puntoPresentacionId": 1062,
+    "eslabones": []
+  },
+  {
+    "folio": "993",
+    "puntoPresentacionId": 1063,
+    "eslabones": []
+  },
+  {
+    "folio": "994",
+    "puntoPresentacionId": 1064,
+    "eslabones": []
+  },
+  {
+    "folio": "997",
+    "puntoPresentacionId": 1067,
+    "eslabones": []
+  },
+  {
+    "folio": "998",
+    "puntoPresentacionId": 1068,
+    "eslabones": []
+  },
+  {
+    "folio": "999",
+    "puntoPresentacionId": 1080,
+    "eslabones": []
+  },
+  {
+    "folio": "1000",
+    "puntoPresentacionId": 1081,
+    "eslabones": []
+  },
+  {
+    "folio": "1001",
+    "puntoPresentacionId": 1082,
+    "eslabones": []
+  },
+  {
+    "folio": "1002",
+    "puntoPresentacionId": 1083,
+    "eslabones": []
+  },
+  {
+    "folio": "1003",
+    "puntoPresentacionId": 1084,
+    "eslabones": []
+  },
+  {
+    "folio": "1005",
+    "puntoPresentacionId": 1086,
+    "eslabones": []
+  },
+  {
+    "folio": "1006",
+    "puntoPresentacionId": 1087,
+    "eslabones": []
+  },
+  {
+    "folio": "1007",
+    "puntoPresentacionId": 1088,
+    "eslabones": []
+  },
+  {
+    "folio": "1008",
+    "puntoPresentacionId": 1089,
+    "eslabones": []
+  },
+  {
+    "folio": "1009",
+    "puntoPresentacionId": 1090,
+    "eslabones": []
+  },
+  {
+    "folio": "1010",
+    "puntoPresentacionId": 1091,
+    "eslabones": []
+  },
+  {
+    "folio": "1011",
+    "puntoPresentacionId": 1092,
+    "eslabones": []
+  },
+  {
+    "folio": "1012",
+    "puntoPresentacionId": 1093,
+    "eslabones": []
+  },
+  {
+    "folio": "1014",
+    "puntoPresentacionId": 1095,
+    "eslabones": []
+  },
+  {
+    "folio": "1018",
+    "puntoPresentacionId": 1099,
+    "eslabones": []
+  },
+  {
+    "folio": "1019",
+    "puntoPresentacionId": 1100,
+    "eslabones": []
+  },
+  {
+    "folio": "1025",
+    "puntoPresentacionId": 1110,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-12-02",
+        "puntoId": 2457,
+        "score": 0.6222222222222222
+      }
+    ]
+  },
+  {
+    "folio": "1048",
+    "puntoPresentacionId": 1116,
+    "eslabones": []
+  },
+  {
+    "folio": "1049",
+    "puntoPresentacionId": 1117,
+    "eslabones": []
+  },
+  {
+    "folio": "1051",
+    "puntoPresentacionId": 1119,
+    "eslabones": []
+  },
+  {
+    "folio": "1052",
+    "puntoPresentacionId": 1120,
+    "eslabones": []
+  },
+  {
+    "folio": "1053",
+    "puntoPresentacionId": 1121,
+    "eslabones": []
+  },
+  {
+    "folio": "1054",
+    "puntoPresentacionId": 1122,
+    "eslabones": []
+  },
+  {
+    "folio": "1055",
+    "puntoPresentacionId": 1123,
+    "eslabones": []
+  },
+  {
+    "folio": "1057",
+    "puntoPresentacionId": 1125,
+    "eslabones": []
+  },
+  {
+    "folio": "1059",
+    "puntoPresentacionId": 1127,
+    "eslabones": []
+  },
+  {
+    "folio": "1060",
+    "puntoPresentacionId": 1128,
+    "eslabones": []
+  },
+  {
+    "folio": "1061",
+    "puntoPresentacionId": 1129,
+    "eslabones": []
+  },
+  {
+    "folio": "1063",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1064",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1065",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1066",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1067",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1068",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1069",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1070",
+    "puntoPresentacionId": 1142,
+    "eslabones": []
+  },
+  {
+    "folio": "1071",
+    "puntoPresentacionId": 1143,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-12-01",
+        "puntoId": 2439,
+        "score": 0.5454545454545454
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-09",
+        "puntoId": 2474,
+        "score": 0.7096774193548387
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-12-10",
+        "puntoId": 1209,
+        "score": 0.5238095238095238
+      }
+    ]
+  },
+  {
+    "folio": "1072",
+    "puntoPresentacionId": 1144,
+    "eslabones": [
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-09",
+        "puntoId": 2478,
+        "score": 0.41379310344827586
+      }
+    ]
+  },
+  {
+    "folio": "1074",
+    "puntoPresentacionId": 1146,
+    "eslabones": []
+  },
+  {
+    "folio": "1075",
+    "puntoPresentacionId": 1147,
+    "eslabones": []
+  },
+  {
+    "folio": "1076",
+    "puntoPresentacionId": 1148,
+    "eslabones": []
+  },
+  {
+    "folio": "1077",
+    "puntoPresentacionId": 1149,
+    "eslabones": []
+  },
+  {
+    "folio": "1078",
+    "puntoPresentacionId": 1150,
+    "eslabones": []
+  },
+  {
+    "folio": "1079",
+    "puntoPresentacionId": 1151,
+    "eslabones": []
+  },
+  {
+    "folio": "1081",
+    "puntoPresentacionId": 1153,
+    "eslabones": []
+  },
+  {
+    "folio": "1082",
+    "puntoPresentacionId": 1154,
+    "eslabones": []
+  },
+  {
+    "folio": "1084",
+    "puntoPresentacionId": 1156,
+    "eslabones": []
+  },
+  {
+    "folio": "1088",
+    "puntoPresentacionId": 1166,
+    "eslabones": []
+  },
+  {
+    "folio": "1089",
+    "puntoPresentacionId": 1177,
+    "eslabones": []
+  },
+  {
+    "folio": "1090",
+    "puntoPresentacionId": 1178,
+    "eslabones": [
+      {
+        "etapa": "Estudio",
+        "fecha": "2025-12-04",
+        "puntoId": 2467,
+        "score": 0.717948717948718
+      },
+      {
+        "etapa": "Dictamen",
+        "fecha": "2025-12-08",
+        "puntoId": 2471,
+        "score": 0.7027027027027027
+      },
+      {
+        "etapa": "Cierre",
+        "fecha": "2025-12-10",
+        "puntoId": 1210,
+        "score": 0.5957446808510638
+      }
+    ]
+  },
+  {
+    "folio": "1091",
+    "puntoPresentacionId": 1179,
+    "eslabones": []
+  },
+  {
+    "folio": "1092",
+    "puntoPresentacionId": 1180,
+    "eslabones": []
+  },
+  {
+    "folio": "1093",
+    "puntoPresentacionId": 1181,
+    "eslabones": []
+  },
+  {
+    "folio": "1095",
+    "puntoPresentacionId": 1183,
+    "eslabones": []
+  },
+  {
+    "folio": "1096",
+    "puntoPresentacionId": 1184,
+    "eslabones": []
+  },
+  {
+    "folio": "1097",
+    "puntoPresentacionId": 1185,
+    "eslabones": []
+  },
+  {
+    "folio": "1098",
+    "puntoPresentacionId": 1186,
+    "eslabones": []
+  },
+  {
+    "folio": "1101",
+    "puntoPresentacionId": 1189,
+    "eslabones": []
+  },
+  {
+    "folio": "1103",
+    "puntoPresentacionId": 1191,
+    "eslabones": []
+  },
+  {
+    "folio": "1104",
+    "puntoPresentacionId": 1192,
+    "eslabones": []
+  },
+  {
+    "folio": "1105",
+    "puntoPresentacionId": 1211,
+    "eslabones": []
+  },
+  {
+    "folio": "1118",
+    "puntoPresentacionId": 2532,
+    "eslabones": []
+  },
+  {
+    "folio": "1119",
+    "puntoPresentacionId": 2533,
+    "eslabones": []
+  },
+  {
+    "folio": "1120",
+    "puntoPresentacionId": 2534,
+    "eslabones": []
+  },
+  {
+    "folio": "1121",
+    "puntoPresentacionId": 2535,
+    "eslabones": []
+  },
+  {
+    "folio": "1122",
+    "puntoPresentacionId": 2536,
+    "eslabones": []
+  },
+  {
+    "folio": "1123",
+    "puntoPresentacionId": 2537,
+    "eslabones": []
+  },
+  {
+    "folio": "1125",
+    "puntoPresentacionId": 2539,
+    "eslabones": []
+  },
+  {
+    "folio": "1126",
+    "puntoPresentacionId": 2540,
+    "eslabones": []
+  },
+  {
+    "folio": "1127",
+    "puntoPresentacionId": 2541,
+    "eslabones": []
+  },
+  {
+    "folio": "1128",
+    "puntoPresentacionId": 2542,
+    "eslabones": []
+  },
+  {
+    "folio": "1129",
+    "puntoPresentacionId": 2543,
+    "eslabones": []
+  },
+  {
+    "folio": "1131",
+    "puntoPresentacionId": 2545,
+    "eslabones": []
+  },
+  {
+    "folio": "1132",
+    "puntoPresentacionId": 2546,
+    "eslabones": []
+  },
+  {
+    "folio": "1133",
+    "puntoPresentacionId": 2547,
+    "eslabones": []
+  },
+  {
+    "folio": "1135",
+    "puntoPresentacionId": 2549,
+    "eslabones": []
+  }
+]
