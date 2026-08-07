@@ -17,6 +17,7 @@ class IniciativaPuntoOrden extends Model {
   declare id_punto: ForeignKey<string> | null;
   declare id_evento: ForeignKey<string>;
   declare iniciativa: string | null;
+  declare materia: string | null;
   declare tipo: number | null;
   declare fecha_votacion: Date | null;
   declare status: string | null;
@@ -63,6 +64,10 @@ IniciativaPuntoOrden.init(
     },
     iniciativa: {
       type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+    materia: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     tipo: {

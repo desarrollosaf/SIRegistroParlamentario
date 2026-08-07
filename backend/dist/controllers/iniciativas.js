@@ -108,7 +108,7 @@ const procesarPresentan = (presentan) => __awaiter(void 0, void 0, void 0, funct
 });
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo", "publico"],
+        attributes: ["id", "iniciativa", "materia", "createdAt", "id_punto", "expediente", "precluida", "tipo", "publico"],
         include: [
             {
                 model: puntos_ordens_1.default,
@@ -329,7 +329,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             // autor: normalizarTexto(proponentesString),
             // autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
-            materia: normalizarTexto((_k = data.punto) === null || _k === void 0 ? void 0 : _k.punto),
+            materia: normalizarTexto(data.materia || ((_k = data.punto) === null || _k === void 0 ? void 0 : _k.punto)),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
             comisiones: normalizarTexto(turnadoInfo.comisiones_turnado),

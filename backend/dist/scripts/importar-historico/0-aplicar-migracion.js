@@ -29,6 +29,7 @@ const registrocomisiones_1 = __importDefault(require("../../database/registrocom
 const MIGRACIONES = [
     { archivo: '20260804120000-add-folio-historico-to-iniciativas-puntos-ordens.js', columna: 'folio_historico' },
     { archivo: '20260805200000-add-folios-agrupados-to-iniciativas-puntos-ordens.js', columna: 'folios_agrupados' },
+    { archivo: '20260806180000-add-materia-to-iniciativas-puntos-ordens.js', columna: 'materia' },
 ];
 function main() {
     return __awaiter(this, void 0, void 0, function* () {

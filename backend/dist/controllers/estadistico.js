@@ -179,7 +179,7 @@ catalogos) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function* () {
     return inciativas_puntos_ordens_1.default.findAll({
-        attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida", "tipo", "path_doc"],
+        attributes: ["id", "iniciativa", "materia", "createdAt", "id_punto", "expediente", "precluida", "tipo", "path_doc"],
         include: [
             {
                 model: puntos_ordens_1.default, as: "punto",
@@ -424,7 +424,7 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
             autor: normalizarTexto(proponentesString),
             autor_detalle: normalizarTexto(presentaString),
             iniciativa: normalizarTexto(data.iniciativa),
-            materia: normalizarTexto((_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto),
+            materia: normalizarTexto(data.materia || ((_t = data.punto) === null || _t === void 0 ? void 0 : _t.punto)),
             presentac: formatearFechaCorta(fechaEventoRaw),
             fecha_evento_raw: fechaEventoRaw,
             comisiones: normalizarTexto(comisionesTurnado || comisionesAnfitrion),

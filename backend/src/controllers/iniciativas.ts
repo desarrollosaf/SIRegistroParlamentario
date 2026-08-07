@@ -118,7 +118,7 @@ const procesarPresentan = async (presentan: any[]) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "createdAt", "id_punto", "expediente", "precluida","tipo", "publico"],
+    attributes: ["id", "iniciativa", "materia", "createdAt", "id_punto", "expediente", "precluida","tipo", "publico"],
     include: [
       {
         model: PuntosOrden,
@@ -366,7 +366,7 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         // autor: normalizarTexto(proponentesString),
         // autor_detalle: normalizarTexto(presentaString),
         iniciativa: normalizarTexto(data.iniciativa),
-        materia: normalizarTexto(data.punto?.punto),
+        materia: normalizarTexto(data.materia || data.punto?.punto),
         presentac: formatearFechaCorta(fechaEventoRaw),
         fecha_evento_raw: fechaEventoRaw,
         comisiones: normalizarTexto(turnadoInfo.comisiones_turnado),
