@@ -153,6 +153,7 @@ const registrarAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, func
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
                 id_diputado: diputadoId,
                 id_agenda,
+                sentido: 1,
             });
         }
         return res.status(200).json({ msg: 'Asistencia registrada correctamente', data: registro });

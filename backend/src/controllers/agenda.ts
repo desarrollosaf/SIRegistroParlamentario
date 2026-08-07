@@ -767,6 +767,18 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
+    // Notificar también al tablero de proyección (antes solo se enteraba el diputado).
+    // El frontend manda idComision (la sala real, la de la ruta) — comision_dip_id
+    // del registro es del diputado individual y no coincide en votaciones de Sesión.
+    const roomIdAsistencia = body.idComision || (voto as any).comision_dip_id;
+    if (io && roomIdAsistencia) {
+      io.to(`proyeccion-${roomIdAsistencia}`).emit('asistencia-registrada', {
+        id_diputado: idDip,
+        id_agenda: (voto as any).id_agenda,
+        sentido: nuevoSentido,
+      });
+    }
+
     return res.status(200).json({
       msg: "Registro actualizado correctamente",
       estatus: 200,
@@ -2823,6 +2835,18 @@ export const actualizarvoto = async (req: Request, res: Response): Promise<any> 
         id_diputado: idDipVoto,
         sentido: nuevoSentido,
         mensaje: nuevoMensaje,
+      });
+    }
+
+    // Notificar también al tablero de proyección (antes solo se enteraba el diputado).
+    // El frontend manda idComision (la sala real, la de la ruta) — id_comision_dip
+    // del registro es del diputado individual y no coincide en votaciones de Sesión.
+    const roomIdVotoAdmin = body.idComision || (registroVoto ? (registroVoto as any).id_comision_dip : null);
+    if (io && roomIdVotoAdmin) {
+      io.to(`proyeccion-${roomIdVotoAdmin}`).emit('voto-registrado', {
+        id_diputado: idDipVoto,
+        sentido_voto: nuevoSentido,
+        id: body.id,
       });
     }
 

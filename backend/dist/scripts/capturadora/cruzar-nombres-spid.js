@@ -1,0 +1,145 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Cruza `adminplem_spid.datos_users.nombre_db` (76 filas, id_legislatura=2 =
+ * LXII, es el nombre EXACTO tal como lo manda la capturadora) contra los 75
+ * diputados activos de la LXII en `diputados` (legislativoConnection), y
+ * puebla `diputados.nombre_captura` — SOLO para matches exactos normalizados
+ * (mayúsculas, sin acentos, espacios colapsados). Los que no calzan exacto
+ * se listan para decidir a mano, nunca se adivina.
+ *
+ * Uso:
+ *   ts-node src/scripts/capturadora/cruzar-nombres-spid.ts            (reporte, no escribe)
+ *   ts-node src/scripts/capturadora/cruzar-nombres-spid.ts --commit   (escribe los matches exactos)
+ */
+const sequelize_1 = require("sequelize");
+const legislativoConnection_1 = __importDefault(require("../../database/legislativoConnection"));
+const diputado_1 = __importDefault(require("../../models/diputado"));
+const LXII_ID = '9b7dd670-6acc-11ef-aed9-5254e4a06850';
+// Casos donde nombre_db (spid) trae apodo/nombre abreviado y no calza exacto
+// contra el nombre legal completo — confirmados a mano con el usuario.
+// "MARTIN SANCHEZ GONZALEZ" quedó fuera a propósito: confirmado que era un
+// registro de prueba en spid, no corresponde a ningún diputado real.
+const MAPEO_MANUAL = {
+    'PABLO FERNANDEZ DE CEVALLOS G': 'PABLO FERNANDEZ DE CEVALLOS GONZALEZ',
+    'KRISHNA ROMERO VELAZQUEZ': 'KRISHNA KARINA ROMERO VELAZQUEZ',
+    'EMMA L ALVAREZ VILLAVICENCIO': 'EMMA LAURA ALVAREZ VILLAVICENCIO',
+    'ALEXIA DAVILA': 'ROCIO ALEXIA DAVILA SANCHEZ',
+    'MA MERCEDES COLIN GUADARRAMA': 'MARIA MERCEDES COLIN GUADARRAMA',
+    'ISAAC HERNANDEZ MENDEZ': 'ISAAC JOSUE HERNANDEZ MENDEZ',
+    'ANAI ESPARZA ACEVEDO': 'YARELI ANAI ESPARZA ACEVEDO',
+    'OSCAR GONZALEZ YAÑEZ - OGY': 'OSCAR GONZALEZ YAÑEZ',
+    'CONSUELO ESTRADA PLATA': 'MARIA DEL CONSUELO ESTRADA PLATA',
+    'MARTHA A CAMACHO REYNOSO': 'MARTHA AZUCENA CAMACHO REYNOSO',
+    'JOSE COUTTOLENC BUENTELLO': 'JOSE ALBERTO COUTTOLENC BUENTELLO',
+    'JUAN ZEPEDA': 'JUAN MANUEL ZEPEDA HERNANDEZ',
+    'SAMUEL RIOS MORENO': 'EDGAR SAMUEL RIOS MORENO',
+    'LUIS VALDEÑA BASTIDA': 'EDMUNDO LUIS VALDEÑA BASTIDA',
+    'DANIELA BALLESTEROS LULE': 'ITZEL DANIELA BALLESTEROS LULE',
+    'ARLETH GRIMALDO OSORIO': 'ARLETH STEPHANIE GRIMALDO OSORIO',
+    'SANDRA SANTOS RODRIGUEZ': 'SANDRA PATRICIA SANTOS RODRIGUEZ',
+    'CARLOS ZURITA TREJO': 'CARLOS ANTONIO MARTINEZ ZURITA TREJO',
+    'CARMEN DE LA ROSA MENDOZA': 'MARIA DEL CARMEN DE LA ROSA MENDOZA',
+    'KARIM CARVALLO DELFIN': 'HECTOR KARIM CARVALLO DELFIN',
+    'J FRANCISCO VAZQUEZ RODRIGUEZ': 'JOSE FRANCISCO VAZQUEZ RODRIGUEZ',
+    'JENNIFER GONZALEZ LOPEZ': 'JENNIFER NATHALIE GONZALEZ LOPEZ',
+    'ESMERALDA NAVARRO HERNANDEZ': 'LUISA ESMERALDA NAVARRO HERNANDEZ',
+};
+const spidConnection = new sequelize_1.Sequelize('adminplem_spid', 'root', 'root', {
+    host: '127.0.0.1',
+    port: 3306,
+    dialect: 'mysql',
+    logging: false,
+});
+function normalizar(valor) {
+    return (valor || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toUpperCase()
+        .replace(/[.,]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const commit = process.argv.includes('--commit');
+        const filasSpid = yield spidConnection.query(`SELECT nombre_completo, nombre_db FROM datos_users WHERE nombre_db IS NOT NULL AND id_legislatura = 2`, { type: sequelize_1.QueryTypes.SELECT });
+        console.log(`Filas en adminplem_spid.datos_users con nombre_db (LXII): ${filasSpid.length}`);
+        const [diputadosActivos] = yield legislativoConnection_1.default.query(`
+    SELECT d.id, d.apaterno, d.amaterno, d.nombres
+    FROM diputados d
+    INNER JOIN integrante_legislaturas il ON il.diputado_id = d.id
+    WHERE il.legislatura_id = :lxii
+      AND il.deleted_at IS NULL
+      AND (il.fecha_fin IS NULL OR il.fecha_fin > CURDATE())
+  `, { replacements: { lxii: LXII_ID } });
+        console.log(`Diputados activos LXII: ${diputadosActivos.length}`);
+        const porNombreNormalizado = new Map();
+        for (const d of diputadosActivos) {
+            const clave = normalizar(`${d.nombres} ${d.apaterno} ${d.amaterno}`);
+            porNombreNormalizado.set(clave, d);
+        }
+        const mapeoManualNormalizado = new Map();
+        for (const [k, v] of Object.entries(MAPEO_MANUAL)) {
+            mapeoManualNormalizado.set(normalizar(k), normalizar(v));
+        }
+        const matches = [];
+        const sinMatch = [];
+        const usados = new Set();
+        for (const fila of filasSpid) {
+            const clave = normalizar(fila.nombre_db);
+            let diputado = porNombreNormalizado.get(clave);
+            if (!diputado && mapeoManualNormalizado.has(clave)) {
+                diputado = porNombreNormalizado.get(mapeoManualNormalizado.get(clave));
+            }
+            if (diputado) {
+                matches.push({ diputado, nombre_db: fila.nombre_db });
+                usados.add(diputado.id);
+            }
+            else {
+                sinMatch.push({ nombre_completo: fila.nombre_completo, nombre_db: fila.nombre_db, claveNormalizada: clave });
+            }
+        }
+        const diputadosSinSpid = diputadosActivos.filter((d) => !usados.has(d.id));
+        console.log(`\n══════════ RESUMEN CRUCE ══════════`);
+        console.log(`Matches exactos: ${matches.length}`);
+        console.log(`Filas de spid SIN match exacto: ${sinMatch.length}`);
+        console.log(`Diputados activos SIN fila de spid: ${diputadosSinSpid.length}`);
+        if (sinMatch.length > 0) {
+            console.log(`\n--- Sin match (spid) — revisar a mano ---`);
+            for (const s of sinMatch)
+                console.log(`  "${s.nombre_db}"  (nombre_completo: "${s.nombre_completo}")`);
+        }
+        if (diputadosSinSpid.length > 0) {
+            console.log(`\n--- Diputados LXII sin fila de spid — revisar a mano ---`);
+            for (const d of diputadosSinSpid)
+                console.log(`  ${d.nombres} ${d.apaterno} ${d.amaterno}`);
+        }
+        if (commit) {
+            for (const m of matches) {
+                yield diputado_1.default.update({ nombre_captura: m.nombre_db }, { where: { id: m.diputado.id } });
+            }
+            console.log(`\n✔ nombre_captura poblado para ${matches.length} diputados.`);
+        }
+        else {
+            console.log(`\nCorre con --commit para escribir los ${matches.length} matches exactos.`);
+        }
+        process.exit(0);
+    });
+}
+main().catch((err) => {
+    console.error('✖ Error:', err);
+    process.exit(1);
+});

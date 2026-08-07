@@ -27,6 +27,7 @@ const diputado_1 = __importDefault(require("../routes/diputado"));
 const aliasDiputado_1 = __importDefault(require("../routes/aliasDiputado"));
 const proyeccion_1 = __importDefault(require("../routes/proyeccion"));
 const transcripcion_1 = __importDefault(require("../routes/transcripcion"));
+const capturadora_1 = __importDefault(require("../routes/capturadora"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -396,6 +397,7 @@ class Server {
         this.app.use(aliasDiputado_1.default);
         this.app.use(proyeccion_1.default);
         this.app.use(transcripcion_1.default);
+        this.app.use(capturadora_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -463,6 +465,7 @@ class Server {
                 '/api/diputado/crear-cuentas',
                 '/api/inteligencia/',
                 '/api/transcripcion/linea', // webhook del transcriptor (sin JWT)
+                '/api/capturadora/voto', // webhook de la capturadora de votos (sin JWT)
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

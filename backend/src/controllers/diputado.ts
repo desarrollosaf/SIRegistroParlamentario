@@ -163,6 +163,7 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
                 id_diputado: diputadoId,
                 id_agenda,
+                sentido: 1,
             });
         }
 

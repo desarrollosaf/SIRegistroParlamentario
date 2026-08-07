@@ -73,6 +73,24 @@ export class SocketService {
     this.socket?.off('asistencia-terminada');
   }
 
+  // Un voto/asistencia individual cambió — para actualizar el tablero al vuelo
+  // sin recargar la lista completa (reemplaza el polling cada 3s).
+  onVotoRegistrado(cb: (data: { id_diputado: string; sentido_voto: number; id?: string }) => void): void {
+    this.socket?.on('voto-registrado', cb);
+  }
+
+  offVotoRegistrado(): void {
+    this.socket?.off('voto-registrado');
+  }
+
+  onAsistenciaRegistrada(cb: (data: { id_diputado: string; id_agenda: string; sentido?: number }) => void): void {
+    this.socket?.on('asistencia-registrada', cb);
+  }
+
+  offAsistenciaRegistrada(): void {
+    this.socket?.off('asistencia-registrada');
+  }
+
   onProyeccionIniciada(cb: (params: Record<string, string>) => void): void {
     this.socket?.on('proyeccion-iniciada', cb);
   }
