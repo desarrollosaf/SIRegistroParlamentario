@@ -91,6 +91,24 @@ export class SocketService {
     this.socket?.off('asistencia-registrada');
   }
 
+  // Botones "marcar todos" (admin) — afecta a todos los diputados a la vez,
+  // así que el tablero recarga completo en vez de actualizar uno por uno.
+  onVotosActualizadosMasivo(cb: (data: { sentido: number }) => void): void {
+    this.socket?.on('votos-actualizados-masivo', cb);
+  }
+
+  offVotosActualizadosMasivo(): void {
+    this.socket?.off('votos-actualizados-masivo');
+  }
+
+  onAsistenciasActualizadasMasivo(cb: (data: { sentido: number }) => void): void {
+    this.socket?.on('asistencias-actualizadas-masivo', cb);
+  }
+
+  offAsistenciasActualizadasMasivo(): void {
+    this.socket?.off('asistencias-actualizadas-masivo');
+  }
+
   onProyeccionIniciada(cb: (params: Record<string, string>) => void): void {
     this.socket?.on('proyeccion-iniciada', cb);
   }

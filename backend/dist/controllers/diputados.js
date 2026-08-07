@@ -140,6 +140,10 @@ const actualizartodos = (req, res) => __awaiter(void 0, void 0, void 0, function
                 id_agenda: body.id,
             },
         });
+        if (body.idComision) {
+            const io = req.app.get('io');
+            io === null || io === void 0 ? void 0 : io.to(`proyeccion-${body.idComision}`).emit('asistencias-actualizadas-masivo', { sentido: nuevoSentido });
+        }
         return res.status(200).json({
             msg: "Actualizados correctamente",
             estatus: 200,
@@ -220,6 +224,10 @@ const actvototodos = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             return res.status(404).json({
                 msg: "No se encontraron votos para actualizar",
             });
+        }
+        if (body.idComision) {
+            const io = req.app.get('io');
+            io === null || io === void 0 ? void 0 : io.to(`proyeccion-${body.idComision}`).emit('votos-actualizados-masivo', { sentido: nuevoSentido });
         }
         return res.status(200).json({
             msg: "Voto(s) actualizado(s) correctamente",

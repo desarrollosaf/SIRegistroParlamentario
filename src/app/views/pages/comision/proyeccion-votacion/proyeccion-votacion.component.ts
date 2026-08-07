@@ -82,6 +82,8 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this._socketService.offAsistenciaTerminada();
     this._socketService.offVotoRegistrado();
     this._socketService.offAsistenciaRegistrada();
+    this._socketService.offVotosActualizadosMasivo();
+    this._socketService.offAsistenciasActualizadasMasivo();
     this._socketService.offProyeccionIniciada();
     this._socketService.offContenidoProyectado();
     this._socketService.offContenidoLimpiado();
@@ -115,6 +117,17 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       // El auto-registro del diputado siempre es sentido=1 (ASISTENCIA); el
       // admin puede mandar 0/2/3. Si no viene, asumimos 1 por compatibilidad.
       this.actualizarSentidoLocal(data.id_diputado, data.sentido ?? 1);
+    });
+
+    // Botones "marcar todos" (admin): afecta a todos a la vez, se recarga completo.
+    this._socketService.onVotosActualizadosMasivo(() => {
+      if (this.modo !== 'votacion') return;
+      this.cargarDatos();
+    });
+
+    this._socketService.onAsistenciasActualizadasMasivo(() => {
+      if (this.modo !== 'asistencia') return;
+      this.cargarDatos();
     });
 
     this._socketService.onProyeccionIniciada((params) => {

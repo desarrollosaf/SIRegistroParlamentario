@@ -1253,7 +1253,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     const datos = {
       id: this.idEvento,
-      sentido: sentido
+      sentido: sentido,
+      idComision: this.idComisionRuta
     }
 
     console.log(datos);
@@ -3189,7 +3190,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const datos = {
       idpunto: this.puntoSeleccionadoVotacion,
       idReserva: this.reservaPuntoSeleccionadoVotacion || null,
-      sentido: sentido
+      sentido: sentido,
+      idComision: this.idComisionRuta
     }
 
     console.log(datos);
