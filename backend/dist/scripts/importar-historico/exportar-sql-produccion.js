@@ -63,8 +63,11 @@ function main() {
         lineas.push('-- Aplicar dentro de una transacción; hacer respaldo antes.');
         lineas.push('START TRANSACTION;');
         lineas.push('');
-        // 1) inciativas_puntos_ordens
-        const inis = yield inciativas_puntos_ordens_1.default.findAll({ where: { folio_historico: { [sequelize_1.Op.ne]: null } } });
+        // 1) inciativas_puntos_ordens (incluye folio_historico no nulo -las del
+        // Excel- y tipo 2/3 -Minutas/Puntos de Acuerdo del backup, sin folio-)
+        const inis = yield inciativas_puntos_ordens_1.default.findAll({
+            where: { [sequelize_1.Op.or]: [{ folio_historico: { [sequelize_1.Op.ne]: null } }, { tipo: { [sequelize_1.Op.in]: [2, 3] } }] },
+        });
         let nuevas = 0, actualizadas = 0;
         const idsNuevas = new Set();
         lineas.push('-- === inciativas_puntos_ordens ===');
@@ -73,7 +76,7 @@ function main() {
             if (esNueva) {
                 idsNuevas.add(i.id);
                 nuevas++;
-                lineas.push(`INSERT INTO inciativas_puntos_ordens (id, id_punto, id_sap, id_evento, iniciativa, tipo, fecha_votacion, status, expediente, path_doc, precluida, publico, folio_historico, folios_agrupados, createdAt, updatedAt, deletedAt) VALUES (${esc(i.id)}, ${esc(i.id_punto)}, ${esc(i.id_sap)}, ${esc(i.id_evento)}, ${esc(i.iniciativa)}, ${esc(i.tipo)}, ${esc(i.fecha_votacion)}, ${esc(i.status)}, ${esc(i.expediente)}, ${esc(i.path_doc)}, ${esc(i.precluida)}, ${esc(i.publico)}, ${esc(i.folio_historico)}, ${esc(i.folios_agrupados)}, ${esc(i.createdAt)}, ${esc(i.updatedAt)}, ${esc(i.deletedAt)});`);
+                lineas.push(`INSERT INTO inciativas_puntos_ordens (id, id_punto, id_sap, id_evento, iniciativa, materia, tipo, fecha_votacion, status, expediente, path_doc, precluida, publico, folio_historico, folios_agrupados, createdAt, updatedAt, deletedAt) VALUES (${esc(i.id)}, ${esc(i.id_punto)}, ${esc(i.id_sap)}, ${esc(i.id_evento)}, ${esc(i.iniciativa)}, ${esc(i.materia)}, ${esc(i.tipo)}, ${esc(i.fecha_votacion)}, ${esc(i.status)}, ${esc(i.expediente)}, ${esc(i.path_doc)}, ${esc(i.precluida)}, ${esc(i.publico)}, ${esc(i.folio_historico)}, ${esc(i.folios_agrupados)}, ${esc(i.createdAt)}, ${esc(i.updatedAt)}, ${esc(i.deletedAt)});`);
             }
             else {
                 actualizadas++;

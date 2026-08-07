@@ -223,7 +223,7 @@ const getPresentantesDePunto = (
 
 const obtenerIniciativasBase = async () =>
   IniciativaPuntoOrden.findAll({
-    attributes: ["id","iniciativa","createdAt","id_punto","expediente","precluida","tipo", "path_doc"],
+    attributes: ["id","iniciativa","materia","createdAt","id_punto","expediente","precluida","tipo", "path_doc"],
     include: [
       {
         model: PuntosOrden, as: "punto",
@@ -268,7 +268,7 @@ const obtenerIniciativasBase = async () =>
       }
     ],
     where: { publico: 1 },
-    order: [["createdAt","ASC"]]
+    order: [[{ model: Agenda, as: "evento" }, "fecha", "DESC"]]
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -476,7 +476,7 @@ export const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
       autor:                  normalizarTexto(proponentesString),
       autor_detalle:          normalizarTexto(presentaString),
       iniciativa:             normalizarTexto(data.iniciativa),
-      materia:                normalizarTexto(data.punto?.punto),
+      materia:                normalizarTexto(data.materia || data.punto?.punto),
       presentac:              formatearFechaCorta(fechaEventoRaw),
       fecha_evento_raw:       fechaEventoRaw,
       comisiones:             normalizarTexto(comisionesTurnado || comisionesAnfitrion),

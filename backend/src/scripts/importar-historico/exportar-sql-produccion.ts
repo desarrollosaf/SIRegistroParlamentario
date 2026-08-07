@@ -66,7 +66,7 @@ async function main() {
       idsNuevas.add(i.id);
       nuevas++;
       lineas.push(
-        `INSERT INTO inciativas_puntos_ordens (id, id_punto, id_sap, id_evento, iniciativa, tipo, fecha_votacion, status, expediente, path_doc, precluida, publico, folio_historico, folios_agrupados, createdAt, updatedAt, deletedAt) VALUES (${esc(i.id)}, ${esc(i.id_punto)}, ${esc(i.id_sap)}, ${esc(i.id_evento)}, ${esc(i.iniciativa)}, ${esc(i.tipo)}, ${esc(i.fecha_votacion)}, ${esc(i.status)}, ${esc(i.expediente)}, ${esc(i.path_doc)}, ${esc(i.precluida)}, ${esc(i.publico)}, ${esc(i.folio_historico)}, ${esc(i.folios_agrupados)}, ${esc(i.createdAt)}, ${esc(i.updatedAt)}, ${esc(i.deletedAt)});`
+        `INSERT INTO inciativas_puntos_ordens (id, id_punto, id_sap, id_evento, iniciativa, materia, tipo, fecha_votacion, status, expediente, path_doc, precluida, publico, folio_historico, folios_agrupados, createdAt, updatedAt, deletedAt) VALUES (${esc(i.id)}, ${esc(i.id_punto)}, ${esc(i.id_sap)}, ${esc(i.id_evento)}, ${esc(i.iniciativa)}, ${esc(i.materia)}, ${esc(i.tipo)}, ${esc(i.fecha_votacion)}, ${esc(i.status)}, ${esc(i.expediente)}, ${esc(i.path_doc)}, ${esc(i.precluida)}, ${esc(i.publico)}, ${esc(i.folio_historico)}, ${esc(i.folios_agrupados)}, ${esc(i.createdAt)}, ${esc(i.updatedAt)}, ${esc(i.deletedAt)});`
       );
     } else {
       actualizadas++;
