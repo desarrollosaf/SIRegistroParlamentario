@@ -224,7 +224,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
             }
         ],
         where: { publico: 1 },
-        order: [[{ model: agendas_1.default, as: "evento" }, "fecha", "DESC"]]
+        order: [[{ model: agendas_1.default, as: "evento" }, "fecha", "ASC"]]
     });
 });
 // ─────────────────────────────────────────────────────────────────────────────
