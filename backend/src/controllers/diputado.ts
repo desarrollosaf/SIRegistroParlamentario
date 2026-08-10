@@ -15,6 +15,7 @@ import PuntosOrden from '../models/puntos_ordens';
 import AnfitrionAgenda from '../models/anfitrion_agendas';
 import Agenda from '../models/agendas';
 import Sedes from '../models/sedes';
+import TemasPuntosVotos from '../models/temas_puntos_votos';
 
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
@@ -156,8 +157,10 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
         });
 
         // El room lo provee el frontend: es idComisionRuta del admin.
-        // Para comisiones coincide con comision_dip_id; para sesiones plenarias el frontend lo envía explícitamente.
-        const roomId = id_comision || registro.comision_dip_id;
+        // Para comisiones coincide con comision_dip_id; para sesiones plenarias
+        // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
+        // de proyección es directamente el id de la agenda.
+        const roomId = id_comision || registro.comision_dip_id || id_agenda;
         const io = req.app.get('io');
         if (io && roomId) {
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
@@ -237,7 +240,18 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
 
         await votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
 
-        const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
+        // Para sesiones plenarias (comision_dip_id es NULL y la app no manda id_comision)
+        // la sala de proyección es el id de la agenda, resuelto vía el punto/tema votado.
+        let roomIdVoto = id_comision || votoRegistro.id_comision_dip;
+        if (!roomIdVoto) {
+            if (votoRegistro.id_tema_punto_voto) {
+                const tema = await TemasPuntosVotos.findByPk(votoRegistro.id_tema_punto_voto);
+                roomIdVoto = tema?.id_evento || null;
+            } else if (votoRegistro.id_punto) {
+                const puntoVotado = await PuntosOrden.findByPk(votoRegistro.id_punto);
+                roomIdVoto = (puntoVotado as any)?.id_evento || null;
+            }
+        }
         const io = req.app.get('io');
         if (io && roomIdVoto) {
             io.to(`proyeccion-${roomIdVoto}`).emit('voto-registrado', {
