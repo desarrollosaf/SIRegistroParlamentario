@@ -51,6 +51,29 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private segPlanoActivo: boolean = false;
   private readonly SEGUNDO_PLANO_INTERVAL_MS = 5000;
 
+  // IDs (de asistencia/voto) que se acaban de marcar a mano — el polling de
+  // fondo no debe pisar ese valor con datos viejos mientras el cambio todavía
+  // no se refleja en el servidor (evita el "regresa a pendiente solo").
+  private escriturasPendientes = new Set<number>();
+
+  private marcarEscrituraPendiente(id: number): void {
+    this.escriturasPendientes.add(id);
+    setTimeout(() => this.escriturasPendientes.delete(id), this.SEGUNDO_PLANO_INTERVAL_MS + 2000);
+  }
+
+  /** Antes de pintar datos frescos del polling, conserva el valor local de
+   *  cualquier item que se acaba de marcar a mano y todavía no se confirma. */
+  private preservarEscriturasPendientes(nuevos: any[], actuales: any[], campo: string): any[] {
+    if (this.escriturasPendientes.size === 0) return nuevos;
+    return nuevos.map(item => {
+      if (this.escriturasPendientes.has(item.id)) {
+        const actual = actuales.find(a => a.id === item.id);
+        if (actual) return { ...item, [campo]: actual[campo] };
+      }
+      return item;
+    });
+  }
+
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
   @ViewChild('xlModalT') xlModalT!: TemplateRef<any>;
   @ViewChild('xlModalI') xlModalI!: TemplateRef<any>;
@@ -964,6 +987,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             const primerElemento = nuevasComisiones[0];
 
             if (primerElemento.comision_id && primerElemento.integrantes) {
+              if (this.escriturasPendientes.size > 0) {
+                for (const comision of nuevasComisiones) {
+                  const actual = this.listaComisiones.find(c => c.id === comision.comision_id);
+                  comision.integrantes = this.preservarEscriturasPendientes(
+                    comision.integrantes || [], actual?.integrantes || [], 'sentido_voto'
+                  );
+                }
+              }
+
               if (this.hayaCambiosEnComisiones(nuevasComisiones)) {
                 console.log('Comisiones actualizadas desde el servidor');
 
@@ -987,7 +1019,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             }
           }
         } else {
-          const nuevosIntegrantes = response.integrantes || [];
+          const nuevosIntegrantes = this.preservarEscriturasPendientes(
+            response.integrantes || [], this.integrantes, 'sentido_voto'
+          );
           if (this.hayaCambiosEnAsistencia(nuevosIntegrantes)) {
             console.log('Asistencia actualizada desde el servidor');
             this.integrantes = nuevosIntegrantes;
@@ -1062,6 +1096,15 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             const primerElemento = nuevasComisionesVotacion[0];
 
             if (primerElemento.comision_id && primerElemento.integrantes) {
+              if (this.escriturasPendientes.size > 0) {
+                for (const comision of nuevasComisionesVotacion) {
+                  const actual = this.listaComisionesVotacion.find(c => c.id === comision.comision_id);
+                  comision.integrantes = this.preservarEscriturasPendientes(
+                    comision.integrantes || [], actual?.integrantes || [], 'sentido'
+                  );
+                }
+              }
+
               if (this.hayaCambiosEnComisionesVotacion(nuevasComisionesVotacion)) {
                 console.log('Votaciones de comisiones actualizadas desde el servidor');
 
@@ -1085,7 +1128,9 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
             }
           }
         } else {
-          const nuevosVotantes = response.integrantes || [];
+          const nuevosVotantes = this.preservarEscriturasPendientes(
+            response.integrantes || [], this.votantes, 'sentido'
+          );
           if (this.hayaCambiosEnVotacion(nuevosVotantes)) {
             console.log('Votaciones actualizadas desde el servidor');
             this.votantes = nuevosVotantes;
@@ -1207,6 +1252,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   marcarAsistenciaComision(integrante: any, sentido: number, comisionId: string): void {
     integrante.sentido_voto = sentido;
+    this.marcarEscrituraPendiente(integrante.id);
     this.guardarSentidoVoto(integrante.id, sentido, this.idComisionRuta);
     this.cdr.detectChanges();
   }
@@ -1242,6 +1288,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   marcarAsistencia(integrante: any, sentido: number): void {
     integrante.sentido_voto = sentido;
+    this.marcarEscrituraPendiente(integrante.id);
     this.guardarSentidoVoto(integrante.id, sentido, this.idComisionRuta);
   }
 
@@ -1266,6 +1313,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.listaComisiones.forEach(comision => {
           comision.integrantes.forEach((integrante: any) => {
             integrante.sentido_voto = sentido;
+            this.marcarEscrituraPendiente(integrante.id);
           });
           const mitad = Math.ceil(comision.integrantes.length / 2);
           comision.columna1 = comision.integrantes.slice(0, mitad);
@@ -1274,6 +1322,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       } else {
         this.integrantes.forEach(integrante => {
           integrante.sentido_voto = sentido;
+          this.marcarEscrituraPendiente(integrante.id);
         });
         this.dividirEnColumnas();
       }
@@ -3203,6 +3252,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
         this.listaComisionesVotacion.forEach(comision => {
           comision.integrantes.forEach((integrante: any) => {
             integrante.sentido = sentido;
+            this.marcarEscrituraPendiente(integrante.id);
           });
           const mitad = Math.ceil(comision.integrantes.length / 2);
           comision.columna1 = comision.integrantes.slice(0, mitad);
@@ -3211,6 +3261,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       } else {
         this.votantes.forEach(votante => {
           votante.sentido = sentido;
+          this.marcarEscrituraPendiente(votante.id);
         });
         this.dividirEnColumnasVotacion();
       }
@@ -3247,6 +3298,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   marcarVotacion(votante: Votante, sentido: number): void {
     votante.sentido = sentido;
+    this.marcarEscrituraPendiente(votante.id);
 
     const datos = {
       idpunto: this.idpto,
@@ -3304,6 +3356,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   marcarVotacionComision(integrante: any, sentido: number, comisionId: string): void {
     integrante.sentido = sentido;
+    this.marcarEscrituraPendiente(integrante.id);
     const datos = {
       idpunto: this.idpto,
       id: integrante.id,
@@ -3486,13 +3539,13 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             if (this.esComision && this.listaComisionesVotacion.length > 0) {
               this.listaComisionesVotacion.forEach(comision => {
-                comision.integrantes.forEach((v: any) => v.sentido = 0);
+                comision.integrantes.forEach((v: any) => { v.sentido = 0; this.marcarEscrituraPendiente(v.id); });
                 const mitad = Math.ceil(comision.integrantes.length / 2);
                 comision.columna1 = comision.integrantes.slice(0, mitad);
                 comision.columna2 = comision.integrantes.slice(mitad);
               });
             } else {
-              this.votantes.forEach(v => v.sentido = 0);
+              this.votantes.forEach(v => { v.sentido = 0; this.marcarEscrituraPendiente(v.id); });
               this.dividirEnColumnasVotacion();
             }
             this.cdr.detectChanges();
