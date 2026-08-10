@@ -538,36 +538,37 @@ export const getComisionInfo = async (req: Request, res: Response): Promise<any>
         const now = new Date();
         const fechaHoy = now.toISOString().slice(0, 10);
 
-        // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
-        const [proximos]: any = await sequelizeSAF.query(`
-            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
-            FROM agendas a
-            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
-            WHERE aa.autor_id = :idComision
-              AND a.deleted_at IS NULL
-              AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
-            ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
-            LIMIT 5
-        `, { replacements: { idComision, fechaHoy } });
-
-        // Eventos pasados (últimas 5 sesiones)
-        const [pasados]: any = await sequelizeSAF.query(`
-            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
-            FROM agendas a
-            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
-            WHERE aa.autor_id = :idComision
-              AND a.deleted_at IS NULL
-              AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
-            ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
-            LIMIT 5
-        `, { replacements: { idComision, fechaHoy } });
-
-        // Integrantes con nombre y cargo
-        const integrantesRaw = await IntegranteComision.findAll({
-            where: { comision_id: idComision, fecha_fin: null },
-            include: [{ model: TipoCargoComision, as: 'tipo_cargo', attributes: ['valor'] }],
-            order: [['orden', 'ASC']],
-        }) as any[];
+        // Próximos, pasados e integrantes son consultas independientes entre sí — en paralelo.
+        const [[proximos], [pasados], integrantesRaw] = await Promise.all([
+            // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
+            sequelizeSAF.query(`
+                SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+                FROM agendas a
+                INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+                WHERE aa.autor_id = :idComision
+                  AND a.deleted_at IS NULL
+                  AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
+                ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
+                LIMIT 5
+            `, { replacements: { idComision, fechaHoy } }) as any,
+            // Eventos pasados (últimas 5 sesiones)
+            sequelizeSAF.query(`
+                SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+                FROM agendas a
+                INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+                WHERE aa.autor_id = :idComision
+                  AND a.deleted_at IS NULL
+                  AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
+                ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
+                LIMIT 5
+            `, { replacements: { idComision, fechaHoy } }) as any,
+            // Integrantes con nombre y cargo
+            IntegranteComision.findAll({
+                where: { comision_id: idComision, fecha_fin: null },
+                include: [{ model: TipoCargoComision, as: 'tipo_cargo', attributes: ['valor'] }],
+                order: [['orden', 'ASC']],
+            }) as any,
+        ]);
 
         const integrantes = await Promise.all(integrantesRaw.map(async (ic: any) => {
             const il = await IntegranteLegislatura.findByPk(ic.integrante_legislatura_id, { raw: true }) as any;

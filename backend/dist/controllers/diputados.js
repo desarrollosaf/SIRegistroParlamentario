@@ -1041,35 +1041,38 @@ exports.eliminarEstudio = eliminarEstudio;
 const terminarvotacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const iniestudio = yield iniciativas_estudio_1.default.findOne({
-            where: { punto_destino_id: id },
-        });
+        // Las tres consultas son independientes entre sí — corren en paralelo.
+        const [iniestudio, punto, votos] = yield Promise.all([
+            iniciativas_estudio_1.default.findOne({
+                where: { punto_destino_id: id },
+            }),
+            puntos_ordens_1.default.findOne({
+                where: { id: id },
+                include: [
+                    {
+                        model: agendas_1.default,
+                        as: 'evento',
+                        include: [
+                            {
+                                model: tipo_eventos_1.default,
+                                as: 'tipoevento',
+                                attributes: ['nombre']
+                            }
+                        ]
+                    }
+                ]
+            }),
+            votos_punto_1.default.findAll({
+                where: {
+                    id_punto: id,
+                    id_tema_punto_voto: null
+                }
+            }),
+        ]);
         console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio);
         if (!iniestudio) {
             return res.status(404).json({ message: "No tiene ninguna iniciativa" });
         }
-        const punto = yield puntos_ordens_1.default.findOne({
-            where: { id: id },
-            include: [
-                {
-                    model: agendas_1.default,
-                    as: 'evento',
-                    include: [
-                        {
-                            model: tipo_eventos_1.default,
-                            as: 'tipoevento',
-                            attributes: ['nombre']
-                        }
-                    ]
-                }
-            ]
-        });
-        const votos = yield votos_punto_1.default.findAll({
-            where: {
-                id_punto: id,
-                id_tema_punto_voto: null
-            }
-        });
         if (votos.length > 0 && punto) {
             let condicion;
             const totalVotos = votos.length;

@@ -1205,38 +1205,39 @@ export const terminarvotacion = async (req: Request, res: Response): Promise<any
     try {
       const { id } = req.params;
       
-      const iniestudio = await IniciativaEstudio.findOne({
-        where: { punto_destino_id: id },
-      })
+      // Las tres consultas son independientes entre sí — corren en paralelo.
+      const [iniestudio, punto, votos] = await Promise.all([
+        IniciativaEstudio.findOne({
+          where: { punto_destino_id: id },
+        }),
+        PuntosOrden.findOne({
+          where: { id: id },
+          include: [
+             {
+                model: Agenda,
+                as: 'evento',
+                include: [
+                  {
+                    model: TipoEventos,
+                    as: 'tipoevento',
+                    attributes: ['nombre']
+                  }
+                ]
+              }
+          ]
+        }) as any,
+        VotosPunto.findAll({
+          where: {
+            id_punto: id,
+            id_tema_punto_voto: null
+          }
+        }),
+      ]);
       console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio)
       if (!iniestudio) {
         return res.status(404).json({ message: "No tiene ninguna iniciativa" });
       }
 
-      const punto = await PuntosOrden.findOne({
-        where: { id: id },
-        include: [
-           {
-              model: Agenda,
-              as: 'evento',
-              include: [
-                {
-                  model: TipoEventos,
-                  as: 'tipoevento', 
-                  attributes: ['nombre']
-                }
-              ]
-            }
-        ]
-      }) as any; 
-      
-      const votos = await VotosPunto.findAll({
-        where: { 
-          id_punto: id,
-          id_tema_punto_voto: null
-        }
-      })
-      
       if(votos.length > 0 && punto){
         let condicion: number;
         const totalVotos = votos.length;

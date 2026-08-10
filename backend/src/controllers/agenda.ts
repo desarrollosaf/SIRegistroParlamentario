@@ -795,38 +795,37 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
 
 export const catalogos = async (req: Request, res: Response): Promise<any> => {
     try {
-        const proponentes = await Proponentes.findAll({
-          attributes: ['id', 'valor'],
-          raw: true,
-        });
-
-        const partidos = await Partidos.findAll({
-          attributes: ['id', 'siglas'],
-          raw: true,
-        });
-
-        const comisiones = await Comision.findAll({
-          attributes: ['id', 'nombre'],
-          raw: true,
-        });
-        
-        
-        const dictamenesRaw = await PuntosOrden.findAll({
-          where: { id_dictamen: 0 },
-          include: [
-            {
-              model: IniciativaEstudio,
-              as: 'puntosestudiados',
-              where: { status: 2 },
-              attributes: ['id', 'type', 'punto_origen_id'],
-            },
-            {
-              model: Agenda,
-              as: 'evento',
-              attributes: ["fecha","id"]
-            }
-          ]
-        });
+        // Cuatro consultas independientes entre sí — corren en paralelo.
+        const [proponentes, partidos, comisiones, dictamenesRaw] = await Promise.all([
+          Proponentes.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+          }),
+          Partidos.findAll({
+            attributes: ['id', 'siglas'],
+            raw: true,
+          }),
+          Comision.findAll({
+            attributes: ['id', 'nombre'],
+            raw: true,
+          }),
+          PuntosOrden.findAll({
+            where: { id_dictamen: 0 },
+            include: [
+              {
+                model: IniciativaEstudio,
+                as: 'puntosestudiados',
+                where: { status: 2 },
+                attributes: ['id', 'type', 'punto_origen_id'],
+              },
+              {
+                model: Agenda,
+                as: 'evento',
+                attributes: ["fecha","id"]
+              }
+            ]
+          }),
+        ]);
 
         // Recolectar punto_origen_id por tipo para hacer queries en batch
         const origenIdsType1 = new Set<string>();
@@ -838,20 +837,22 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           }
         }
 
-        // type=1: iniciativas directo del punto origen
-        const iniType1Raw = origenIdsType1.size > 0
-          ? await IniciativaPuntoOrden.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
-          : [];
+        // type=1 (punto origen directo) y type=2 (via ExpedienteEstudiosPuntos) son
+        // independientes entre sí — corren en paralelo.
+        const [iniType1Raw, expedPuntos] = await Promise.all([
+          origenIdsType1.size > 0
+            ? IniciativaPuntoOrden.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
+            : Promise.resolve([] as any[]),
+          origenIdsType2.size > 0
+            ? ExpedienteEstudiosPuntos.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
+            : Promise.resolve([] as any[]),
+        ]);
         const iniByPunto1 = new Map<string, string[]>();
         for (const ini of iniType1Raw as any[]) {
           if (!iniByPunto1.has(ini.id_punto)) iniByPunto1.set(ini.id_punto, []);
           iniByPunto1.get(ini.id_punto)!.push(ini.id);
         }
 
-        // type=2: buscar los puntos del expediente via ExpedienteEstudiosPuntos
-        const expedPuntos = origenIdsType2.size > 0
-          ? await ExpedienteEstudiosPuntos.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
-          : [];
         const sesionIdsByExpediente = new Map<string, number[]>();
         for (const ep of expedPuntos as any[]) {
           const key = String(ep.expediente_id);
@@ -905,9 +906,16 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
 
 
         
-        const legislatura = await Legislatura.findOne({
-          order: [["fecha_inicio", "DESC"]],
-        });
+        // legislatura y tipointer no dependen entre sí — en paralelo.
+        const [legislatura, tipointer] = await Promise.all([
+          Legislatura.findOne({
+            order: [["fecha_inicio", "DESC"]],
+          }),
+          TipoIntervencion.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+          }),
+        ]);
 
         let diputadosArray: { id: string; nombre: string }[] = [];
 
@@ -929,11 +937,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
               nombre: `${d.diputado.nombres ?? ""} ${d.diputado.apaterno ?? ""} ${d.diputado.amaterno ?? ""}`.trim(),
             }));
         }
-
-        const tipointer = await TipoIntervencion.findAll({
-            attributes: ['id', 'valor'],
-            raw: true,
-          });
 
 
         return res.json({
@@ -1590,7 +1593,10 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
-    const puntos = await Promise.all(puntosRaw.map(async punto => {
+    // El procesamiento de puntosRaw y la consulta de selects son independientes
+    // entre sí — corren en paralelo.
+    const [puntos, selects] = await Promise.all([
+    Promise.all(puntosRaw.map(async punto => {
       const data = punto.toJSON();
 
       const turnosNormalizados =
@@ -1669,14 +1675,17 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       let dictamenes = null;
 
       const buildLabelPunto = async (id: number) => {
-        const p = await PuntosOrden.findOne({
-          where: { id },
-          attributes: ["id", "punto"],
-          include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
-        }) as any;
-        const inis = await IniciativaPuntoOrden.findAll({
-          where: { id_punto: id }, attributes: ['id'], raw: true
-        });
+        // Ninguna depende de la otra, corren en paralelo.
+        const [p, inis] = await Promise.all([
+          PuntosOrden.findOne({
+            where: { id },
+            attributes: ["id", "punto"],
+            include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
+          }) as any,
+          IniciativaPuntoOrden.findAll({
+            where: { id_punto: id }, attributes: ['id'], raw: true
+          }),
+        ]);
         const d = p?.toJSON();
         const fecha = d?.evento?.fecha ? new Date(d.evento.fecha).toISOString().split('T')[0] : '';
         const iniciativasStr = inis.map((i: any) => i.id).join(' | ');
@@ -1723,14 +1732,13 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
       return {
         ...data,
         turnocomision: turnosExpandidos,
-        iniciativas: iniciativasConInfo,  
+        iniciativas: iniciativasConInfo,
         reservas:      reservasConInfo,
         puntosestudiado,
         dictamenes
       };
-    }));
-
-    const selects = await IniciativaPuntoOrden.findAll({
+    })),
+    IniciativaPuntoOrden.findAll({
       where: {
         id_evento: id,
         id_punto: {
@@ -1738,7 +1746,8 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         }
       },
       attributes: ["id", "iniciativa"]
-    });
+    }),
+    ]);
 
     return res.status(201).json({
       message: "Se encontraron registros",
@@ -1884,34 +1893,36 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
       ],
     });
 
-    const reservas = await Promise.all(
-      reservasRaw.map(async (reserva: any) => {
-        const data = reserva.toJSON();
-        const { proponentesString, presentaString } = data.presentan?.length
-          ? await procesarPresentan(data.presentan)
-          : { proponentesString: '', presentaString: '' };
+    // El armado de reservas y la consulta de iniciativas son independientes
+    // entre sí — corren en paralelo.
+    const [reservas, iniciativa] = await Promise.all([
+      Promise.all(
+        reservasRaw.map(async (reserva: any) => {
+          const data = reserva.toJSON();
+          const { proponentesString, presentaString } = data.presentan?.length
+            ? await procesarPresentan(data.presentan)
+            : { proponentesString: '', presentaString: '' };
 
-        const _proponentesIds = [...new Set((data.presentan || []).map((p: any) => p.id_tipo_presenta).filter(Boolean))];
-        const _presentanIds = (data.presentan || [])
-          .filter((p: any) => p.id_tipo_presenta && p.id_presenta)
-          .map((p: any) => `${p.id_tipo_presenta}/${p.id_presenta}`);
+          const _proponentesIds = [...new Set((data.presentan || []).map((p: any) => p.id_tipo_presenta).filter(Boolean))];
+          const _presentanIds = (data.presentan || [])
+            .filter((p: any) => p.id_tipo_presenta && p.id_presenta)
+            .map((p: any) => `${p.id_tipo_presenta}/${p.id_presenta}`);
 
-        return {
-          id:            data.id,
-          tema_votacion: data.tema_votacion,
-          proponente:    proponentesString,
-          presenta:      presentaString,
-          _proponentesIds,
-          _presentanIds,
-        };
-      })
-    );
-
- 
-    const iniciativa = await IniciativaPuntoOrden.findAll({ 
-      where: { id_punto: id },
-      attributes: ["id", "iniciativa"],
-    });
+          return {
+            id:            data.id,
+            tema_votacion: data.tema_votacion,
+            proponente:    proponentesString,
+            presenta:      presentaString,
+            _proponentesIds,
+            _presentanIds,
+          };
+        })
+      ),
+      IniciativaPuntoOrden.findAll({
+        where: { id_punto: id },
+        attributes: ["id", "iniciativa"],
+      }),
+    ]);
 
     return res.status(200).json({
       data: {
@@ -2478,26 +2489,30 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     const body = req.body;
     let tema: string | null;
     let puntoa: string | null;
-    let votos;
-    
+
     if(body.idPunto && body.idReserva) {
       tema = body.idReserva;
       puntoa = null;
-      votos = await VotosPunto.findOne({ where: { id_tema_punto_voto: body.idReserva } });
     } else if (body.idPunto && body.idIniciativa) {
       tema = null;
       puntoa = body.idPunto;
-      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } });
     } else {
       tema = null;
       puntoa = body.idPunto;
-      votos = await VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } });
     }
-    
+
+    // La consulta de votos y la del punto son independientes entre sí — en paralelo.
+    const [votos, punto] = await Promise.all([
+      body.idPunto && body.idReserva
+        ? VotosPunto.findOne({ where: { id_tema_punto_voto: body.idReserva } })
+        : body.idPunto && body.idIniciativa
+        ? VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } })
+        : VotosPunto.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } }),
+      PuntosOrden.findOne({ where: { id: body.idPunto } }),
+    ]);
+
     console.log("tema:", tema, "punto:", puntoa);
-    
-    const punto = await PuntosOrden.findOne({ where: { id: body.idPunto } });
-    
+
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
     }
@@ -2638,22 +2653,25 @@ async function obtenerResultadosVotacionOptimizado(
     }
 
   const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-  const diputados = await Diputado.findAll({
-    where: { id: diputadoIds },
-    attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
-    raw: true,
-    paranoid: false,
-  });
+  const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
+
+  // Ninguna depende de la otra, corren en paralelo.
+  const [diputados, partidos] = await Promise.all([
+    Diputado.findAll({
+      where: { id: diputadoIds },
+      attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
+      raw: true,
+      paranoid: false,
+    }),
+    Partidos.findAll({
+      where: { id: partidoIds },
+      attributes: ["id", "siglas"],
+      raw: true,
+    }),
+  ]);
   const diputadosMap = new Map(
     diputados.map(d => [d.id, d])
   );
-
-  const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-  const partidos = await Partidos.findAll({
-    where: { id: partidoIds },
-    attributes: ["id", "siglas"],
-    raw: true,
-  });
   const partidosMap = new Map(
     partidos.map(p => [p.id, p])
   );
@@ -2665,30 +2683,37 @@ async function obtenerResultadosVotacionOptimizado(
     const comisionIds = votosRaw
       .map(v => v.id_comision_dip)
       .filter(Boolean);
-    
+
+    const cargoIds = votosRaw
+      .map(v => v.id_cargo_dip)
+      .filter(Boolean);
+
+    // Ninguna depende de la otra, corren en paralelo.
+    const [comisiones, cargos] = await Promise.all([
+      comisionIds.length > 0
+        ? Comision.findAll({
+            where: { id: comisionIds },
+            attributes: ["id", "nombre", "importancia"],
+            raw: true,
+          })
+        : Promise.resolve([] as any[]),
+      cargoIds.length > 0
+        ? TipoCargoComision.findAll({
+            where: { id: cargoIds },
+            attributes: ["id", "valor", "nivel"],
+            raw: true,
+          })
+        : Promise.resolve([] as any[]),
+    ]);
+
     if (comisionIds.length > 0) {
-      const comisiones = await Comision.findAll({
-        where: { id: comisionIds },
-        attributes: ["id", "nombre", "importancia"],
-        raw: true,
-      });
       comisionesMap = new Map(
         comisiones.map(c => [c.id, c])
       );
     }
-
-    const cargoIds = votosRaw  
-      .map(v => v.id_cargo_dip)
-      .filter(Boolean);
-    
     if (cargoIds.length > 0) {
-      const cargos = await TipoCargoComision.findAll({
-        where: { id: cargoIds },
-        attributes: ["id", "valor", "nivel"],
-        raw: true,
-      });
       cargosMap = new Map(
-        cargos.map(c => [c.id, c] )
+        cargos.map(c => [c.id, c])
       );
     }
   }
@@ -2920,7 +2945,12 @@ export const reiniciarvoto = async (req: Request, res: Response): Promise<any> =
         msg: "No se encontraron votos para reiniciar",
       });
     }
-    
+
+    if (body.idComision) {
+      const io = (req as any).app.get('io');
+      io?.to(`proyeccion-${body.idComision}`).emit('votos-actualizados-masivo', { sentido: 0 });
+    }
+
     return res.status(200).json({
       msg: `${cantidadActualizada} voto(s) reiniciado(s) correctamente a PENDIENTE`,
       estatus: 200,
@@ -2937,105 +2967,76 @@ export const reiniciarvoto = async (req: Request, res: Response): Promise<any> =
 
 export const catalogossave = async (req: Request, res: Response) => {
   try {
-    const sedes = await Sedes.findAll({
-      attributes: ['id', ['sede', 'name']]
-    });
+    interface SelectOption {
+      id: number;
+      name: string;
+    }
 
-    const comisiones = await Comision.findAll({
-      attributes: ['id', ['nombre', 'name']]
-    });
+    // Todas independientes entre sí — corren en paralelo.
+    const [
+      sedes, comisiones, municipios, partidos, tipoAutores, otros, legislatura, tipoevento,
+      idComites, idPermanente, legisla
+    ] = await Promise.all([
+      Sedes.findAll({ attributes: ['id', ['sede', 'name']] }),
+      Comision.findAll({ attributes: ['id', ['nombre', 'name']] }),
+      MunicipiosAg.findAll({ attributes: ['id', ['nombre', 'name']] }),
+      Partidos.findAll({ attributes: ['id', ['nombre', 'name']] }),
+      TipoAutor.findAll({ attributes: ['id', ['valor', 'name']] }),
+      OtrosAutores.findAll({ attributes: ['id', ['valor', 'name']] }),
+      Legislatura.findAll({ attributes: ['id', ['numero', 'name']] }),
+      TipoEventos.findAll({ attributes: ['id', ['nombre', 'name']] }),
+      TipoComisions.findOne({ where: { valor: 'Comités' } }),
+      TipoComisions.findOne({ where: { valor: 'Diputación Permanente' } }),
+      Legislatura.findOne({ order: [["fecha_inicio", "DESC"]] }),
+    ]);
 
-    const municipios = await MunicipiosAg.findAll({
-      attributes: ['id', ['nombre', 'name']],
-    });
-
-    const partidos = await Partidos.findAll({
-      attributes: ['id', ['nombre', 'name']]
-    });
-
-    const tipoAutores = await TipoAutor.findAll({
-      attributes: ['id', ['valor', 'name']]
-    });
-
-    const otros = await OtrosAutores.findAll({
-      attributes: ['id', ['valor', 'name']]
-    });
-
-    const legislatura = await Legislatura.findAll({
-      attributes: ['id', ['numero', 'name']]
-    });
-
-    const tipoevento = await TipoEventos.findAll({
-      attributes: ['id', ['nombre', 'name']]
-    });
-    const idComites = await TipoComisions.findOne({
-      where: { valor: 'Comités' }
-    });
+    // Las tres dependen únicamente de los resultados anteriores, no entre sí — en paralelo.
+    const [comitesRaw, permanenteRaw, diputados] = await Promise.all([
+      idComites
+        ? Comision.findAll({
+            where: { tipo_comision_id: idComites.id },
+            attributes: ['id', ['nombre', 'name']]
+          })
+        : Promise.resolve([] as any[]),
+      idPermanente
+        ? Comision.findAll({
+            where: { tipo_comision_id: idPermanente.id },
+            attributes: ['id', 'nombre']
+          })
+        : Promise.resolve([] as any[]),
+      legisla
+        ? IntegranteLegislatura.findAll({
+            where: { legislatura_id: legisla.id },
+            include: [
+              {
+                model: Diputado,
+                as: "diputado",
+                attributes: ["id", "nombres", "apaterno", "amaterno"],
+              },
+            ],
+          })
+        : Promise.resolve([] as any[]),
+    ]);
 
     let comites: Record<string, string> = {};
-
     if (idComites) {
-      const com = await Comision.findAll({
-        where: { tipo_comision_id: idComites.id },
-        attributes: ['id',['nombre', 'name']]
-      });
-
       comites = Object.fromEntries(
-        com.map(item => [item.id, item.nombre])
+        comitesRaw.map(item => [item.id, item.nombre])
       );
-    }
-
-    const idPermanente = await TipoComisions.findOne({
-      where: { valor: 'Diputación Permanente' }
-    });
-    
-    interface SelectOption {
-      id: number;
-      name: string;
-    }
-
-    interface SelectOption {
-      id: number;
-      name: string;
-    }
-
-    interface SelectOption {
-      id: number;
-      name: string;
     }
 
     let permanente: SelectOption[] = [];
     if (idPermanente) {
-      const dips = await Comision.findAll({
-        where: { tipo_comision_id: idPermanente.id },
-        attributes: ['id', 'nombre']
-      });
-      console.log(dips)
-      permanente = dips.map(item => ({
+      console.log(permanenteRaw)
+      permanente = permanenteRaw.map(item => ({
         id: item.id,
         name: item.nombre
       }));
       console.log('permanente:', permanente)
     }
-      // console.log("holaaa:1",permanente)
-      // return 500;
-    const legisla = await Legislatura.findOne({
-      order: [["fecha_inicio", "DESC"]],
-    });
 
     let diputadosArray: { id: string; name: string }[] = [];
-
     if (legisla) {
-      const diputados = await IntegranteLegislatura.findAll({
-        where: { legislatura_id: legisla.id },
-        include: [
-          {
-            model: Diputado,
-            as: "diputado",
-            attributes: ["id", "nombres", "apaterno", "amaterno"],
-          },
-        ],
-      });
       diputadosArray = diputados
             .filter(d => d.diputado)
             .map(d => ({
@@ -3499,41 +3500,48 @@ export const gestionIntegrantes = async (req: Request, res: Response): Promise<a
 
     const esSesion = evento.tipoevento?.nombre === "Sesión";
 
-    let cargos: any[] = [];
-    let comisiones: any[] = [];
+    // El bloque de cargos/comisiones (solo aplica si no es sesión), partidos y
+    // legislatura son independientes entre sí — corren en paralelo.
+    const [cargosComisiones, partidos, legislatura] = await Promise.all([
+      (async () => {
+        if (esSesion) return { cargos: [] as any[], comisiones: [] as any[] };
 
-    if (!esSesion) {
-      const anfitriones = await AnfitrionAgenda.findAll({
-        where: { agenda_id: evento.id },
-        attributes: ["autor_id"],
-        raw: true
-      });
-
-      const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-
-      if (comisionIds.length > 0) {
-        comisiones = await Comision.findAll({
-          where: { id: comisionIds }, 
-          attributes: ['id', 'nombre'],
-          raw: true,
+        const anfitriones = await AnfitrionAgenda.findAll({
+          where: { agenda_id: evento.id },
+          attributes: ["autor_id"],
+          raw: true
         });
-      }
 
-      cargos = await TipoCargoComision.findAll({
-        attributes: ['id', 'valor', 'nivel'],
-        order: [['nivel', 'ASC']], 
+        const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+
+        const [comisionesRes, cargosRes] = await Promise.all([
+          comisionIds.length > 0
+            ? Comision.findAll({
+                where: { id: comisionIds },
+                attributes: ['id', 'nombre'],
+                raw: true,
+              })
+            : Promise.resolve([] as any[]),
+          TipoCargoComision.findAll({
+            attributes: ['id', 'valor', 'nivel'],
+            order: [['nivel', 'ASC']],
+            raw: true,
+          }),
+        ]);
+
+        return { cargos: cargosRes, comisiones: comisionesRes };
+      })(),
+      Partidos.findAll({
+        attributes: ['id', 'siglas'],
         raw: true,
-      });
-    }
+      }),
+      Legislatura.findOne({
+        order: [["fecha_inicio", "DESC"]],
+      }),
+    ]);
 
-    const partidos = await Partidos.findAll({
-      attributes: ['id', 'siglas'],
-      raw: true,
-    });
-
-    const legislatura = await Legislatura.findOne({
-      order: [["fecha_inicio", "DESC"]],
-    });
+    const cargos = cargosComisiones.cargos;
+    const comisiones = cargosComisiones.comisiones;
 
     let diputadosArray: { id: string; nombre: string }[] = [];
 
@@ -3757,48 +3765,51 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
       return res.status(404).json({ msg: "No hay votos registrados" });
     }
 
-    // Obtener diputados
+    // Obtener diputados y partidos — independientes entre sí, en paralelo.
     const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-    const diputados = await Diputado.findAll({
-      where: { id: diputadoIds },
-      attributes: ["id", "apaterno", "amaterno", "nombres"],
-      raw: true,
-    });
-    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
-
-    // Obtener partidos
     const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-    const partidos = await Partidos.findAll({
-      where: { id: partidoIds },
-      attributes: ["id", "siglas"],
-      raw: true,
-    });
+    const [diputados, partidos] = await Promise.all([
+      Diputado.findAll({
+        where: { id: diputadoIds },
+        attributes: ["id", "apaterno", "amaterno", "nombres"],
+        raw: true,
+      }),
+      Partidos.findAll({
+        where: { id: partidoIds },
+        attributes: ["id", "siglas"],
+        raw: true,
+      }),
+    ]);
+    const diputadosMap = new Map(diputados.map(d => [d.id, d]));
     const partidosMap = new Map(partidos.map(p => [p.id, p]));
 
-    // Obtener comisiones y cargos (solo si es comisión)
+    // Obtener comisiones y cargos (solo si es comisión) — independientes entre sí.
     let comisionesMap = new Map();
     let cargosMap = new Map();
-    
+
     if (!esSesion) {
       const comisionIds = votosRaw.map(v => v.id_comision_dip).filter(Boolean);
-      if (comisionIds.length > 0) {
-        const comisiones = await Comision.findAll({
-          where: { id: comisionIds },
-          attributes: ["id", "nombre", "importancia"],
-          raw: true,
-        });
-        comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-      }
-
       const cargoIds = votosRaw.map(v => v.id_cargo_dip).filter(Boolean);
-      if (cargoIds.length > 0) {
-        const cargos = await TipoCargoComision.findAll({
-          where: { id: cargoIds },
-          attributes: ["id", "valor", "nivel"],
-          raw: true,
-        });
-        cargosMap = new Map(cargos.map(c => [c.id, c]));
-      }
+
+      const [comisiones, cargos] = await Promise.all([
+        comisionIds.length > 0
+          ? Comision.findAll({
+              where: { id: comisionIds },
+              attributes: ["id", "nombre", "importancia"],
+              raw: true,
+            })
+          : Promise.resolve([] as any[]),
+        cargoIds.length > 0
+          ? TipoCargoComision.findAll({
+              where: { id: cargoIds },
+              attributes: ["id", "valor", "nivel"],
+              raw: true,
+            })
+          : Promise.resolve([] as any[]),
+      ]);
+
+      if (comisionIds.length > 0) comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+      if (cargoIds.length > 0) cargosMap = new Map(cargos.map(c => [c.id, c]));
     }
 
     const getSentidoTexto = (sentido: number): string => {

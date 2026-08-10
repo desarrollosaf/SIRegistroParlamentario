@@ -34,19 +34,20 @@ const listarDiputadosAlias = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (diputadoIds.length === 0) {
             return res.json({ msg: 'Diputados obtenidos correctamente', data: [] });
         }
-        // Diputados (conexión legislativo).
-        const diputados = yield diputado_1.default.findAll({
-            where: { id: diputadoIds },
-            attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
-            raw: true,
-        });
+        // Diputados y usuarios son consultas independientes entre sí — en paralelo.
+        const [diputados, usuarios] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
+                raw: true,
+            }),
+            user_1.default.findAll({
+                where: { integrante_legislatura_id: integranteIds },
+                attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
+                raw: true,
+            }),
+        ]);
         const diputadoMap = Object.fromEntries(diputados.map((d) => [d.id, d]));
-        // Usuarios (conexión registrocomisiones): se enlazan por integrante_legislatura_id.
-        const usuarios = yield user_1.default.findAll({
-            where: { integrante_legislatura_id: integranteIds },
-            attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
-            raw: true,
-        });
         const userMap = Object.fromEntries(usuarios.map((u) => [u.integrante_legislatura_id, u]));
         // Una fila por integrante activo, con su diputado y su usuario (si existe).
         const data = integrantes

@@ -25,20 +25,20 @@ export const listarDiputadosAlias = async (req: Request, res: Response): Promise
             return res.json({ msg: 'Diputados obtenidos correctamente', data: [] });
         }
 
-        // Diputados (conexión legislativo).
-        const diputados = await Diputado.findAll({
-            where: { id: diputadoIds },
-            attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
-            raw: true,
-        }) as any[];
+        // Diputados y usuarios son consultas independientes entre sí — en paralelo.
+        const [diputados, usuarios] = await Promise.all([
+            Diputado.findAll({
+                where: { id: diputadoIds },
+                attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
+                raw: true,
+            }) as Promise<any[]>,
+            User.findAll({
+                where: { integrante_legislatura_id: integranteIds },
+                attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
+                raw: true,
+            }) as Promise<any[]>,
+        ]);
         const diputadoMap: Record<string, any> = Object.fromEntries(diputados.map((d: any) => [d.id, d]));
-
-        // Usuarios (conexión registrocomisiones): se enlazan por integrante_legislatura_id.
-        const usuarios = await User.findAll({
-            where: { integrante_legislatura_id: integranteIds },
-            attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
-            raw: true,
-        }) as any[];
         const userMap: Record<string, any> = Object.fromEntries(
             usuarios.map((u: any) => [u.integrante_legislatura_id, u])
         );
