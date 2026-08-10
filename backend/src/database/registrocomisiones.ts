@@ -4,8 +4,14 @@ const sequelizeCuestionarios = new Sequelize('adminplem_siregistroparlamentario'
     host: '192.168.36.53',
     dialect: 'mysql',
     define: {
-        freezeTableName: true 
-    }  
+        freezeTableName: true
+    },
+    pool: {
+        max: 20,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
 })
 
 

@@ -4,7 +4,13 @@ const sequelize = new Sequelize('adminplem_saf', 'root', '', {
     host: 'localhost',
     dialect: 'mysql',
     define: {
-        freezeTableName: true 
+        freezeTableName: true
+    },
+    pool: {
+        max: 20,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
     }
 })
 
