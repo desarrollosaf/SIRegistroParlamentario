@@ -4,3 +4,40 @@
   align-items: center;
   justify-content: center;
 }
+
+.auth-background {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 40%),
+    radial-gradient(circle at 85% 80%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%),
+    linear-gradient(135deg, #6d0e39 0%, #96134b 45%, #b81a5c 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-page {
+  position: relative;
+  z-index: 1;
+}
+
+.card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.auth-form-wrapper {
+  .nobleui-logo {
+    text-align: center;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 0.65rem;
+    font-weight: 600;
+  }
+}

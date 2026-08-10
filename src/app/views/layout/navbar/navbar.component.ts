@@ -2,12 +2,19 @@ import { Component, HostListener, Inject, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ThemeModeService } from '../../../core/services/theme-mode.service';
-import { DOCUMENT, NgClass, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, DOCUMENT, NgClass, NgFor, NgIf } from '@angular/common';
+import { map, Observable } from 'rxjs';
 
 import { MENU } from './menu';
 import { MenuItem } from './menu.model';
 import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.directive';
 import { UserService } from '../../../core/services/auth.service';
+import { User } from '../../../core/interfaces/user';
+
+const NOMBRES_ROL: Record<string, string> = {
+  admin: 'Administrador',
+  diputado: 'Diputado/a',
+};
 
 @Component({
     selector: 'app-navbar',
@@ -18,7 +25,8 @@ import { UserService } from '../../../core/services/auth.service';
         RouterLinkActive,
         NgFor,
         NgIf,
-        NgClass
+        NgClass,
+        AsyncPipe
     ],
     templateUrl: './navbar.component.html',
     styleUrl: './navbar.component.scss'
@@ -30,11 +38,21 @@ export class NavbarComponent implements OnInit {
 
   currentlyOpenedNavItem: HTMLElement | undefined;
 
+  nombreUsuario$: Observable<string>;
+  subtituloUsuario$: Observable<string>;
+
   constructor(
     private router: Router,
     private themeModeService: ThemeModeService,
     private userService: UserService
-  ) {}
+  ) {
+    this.nombreUsuario$ = this.userService.currentUser$.pipe(
+      map((user: User | null) => user?.nombreCompleto || user?.name || 'Usuario')
+    );
+    this.subtituloUsuario$ = this.userService.currentUser$.pipe(
+      map((user: User | null) => user?.email || NOMBRES_ROL[user?.role || ''] || '')
+    );
+  }
 
   ngOnInit(): void {
     this.themeModeService.currentTheme.subscribe( (theme) => {

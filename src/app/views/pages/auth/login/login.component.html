@@ -28,7 +28,10 @@
                 </div>
               
                 <div>
-                  <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0" >Ingresar</button>
+                  <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0" [disabled]="cargando">
+                    <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    {{ cargando ? 'Iniciando sesión...' : 'Ingresar' }}
+                  </button>
                 </div><br>
 
               </form>

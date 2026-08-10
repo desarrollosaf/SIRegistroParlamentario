@@ -13,8 +13,10 @@ export interface User {
   id?: number;
   name: string;
   password: string;
+  email?: string | null;
   rol_users?: UserRole;
   integrante_legislatura_id?: string | null;
-  // Campo derivado del login (no viene del modelo pero sí de la respuesta)
+  // Campos derivados del login (no vienen del modelo tal cual, sí de la respuesta)
   role?: string;
+  nombreCompleto?: string;
 }
