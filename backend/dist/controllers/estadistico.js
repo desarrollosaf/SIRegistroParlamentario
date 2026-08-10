@@ -488,40 +488,43 @@ const contarPorObservacion = (items, obs) => items.filter((i) => i.observac === 
 // ─────────────────────────────────────────────────────────────────────────────
 const getResumenTotalesEndpoint = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const reporte = yield (0, exports.construirReporteBase)();
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+        // Las 3 consultas son independientes entre sí — corren en paralelo en vez de una por una.
+        const [reporte, sesion, comision] = yield Promise.all([
+            (0, exports.construirReporteBase)(),
+            agendas_1.default.findAll({
+                include: [
+                    {
+                        model: tipo_eventos_1.default,
+                        as: "tipoevento",
+                        attributes: ["id", "nombre"],
+                        where: {
+                            id: {
+                                [sequelize_1.Op.in]: [uuidSesion, uuidpermanente]
+                            }
+                        }
+                    }
+                ],
+                order: [['fecha', 'DESC']]
+            }),
+            agendas_1.default.findAll({
+                include: [
+                    {
+                        model: tipo_eventos_1.default,
+                        as: "tipoevento",
+                        attributes: ["id", "nombre"],
+                        where: {
+                            id: '0e772516-bbc2-402f-afa0-022489752d33'
+                        }
+                    }
+                ],
+                order: [['fecha', 'DESC']]
+            }),
+        ]);
         const iniciativas = reporte.filter((i) => Number(i.tipo) === 1);
         const puntosAcuerdo = reporte.filter((i) => Number(i.tipo) === 2);
         const minutas = reporte.filter((i) => Number(i.tipo) === 3);
-        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
-        const uuidpermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
-        const sesion = yield agendas_1.default.findAll({
-            include: [
-                {
-                    model: tipo_eventos_1.default,
-                    as: "tipoevento",
-                    attributes: ["id", "nombre"],
-                    where: {
-                        id: {
-                            [sequelize_1.Op.in]: [uuidSesion, uuidpermanente]
-                        }
-                    }
-                }
-            ],
-            order: [['fecha', 'DESC']]
-        });
-        const comision = yield agendas_1.default.findAll({
-            include: [
-                {
-                    model: tipo_eventos_1.default,
-                    as: "tipoevento",
-                    attributes: ["id", "nombre"],
-                    where: {
-                        id: '0e772516-bbc2-402f-afa0-022489752d33'
-                    }
-                }
-            ],
-            order: [['fecha', 'DESC']]
-        });
         return res.status(200).json({
             ok: true,
             data: {
@@ -1303,19 +1306,22 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             return [];
         }
         const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-        const diputados = yield diputado_1.default.findAll({
-            where: { id: diputadoIds },
-            attributes: ["id", "apaterno", "amaterno", "nombres"],
-            raw: true,
-            paranoid: false,
-        });
-        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-        const partidos = yield partidos_1.default.findAll({
-            where: { id: partidoIds },
-            attributes: ["id", "siglas"],
-            raw: true,
-        });
+        // Ninguna depende de la otra, corren en paralelo.
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+                paranoid: false,
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+            }),
+        ]);
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidosMap = new Map(partidos.map(p => [p.id, p]));
         let comisionesMap = new Map();
         let cargosMap = new Map();
@@ -1323,23 +1329,30 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             const comisionIds = votosRaw
                 .map(v => v.id_comision_dip)
                 .filter(Boolean);
-            if (comisionIds.length > 0) {
-                const comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["id", "nombre", "importancia"],
-                    raw: true,
-                });
-                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-            }
             const cargoIds = votosRaw
                 .map(v => v.id_cargo_dip)
                 .filter(Boolean);
+            // Ninguna depende de la otra, corren en paralelo.
+            const [comisiones, cargos] = yield Promise.all([
+                comisionIds.length > 0
+                    ? comisions_1.default.findAll({
+                        where: { id: comisionIds },
+                        attributes: ["id", "nombre", "importancia"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+                cargoIds.length > 0
+                    ? tipo_cargo_comisions_1.default.findAll({
+                        where: { id: cargoIds },
+                        attributes: ["id", "valor", "nivel"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+            ]);
+            if (comisionIds.length > 0) {
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            }
             if (cargoIds.length > 0) {
-                const cargos = yield tipo_cargo_comisions_1.default.findAll({
-                    where: { id: cargoIds },
-                    attributes: ["id", "valor", "nivel"],
-                    raw: true,
-                });
                 cargosMap = new Map(cargos.map(c => [c.id, c]));
             }
         }

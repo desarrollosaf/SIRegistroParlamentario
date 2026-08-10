@@ -718,34 +718,37 @@ exports.actualizar = actualizar;
 const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const proponentes = yield proponentes_1.default.findAll({
-            attributes: ['id', 'valor'],
-            raw: true,
-        });
-        const partidos = yield partidos_1.default.findAll({
-            attributes: ['id', 'siglas'],
-            raw: true,
-        });
-        const comisiones = yield comisions_1.default.findAll({
-            attributes: ['id', 'nombre'],
-            raw: true,
-        });
-        const dictamenesRaw = yield puntos_ordens_1.default.findAll({
-            where: { id_dictamen: 0 },
-            include: [
-                {
-                    model: iniciativas_estudio_1.default,
-                    as: 'puntosestudiados',
-                    where: { status: 2 },
-                    attributes: ['id', 'type', 'punto_origen_id'],
-                },
-                {
-                    model: agendas_1.default,
-                    as: 'evento',
-                    attributes: ["fecha", "id"]
-                }
-            ]
-        });
+        // Cuatro consultas independientes entre sí — corren en paralelo.
+        const [proponentes, partidos, comisiones, dictamenesRaw] = yield Promise.all([
+            proponentes_1.default.findAll({
+                attributes: ['id', 'valor'],
+                raw: true,
+            }),
+            partidos_1.default.findAll({
+                attributes: ['id', 'siglas'],
+                raw: true,
+            }),
+            comisions_1.default.findAll({
+                attributes: ['id', 'nombre'],
+                raw: true,
+            }),
+            puntos_ordens_1.default.findAll({
+                where: { id_dictamen: 0 },
+                include: [
+                    {
+                        model: iniciativas_estudio_1.default,
+                        as: 'puntosestudiados',
+                        where: { status: 2 },
+                        attributes: ['id', 'type', 'punto_origen_id'],
+                    },
+                    {
+                        model: agendas_1.default,
+                        as: 'evento',
+                        attributes: ["fecha", "id"]
+                    }
+                ]
+            }),
+        ]);
         // Recolectar punto_origen_id por tipo para hacer queries en batch
         const origenIdsType1 = new Set();
         const origenIdsType2 = new Set();
@@ -757,20 +760,22 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     origenIdsType2.add(est.punto_origen_id);
             }
         }
-        // type=1: iniciativas directo del punto origen
-        const iniType1Raw = origenIdsType1.size > 0
-            ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
-            : [];
+        // type=1 (punto origen directo) y type=2 (via ExpedienteEstudiosPuntos) son
+        // independientes entre sí — corren en paralelo.
+        const [iniType1Raw, expedPuntos] = yield Promise.all([
+            origenIdsType1.size > 0
+                ? inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
+                : Promise.resolve([]),
+            origenIdsType2.size > 0
+                ? expedientes_estudio_puntos_1.default.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
+                : Promise.resolve([]),
+        ]);
         const iniByPunto1 = new Map();
         for (const ini of iniType1Raw) {
             if (!iniByPunto1.has(ini.id_punto))
                 iniByPunto1.set(ini.id_punto, []);
             iniByPunto1.get(ini.id_punto).push(ini.id);
         }
-        // type=2: buscar los puntos del expediente via ExpedienteEstudiosPuntos
-        const expedPuntos = origenIdsType2.size > 0
-            ? yield expedientes_estudio_puntos_1.default.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
-            : [];
         const sesionIdsByExpediente = new Map();
         for (const ep of expedPuntos) {
             const key = String(ep.expediente_id);
@@ -823,9 +828,16 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         //     punto: `${fecha} - ${d.evento?.id} - ${d.punto}`
         //   };
         // });
-        const legislatura = yield legislaturas_1.default.findOne({
-            order: [["fecha_inicio", "DESC"]],
-        });
+        // legislatura y tipointer no dependen entre sí — en paralelo.
+        const [legislatura, tipointer] = yield Promise.all([
+            legislaturas_1.default.findOne({
+                order: [["fecha_inicio", "DESC"]],
+            }),
+            tipo_intervencions_1.default.findAll({
+                attributes: ['id', 'valor'],
+                raw: true,
+            }),
+        ]);
         let diputadosArray = [];
         if (legislatura) {
             const diputados = yield integrante_legislaturas_1.default.findAll({
@@ -848,10 +860,6 @@ const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
             });
         }
-        const tipointer = yield tipo_intervencions_1.default.findAll({
-            attributes: ['id', 'valor'],
-            raw: true,
-        });
         return res.json({
             proponentes: proponentes,
             comisiones: comisiones,
@@ -1452,131 +1460,138 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!puntosRaw) {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
-        const puntos = yield Promise.all(puntosRaw.map((punto) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
-            const data = punto.toJSON();
-            const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
-                ? data.turnocomision
-                : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
-            delete data.puntoTurnoComision;
-            const turnosExpandidos = [];
-            turnosNormalizados.forEach((turno) => {
-                if (turno.id_comision && typeof turno.id_comision === 'string') {
-                    const comisionesArray = turno.id_comision
-                        .replace(/[\[\]]/g, '')
-                        .split(',')
-                        .map((id) => id.trim())
-                        .filter((id) => id);
-                    comisionesArray.forEach(comisionId => {
-                        turnosExpandidos.push({
-                            id: turno.id,
-                            id_punto: turno.id_punto,
-                            id_comision: comisionId,
-                            id_punto_turno: turno.id_punto_turno
+        // El procesamiento de puntosRaw y la consulta de selects son independientes
+        // entre sí — corren en paralelo.
+        const [puntos, selects] = yield Promise.all([
+            Promise.all(puntosRaw.map((punto) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d;
+                const data = punto.toJSON();
+                const turnosNormalizados = ((_a = data.turnocomision) === null || _a === void 0 ? void 0 : _a.length)
+                    ? data.turnocomision
+                    : (_b = data.puntoTurnoComision) !== null && _b !== void 0 ? _b : [];
+                delete data.puntoTurnoComision;
+                const turnosExpandidos = [];
+                turnosNormalizados.forEach((turno) => {
+                    if (turno.id_comision && typeof turno.id_comision === 'string') {
+                        const comisionesArray = turno.id_comision
+                            .replace(/[\[\]]/g, '')
+                            .split(',')
+                            .map((id) => id.trim())
+                            .filter((id) => id);
+                        comisionesArray.forEach(comisionId => {
+                            turnosExpandidos.push({
+                                id: turno.id,
+                                id_punto: turno.id_punto,
+                                id_comision: comisionId,
+                                id_punto_turno: turno.id_punto_turno
+                            });
                         });
-                    });
-                }
-                else {
-                    turnosExpandidos.push(turno);
-                }
-            });
-            // 👇 Procesar iniciativas con sus presentan
-            const iniciativasConInfo = yield Promise.all((data.iniciativas || []).map((ini) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
-                const { proponentesString, presentaString } = ((_a = ini.presentan) === null || _a === void 0 ? void 0 : _a.length)
-                    ? yield procesarPresentan(ini.presentan)
-                    : { proponentesString: '', presentaString: '' };
-                const presentanRaw = (ini.presentan || []).map((p) => ({
-                    id: `${p.id_tipo_presenta}/${p.id_presenta}`,
-                    id_proponente: p.id_tipo_presenta,
-                    id_presenta: p.id_presenta,
-                }));
-                return {
-                    id: ini.id,
-                    iniciativa: ini.iniciativa,
-                    proponente: proponentesString,
-                    presenta: presentaString,
-                    tipo: ini.tipo,
-                    presentan: presentanRaw,
-                };
-            })));
-            // 👇 Procesar Reservas con sus presentan
-            const reservasConInfo = yield Promise.all((data.reservas || []).map((reserva) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
-                const { proponentesString, presentaString } = ((_a = reserva.presentan) === null || _a === void 0 ? void 0 : _a.length)
-                    ? yield procesarPresentan(reserva.presentan)
-                    : { proponentesString: '', presentaString: '' };
-                return {
-                    id: reserva.id,
-                    tema_votacion: reserva.tema_votacion,
-                    proponente: proponentesString,
-                    presenta: presentaString,
-                };
-            })));
-            const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
-            let puntosestudiado = null;
-            let dictamenes = null;
-            const buildLabelPunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b;
-                const p = yield puntos_ordens_1.default.findOne({
-                    where: { id },
-                    attributes: ["id", "punto"],
-                    include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
-                });
-                const inis = yield inciativas_puntos_ordens_1.default.findAll({
-                    where: { id_punto: id }, attributes: ['id'], raw: true
-                });
-                const d = p === null || p === void 0 ? void 0 : p.toJSON();
-                const fecha = ((_a = d === null || d === void 0 ? void 0 : d.evento) === null || _a === void 0 ? void 0 : _a.fecha) ? new Date(d.evento.fecha).toISOString().split('T')[0] : '';
-                const iniciativasStr = inis.map((i) => i.id).join(' | ');
-                return { id: d === null || d === void 0 ? void 0 : d.id, punto: `${fecha} - ${(_b = d === null || d === void 0 ? void 0 : d.evento) === null || _b === void 0 ? void 0 : _b.id} - [${iniciativasStr}] - ${d === null || d === void 0 ? void 0 : d.punto}` };
-            });
-            if (estudiado) {
-                if (estudiado.type === "1") {
-                    const origenId = (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id;
-                    const info = origenId ? [yield buildLabelPunto(origenId)] : [];
-                    if (esSesion) {
-                        dictamenes = info;
                     }
                     else {
-                        puntosestudiado = info;
+                        turnosExpandidos.push(turno);
                     }
-                }
-                else if (estudiado.type === "2") {
-                    if (esSesion) {
-                        console.log('estudiado.punto_destino_id', estudiado.punto_destino_id);
-                        const info = [];
-                        const puntoss = yield puntos_ordens_1.default.findAll({
-                            where: { id_dictamen: estudiado.punto_destino_id },
-                        });
-                        for (const d of puntoss) {
-                            info.push({ id: d === null || d === void 0 ? void 0 : d.id, punto: d === null || d === void 0 ? void 0 : d.punto });
+                });
+                // 👇 Procesar iniciativas con sus presentan
+                const iniciativasConInfo = yield Promise.all((data.iniciativas || []).map((ini) => __awaiter(void 0, void 0, void 0, function* () {
+                    var _a;
+                    const { proponentesString, presentaString } = ((_a = ini.presentan) === null || _a === void 0 ? void 0 : _a.length)
+                        ? yield procesarPresentan(ini.presentan)
+                        : { proponentesString: '', presentaString: '' };
+                    const presentanRaw = (ini.presentan || []).map((p) => ({
+                        id: `${p.id_tipo_presenta}/${p.id_presenta}`,
+                        id_proponente: p.id_tipo_presenta,
+                        id_presenta: p.id_presenta,
+                    }));
+                    return {
+                        id: ini.id,
+                        iniciativa: ini.iniciativa,
+                        proponente: proponentesString,
+                        presenta: presentaString,
+                        tipo: ini.tipo,
+                        presentan: presentanRaw,
+                    };
+                })));
+                // 👇 Procesar Reservas con sus presentan
+                const reservasConInfo = yield Promise.all((data.reservas || []).map((reserva) => __awaiter(void 0, void 0, void 0, function* () {
+                    var _a;
+                    const { proponentesString, presentaString } = ((_a = reserva.presentan) === null || _a === void 0 ? void 0 : _a.length)
+                        ? yield procesarPresentan(reserva.presentan)
+                        : { proponentesString: '', presentaString: '' };
+                    return {
+                        id: reserva.id,
+                        tema_votacion: reserva.tema_votacion,
+                        proponente: proponentesString,
+                        presenta: presentaString,
+                    };
+                })));
+                const estudiado = (_c = data.puntosestudiados) === null || _c === void 0 ? void 0 : _c[0];
+                let puntosestudiado = null;
+                let dictamenes = null;
+                const buildLabelPunto = (id) => __awaiter(void 0, void 0, void 0, function* () {
+                    var _a, _b;
+                    // Ninguna depende de la otra, corren en paralelo.
+                    const [p, inis] = yield Promise.all([
+                        puntos_ordens_1.default.findOne({
+                            where: { id },
+                            attributes: ["id", "punto"],
+                            include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
+                        }),
+                        inciativas_puntos_ordens_1.default.findAll({
+                            where: { id_punto: id }, attributes: ['id'], raw: true
+                        }),
+                    ]);
+                    const d = p === null || p === void 0 ? void 0 : p.toJSON();
+                    const fecha = ((_a = d === null || d === void 0 ? void 0 : d.evento) === null || _a === void 0 ? void 0 : _a.fecha) ? new Date(d.evento.fecha).toISOString().split('T')[0] : '';
+                    const iniciativasStr = inis.map((i) => i.id).join(' | ');
+                    return { id: d === null || d === void 0 ? void 0 : d.id, punto: `${fecha} - ${(_b = d === null || d === void 0 ? void 0 : d.evento) === null || _b === void 0 ? void 0 : _b.id} - [${iniciativasStr}] - ${d === null || d === void 0 ? void 0 : d.punto}` };
+                });
+                if (estudiado) {
+                    if (estudiado.type === "1") {
+                        const origenId = (_d = estudiado.iniciativaorigen) === null || _d === void 0 ? void 0 : _d.id;
+                        const info = origenId ? [yield buildLabelPunto(origenId)] : [];
+                        if (esSesion) {
+                            dictamenes = info;
                         }
-                        dictamenes = info;
+                        else {
+                            puntosestudiado = info;
+                        }
                     }
-                    else {
-                        const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
-                            where: { expediente_id: estudiado.punto_origen_id },
-                            attributes: ['punto_origen_sesion_id'],
-                            raw: true
-                        });
-                        puntosestudiado = yield Promise.all(puntosExpediente.map((p) => buildLabelPunto(p.punto_origen_sesion_id)));
+                    else if (estudiado.type === "2") {
+                        if (esSesion) {
+                            console.log('estudiado.punto_destino_id', estudiado.punto_destino_id);
+                            const info = [];
+                            const puntoss = yield puntos_ordens_1.default.findAll({
+                                where: { id_dictamen: estudiado.punto_destino_id },
+                            });
+                            for (const d of puntoss) {
+                                info.push({ id: d === null || d === void 0 ? void 0 : d.id, punto: d === null || d === void 0 ? void 0 : d.punto });
+                            }
+                            dictamenes = info;
+                        }
+                        else {
+                            const puntosExpediente = yield expedientes_estudio_puntos_1.default.findAll({
+                                where: { expediente_id: estudiado.punto_origen_id },
+                                attributes: ['punto_origen_sesion_id'],
+                                raw: true
+                            });
+                            puntosestudiado = yield Promise.all(puntosExpediente.map((p) => buildLabelPunto(p.punto_origen_sesion_id)));
+                        }
                     }
                 }
-            }
-            delete data.puntosestudiados;
-            return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos, iniciativas: iniciativasConInfo, reservas: reservasConInfo, puntosestudiado,
-                dictamenes });
-        })));
-        const selects = yield inciativas_puntos_ordens_1.default.findAll({
-            where: {
-                id_evento: id,
-                id_punto: {
-                    [sequelize_1.Op.or]: [null, '', '0']
-                }
-            },
-            attributes: ["id", "iniciativa"]
-        });
+                delete data.puntosestudiados;
+                return Object.assign(Object.assign({}, data), { turnocomision: turnosExpandidos, iniciativas: iniciativasConInfo, reservas: reservasConInfo, puntosestudiado,
+                    dictamenes });
+            }))),
+            inciativas_puntos_ordens_1.default.findAll({
+                where: {
+                    id_evento: id,
+                    id_punto: {
+                        [sequelize_1.Op.or]: [null, '', '0']
+                    }
+                },
+                attributes: ["id", "iniciativa"]
+            }),
+        ]);
         return res.status(201).json({
             message: "Se encontraron registros",
             data: puntos,
@@ -1708,29 +1723,33 @@ const getreservas = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             ],
         });
-        const reservas = yield Promise.all(reservasRaw.map((reserva) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a;
-            const data = reserva.toJSON();
-            const { proponentesString, presentaString } = ((_a = data.presentan) === null || _a === void 0 ? void 0 : _a.length)
-                ? yield procesarPresentan(data.presentan)
-                : { proponentesString: '', presentaString: '' };
-            const _proponentesIds = [...new Set((data.presentan || []).map((p) => p.id_tipo_presenta).filter(Boolean))];
-            const _presentanIds = (data.presentan || [])
-                .filter((p) => p.id_tipo_presenta && p.id_presenta)
-                .map((p) => `${p.id_tipo_presenta}/${p.id_presenta}`);
-            return {
-                id: data.id,
-                tema_votacion: data.tema_votacion,
-                proponente: proponentesString,
-                presenta: presentaString,
-                _proponentesIds,
-                _presentanIds,
-            };
-        })));
-        const iniciativa = yield inciativas_puntos_ordens_1.default.findAll({
-            where: { id_punto: id },
-            attributes: ["id", "iniciativa"],
-        });
+        // El armado de reservas y la consulta de iniciativas son independientes
+        // entre sí — corren en paralelo.
+        const [reservas, iniciativa] = yield Promise.all([
+            Promise.all(reservasRaw.map((reserva) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
+                const data = reserva.toJSON();
+                const { proponentesString, presentaString } = ((_a = data.presentan) === null || _a === void 0 ? void 0 : _a.length)
+                    ? yield procesarPresentan(data.presentan)
+                    : { proponentesString: '', presentaString: '' };
+                const _proponentesIds = [...new Set((data.presentan || []).map((p) => p.id_tipo_presenta).filter(Boolean))];
+                const _presentanIds = (data.presentan || [])
+                    .filter((p) => p.id_tipo_presenta && p.id_presenta)
+                    .map((p) => `${p.id_tipo_presenta}/${p.id_presenta}`);
+                return {
+                    id: data.id,
+                    tema_votacion: data.tema_votacion,
+                    proponente: proponentesString,
+                    presenta: presentaString,
+                    _proponentesIds,
+                    _presentanIds,
+                };
+            }))),
+            inciativas_puntos_ordens_1.default.findAll({
+                where: { id_punto: id },
+                attributes: ["id", "iniciativa"],
+            }),
+        ]);
         return res.status(200).json({
             data: {
                 reservas,
@@ -2193,24 +2212,28 @@ const getvotacionpunto = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const body = req.body;
         let tema;
         let puntoa;
-        let votos;
         if (body.idPunto && body.idReserva) {
             tema = body.idReserva;
             puntoa = null;
-            votos = yield votos_punto_1.default.findOne({ where: { id_tema_punto_voto: body.idReserva } });
         }
         else if (body.idPunto && body.idIniciativa) {
             tema = null;
             puntoa = body.idPunto;
-            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } });
         }
         else {
             tema = null;
             puntoa = body.idPunto;
-            votos = yield votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } });
         }
+        // La consulta de votos y la del punto son independientes entre sí — en paralelo.
+        const [votos, punto] = yield Promise.all([
+            body.idPunto && body.idReserva
+                ? votos_punto_1.default.findOne({ where: { id_tema_punto_voto: body.idReserva } })
+                : body.idPunto && body.idIniciativa
+                    ? votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: body.idIniciativa } })
+                    : votos_punto_1.default.findOne({ where: { id_punto: body.idPunto, id_iniciativa: null } }),
+            puntos_ordens_1.default.findOne({ where: { id: body.idPunto } }),
+        ]);
         console.log("tema:", tema, "punto:", puntoa);
-        const punto = yield puntos_ordens_1.default.findOne({ where: { id: body.idPunto } });
         if (!punto) {
             return res.status(404).json({ msg: "Punto no encontrado" });
         }
@@ -2304,19 +2327,22 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             return [];
         }
         const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-        const diputados = yield diputado_1.default.findAll({
-            where: { id: diputadoIds },
-            attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
-            raw: true,
-            paranoid: false,
-        });
-        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-        const partidos = yield partidos_1.default.findAll({
-            where: { id: partidoIds },
-            attributes: ["id", "siglas"],
-            raw: true,
-        });
+        // Ninguna depende de la otra, corren en paralelo.
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres", "alias"],
+                raw: true,
+                paranoid: false,
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+            }),
+        ]);
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidosMap = new Map(partidos.map(p => [p.id, p]));
         let comisionesMap = new Map();
         let cargosMap = new Map();
@@ -2324,23 +2350,30 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             const comisionIds = votosRaw
                 .map(v => v.id_comision_dip)
                 .filter(Boolean);
-            if (comisionIds.length > 0) {
-                const comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["id", "nombre", "importancia"],
-                    raw: true,
-                });
-                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-            }
             const cargoIds = votosRaw
                 .map(v => v.id_cargo_dip)
                 .filter(Boolean);
+            // Ninguna depende de la otra, corren en paralelo.
+            const [comisiones, cargos] = yield Promise.all([
+                comisionIds.length > 0
+                    ? comisions_1.default.findAll({
+                        where: { id: comisionIds },
+                        attributes: ["id", "nombre", "importancia"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+                cargoIds.length > 0
+                    ? tipo_cargo_comisions_1.default.findAll({
+                        where: { id: cargoIds },
+                        attributes: ["id", "valor", "nivel"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+            ]);
+            if (comisionIds.length > 0) {
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            }
             if (cargoIds.length > 0) {
-                const cargos = yield tipo_cargo_comisions_1.default.findAll({
-                    where: { id: cargoIds },
-                    attributes: ["id", "valor", "nivel"],
-                    raw: true,
-                });
                 cargosMap = new Map(cargos.map(c => [c.id, c]));
             }
         }
@@ -2535,6 +2568,10 @@ const reiniciarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 msg: "No se encontraron votos para reiniciar",
             });
         }
+        if (body.idComision) {
+            const io = req.app.get('io');
+            io === null || io === void 0 ? void 0 : io.to(`proyeccion-${body.idComision}`).emit('votos-actualizados-masivo', { sentido: 0 });
+        }
         return res.status(200).json({
             msg: `${cantidadActualizada} voto(s) reiniciado(s) correctamente a PENDIENTE`,
             estatus: 200,
@@ -2551,74 +2588,62 @@ const reiniciarvoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.reiniciarvoto = reiniciarvoto;
 const catalogossave = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const sedes = yield sedes_1.default.findAll({
-            attributes: ['id', ['sede', 'name']]
-        });
-        const comisiones = yield comisions_1.default.findAll({
-            attributes: ['id', ['nombre', 'name']]
-        });
-        const municipios = yield municipiosag_1.default.findAll({
-            attributes: ['id', ['nombre', 'name']],
-        });
-        const partidos = yield partidos_1.default.findAll({
-            attributes: ['id', ['nombre', 'name']]
-        });
-        const tipoAutores = yield tipo_autors_1.default.findAll({
-            attributes: ['id', ['valor', 'name']]
-        });
-        const otros = yield otros_autores_1.default.findAll({
-            attributes: ['id', ['valor', 'name']]
-        });
-        const legislatura = yield legislaturas_1.default.findAll({
-            attributes: ['id', ['numero', 'name']]
-        });
-        const tipoevento = yield tipo_eventos_1.default.findAll({
-            attributes: ['id', ['nombre', 'name']]
-        });
-        const idComites = yield tipo_comisions_1.default.findOne({
-            where: { valor: 'Comités' }
-        });
+        // Todas independientes entre sí — corren en paralelo.
+        const [sedes, comisiones, municipios, partidos, tipoAutores, otros, legislatura, tipoevento, idComites, idPermanente, legisla] = yield Promise.all([
+            sedes_1.default.findAll({ attributes: ['id', ['sede', 'name']] }),
+            comisions_1.default.findAll({ attributes: ['id', ['nombre', 'name']] }),
+            municipiosag_1.default.findAll({ attributes: ['id', ['nombre', 'name']] }),
+            partidos_1.default.findAll({ attributes: ['id', ['nombre', 'name']] }),
+            tipo_autors_1.default.findAll({ attributes: ['id', ['valor', 'name']] }),
+            otros_autores_1.default.findAll({ attributes: ['id', ['valor', 'name']] }),
+            legislaturas_1.default.findAll({ attributes: ['id', ['numero', 'name']] }),
+            tipo_eventos_1.default.findAll({ attributes: ['id', ['nombre', 'name']] }),
+            tipo_comisions_1.default.findOne({ where: { valor: 'Comités' } }),
+            tipo_comisions_1.default.findOne({ where: { valor: 'Diputación Permanente' } }),
+            legislaturas_1.default.findOne({ order: [["fecha_inicio", "DESC"]] }),
+        ]);
+        // Las tres dependen únicamente de los resultados anteriores, no entre sí — en paralelo.
+        const [comitesRaw, permanenteRaw, diputados] = yield Promise.all([
+            idComites
+                ? comisions_1.default.findAll({
+                    where: { tipo_comision_id: idComites.id },
+                    attributes: ['id', ['nombre', 'name']]
+                })
+                : Promise.resolve([]),
+            idPermanente
+                ? comisions_1.default.findAll({
+                    where: { tipo_comision_id: idPermanente.id },
+                    attributes: ['id', 'nombre']
+                })
+                : Promise.resolve([]),
+            legisla
+                ? integrante_legislaturas_1.default.findAll({
+                    where: { legislatura_id: legisla.id },
+                    include: [
+                        {
+                            model: diputado_1.default,
+                            as: "diputado",
+                            attributes: ["id", "nombres", "apaterno", "amaterno"],
+                        },
+                    ],
+                })
+                : Promise.resolve([]),
+        ]);
         let comites = {};
         if (idComites) {
-            const com = yield comisions_1.default.findAll({
-                where: { tipo_comision_id: idComites.id },
-                attributes: ['id', ['nombre', 'name']]
-            });
-            comites = Object.fromEntries(com.map(item => [item.id, item.nombre]));
+            comites = Object.fromEntries(comitesRaw.map(item => [item.id, item.nombre]));
         }
-        const idPermanente = yield tipo_comisions_1.default.findOne({
-            where: { valor: 'Diputación Permanente' }
-        });
         let permanente = [];
         if (idPermanente) {
-            const dips = yield comisions_1.default.findAll({
-                where: { tipo_comision_id: idPermanente.id },
-                attributes: ['id', 'nombre']
-            });
-            console.log(dips);
-            permanente = dips.map(item => ({
+            console.log(permanenteRaw);
+            permanente = permanenteRaw.map(item => ({
                 id: item.id,
                 name: item.nombre
             }));
             console.log('permanente:', permanente);
         }
-        // console.log("holaaa:1",permanente)
-        // return 500;
-        const legisla = yield legislaturas_1.default.findOne({
-            order: [["fecha_inicio", "DESC"]],
-        });
         let diputadosArray = [];
         if (legisla) {
-            const diputados = yield integrante_legislaturas_1.default.findAll({
-                where: { legislatura_id: legisla.id },
-                include: [
-                    {
-                        model: diputado_1.default,
-                        as: "diputado",
-                        attributes: ["id", "nombres", "apaterno", "amaterno"],
-                    },
-                ],
-            });
             diputadosArray = diputados
                 .filter(d => d.diputado)
                 .map(d => {
@@ -3021,35 +3046,44 @@ const gestionIntegrantes = (req, res) => __awaiter(void 0, void 0, void 0, funct
             return res.status(404).json({ msg: "Evento no encontrado" });
         }
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
-        let cargos = [];
-        let comisiones = [];
-        if (!esSesion) {
-            const anfitriones = yield anfitrion_agendas_1.default.findAll({
-                where: { agenda_id: evento.id },
-                attributes: ["autor_id"],
-                raw: true
-            });
-            const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-            if (comisionIds.length > 0) {
-                comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ['id', 'nombre'],
-                    raw: true,
+        // El bloque de cargos/comisiones (solo aplica si no es sesión), partidos y
+        // legislatura son independientes entre sí — corren en paralelo.
+        const [cargosComisiones, partidos, legislatura] = yield Promise.all([
+            (() => __awaiter(void 0, void 0, void 0, function* () {
+                if (esSesion)
+                    return { cargos: [], comisiones: [] };
+                const anfitriones = yield anfitrion_agendas_1.default.findAll({
+                    where: { agenda_id: evento.id },
+                    attributes: ["autor_id"],
+                    raw: true
                 });
-            }
-            cargos = yield tipo_cargo_comisions_1.default.findAll({
-                attributes: ['id', 'valor', 'nivel'],
-                order: [['nivel', 'ASC']],
+                const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
+                const [comisionesRes, cargosRes] = yield Promise.all([
+                    comisionIds.length > 0
+                        ? comisions_1.default.findAll({
+                            where: { id: comisionIds },
+                            attributes: ['id', 'nombre'],
+                            raw: true,
+                        })
+                        : Promise.resolve([]),
+                    tipo_cargo_comisions_1.default.findAll({
+                        attributes: ['id', 'valor', 'nivel'],
+                        order: [['nivel', 'ASC']],
+                        raw: true,
+                    }),
+                ]);
+                return { cargos: cargosRes, comisiones: comisionesRes };
+            }))(),
+            partidos_1.default.findAll({
+                attributes: ['id', 'siglas'],
                 raw: true,
-            });
-        }
-        const partidos = yield partidos_1.default.findAll({
-            attributes: ['id', 'siglas'],
-            raw: true,
-        });
-        const legislatura = yield legislaturas_1.default.findOne({
-            order: [["fecha_inicio", "DESC"]],
-        });
+            }),
+            legislaturas_1.default.findOne({
+                order: [["fecha_inicio", "DESC"]],
+            }),
+        ]);
+        const cargos = cargosComisiones.cargos;
+        const comisiones = cargosComisiones.comisiones;
         let diputadosArray = [];
         if (legislatura) {
             const diputados = yield integrante_legislaturas_1.default.findAll({
@@ -3247,44 +3281,49 @@ const generarPDFVotacion = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (votosRaw.length === 0) {
             return res.status(404).json({ msg: "No hay votos registrados" });
         }
-        // Obtener diputados
+        // Obtener diputados y partidos — independientes entre sí, en paralelo.
         const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-        const diputados = yield diputado_1.default.findAll({
-            where: { id: diputadoIds },
-            attributes: ["id", "apaterno", "amaterno", "nombres"],
-            raw: true,
-        });
-        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
-        // Obtener partidos
         const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-        const partidos = yield partidos_1.default.findAll({
-            where: { id: partidoIds },
-            attributes: ["id", "siglas"],
-            raw: true,
-        });
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+            }),
+        ]);
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidosMap = new Map(partidos.map(p => [p.id, p]));
-        // Obtener comisiones y cargos (solo si es comisión)
+        // Obtener comisiones y cargos (solo si es comisión) — independientes entre sí.
         let comisionesMap = new Map();
         let cargosMap = new Map();
         if (!esSesion) {
             const comisionIds = votosRaw.map(v => v.id_comision_dip).filter(Boolean);
-            if (comisionIds.length > 0) {
-                const comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["id", "nombre", "importancia"],
-                    raw: true,
-                });
-                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-            }
             const cargoIds = votosRaw.map(v => v.id_cargo_dip).filter(Boolean);
-            if (cargoIds.length > 0) {
-                const cargos = yield tipo_cargo_comisions_1.default.findAll({
-                    where: { id: cargoIds },
-                    attributes: ["id", "valor", "nivel"],
-                    raw: true,
-                });
+            const [comisiones, cargos] = yield Promise.all([
+                comisionIds.length > 0
+                    ? comisions_1.default.findAll({
+                        where: { id: comisionIds },
+                        attributes: ["id", "nombre", "importancia"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+                cargoIds.length > 0
+                    ? tipo_cargo_comisions_1.default.findAll({
+                        where: { id: cargoIds },
+                        attributes: ["id", "valor", "nivel"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+            ]);
+            if (comisionIds.length > 0)
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            if (cargoIds.length > 0)
                 cargosMap = new Map(cargos.map(c => [c.id, c]));
-            }
         }
         const getSentidoTexto = (sentido) => {
             switch (sentido) {

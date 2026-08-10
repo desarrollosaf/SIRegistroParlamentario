@@ -3479,7 +3479,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
         const datos = {
           idPunto: this.puntoSeleccionadoVotacion,
-          idReserva: this.reservaPuntoSeleccionadoVotacion || null
+          idReserva: this.reservaPuntoSeleccionadoVotacion || null,
+          idComision: this.idComisionRuta
         }
         this._eventoService.reinicioVotacion(datos).subscribe({
           next: (response: any) => {

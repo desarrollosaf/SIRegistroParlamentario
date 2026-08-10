@@ -976,19 +976,22 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             return [];
         }
         const diputadoIds = votosRaw.map(v => v.id_diputado).filter(Boolean);
-        const diputados = yield diputado_1.default.findAll({
-            where: { id: diputadoIds },
-            attributes: ["id", "apaterno", "amaterno", "nombres"],
-            raw: true,
-            paranoid: false
-        });
-        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidoIds = votosRaw.map(v => v.id_partido).filter(Boolean);
-        const partidos = yield partidos_1.default.findAll({
-            where: { id: partidoIds },
-            attributes: ["id", "siglas"],
-            raw: true,
-        });
+        // Ninguna depende de la otra, corren en paralelo.
+        const [diputados, partidos] = yield Promise.all([
+            diputado_1.default.findAll({
+                where: { id: diputadoIds },
+                attributes: ["id", "apaterno", "amaterno", "nombres"],
+                raw: true,
+                paranoid: false
+            }),
+            partidos_1.default.findAll({
+                where: { id: partidoIds },
+                attributes: ["id", "siglas"],
+                raw: true,
+            }),
+        ]);
+        const diputadosMap = new Map(diputados.map(d => [d.id, d]));
         const partidosMap = new Map(partidos.map(p => [p.id, p]));
         let comisionesMap = new Map();
         let cargosMap = new Map();
@@ -996,23 +999,30 @@ function obtenerResultadosVotacionOptimizado(idTemaPuntoVoto, idPunto, tipoEvent
             const comisionIds = votosRaw
                 .map(v => v.id_comision_dip)
                 .filter(Boolean);
-            if (comisionIds.length > 0) {
-                const comisiones = yield comisions_1.default.findAll({
-                    where: { id: comisionIds },
-                    attributes: ["id", "nombre", "importancia"],
-                    raw: true,
-                });
-                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
-            }
             const cargoIds = votosRaw
                 .map(v => v.id_cargo_dip)
                 .filter(Boolean);
+            // Ninguna depende de la otra, corren en paralelo.
+            const [comisiones, cargos] = yield Promise.all([
+                comisionIds.length > 0
+                    ? comisions_1.default.findAll({
+                        where: { id: comisionIds },
+                        attributes: ["id", "nombre", "importancia"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+                cargoIds.length > 0
+                    ? tipo_cargo_comisions_1.default.findAll({
+                        where: { id: cargoIds },
+                        attributes: ["id", "valor", "nivel"],
+                        raw: true,
+                    })
+                    : Promise.resolve([]),
+            ]);
+            if (comisionIds.length > 0) {
+                comisionesMap = new Map(comisiones.map(c => [c.id, c]));
+            }
             if (cargoIds.length > 0) {
-                const cargos = yield tipo_cargo_comisions_1.default.findAll({
-                    where: { id: cargoIds },
-                    attributes: ["id", "valor", "nivel"],
-                    raw: true,
-                });
                 cargosMap = new Map(cargos.map(c => [c.id, c]));
             }
         }

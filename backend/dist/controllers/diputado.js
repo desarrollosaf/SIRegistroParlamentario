@@ -491,34 +491,37 @@ const getComisionInfo = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { idComision } = req.params;
         const now = new Date();
         const fechaHoy = now.toISOString().slice(0, 10);
-        // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
-        const [proximos] = yield registrocomisiones_1.default.query(`
-            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
-            FROM agendas a
-            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
-            WHERE aa.autor_id = :idComision
-              AND a.deleted_at IS NULL
-              AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
-            ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
-            LIMIT 5
-        `, { replacements: { idComision, fechaHoy } });
-        // Eventos pasados (últimas 5 sesiones)
-        const [pasados] = yield registrocomisiones_1.default.query(`
-            SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
-            FROM agendas a
-            INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
-            WHERE aa.autor_id = :idComision
-              AND a.deleted_at IS NULL
-              AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
-            ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
-            LIMIT 5
-        `, { replacements: { idComision, fechaHoy } });
-        // Integrantes con nombre y cargo
-        const integrantesRaw = yield integrante_comisions_1.default.findAll({
-            where: { comision_id: idComision, fecha_fin: null },
-            include: [{ model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['valor'] }],
-            order: [['orden', 'ASC']],
-        });
+        // Próximos, pasados e integrantes son consultas independientes entre sí — en paralelo.
+        const [[proximos], [pasados], integrantesRaw] = yield Promise.all([
+            // Próximos eventos (agendas futuras donde esta comisión es anfitrión)
+            registrocomisiones_1.default.query(`
+                SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+                FROM agendas a
+                INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+                WHERE aa.autor_id = :idComision
+                  AND a.deleted_at IS NULL
+                  AND DATE(COALESCE(a.fecha_hora, a.fecha)) >= :fechaHoy
+                ORDER BY COALESCE(a.fecha_hora, a.fecha) ASC
+                LIMIT 5
+            `, { replacements: { idComision, fechaHoy } }),
+            // Eventos pasados (últimas 5 sesiones)
+            registrocomisiones_1.default.query(`
+                SELECT a.id, a.descripcion, a.fecha, a.hora, a.fecha_hora
+                FROM agendas a
+                INNER JOIN anfitrion_agendas aa ON aa.agenda_id = a.id AND aa.deleted_at IS NULL
+                WHERE aa.autor_id = :idComision
+                  AND a.deleted_at IS NULL
+                  AND DATE(COALESCE(a.fecha_hora, a.fecha)) < :fechaHoy
+                ORDER BY COALESCE(a.fecha_hora, a.fecha) DESC
+                LIMIT 5
+            `, { replacements: { idComision, fechaHoy } }),
+            // Integrantes con nombre y cargo
+            integrante_comisions_1.default.findAll({
+                where: { comision_id: idComision, fecha_fin: null },
+                include: [{ model: tipo_cargo_comisions_1.default, as: 'tipo_cargo', attributes: ['valor'] }],
+                order: [['orden', 'ASC']],
+            }),
+        ]);
         const integrantes = yield Promise.all(integrantesRaw.map((ic) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f;
             const il = yield integrante_legislaturas_1.default.findByPk(ic.integrante_legislatura_id, { raw: true });
