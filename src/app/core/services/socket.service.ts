@@ -73,6 +73,42 @@ export class SocketService {
     this.socket?.off('asistencia-terminada');
   }
 
+  // Un voto/asistencia individual cambió — para actualizar el tablero al vuelo
+  // sin recargar la lista completa (reemplaza el polling cada 3s).
+  onVotoRegistrado(cb: (data: { id_diputado: string; sentido_voto: number; id?: string }) => void): void {
+    this.socket?.on('voto-registrado', cb);
+  }
+
+  offVotoRegistrado(): void {
+    this.socket?.off('voto-registrado');
+  }
+
+  onAsistenciaRegistrada(cb: (data: { id_diputado: string; id_agenda: string; sentido?: number }) => void): void {
+    this.socket?.on('asistencia-registrada', cb);
+  }
+
+  offAsistenciaRegistrada(): void {
+    this.socket?.off('asistencia-registrada');
+  }
+
+  // Botones "marcar todos" (admin) — afecta a todos los diputados a la vez,
+  // así que el tablero recarga completo en vez de actualizar uno por uno.
+  onVotosActualizadosMasivo(cb: (data: { sentido: number }) => void): void {
+    this.socket?.on('votos-actualizados-masivo', cb);
+  }
+
+  offVotosActualizadosMasivo(): void {
+    this.socket?.off('votos-actualizados-masivo');
+  }
+
+  onAsistenciasActualizadasMasivo(cb: (data: { sentido: number }) => void): void {
+    this.socket?.on('asistencias-actualizadas-masivo', cb);
+  }
+
+  offAsistenciasActualizadasMasivo(): void {
+    this.socket?.off('asistencias-actualizadas-masivo');
+  }
+
   onProyeccionIniciada(cb: (params: Record<string, string>) => void): void {
     this.socket?.on('proyeccion-iniciada', cb);
   }

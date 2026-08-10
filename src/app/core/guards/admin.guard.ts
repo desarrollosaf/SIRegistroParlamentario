@@ -10,8 +10,10 @@ export const adminGuard: CanActivateFn = (_route, _state) => {
   return userService.getCurrentUser().pipe(
     map((user: any) => {
       const role = user?.role || 'admin';
+      // Los diputados no usan esta app (usan la app de diputados aparte)
       if (role === 'diputado') {
-        router.navigate(['/diputado/panel']);
+        userService.clearSession();
+        router.navigate(['/auth/login']);
         return false;
       }
       return true;

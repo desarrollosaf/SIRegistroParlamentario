@@ -9,6 +9,7 @@ class Diputado extends Model {
   declare apaterno: string;
   declare amaterno: string;
   declare nombres: string;
+  declare nombre_captura: string | null;
   declare alias: string | null;
   declare descripcion?: string | null;
   declare shortname: string;
@@ -46,6 +47,10 @@ Diputado.init(
     nombres: {
       type: DataTypes.STRING(255),
       allowNull: false,
+    },
+    nombre_captura: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     alias: {
       type: DataTypes.STRING(255),

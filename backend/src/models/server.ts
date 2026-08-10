@@ -13,6 +13,7 @@ import diputadoRoutes from "../routes/diputado";
 import aliasDiputado from "../routes/aliasDiputado";
 import proyeccion from "../routes/proyeccion";
 import transcripcion from "../routes/transcripcion";
+import capturadora from "../routes/capturadora";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -432,6 +433,7 @@ class Server {
        this.app.use(aliasDiputado);
        this.app.use(proyeccion);
        this.app.use(transcripcion);
+       this.app.use(capturadora);
     }
 
     
@@ -502,6 +504,7 @@ class Server {
                 '/api/diputado/crear-cuentas',
                 '/api/inteligencia/',
                 '/api/transcripcion/linea',   // webhook del transcriptor (sin JWT)
+                '/api/capturadora/voto',      // webhook de la capturadora de votos (sin JWT)
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;

@@ -9,9 +9,10 @@ export const authGuard: CanActivateFn = (route, state) => {
   return userService.getCurrentUser().pipe(
     map((user: any) => {
       userService.setCurrentUser(user);
-      // Si un diputado intenta acceder a rutas de admin, lo redirigimos a su panel
+      // Los diputados no usan esta app (usan la app de diputados aparte)
       if (user?.role === 'diputado') {
-        router.navigate(['/diputado/panel']);
+        userService.clearSession();
+        router.navigate(['/auth/login']);
         return false;
       }
       return true;

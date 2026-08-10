@@ -27,6 +27,7 @@ export class LoginComponent implements OnInit {
 
   returnUrl: any;
   loggedin: boolean = false;
+  cargando: boolean = false;
   Urfc: string = '';
   Upassword: string = '';
   userRole$: Observable<string | undefined>;
@@ -58,16 +59,29 @@ onLoggedin(form: NgForm) {
     password: form.value.Upassword
   };
 
+  this.cargando = true;
+
   this._userService.login(user).subscribe({
     next: (response: any) => {
+      // Los diputados no usan esta app (usan la app de diputados aparte)
+      if (response.role === 'diputado') {
+        this.cargando = false;
+        Swal.fire({
+          position: "center",
+          icon: "info",
+          title: "Usa la app de diputados para iniciar sesión.",
+          showConfirmButton: false,
+          timer: 3000
+        });
+        return;
+      }
+
       const userData = response.user;
       userData.role = response.role;
       localStorage.setItem('isLoggedin', 'true');
       this._userService.setCurrentUser(userData);
       if (this.returnUrl) {
         this.router.navigate([this.returnUrl]);
-      } else if (response.role === 'diputado') {
-        this.router.navigate(['/diputado/panel']);
       } else {
         this.router.navigate(['/agenda-comision/sesiones']);
       }
@@ -78,6 +92,7 @@ onLoggedin(form: NgForm) {
       }*/
     },
     error: (e: HttpErrorResponse) => {
+      this.cargando = false;
       if (e.status === 400) {
         Swal.fire({
           position: "center",

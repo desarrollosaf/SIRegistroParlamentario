@@ -148,6 +148,11 @@ export const actualizartodos = async (req: Request, res: Response): Promise<any>
       }
     );
 
+    if (body.idComision) {
+      const io = (req as any).app.get('io');
+      io?.to(`proyeccion-${body.idComision}`).emit('asistencias-actualizadas-masivo', { sentido: nuevoSentido });
+    }
+
     return res.status(200).json({
       msg: "Actualizados correctamente",
       estatus: 200,
@@ -244,7 +249,12 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
         msg: "No se encontraron votos para actualizar",
       });
     }
-    
+
+    if (body.idComision) {
+      const io = (req as any).app.get('io');
+      io?.to(`proyeccion-${body.idComision}`).emit('votos-actualizados-masivo', { sentido: nuevoSentido });
+    }
+
     return res.status(200).json({
       msg: "Voto(s) actualizado(s) correctamente",
       estatus: 200,

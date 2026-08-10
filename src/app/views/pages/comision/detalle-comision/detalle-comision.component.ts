@@ -1253,7 +1253,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
     const datos = {
       id: this.idEvento,
-      sentido: sentido
+      sentido: sentido,
+      idComision: this.idComisionRuta
     }
 
     console.log(datos);
@@ -1310,7 +1311,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   guardarSentidoVoto(idIntegrante: string, sentido: number, idAgenda: string): void {
     const datos = {
       id: idIntegrante,
-      sentido: sentido
+      sentido: sentido,
+      idComision: idAgenda
     };
     console.log(datos);
     this._eventoService.actualizaAsistencia(datos).subscribe({
@@ -3188,7 +3190,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const datos = {
       idpunto: this.puntoSeleccionadoVotacion,
       idReserva: this.reservaPuntoSeleccionadoVotacion || null,
-      sentido: sentido
+      sentido: sentido,
+      idComision: this.idComisionRuta
     }
 
     console.log(datos);
@@ -3248,7 +3251,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const datos = {
       idpunto: this.idpto,
       id: votante.id,
-      sentido: votante.sentido
+      sentido: votante.sentido,
+      idComision: this.idComisionRuta
     }
     this._eventoService.saveVotacion(datos).subscribe({
       next: (response: any) => {
@@ -3303,7 +3307,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     const datos = {
       idpunto: this.idpto,
       id: integrante.id,
-      sentido: integrante.sentido
+      sentido: integrante.sentido,
+      idComision: this.idComisionRuta
     }
 
     this._eventoService.saveVotacion(datos).subscribe({

@@ -80,6 +80,10 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this.detenerPolling();
     this._socketService.offVotacionTerminada();
     this._socketService.offAsistenciaTerminada();
+    this._socketService.offVotoRegistrado();
+    this._socketService.offAsistenciaRegistrada();
+    this._socketService.offVotosActualizadosMasivo();
+    this._socketService.offAsistenciasActualizadasMasivo();
     this._socketService.offProyeccionIniciada();
     this._socketService.offContenidoProyectado();
     this._socketService.offContenidoLimpiado();
@@ -99,6 +103,31 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       this.detenerPolling();
       this.terminado = true;
       this.cdr.detectChanges();
+    });
+
+    // Actualización instantánea: un voto/asistencia cambió en el servidor.
+    // Reemplaza tener que esperar al siguiente ciclo de polling (antes cada 3s).
+    this._socketService.onVotoRegistrado((data) => {
+      if (this.modo !== 'votacion') return;
+      this.actualizarSentidoLocal(data.id_diputado, data.sentido_voto);
+    });
+
+    this._socketService.onAsistenciaRegistrada((data) => {
+      if (this.modo !== 'asistencia') return;
+      // El auto-registro del diputado siempre es sentido=1 (ASISTENCIA); el
+      // admin puede mandar 0/2/3. Si no viene, asumimos 1 por compatibilidad.
+      this.actualizarSentidoLocal(data.id_diputado, data.sentido ?? 1);
+    });
+
+    // Botones "marcar todos" (admin): afecta a todos a la vez, se recarga completo.
+    this._socketService.onVotosActualizadosMasivo(() => {
+      if (this.modo !== 'votacion') return;
+      this.cargarDatos();
+    });
+
+    this._socketService.onAsistenciasActualizadasMasivo(() => {
+      if (this.modo !== 'asistencia') return;
+      this.cargarDatos();
     });
 
     this._socketService.onProyeccionIniciada((params) => {
@@ -187,7 +216,9 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   }
 
   private iniciarPolling(): void {
-    this.pollInterval = setInterval(() => this.cargarDatos(), 3000);
+    // Respaldo por si se pierde algún evento de socket (reconexión, etc.) —
+    // la actualización normal ya es instantánea vía voto-registrado/asistencia-registrada.
+    this.pollInterval = setInterval(() => this.cargarDatos(), 30000);
   }
 
   private detenerPolling(): void {
@@ -318,6 +349,31 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /** Actualiza el sentido de un participante ya cargado, sin volver a pedir la lista completa. */
+  private actualizarSentidoLocal(idDiputado: string, sentido: number): void {
+    let encontrado = false;
+
+    if (this.esComision) {
+      for (const comision of this.listaComisiones) {
+        const integrante = comision.integrantes.find((i: any) => i.id_diputado === idDiputado);
+        if (integrante) {
+          integrante.sentido = sentido;
+          encontrado = true;
+        }
+      }
+    } else {
+      const participante = this.participantes.find((p: any) => p.id_diputado === idDiputado);
+      if (participante) {
+        participante.sentido = sentido;
+        encontrado = true;
+        // columna1/2/3 referencian los mismos objetos (slice copia el array, no los items),
+        // así que basta con mutar el de participantes — pero por si acaso, se busca también aquí.
+      }
+    }
+
+    if (encontrado) this.cdr.detectChanges();
   }
 
   private distribuirColumnas(lista: any[]): void {
