@@ -29,6 +29,7 @@ const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
 const anfitrion_agendas_1 = __importDefault(require("../models/anfitrion_agendas"));
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
+const temas_puntos_votos_1 = __importDefault(require("../models/temas_puntos_votos"));
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
 function getDiputadoId(integranteLegislaturaId) {
@@ -146,8 +147,10 @@ const registrarAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, func
         // sentido_voto=1 = ASISTENCIA (igual que cuando el admin marca manualmente)
         yield registro.update(Object.assign(Object.assign(Object.assign({ sentido_voto: 1, mensaje: 'ASISTENCIA' }, (partido_dip && { partido_dip })), (id_cargo_dip && { id_cargo_dip })), (orden !== undefined && { orden })));
         // El room lo provee el frontend: es idComisionRuta del admin.
-        // Para comisiones coincide con comision_dip_id; para sesiones plenarias el frontend lo envía explícitamente.
-        const roomId = id_comision || registro.comision_dip_id;
+        // Para comisiones coincide con comision_dip_id; para sesiones plenarias
+        // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
+        // de proyección es directamente el id de la agenda.
+        const roomId = id_comision || registro.comision_dip_id || id_agenda;
         const io = req.app.get('io');
         if (io && roomId) {
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
@@ -217,7 +220,19 @@ const registrarVoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         // sentido 0 = Sin Registro del diputado → mismo estado que pendiente (0 / PENDIENTE)
         const mensajeVoto = sentido === 0 ? 'PENDIENTE' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
         yield votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
-        const roomIdVoto = id_comision || votoRegistro.id_comision_dip;
+        // Para sesiones plenarias (comision_dip_id es NULL y la app no manda id_comision)
+        // la sala de proyección es el id de la agenda, resuelto vía el punto/tema votado.
+        let roomIdVoto = id_comision || votoRegistro.id_comision_dip;
+        if (!roomIdVoto) {
+            if (votoRegistro.id_tema_punto_voto) {
+                const tema = yield temas_puntos_votos_1.default.findByPk(votoRegistro.id_tema_punto_voto);
+                roomIdVoto = (tema === null || tema === void 0 ? void 0 : tema.id_evento) || null;
+            }
+            else if (votoRegistro.id_punto) {
+                const puntoVotado = yield puntos_ordens_1.default.findByPk(votoRegistro.id_punto);
+                roomIdVoto = (puntoVotado === null || puntoVotado === void 0 ? void 0 : puntoVotado.id_evento) || null;
+            }
+        }
         const io = req.app.get('io');
         if (io && roomIdVoto) {
             io.to(`proyeccion-${roomIdVoto}`).emit('voto-registrado', {
