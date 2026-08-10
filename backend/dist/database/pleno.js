@@ -6,6 +6,12 @@ const sequelizeCuestionarios = new sequelize_1.Sequelize('pleno', 'homestead', '
     dialect: 'mysql',
     define: {
         freezeTableName: true
+    },
+    pool: {
+        max: 20,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
     }
 });
 exports.default = sequelizeCuestionarios;
