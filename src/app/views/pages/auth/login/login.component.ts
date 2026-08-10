@@ -60,14 +60,24 @@ onLoggedin(form: NgForm) {
 
   this._userService.login(user).subscribe({
     next: (response: any) => {
+      // Los diputados no usan esta app (usan la app de diputados aparte)
+      if (response.role === 'diputado') {
+        Swal.fire({
+          position: "center",
+          icon: "info",
+          title: "Usa la app de diputados para iniciar sesión.",
+          showConfirmButton: false,
+          timer: 3000
+        });
+        return;
+      }
+
       const userData = response.user;
       userData.role = response.role;
       localStorage.setItem('isLoggedin', 'true');
       this._userService.setCurrentUser(userData);
       if (this.returnUrl) {
         this.router.navigate([this.returnUrl]);
-      } else if (response.role === 'diputado') {
-        this.router.navigate(['/diputado/panel']);
       } else {
         this.router.navigate(['/agenda-comision/sesiones']);
       }
