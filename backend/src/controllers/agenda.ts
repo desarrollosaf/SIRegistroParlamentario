@@ -147,7 +147,7 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-    
+
     // 1. Obtener evento
     const evento = await Agenda.findOne({
       where: { id },
@@ -156,178 +156,70 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
         { model: TipoEventos, as: "tipoevento", attributes: ["id", "nombre"] },
       ],
     });
-    
+
     if (!evento) {
       return res.status(404).json({ msg: "Evento no encontrado" });
     }
-    
+
     // 2. Determinar tipo de evento
     const esSesion = evento.tipoevento?.nombre === "Sesión";
     const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-    
-    // 3. Obtener título y puntos según tipo de evento
-    let titulo = "";
-    let puntos: any[] = []; // ✅ Declarar aquí, fuera del if/else
-    
-    if (esSesion) {
-      titulo = evento.descripcion ?? "";
-    } else {
-      const anfitriones = await AnfitrionAgenda.findAll({
-        where: { agenda_id: evento.id },
-        attributes: ["autor_id"],
-        raw: true
-      });
-      
-      if (anfitriones.length > 0) { // ✅ Validar antes de continuar
-        const puntosturnados = await PuntosComisiones.findAll({
-          where: Sequelize.literal(
-            `(${anfitriones.map(a => 
-              `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
-            ).join(' AND ')})`
-          )
-        });
-        
-        if (puntosturnados.length > 0) {
-          const idsTurnados = puntosturnados.map(p => p.id_punto);
 
-          // type=1: punto_origen_id apunta directamente al punto de sesión
-          const estudiosType1 = await IniciativaEstudio.findAll({
-            where: { punto_origen_id: idsTurnados, type: '1', status: { [Op.gte]: 2 } },
-            attributes: ['punto_origen_id'],
-            raw: true
-          });
-
-          // type=2: punto_origen_id apunta a un expediente → buscar los puntos de sesión en ExpedienteEstudiosPuntos
-          const estudiosType2 = await IniciativaEstudio.findAll({
-            where: { type: '2', status: { [Op.gte]: 2 } },
-            attributes: ['punto_origen_id'],
-            raw: true
-          });
-          const expedienteIds = estudiosType2.map((e: any) => e.punto_origen_id);
-          const puntosEnExpediente = expedienteIds.length > 0
-            ? await ExpedienteEstudiosPuntos.findAll({
-                where: { expediente_id: expedienteIds },
-                attributes: ['punto_origen_sesion_id'],
-                raw: true
-              })
-            : [];
-
-          const idsYaUsados = new Set([
-            ...estudiosType1.map((e: any) => String(e.punto_origen_id)),
-            ...puntosEnExpediente.map((e: any) => String(e.punto_origen_sesion_id)),
-          ]);
-          const idsPendientes = idsTurnados.filter((id: any) => !idsYaUsados.has(String(id)));
-
-          const puntosRaw = await PuntosOrden.findAll({
-            where: { id: idsPendientes },
-            attributes: ["id", "punto", "nopunto"],
-            include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
-          });
-
-          const puntosIds = puntosRaw.map((p: any) => p.id);
-          const iniciativasPuntosRaw = puntosIds.length > 0
-            ? await IniciativaPuntoOrden.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
-            : [];
-          const iniByPuntoId = new Map<number, string[]>();
-          for (const ini of iniciativasPuntosRaw as any[]) {
-            const key = Number(ini.id_punto);
-            if (!iniByPuntoId.has(key)) iniByPuntoId.set(key, []);
-            iniByPuntoId.get(key)!.push(ini.id);
-          }
-
-          puntos = puntosRaw.map((p: any) => {
-            const data = p.toJSON();
-            const fecha = data.evento?.fecha
-              ? new Date(data.evento.fecha).toISOString().split('T')[0]
-              : '';
-            const iniciativasStr = (iniByPuntoId.get(data.id) ?? []).join(' | ');
-            return {
-              id: data.id,
-              punto: `${fecha} - ${data.evento?.id} - [${iniciativasStr}] - ${data.punto}`
-            };
-          });
-        }
-
-        
-        const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-        
-        if (comisionIds.length > 0) {
-          const comisiones = await Comision.findAll({
-            where: { id: comisionIds },
-            attributes: ["nombre"],
-            raw: true
-          });
-          titulo = comisiones.map(c => c.nombre).join(", ");
-        }
-      }
-    }
-    
-    // 4. Verificar si existen asistencias
-    const asistenciasExistentes = await AsistenciaVoto.findAll({
-      where: { id_agenda: id },
-      order: [['created_at', 'DESC']],
-      raw: true,
-    });
-
-    
-    let dipasociadosRaw = await DiputadosAsociados.findAll({
-      where: { id_agenda: evento.id },
-      raw: true
-    });
-
-    let dipasociados: any[] = [];
-
-    if (!esSesion) {
-      dipasociados = await procesarDiputadosAsociadosComision(dipasociadosRaw);
-    }
-
-    const comentarios = await ComentarioEvento.findAll({
-      where: { id_evento: id },
-      order: [['createdAt', 'DESC']],
-      raw: true
-    });
-    
-    // 5. Si NO existen asistencias, crearlas
-    if (asistenciasExistentes.length === 0) {
-      await crearAsistencias(evento, esSesion);
-      const io = req.app.get('io');
-      io.emit('evento_iniciado', { id });
-      // Volver a consultar las asistencias recién creadas
-      const asistenciasNuevas = await AsistenciaVoto.findAll({
+    // 3-4. Título/puntos, asistencias, diputados asociados (crudo) y comentarios
+    // son consultas independientes entre sí — corren en paralelo en vez de una por una.
+    const [{ titulo, puntos }, asistenciasExistentes, dipasociadosRaw, comentarios] = await Promise.all([
+      obtenerTituloYPuntos(evento, esSesion),
+      AsistenciaVoto.findAll({
         where: { id_agenda: id },
         order: [['created_at', 'DESC']],
         raw: true,
-      });
-      const integrantes = await procesarAsistencias(asistenciasNuevas, esSesion);
-      
-      return res.status(200).json({
-        msg: "Asistencias creadas exitosamente",
-        evento,
-        integrantes,
-        titulo,
-        tipoEvento,
-        puntos,
-        dipasociados,
-        comentarios  
-      });
-    }
-    
-    // 6. Si SÍ existen asistencias, procesarlas
-    const integrantes = await procesarAsistencias(asistenciasExistentes, esSesion);
+      }),
+      DiputadosAsociados.findAll({
+        where: { id_agenda: evento.id },
+        raw: true
+      }),
+      ComentarioEvento.findAll({
+        where: { id_evento: id },
+        order: [['createdAt', 'DESC']],
+        raw: true
+      }),
+    ]);
 
-    
-    
+    // Procesar diputados asociados e integrantes (asistencia) tampoco dependen
+    // entre sí — también en paralelo.
+    const [dipasociados, { integrantes, asistenciasCreadas }] = await Promise.all([
+      !esSesion ? procesarDiputadosAsociadosComision(dipasociadosRaw) : Promise.resolve([] as any[]),
+      (async () => {
+        // 5. Si NO existen asistencias, crearlas
+        if (asistenciasExistentes.length === 0) {
+          await crearAsistencias(evento, esSesion);
+          const io = req.app.get('io');
+          io.emit('evento_iniciado', { id });
+          // Volver a consultar las asistencias recién creadas
+          const asistenciasNuevas = await AsistenciaVoto.findAll({
+            where: { id_agenda: id },
+            order: [['created_at', 'DESC']],
+            raw: true,
+          });
+          return { integrantes: await procesarAsistencias(asistenciasNuevas, esSesion), asistenciasCreadas: true };
+        }
+
+        // 6. Si SÍ existen asistencias, procesarlas
+        return { integrantes: await procesarAsistencias(asistenciasExistentes, esSesion), asistenciasCreadas: false };
+      })(),
+    ]);
+
     return res.status(200).json({
-      msg: "Evento con asistencias existentes",
+      msg: asistenciasCreadas ? "Asistencias creadas exitosamente" : "Evento con asistencias existentes",
       evento,
       integrantes,
       titulo,
-      tipoEvento, 
+      tipoEvento,
       puntos,
       dipasociados,
-      comentarios  
+      comentarios
     });
-    
+
   } catch (error) {
     console.error("Error obteniendo evento:", error);
     return res.status(500).json({
@@ -336,6 +228,113 @@ export const getevento = async (req: Request, res: Response): Promise<Response> 
     });
   }
 };
+
+/** Título y puntos turnados del evento. Sin llamadas dependientes entre sí
+ *  se resuelven en paralelo (comisiones anfitrionas vs. puntos turnados). */
+async function obtenerTituloYPuntos(evento: any, esSesion: boolean): Promise<{ titulo: string; puntos: any[] }> {
+  if (esSesion) {
+    return { titulo: evento.descripcion ?? "", puntos: [] };
+  }
+
+  const anfitriones = await AnfitrionAgenda.findAll({
+    where: { agenda_id: evento.id },
+    attributes: ["autor_id"],
+    raw: true
+  });
+
+  if (anfitriones.length === 0) {
+    return { titulo: "", puntos: [] };
+  }
+
+  const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
+
+  const [puntos, comisiones] = await Promise.all([
+    calcularPuntosTurnados(anfitriones),
+    comisionIds.length > 0
+      ? Comision.findAll({ where: { id: comisionIds }, attributes: ["nombre"], raw: true })
+      : Promise.resolve([] as any[]),
+  ]);
+
+  const titulo = comisiones.map((c: any) => c.nombre).join(", ");
+  return { titulo, puntos };
+}
+
+/** Puntos de sesión turnados a las comisiones anfitrionas que aún no tienen estudio. */
+async function calcularPuntosTurnados(anfitriones: any[]): Promise<any[]> {
+  const puntosturnados = await PuntosComisiones.findAll({
+    where: Sequelize.literal(
+      `(${anfitriones.map(a =>
+        `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`
+      ).join(' AND ')})`
+    )
+  });
+
+  if (puntosturnados.length === 0) {
+    return [];
+  }
+
+  const idsTurnados = puntosturnados.map(p => p.id_punto);
+
+  // type=1: punto_origen_id apunta directamente al punto de sesión
+  // type=2: punto_origen_id apunta a un expediente → puntos de sesión en ExpedienteEstudiosPuntos
+  // Ninguna depende de la otra, corren en paralelo.
+  const [estudiosType1, estudiosType2] = await Promise.all([
+    IniciativaEstudio.findAll({
+      where: { punto_origen_id: idsTurnados, type: '1', status: { [Op.gte]: 2 } },
+      attributes: ['punto_origen_id'],
+      raw: true
+    }),
+    IniciativaEstudio.findAll({
+      where: { type: '2', status: { [Op.gte]: 2 } },
+      attributes: ['punto_origen_id'],
+      raw: true
+    }),
+  ]);
+
+  const expedienteIds = estudiosType2.map((e: any) => e.punto_origen_id);
+  const puntosEnExpediente = expedienteIds.length > 0
+    ? await ExpedienteEstudiosPuntos.findAll({
+        where: { expediente_id: expedienteIds },
+        attributes: ['punto_origen_sesion_id'],
+        raw: true
+      })
+    : [];
+
+  const idsYaUsados = new Set([
+    ...estudiosType1.map((e: any) => String(e.punto_origen_id)),
+    ...puntosEnExpediente.map((e: any) => String(e.punto_origen_sesion_id)),
+  ]);
+  const idsPendientes = idsTurnados.filter((id: any) => !idsYaUsados.has(String(id)));
+
+  const puntosRaw = await PuntosOrden.findAll({
+    where: { id: idsPendientes },
+    attributes: ["id", "punto", "nopunto"],
+    include: [{ model: Agenda, as: 'evento', attributes: ["fecha", "id"] }]
+  });
+
+  const puntosIds = puntosRaw.map((p: any) => p.id);
+  const iniciativasPuntosRaw = puntosIds.length > 0
+    ? await IniciativaPuntoOrden.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
+    : [];
+  const iniByPuntoId = new Map<number, string[]>();
+  for (const ini of iniciativasPuntosRaw as any[]) {
+    const key = Number(ini.id_punto);
+    if (!iniByPuntoId.has(key)) iniByPuntoId.set(key, []);
+    iniByPuntoId.get(key)!.push(ini.id);
+  }
+
+  return puntosRaw.map((p: any) => {
+    const data = p.toJSON();
+    const fecha = data.evento?.fecha
+      ? new Date(data.evento.fecha).toISOString().split('T')[0]
+      : '';
+    const iniciativasStr = (iniByPuntoId.get(data.id) ?? []).join(' | ');
+    return {
+      id: data.id,
+      punto: `${fecha} - ${data.evento?.id} - [${iniciativasStr}] - ${data.punto}`
+    };
+  });
+}
 
 /**
  * Crea asistencias para el evento

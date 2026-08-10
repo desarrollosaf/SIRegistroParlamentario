@@ -143,7 +143,7 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.geteventos = geteventos;
 const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     try {
         const { id } = req.params;
         // 1. Obtener evento
@@ -160,135 +160,49 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // 2. Determinar tipo de evento
         const esSesion = ((_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === "Sesión";
         const tipoEvento = esSesion ? 1 : 2; // 1 = Sesión, 2 = Comisiones
-        // 3. Obtener título y puntos según tipo de evento
-        let titulo = "";
-        let puntos = []; // ✅ Declarar aquí, fuera del if/else
-        if (esSesion) {
-            titulo = (_b = evento.descripcion) !== null && _b !== void 0 ? _b : "";
-        }
-        else {
-            const anfitriones = yield anfitrion_agendas_1.default.findAll({
-                where: { agenda_id: evento.id },
-                attributes: ["autor_id"],
-                raw: true
-            });
-            if (anfitriones.length > 0) { // ✅ Validar antes de continuar
-                const puntosturnados = yield puntos_comisiones_1.default.findAll({
-                    where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
-                });
-                if (puntosturnados.length > 0) {
-                    const idsTurnados = puntosturnados.map(p => p.id_punto);
-                    // type=1: punto_origen_id apunta directamente al punto de sesión
-                    const estudiosType1 = yield iniciativas_estudio_1.default.findAll({
-                        where: { punto_origen_id: idsTurnados, type: '1', status: { [sequelize_1.Op.gte]: 2 } },
-                        attributes: ['punto_origen_id'],
-                        raw: true
-                    });
-                    // type=2: punto_origen_id apunta a un expediente → buscar los puntos de sesión en ExpedienteEstudiosPuntos
-                    const estudiosType2 = yield iniciativas_estudio_1.default.findAll({
-                        where: { type: '2', status: { [sequelize_1.Op.gte]: 2 } },
-                        attributes: ['punto_origen_id'],
-                        raw: true
-                    });
-                    const expedienteIds = estudiosType2.map((e) => e.punto_origen_id);
-                    const puntosEnExpediente = expedienteIds.length > 0
-                        ? yield expedientes_estudio_puntos_1.default.findAll({
-                            where: { expediente_id: expedienteIds },
-                            attributes: ['punto_origen_sesion_id'],
-                            raw: true
-                        })
-                        : [];
-                    const idsYaUsados = new Set([
-                        ...estudiosType1.map((e) => String(e.punto_origen_id)),
-                        ...puntosEnExpediente.map((e) => String(e.punto_origen_sesion_id)),
-                    ]);
-                    const idsPendientes = idsTurnados.filter((id) => !idsYaUsados.has(String(id)));
-                    const puntosRaw = yield puntos_ordens_1.default.findAll({
-                        where: { id: idsPendientes },
-                        attributes: ["id", "punto", "nopunto"],
-                        include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
-                    });
-                    const puntosIds = puntosRaw.map((p) => p.id);
-                    const iniciativasPuntosRaw = puntosIds.length > 0
-                        ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
-                        : [];
-                    const iniByPuntoId = new Map();
-                    for (const ini of iniciativasPuntosRaw) {
-                        const key = Number(ini.id_punto);
-                        if (!iniByPuntoId.has(key))
-                            iniByPuntoId.set(key, []);
-                        iniByPuntoId.get(key).push(ini.id);
-                    }
-                    puntos = puntosRaw.map((p) => {
-                        var _a, _b, _c;
-                        const data = p.toJSON();
-                        const fecha = ((_a = data.evento) === null || _a === void 0 ? void 0 : _a.fecha)
-                            ? new Date(data.evento.fecha).toISOString().split('T')[0]
-                            : '';
-                        const iniciativasStr = ((_b = iniByPuntoId.get(data.id)) !== null && _b !== void 0 ? _b : []).join(' | ');
-                        return {
-                            id: data.id,
-                            punto: `${fecha} - ${(_c = data.evento) === null || _c === void 0 ? void 0 : _c.id} - [${iniciativasStr}] - ${data.punto}`
-                        };
-                    });
-                }
-                const comisionIds = anfitriones.map(a => a.autor_id).filter(Boolean);
-                if (comisionIds.length > 0) {
-                    const comisiones = yield comisions_1.default.findAll({
-                        where: { id: comisionIds },
-                        attributes: ["nombre"],
-                        raw: true
-                    });
-                    titulo = comisiones.map(c => c.nombre).join(", ");
-                }
-            }
-        }
-        // 4. Verificar si existen asistencias
-        const asistenciasExistentes = yield asistencia_votos_1.default.findAll({
-            where: { id_agenda: id },
-            order: [['created_at', 'DESC']],
-            raw: true,
-        });
-        let dipasociadosRaw = yield diputados_asociados_1.default.findAll({
-            where: { id_agenda: evento.id },
-            raw: true
-        });
-        let dipasociados = [];
-        if (!esSesion) {
-            dipasociados = yield procesarDiputadosAsociadosComision(dipasociadosRaw);
-        }
-        const comentarios = yield comentario_evento_1.default.findAll({
-            where: { id_evento: id },
-            order: [['createdAt', 'DESC']],
-            raw: true
-        });
-        // 5. Si NO existen asistencias, crearlas
-        if (asistenciasExistentes.length === 0) {
-            yield crearAsistencias(evento, esSesion);
-            const io = req.app.get('io');
-            io.emit('evento_iniciado', { id });
-            // Volver a consultar las asistencias recién creadas
-            const asistenciasNuevas = yield asistencia_votos_1.default.findAll({
+        // 3-4. Título/puntos, asistencias, diputados asociados (crudo) y comentarios
+        // son consultas independientes entre sí — corren en paralelo en vez de una por una.
+        const [{ titulo, puntos }, asistenciasExistentes, dipasociadosRaw, comentarios] = yield Promise.all([
+            obtenerTituloYPuntos(evento, esSesion),
+            asistencia_votos_1.default.findAll({
                 where: { id_agenda: id },
                 order: [['created_at', 'DESC']],
                 raw: true,
-            });
-            const integrantes = yield procesarAsistencias(asistenciasNuevas, esSesion);
-            return res.status(200).json({
-                msg: "Asistencias creadas exitosamente",
-                evento,
-                integrantes,
-                titulo,
-                tipoEvento,
-                puntos,
-                dipasociados,
-                comentarios
-            });
-        }
-        // 6. Si SÍ existen asistencias, procesarlas
-        const integrantes = yield procesarAsistencias(asistenciasExistentes, esSesion);
+            }),
+            diputados_asociados_1.default.findAll({
+                where: { id_agenda: evento.id },
+                raw: true
+            }),
+            comentario_evento_1.default.findAll({
+                where: { id_evento: id },
+                order: [['createdAt', 'DESC']],
+                raw: true
+            }),
+        ]);
+        // Procesar diputados asociados e integrantes (asistencia) tampoco dependen
+        // entre sí — también en paralelo.
+        const [dipasociados, { integrantes, asistenciasCreadas }] = yield Promise.all([
+            !esSesion ? procesarDiputadosAsociadosComision(dipasociadosRaw) : Promise.resolve([]),
+            (() => __awaiter(void 0, void 0, void 0, function* () {
+                // 5. Si NO existen asistencias, crearlas
+                if (asistenciasExistentes.length === 0) {
+                    yield crearAsistencias(evento, esSesion);
+                    const io = req.app.get('io');
+                    io.emit('evento_iniciado', { id });
+                    // Volver a consultar las asistencias recién creadas
+                    const asistenciasNuevas = yield asistencia_votos_1.default.findAll({
+                        where: { id_agenda: id },
+                        order: [['created_at', 'DESC']],
+                        raw: true,
+                    });
+                    return { integrantes: yield procesarAsistencias(asistenciasNuevas, esSesion), asistenciasCreadas: true };
+                }
+                // 6. Si SÍ existen asistencias, procesarlas
+                return { integrantes: yield procesarAsistencias(asistenciasExistentes, esSesion), asistenciasCreadas: false };
+            }))(),
+        ]);
         return res.status(200).json({
-            msg: "Evento con asistencias existentes",
+            msg: asistenciasCreadas ? "Asistencias creadas exitosamente" : "Evento con asistencias existentes",
             evento,
             integrantes,
             titulo,
@@ -307,6 +221,101 @@ const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getevento = getevento;
+/** Título y puntos turnados del evento. Sin llamadas dependientes entre sí
+ *  se resuelven en paralelo (comisiones anfitrionas vs. puntos turnados). */
+function obtenerTituloYPuntos(evento, esSesion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        if (esSesion) {
+            return { titulo: (_a = evento.descripcion) !== null && _a !== void 0 ? _a : "", puntos: [] };
+        }
+        const anfitriones = yield anfitrion_agendas_1.default.findAll({
+            where: { agenda_id: evento.id },
+            attributes: ["autor_id"],
+            raw: true
+        });
+        if (anfitriones.length === 0) {
+            return { titulo: "", puntos: [] };
+        }
+        const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
+        const [puntos, comisiones] = yield Promise.all([
+            calcularPuntosTurnados(anfitriones),
+            comisionIds.length > 0
+                ? comisions_1.default.findAll({ where: { id: comisionIds }, attributes: ["nombre"], raw: true })
+                : Promise.resolve([]),
+        ]);
+        const titulo = comisiones.map((c) => c.nombre).join(", ");
+        return { titulo, puntos };
+    });
+}
+/** Puntos de sesión turnados a las comisiones anfitrionas que aún no tienen estudio. */
+function calcularPuntosTurnados(anfitriones) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const puntosturnados = yield puntos_comisiones_1.default.findAll({
+            where: sequelize_2.Sequelize.literal(`(${anfitriones.map(a => `FIND_IN_SET('${a.autor_id}', REPLACE(REPLACE(id_comision, '[', ''), ']', ''))`).join(' AND ')})`)
+        });
+        if (puntosturnados.length === 0) {
+            return [];
+        }
+        const idsTurnados = puntosturnados.map(p => p.id_punto);
+        // type=1: punto_origen_id apunta directamente al punto de sesión
+        // type=2: punto_origen_id apunta a un expediente → puntos de sesión en ExpedienteEstudiosPuntos
+        // Ninguna depende de la otra, corren en paralelo.
+        const [estudiosType1, estudiosType2] = yield Promise.all([
+            iniciativas_estudio_1.default.findAll({
+                where: { punto_origen_id: idsTurnados, type: '1', status: { [sequelize_1.Op.gte]: 2 } },
+                attributes: ['punto_origen_id'],
+                raw: true
+            }),
+            iniciativas_estudio_1.default.findAll({
+                where: { type: '2', status: { [sequelize_1.Op.gte]: 2 } },
+                attributes: ['punto_origen_id'],
+                raw: true
+            }),
+        ]);
+        const expedienteIds = estudiosType2.map((e) => e.punto_origen_id);
+        const puntosEnExpediente = expedienteIds.length > 0
+            ? yield expedientes_estudio_puntos_1.default.findAll({
+                where: { expediente_id: expedienteIds },
+                attributes: ['punto_origen_sesion_id'],
+                raw: true
+            })
+            : [];
+        const idsYaUsados = new Set([
+            ...estudiosType1.map((e) => String(e.punto_origen_id)),
+            ...puntosEnExpediente.map((e) => String(e.punto_origen_sesion_id)),
+        ]);
+        const idsPendientes = idsTurnados.filter((id) => !idsYaUsados.has(String(id)));
+        const puntosRaw = yield puntos_ordens_1.default.findAll({
+            where: { id: idsPendientes },
+            attributes: ["id", "punto", "nopunto"],
+            include: [{ model: agendas_1.default, as: 'evento', attributes: ["fecha", "id"] }]
+        });
+        const puntosIds = puntosRaw.map((p) => p.id);
+        const iniciativasPuntosRaw = puntosIds.length > 0
+            ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: puntosIds }, attributes: ['id', 'id_punto'], raw: true })
+            : [];
+        const iniByPuntoId = new Map();
+        for (const ini of iniciativasPuntosRaw) {
+            const key = Number(ini.id_punto);
+            if (!iniByPuntoId.has(key))
+                iniByPuntoId.set(key, []);
+            iniByPuntoId.get(key).push(ini.id);
+        }
+        return puntosRaw.map((p) => {
+            var _a, _b, _c;
+            const data = p.toJSON();
+            const fecha = ((_a = data.evento) === null || _a === void 0 ? void 0 : _a.fecha)
+                ? new Date(data.evento.fecha).toISOString().split('T')[0]
+                : '';
+            const iniciativasStr = ((_b = iniByPuntoId.get(data.id)) !== null && _b !== void 0 ? _b : []).join(' | ');
+            return {
+                id: data.id,
+                punto: `${fecha} - ${(_c = data.evento) === null || _c === void 0 ? void 0 : _c.id} - [${iniciativasStr}] - ${data.punto}`
+            };
+        });
+    });
+}
 /**
  * Crea asistencias para el evento
  */
