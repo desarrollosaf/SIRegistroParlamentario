@@ -498,6 +498,7 @@ class Server {
                 '/api/estadistico/pdfordendia/',
                 '/api/estadistico/comision/eventos/',
                 '/api/eventos/getevento/',
+                '/api/eventos/ultimoseventos/',
                 '/api/eventos/getpuntos/',
                 '/api/eventos/getvotospunto/',
                 '/api/estadistico/getordenes',

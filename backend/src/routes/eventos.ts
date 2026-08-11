@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, getUltimosEventosConLiga, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 import  uploadAgenda from  "../controllers/uploadAgenda";
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 
 router.get("/api/eventos/geteventos/:id", geteventos );
 router.get("/api/eventos/getevento/:id", getevento );
+router.get("/api/eventos/ultimoseventos/:tipo", getUltimosEventosConLiga );
 router.post("/api/eventos/actasistencia/", actualizar );
 router.get("/api/eventos/catalogos/", catalogos );
 router.post("/api/eventos/gettipos/", getTiposPuntos );

@@ -144,6 +144,68 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
   }
 };
 
+// Últimos 10 eventos de un tipo (1 = Sesión, 0 = Comisión) con su liga de YouTube
+// y los integrantes del evento (mismo formato que ya usa getevento).
+export const getUltimosEventosConLiga = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { tipo } = req.params;
+    const esSesion = tipo === '1';
+
+    const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+    const uuidPermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+    const uuidComision = '0e772516-bbc2-402f-afa0-022489752d33';
+
+    const eventos = await Agenda.findAll({
+      include: [
+        {
+          model: TipoEventos,
+          as: 'tipoevento',
+          attributes: ['id', 'nombre'],
+          where: { id: esSesion ? { [Op.in]: [uuidSesion, uuidPermanente] } : uuidComision }
+        }
+      ],
+      order: [['fecha', 'DESC']],
+      limit: 10,
+    });
+
+    const data = await Promise.all(eventos.map(async (evento: any) => {
+      const asistencias = await AsistenciaVoto.findAll({
+        where: { id_agenda: evento.id },
+        order: [['created_at', 'DESC']],
+        raw: true,
+      });
+      const integrantesRaw = await procesarAsistencias(asistencias, esSesion);
+
+      // Solo se quiere el nombre del diputado — si viene agrupado por comisión
+      // se simplifica cada integrante dentro del grupo, si no, la lista plana.
+      const integrantes = esSesion
+        ? integrantesRaw.map((i: any) => ({ diputado: i.diputado }))
+        : integrantesRaw.map((grupo: any) => ({
+            ...grupo,
+            integrantes: (grupo.integrantes || []).map((i: any) => ({ diputado: i.diputado })),
+          }));
+
+      return {
+        id: evento.id,
+        descripcion: evento.descripcion,
+        fecha: evento.fecha,
+        liga: evento.liga,
+        tipoevento: evento.tipoevento?.nombre ?? null,
+        integrantes,
+      };
+    }));
+
+    return res.status(200).json({ ok: true, data });
+  } catch (error) {
+    console.error('Error al obtener últimos eventos con liga:', error);
+    return res.status(500).json({
+      ok: false,
+      msg: 'Ocurrió un error al obtener los eventos',
+      error: (error as Error).message,
+    });
+  }
+};
+
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
