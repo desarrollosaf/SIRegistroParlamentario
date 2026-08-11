@@ -10,6 +10,7 @@ const uploadAgenda_1 = __importDefault(require("../controllers/uploadAgenda"));
 const router = (0, express_1.Router)();
 router.get("/api/eventos/geteventos/:id", agenda_1.geteventos);
 router.get("/api/eventos/getevento/:id", agenda_1.getevento);
+router.get("/api/eventos/ultimoseventos/:tipo", agenda_1.getUltimosEventosConLiga);
 router.post("/api/eventos/actasistencia/", agenda_1.actualizar);
 router.get("/api/eventos/catalogos/", agenda_1.catalogos);
 router.post("/api/eventos/gettipos/", agenda_1.getTiposPuntos);

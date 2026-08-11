@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.geteventos = void 0;
+exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.getUltimosEventosConLiga = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -142,6 +142,61 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.geteventos = geteventos;
+// Últimos 10 eventos de un tipo (1 = Sesión, 0 = Comisión) con su liga de YouTube
+// y los integrantes del evento (mismo formato que ya usa getevento).
+const getUltimosEventosConLiga = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { tipo } = req.params;
+        const esSesion = tipo === '1';
+        const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
+        const uuidPermanente = 'a413e44b-550b-47ab-b004-a6f28c73a750';
+        const uuidComision = '0e772516-bbc2-402f-afa0-022489752d33';
+        const eventos = yield agendas_1.default.findAll({
+            include: [
+                {
+                    model: tipo_eventos_1.default,
+                    as: 'tipoevento',
+                    attributes: ['id', 'nombre'],
+                    where: { id: esSesion ? { [sequelize_1.Op.in]: [uuidSesion, uuidPermanente] } : uuidComision }
+                }
+            ],
+            order: [['fecha', 'DESC']],
+            limit: 10,
+        });
+        const data = yield Promise.all(eventos.map((evento) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b;
+            const asistencias = yield asistencia_votos_1.default.findAll({
+                where: { id_agenda: evento.id },
+                order: [['created_at', 'DESC']],
+                raw: true,
+            });
+            const integrantesRaw = yield procesarAsistencias(asistencias, esSesion);
+            // Solo se quiere el nombre del diputado — si viene agrupado por comisión
+            // se simplifica cada integrante dentro del grupo, si no, la lista plana.
+            const integrantes = esSesion
+                ? integrantesRaw.map((i) => ({ diputado: i.diputado }))
+                : integrantesRaw.map((grupo) => (Object.assign(Object.assign({}, grupo), { integrantes: (grupo.integrantes || []).map((i) => ({ diputado: i.diputado })) })));
+            return {
+                id: evento.id,
+                descripcion: evento.descripcion,
+                fecha: evento.fecha,
+                liga: evento.liga,
+                tipoevento: (_b = (_a = evento.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) !== null && _b !== void 0 ? _b : null,
+                integrantes,
+            };
+        })));
+        return res.status(200).json({ ok: true, data });
+    }
+    catch (error) {
+        console.error('Error al obtener últimos eventos con liga:', error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Ocurrió un error al obtener los eventos',
+            error: error.message,
+        });
+    }
+});
+exports.getUltimosEventosConLiga = getUltimosEventosConLiga;
 const getevento = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
