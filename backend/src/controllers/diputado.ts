@@ -160,7 +160,15 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
         // Para comisiones coincide con comision_dip_id; para sesiones plenarias
         // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
         // de proyección es directamente el id de la agenda.
-        const roomId = id_comision || registro.comision_dip_id || id_agenda;
+        let roomId = id_comision || registro.comision_dip_id || id_agenda;
+        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+        // por sala-diputados), pero la proyección está en la sala del SAF id
+        // (idComisionRuta del admin) — hay que traducir uno al otro.
+        if (roomId) {
+            const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
+            const abierta = asistenciasAbiertas.get(roomId);
+            if (abierta?.safId) roomId = abierta.safId;
+        }
         const io = req.app.get('io');
         if (io && roomId) {
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
@@ -251,6 +259,14 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
                 const puntoVotado = await PuntosOrden.findByPk(votoRegistro.id_punto);
                 roomIdVoto = (puntoVotado as any)?.id_evento || null;
             }
+        }
+        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+        // por sala-diputados), pero la proyección está en la sala del SAF id
+        // (idComisionRuta del admin) — hay que traducir uno al otro.
+        if (roomIdVoto) {
+            const votacionesAbiertasRoom: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
+            const abierta = votacionesAbiertasRoom.get(roomIdVoto);
+            if (abierta?.safId) roomIdVoto = abierta.safId;
         }
         const io = req.app.get('io');
         if (io && roomIdVoto) {

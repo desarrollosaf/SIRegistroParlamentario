@@ -150,7 +150,16 @@ const registrarAsistencia = (req, res) => __awaiter(void 0, void 0, void 0, func
         // Para comisiones coincide con comision_dip_id; para sesiones plenarias
         // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
         // de proyección es directamente el id de la agenda.
-        const roomId = id_comision || registro.comision_dip_id || id_agenda;
+        let roomId = id_comision || registro.comision_dip_id || id_agenda;
+        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+        // por sala-diputados), pero la proyección está en la sala del SAF id
+        // (idComisionRuta del admin) — hay que traducir uno al otro.
+        if (roomId) {
+            const asistenciasAbiertas = req.app.get('asistenciasAbiertas') || new Map();
+            const abierta = asistenciasAbiertas.get(roomId);
+            if (abierta === null || abierta === void 0 ? void 0 : abierta.safId)
+                roomId = abierta.safId;
+        }
         const io = req.app.get('io');
         if (io && roomId) {
             io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
@@ -232,6 +241,15 @@ const registrarVoto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 const puntoVotado = yield puntos_ordens_1.default.findByPk(votoRegistro.id_punto);
                 roomIdVoto = (puntoVotado === null || puntoVotado === void 0 ? void 0 : puntoVotado.id_evento) || null;
             }
+        }
+        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+        // por sala-diputados), pero la proyección está en la sala del SAF id
+        // (idComisionRuta del admin) — hay que traducir uno al otro.
+        if (roomIdVoto) {
+            const votacionesAbiertasRoom = req.app.get('votacionesAbiertas') || new Map();
+            const abierta = votacionesAbiertasRoom.get(roomIdVoto);
+            if (abierta === null || abierta === void 0 ? void 0 : abierta.safId)
+                roomIdVoto = abierta.safId;
         }
         const io = req.app.get('io');
         if (io && roomIdVoto) {
