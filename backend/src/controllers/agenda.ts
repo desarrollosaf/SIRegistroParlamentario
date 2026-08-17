@@ -206,6 +206,71 @@ export const getUltimosEventosConLiga = async (req: Request, res: Response): Pro
   }
 };
 
+// sentido_voto en asistencia_votos: 0=pendiente, 1=presencial, 2=remota (zoom), 3=justificada
+const ETIQUETA_ASISTENCIA: Record<number, string> = {
+  0: 'Pendiente',
+  1: 'Presencial',
+  2: 'Remota',
+  3: 'Justificada',
+};
+
+// Asistencia de un evento por id: integrantes con su estado (presencial/remota/
+// justificada/pendiente), liga de YouTube y datos básicos del evento.
+export const getAsistenciaEvento = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+
+    const evento = await Agenda.findOne({
+      where: { id },
+      include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['id', 'nombre'] }],
+    }) as any;
+
+    if (!evento) {
+      return res.status(404).json({ ok: false, msg: 'Evento no encontrado' });
+    }
+
+    const esSesion = evento.tipoevento?.nombre === 'Sesión';
+
+    const asistencias = await AsistenciaVoto.findAll({
+      where: { id_agenda: id },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+    const integrantesRaw = await procesarAsistencias(asistencias, esSesion);
+
+    const simplificar = (i: any) => ({
+      diputado: i.diputado,
+      asistencia: ETIQUETA_ASISTENCIA[Number(i.sentido_voto)] ?? 'Pendiente',
+    });
+
+    const integrantes = esSesion
+      ? integrantesRaw.map(simplificar)
+      : integrantesRaw.map((grupo: any) => ({
+          ...grupo,
+          integrantes: (grupo.integrantes || []).map(simplificar),
+        }));
+
+    return res.status(200).json({
+      ok: true,
+      data: {
+        id: evento.id,
+        descripcion: evento.descripcion,
+        fecha: evento.fecha,
+        liga: evento.liga,
+        tipoevento: evento.tipoevento?.nombre ?? null,
+        integrantes,
+      },
+    });
+  } catch (error) {
+    console.error('Error al obtener asistencia del evento:', error);
+    return res.status(500).json({
+      ok: false,
+      msg: 'Ocurrió un error al obtener la asistencia del evento',
+      error: (error as Error).message,
+    });
+  }
+};
+
 export const getevento = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
