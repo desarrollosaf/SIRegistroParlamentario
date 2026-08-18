@@ -1626,6 +1626,9 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: PuntosPresenta,
           as: "presentan",
+          // Nota: NO se marca separate:true aquí — el atributo usa Sequelize.col('presentan...')
+          // que depende del alias del JOIN en la query principal; con separate cambiaría
+          // el contexto de esa referencia y podría romper el CONCAT de abajo.
           attributes: [
             [
               Sequelize.fn(
@@ -1644,16 +1647,19 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: PuntosComisiones,
           as: "turnocomision",
+          separate: true,
           attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
         },
         {
           model: PuntosComisiones,
           as: "puntoTurnoComision",
+          separate: true,
           attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
         },
         {
           model: TemasPuntosVotos,
           as: "reservas",
+          separate: true,
           attributes: ["id", "tema_votacion"],
           include: [
             {
@@ -1673,6 +1679,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: IniciativaPuntoOrden,
           as: "iniciativas",
+          separate: true,
           attributes: ["id", "iniciativa","tipo"],
           include: [
             {
@@ -1692,6 +1699,7 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
         {
           model: IniciativaEstudio,
           as: "puntosestudiados",
+          separate: true,
           attributes: ["id", "punto_origen_id", "punto_destino_id", "type"],
           include: [
             {

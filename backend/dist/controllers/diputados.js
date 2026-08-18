@@ -676,6 +676,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                             where: {
                                 type: 1
                             },
+                            // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+                            separate: true,
                             include: [
                                 {
                                     model: puntos_ordens_1.default,
@@ -704,6 +706,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: expedientes_estudio_puntos_1.default,
                     as: 'expedienteturno',
                     attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+                    // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+                    separate: true,
                     include: [
                         {
                             model: iniciativas_estudio_1.default,
@@ -753,6 +757,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: iniciativaspresenta_1.default,
                     as: "presentan",
                     attributes: ["id_tipo_presenta", "id_presenta"],
+                    // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+                    separate: true,
                     include: [
                         {
                             model: proponentes_1.default,
@@ -765,6 +771,8 @@ const getifnini = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     model: decreto_1.default,
                     as: "decretos",
                     attributes: ["nombre_decreto", "decreto"],
+                    // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+                    separate: true,
                 }
             ]
         });
