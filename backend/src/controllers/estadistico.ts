@@ -232,6 +232,9 @@ const obtenerIniciativasBase = async () =>
           model: IniciativaEstudio, as: "estudio",
           attributes: ["id","status","createdAt","punto_origen_id","punto_destino_id","type"],
           required: false, where: { type: 1 },
+          // hasMany — separate evita el producto cartesiano al combinarse con
+          // el otro hasMany (expedienteturno) en el mismo JOIN.
+          separate: true,
           include: [{
             model: PuntosOrden, as: "iniciativa",
             attributes: ["id","punto","nopunto","tribuna","dispensa"],
@@ -246,6 +249,8 @@ const obtenerIniciativasBase = async () =>
       {
         model: ExpedienteEstudiosPuntos, as: "expedienteturno",
         attributes: ["id","expediente_id","punto_origen_sesion_id"],
+        // hasMany — separate evita el producto cartesiano con el include de arriba.
+        separate: true,
         include: [{
           model: IniciativaEstudio, as: "estudio",
           attributes: ["id","status","createdAt","punto_origen_id","punto_destino_id","type"],
