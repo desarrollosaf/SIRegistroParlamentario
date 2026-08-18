@@ -1487,6 +1487,9 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: puntos_presenta_1.default,
                     as: "presentan",
+                    // Nota: NO se marca separate:true aquí — el atributo usa Sequelize.col('presentan...')
+                    // que depende del alias del JOIN en la query principal; con separate cambiaría
+                    // el contexto de esa referencia y podría romper el CONCAT de abajo.
                     attributes: [
                         [
                             sequelize_2.Sequelize.fn('CONCAT', sequelize_2.Sequelize.col('presentan.id_tipo_presenta'), '/', sequelize_2.Sequelize.col('presentan.id_presenta')),
@@ -1500,16 +1503,19 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: puntos_comisiones_1.default,
                     as: "turnocomision",
+                    separate: true,
                     attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
                 },
                 {
                     model: puntos_comisiones_1.default,
                     as: "puntoTurnoComision",
+                    separate: true,
                     attributes: ["id", "id_punto", "id_comision", "id_punto_turno"]
                 },
                 {
                     model: temas_puntos_votos_1.default,
                     as: "reservas",
+                    separate: true,
                     attributes: ["id", "tema_votacion"],
                     include: [
                         {
@@ -1529,6 +1535,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: inciativas_puntos_ordens_1.default,
                     as: "iniciativas",
+                    separate: true,
                     attributes: ["id", "iniciativa", "tipo"],
                     include: [
                         {
@@ -1548,6 +1555,7 @@ const getpuntos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 {
                     model: iniciativas_estudio_1.default,
                     as: "puntosestudiados",
+                    separate: true,
                     attributes: ["id", "punto_origen_id", "punto_destino_id", "type"],
                     include: [
                         {

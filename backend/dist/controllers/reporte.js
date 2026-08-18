@@ -255,6 +255,9 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
                         attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
                         required: false,
                         where: { type: 1 },
+                        // hasMany — separate evita el producto cartesiano al combinarse con
+                        // el otro hasMany (expedienteturno) en el mismo JOIN.
+                        separate: true,
                         include: [
                             {
                                 model: puntos_ordens_1.default,
@@ -283,6 +286,8 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
                 model: expedientes_estudio_puntos_1.default,
                 as: "expedienteturno",
                 attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+                // hasMany — separate evita el producto cartesiano con el include de arriba.
+                separate: true,
                 include: [
                     {
                         model: iniciativas_estudio_1.default,

@@ -732,6 +732,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               where: {
                 type: 1
               },
+              // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+              separate: true,
               include: [
                 {
                   model: PuntosOrden,
@@ -760,6 +762,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           model: ExpedienteEstudiosPuntos,
           as: 'expedienteturno',
           attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
+          // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+          separate: true,
           include: [
             {
               model: IniciativaEstudio,
@@ -809,6 +813,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           model: IniciativasPresenta,
             as: "presentan",
             attributes: ["id_tipo_presenta", "id_presenta"],
+            // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+            separate: true,
               include: [
                 {
                   model: Proponentes,
@@ -821,7 +827,8 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           model: Decreto,
             as: "decretos",
             attributes: ["nombre_decreto", "decreto"],
-  
+            // hasMany — separate evita el producto cartesiano con los demás hasMany de este query.
+            separate: true,
         }
       ]
     });
