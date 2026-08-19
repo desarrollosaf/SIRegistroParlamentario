@@ -107,7 +107,9 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
       await (asistenciaRegistro as any).update({ sentido_voto: 1, mensaje: 'ASISTENCIA' });
 
       const ioAsist = req.app.get('io');
-      const roomIdAsist = idComisionSesionAsist || (asistenciaRegistro as any).comision_dip_id;
+      // La sala de proyección usa el SAF id (safId), no el UUID interno que es la
+      // clave del mapa — igual que hace registrarAsistencia en diputado.ts.
+      const roomIdAsist = asistAbierta.safId || idComisionSesionAsist || (asistenciaRegistro as any).comision_dip_id;
       if (ioAsist && roomIdAsist) {
         ioAsist.to(`proyeccion-${roomIdAsist}`).emit('asistencia-registrada', {
           id_diputado: (diputado as any).id,
@@ -138,7 +140,9 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
     await (votoRegistro as any).update({ sentido: sentidoInfo.codigo, mensaje: sentidoInfo.mensaje });
 
     const io = req.app.get('io');
-    const roomId = idComisionSesion || (votoRegistro as any).id_comision_dip;
+    // La sala de proyección usa el SAF id (safId), no el UUID interno que es la
+    // clave del mapa — igual que hace registrarVoto en diputado.ts.
+    const roomId = votAbierta.safId || idComisionSesion || (votoRegistro as any).id_comision_dip;
     if (io && roomId) {
       io.to(`proyeccion-${roomId}`).emit('voto-registrado', {
         id_diputado: (diputado as any).id,
