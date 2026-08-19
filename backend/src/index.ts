@@ -6,6 +6,15 @@ import 'dotenv/config'   // carga .env antes que cualquier módulo lea process.e
 import Server from "./models/server"
 import './models/associations'
 
+// Red de seguridad: evita que un error no capturado (fuera de los handlers de
+// socket, que ya están protegidos) tumbe el proceso completo en producción.
+process.on('uncaughtException', (err) => {
+    console.error('uncaughtException:', err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('unhandledRejection:', reason);
+});
+
 const server =  new Server()
 
 const models = {

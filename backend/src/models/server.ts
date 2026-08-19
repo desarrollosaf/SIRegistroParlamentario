@@ -123,7 +123,24 @@ class Server {
         this.io.on('connection', (socket) => {
         console.log('Socket conectado:', socket.id);
 
-        socket.on('unirse-sesion', (idComision: string) => {
+        // Evita que una excepción (síncrona o promesa rechazada) dentro de un handler
+        // tumbe todo el proceso Node: se loguea y solo afecta a ese evento/socket.
+        const wrap = (event: string, handler: (...args: any[]) => any) => {
+            socket.on(event, (...args: any[]) => {
+                try {
+                    const result = handler(...args);
+                    if (result && typeof result.then === 'function') {
+                        result.catch((err: any) => {
+                            console.error(`Error en handler de socket '${event}':`, err);
+                        });
+                    }
+                } catch (err) {
+                    console.error(`Error en handler de socket '${event}':`, err);
+                }
+            });
+        };
+
+        wrap('unirse-sesion', (idComision: string) => {
             socket.join(`proyeccion-${idComision}`);
             // Si hay contenido libre activo para esta comisión, se lo envía al recién unido.
             const contenido = this.contenidoProyectado.get(idComision);
@@ -134,47 +151,47 @@ class Server {
 
         // Transcripción en vivo: el cliente se une a la sala de su sesión
         // para recibir cada intervención que emite el transcriptor.
-        socket.on('unirse-transcripcion', (idAgenda: string) => {
+        wrap('unirse-transcripcion', (idAgenda: string) => {
             socket.join(`transcripcion-${idAgenda}`);
         });
 
-        socket.on('salir-transcripcion', (idAgenda: string) => {
+        wrap('salir-transcripcion', (idAgenda: string) => {
             socket.leave(`transcripcion-${idAgenda}`);
         });
 
         // Proyectar contenido libre (imagen/video/mesa) en el tablero de una comisión.
-        socket.on('proyectar-contenido', (data: { idComision: string; contenido: any }) => {
+        wrap('proyectar-contenido', (data: { idComision: string; contenido: any }) => {
             this.contenidoProyectado.set(data.idComision, data.contenido);
             this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', data.contenido);
         });
 
         // Quitar el contenido libre del tablero → pantalla neutra (idle), no regresa al evento.
-        socket.on('limpiar-contenido', (data: { idComision: string }) => {
+        wrap('limpiar-contenido', (data: { idComision: string }) => {
             const idle = { tipo: 'idle' };
             this.contenidoProyectado.set(data.idComision, idle);
             this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
         });
 
         // Terminar el tablero al finalizar la sesión (pantalla neutra persistente).
-        socket.on('terminar-tablero', (data: { idComision: string; mensaje?: string }) => {
+        wrap('terminar-tablero', (data: { idComision: string; mensaje?: string }) => {
             const idle = { tipo: 'idle', mensaje: data.mensaje || 'Sesión finalizada' };
             this.contenidoProyectado.set(data.idComision, idle);
             this.io.to(`proyeccion-${data.idComision}`).emit('contenido-proyectado', idle);
         });
 
-        socket.on('terminar-votacion', (data: { idComision: string }) => {
+        wrap('terminar-votacion', (data: { idComision: string }) => {
             // Persiste el estado "terminado" para que al recargar no vuelva a la votación.
             this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Votación finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-terminada');
         });
 
-        socket.on('terminar-asistencia', (data: { idComision: string }) => {
+        wrap('terminar-asistencia', (data: { idComision: string }) => {
             // Persiste el estado "terminado" para que al recargar no vuelva a la asistencia.
             this.contenidoProyectado.set(data.idComision, { tipo: 'idle', mensaje: 'Asistencia finalizada' });
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-terminada');
         });
 
-        socket.on('iniciar-proyeccion', (data: { idComision: string, params: any }) => {
+        wrap('iniciar-proyeccion', (data: { idComision: string, params: any }) => {
             // Al proyectar votación/asistencia se limpia cualquier idle/contenido previo,
             // para que al recargar el tablero muestre el evento en curso.
             this.contenidoProyectado.delete(data.idComision);
@@ -182,7 +199,7 @@ class Server {
         });
 
         // El diputado se une a la sala general y a su sala personal
-        socket.on('unirse-diputado', (data?: { integranteId?: string }) => {
+        wrap('unirse-diputado', (data?: { integranteId?: string }) => {
             socket.join('sala-diputados');
             if (data?.integranteId) {
                 socket.join(`diputado-${data.integranteId}`);
@@ -190,7 +207,7 @@ class Server {
         });
 
         // Eventos para el panel del diputado
-        socket.on('abrir-asistencia', async (data: { idComision: string, idAgenda: string }) => {
+        wrap('abrir-asistencia', async (data: { idComision: string, idAgenda: string }) => {
             // Obtener UUIDs desde la sesión activa (fuente más confiable)
             const sesion = this.sesionesActivas.get(data.idAgenda);
             const uuids = sesion?.idComisiones?.length
@@ -206,7 +223,7 @@ class Server {
             }
         });
 
-        socket.on('cerrar-asistencia', (data: { idComision: string }) => {
+        wrap('cerrar-asistencia', (data: { idComision: string }) => {
             const uuids = this.findUUIDsBySafId(data.idComision, this.asistenciasAbiertas);
             for (const uuid of uuids) {
                 this.asistenciasAbiertas.delete(uuid);
@@ -217,7 +234,7 @@ class Server {
             }
         });
 
-        socket.on('abrir-votacion', async (data: { idComision: string, idAgenda: string, punto: any, idPunto?: any, idReserva?: string | null, idIniciativa?: string | null }) => {
+        wrap('abrir-votacion', async (data: { idComision: string, idAgenda: string, punto: any, idPunto?: any, idReserva?: string | null, idIniciativa?: string | null }) => {
             // Obtener UUIDs desde la sesión activa (fuente más confiable)
             const sesion = this.sesionesActivas.get(data.idAgenda);
             const uuids = sesion?.idComisiones?.length
@@ -241,7 +258,7 @@ class Server {
             }
         });
 
-        socket.on('cerrar-votacion', (data: { idComision: string }) => {
+        wrap('cerrar-votacion', (data: { idComision: string }) => {
             const uuids = this.findUUIDsBySafId(data.idComision, this.votacionesAbiertas);
             for (const uuid of uuids) {
                 this.votacionesAbiertas.delete(uuid);
@@ -253,7 +270,7 @@ class Server {
         });
 
         // ── Sesiones activas ────────────────────────────────────────────
-        socket.on('iniciar-sesion', async (data: {
+        wrap('iniciar-sesion', async (data: {
             idAgenda: string;
             titulo: string;
             fecha: string;
@@ -342,7 +359,7 @@ class Server {
             socket.emit('sesion-confirmada', { clave, ...sesion });
         });
 
-        socket.on('terminar-sesion', async (data: { idAgenda: string; esComision: boolean }) => {
+        wrap('terminar-sesion', async (data: { idAgenda: string; esComision: boolean }) => {
             const clave = data.esComision ? data.idAgenda : 'sesion-plenaria';
             const sesionPrevia = this.sesionesActivas.get(clave);
             this.sesionesActivas.delete(clave);
@@ -373,7 +390,7 @@ class Server {
         });
 
         // Un cliente recién conectado pregunta qué sesiones están activas
-        socket.on('get-sesiones-activas', async () => {
+        wrap('get-sesiones-activas', async () => {
             const entries = Array.from(this.sesionesActivas.entries());
             const lista = await Promise.all(entries.map(async ([clave, s]) => {
                 let sede: string | null = null;
@@ -392,19 +409,19 @@ class Server {
         });
 
         // Devuelve solo la sesión plenaria activa (no comisiones)
-        socket.on('get-sesion-plenaria', () => {
+        wrap('get-sesion-plenaria', () => {
             const sesion = this.sesionesActivas.get('sesion-plenaria') ?? null;
             socket.emit('sesion-plenaria', sesion);
         });
 
         // Consulta el estado actual de asistencias y votaciones abiertas
-        socket.on('get-estado-eventos', () => {
+        wrap('get-estado-eventos', () => {
             const asistencias = Array.from(this.asistenciasAbiertas.entries()).map(([idComision, data]) => ({ idComision, ...data }));
             const votaciones = Array.from(this.votacionesAbiertas.entries()).map(([idComision, data]) => ({ idComision, ...data }));
             socket.emit('estado-eventos', { asistencias, votaciones });
         });
 
-        socket.on('disconnect', () => {
+        wrap('disconnect', () => {
             console.log('Socket desconectado:', socket.id);
         });
         });
