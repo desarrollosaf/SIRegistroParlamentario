@@ -66,7 +66,21 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this.ajustarFitScale();
   }
 
-  /** Reduce fitScale hasta que la lista quepa sin scroll (o hasta un mínimo legible). */
+  /** Alto real del contenido (no acotado por el contenedor, a diferencia de
+   *  scrollHeight que nunca puede ser menor que clientHeight). */
+  private medirAltoContenido(el: HTMLElement): number {
+    if (this.esComision) {
+      const secciones = Array.from(el.querySelectorAll<HTMLElement>('.comision-seccion'));
+      if (secciones.length === 0) return el.scrollHeight;
+      return secciones.reduce((suma, s) => suma + s.getBoundingClientRect().height, 0);
+    }
+    const columnas = Array.from(el.querySelectorAll<HTMLElement>(':scope > .columna-votos'));
+    if (columnas.length === 0) return el.scrollHeight;
+    return Math.max(...columnas.map((c) => c.getBoundingClientRect().height));
+  }
+
+  /** Ajusta fitScale para que la lista use exactamente el espacio disponible sin
+   *  scroll: reduce si no cabe, o crece si sobra espacio en blanco. */
   private ajustarFitScale(): void {
     const el = this.gridSesionRef?.nativeElement || this.gridComisionRef?.nativeElement;
     if (!el) return;
@@ -74,11 +88,25 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this.fitScale = 1;
     this.cdr.detectChanges();
 
+    const disponible = el.clientHeight;
     let intentos = 0;
-    while (el.scrollHeight > el.clientHeight + 1 && this.fitScale > 0.5 && intentos < 20) {
-      this.fitScale = Math.max(0.5, this.fitScale - 0.04);
-      this.cdr.detectChanges();
-      intentos++;
+
+    if (this.medirAltoContenido(el) > disponible + 1) {
+      while (this.medirAltoContenido(el) > disponible + 1 && this.fitScale > 0.5 && intentos < 25) {
+        this.fitScale = Math.max(0.5, this.fitScale - 0.04);
+        this.cdr.detectChanges();
+        intentos++;
+      }
+    } else {
+      while (this.medirAltoContenido(el) <= disponible - 4 && this.fitScale < 1.6 && intentos < 25) {
+        this.fitScale = Math.min(1.6, this.fitScale + 0.04);
+        this.cdr.detectChanges();
+        intentos++;
+      }
+      if (this.medirAltoContenido(el) > disponible + 1) {
+        this.fitScale = Math.max(0.5, this.fitScale - 0.04);
+        this.cdr.detectChanges();
+      }
     }
   }
 
