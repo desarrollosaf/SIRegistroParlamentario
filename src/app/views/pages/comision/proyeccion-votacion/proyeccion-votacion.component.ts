@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -48,7 +48,43 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   cargando: boolean = true;
 
+  // Factor fino que reduce texto/focos (además de la escala xl/lg/md/sm/xs) hasta que
+  // la lista de diputados quepa completa sin scroll, sin importar cuántos sean ni la
+  // resolución de la pantalla.
+  fitScale = 1;
+
+  @ViewChild('gridSesion') private gridSesionRef?: ElementRef<HTMLElement>;
+  @ViewChild('gridComision') private gridComisionRef?: ElementRef<HTMLElement>;
+
+  // Escala el tamaño de fuente raíz según la resolución real de la pantalla (vmin),
+  // para que el tablero (dimensionado en rem) se vea proporcional en cualquier proyector/monitor.
+  @HostListener('window:resize')
+  ajustarEscalaPantalla(): void {
+    const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+    const fontSize = Math.min(34, Math.max(10, vmin * 1.48));
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    this.ajustarFitScale();
+  }
+
+  /** Reduce fitScale hasta que la lista quepa sin scroll (o hasta un mínimo legible). */
+  private ajustarFitScale(): void {
+    const el = this.gridSesionRef?.nativeElement || this.gridComisionRef?.nativeElement;
+    if (!el) return;
+
+    this.fitScale = 1;
+    this.cdr.detectChanges();
+
+    let intentos = 0;
+    while (el.scrollHeight > el.clientHeight + 1 && this.fitScale > 0.5 && intentos < 20) {
+      this.fitScale = Math.max(0.5, this.fitScale - 0.04);
+      this.cdr.detectChanges();
+      intentos++;
+    }
+  }
+
   ngOnInit(): void {
+    this.ajustarEscalaPantalla();
+
     this.aRouter.queryParams.subscribe(params => {
       const decoded = this.decodificarParams(params['t'] || '');
 
@@ -77,6 +113,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.documentElement.style.fontSize = '';
     this.detenerPolling();
     this._socketService.offVotacionTerminada();
     this._socketService.offAsistenciaTerminada();
@@ -272,6 +309,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         }
         this.cargando = false;
         this.cdr.detectChanges();
+        setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error asistencia:', e);
@@ -342,6 +380,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         }
         this.cargando = false;
         this.cdr.detectChanges();
+        setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
         console.error('Error votación:', e);

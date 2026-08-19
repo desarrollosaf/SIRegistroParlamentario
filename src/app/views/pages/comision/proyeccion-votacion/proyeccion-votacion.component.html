@@ -130,7 +130,7 @@
 
   <!-- MODO SESIÓN SIMPLE -->
   <ng-container *ngIf="!esComision && !cargando">
-    <div class="tablero-grid" [ngClass]="getEscalaClase()" *ngIf="participantes.length > 0">
+    <div class="tablero-grid" #gridSesion [ngClass]="getEscalaClase()" [style.--fit-scale]="fitScale" *ngIf="participantes.length > 0">
       <div class="columna-votos">
         <div class="votante-row" *ngFor="let p of columna1">
           <span class="foco" [ngClass]="'foco-' + getColorSentido(p.sentido)"></span>
@@ -158,7 +158,7 @@
   </ng-container>
 
   <!-- MODO COMISIÓN -->
-  <div class="comisiones-wrapper" *ngIf="esComision && !cargando" [ngClass]="getEscalaClase()">
+  <div class="comisiones-wrapper" #gridComision *ngIf="esComision && !cargando" [ngClass]="getEscalaClase()" [style.--fit-scale]="fitScale">
     <div *ngFor="let comision of listaComisiones" class="comision-seccion">
       <div class="comision-nombre-header">{{ comision.nombre }}</div>
       <ng-container *ngIf="distribuirColumnasComision(comision.integrantes) as cols">

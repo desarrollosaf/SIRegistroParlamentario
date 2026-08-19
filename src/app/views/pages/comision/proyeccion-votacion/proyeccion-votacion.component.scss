@@ -147,29 +147,29 @@
   flex: 1;
 
   &.escala-xl {
-    .votante-row     { padding: 1.4rem 1rem; }
-    .foco            { width: 42px; height: 42px; }
-    .nombre-diputado { font-size: 2.8rem; }
+    .votante-row     { padding: calc(1.4rem * var(--fit-scale, 1)) calc(1rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(2.625rem * var(--fit-scale, 1)); height: calc(2.625rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(2.8rem * var(--fit-scale, 1)); }
   }
   &.escala-lg {
-    .votante-row     { padding: 1rem 0.8rem; }
-    .foco            { width: 34px; height: 34px; }
-    .nombre-diputado { font-size: 2.2rem; }
+    .votante-row     { padding: calc(1rem * var(--fit-scale, 1)) calc(0.8rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(2.125rem * var(--fit-scale, 1)); height: calc(2.125rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(2.2rem * var(--fit-scale, 1)); }
   }
   &.escala-md {
-    .votante-row     { padding: 0.7rem 0.7rem; }
-    .foco            { width: 28px; height: 28px; }
-    .nombre-diputado { font-size: 1.75rem; }
+    .votante-row     { padding: calc(0.7rem * var(--fit-scale, 1)) calc(0.7rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.75rem * var(--fit-scale, 1)); height: calc(1.75rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.75rem * var(--fit-scale, 1)); }
   }
   &.escala-sm {
-    .votante-row     { padding: 0.5rem 0.6rem; }
-    .foco            { width: 24px; height: 24px; }
-    .nombre-diputado { font-size: 1.45rem; }
+    .votante-row     { padding: calc(0.5rem * var(--fit-scale, 1)) calc(0.6rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.5rem * var(--fit-scale, 1)); height: calc(1.5rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.45rem * var(--fit-scale, 1)); }
   }
   &.escala-xs {
-    .votante-row     { padding: 0.35rem 0.5rem; }
-    .foco            { width: 20px; height: 20px; }
-    .nombre-diputado { font-size: 1.2rem; }
+    .votante-row     { padding: calc(0.35rem * var(--fit-scale, 1)) calc(0.5rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.25rem * var(--fit-scale, 1)); height: calc(1.25rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.2rem * var(--fit-scale, 1)); }
   }
 }
 
@@ -257,34 +257,34 @@
   &::-webkit-scrollbar-thumb { background: #444444; border-radius: 3px; }
 
   &.escala-xl {
-    .votante-row     { padding: 1.4rem 1rem; }
-    .foco            { width: 42px; height: 42px; }
-    .nombre-diputado { font-size: 2.8rem; }
-    .comision-nombre-header { font-size: 2rem; padding: 0.6rem 1.2rem; color: #000000; background: #ffffff; border-left-color: #ffffff; }
+    .votante-row     { padding: calc(1.4rem * var(--fit-scale, 1)) calc(1rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(2.625rem * var(--fit-scale, 1)); height: calc(2.625rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(2.8rem * var(--fit-scale, 1)); }
+    .comision-nombre-header { font-size: calc(2rem * var(--fit-scale, 1)); padding: calc(0.6rem * var(--fit-scale, 1)) calc(1.2rem * var(--fit-scale, 1)); color: #000000; background: #ffffff; border-left-color: #ffffff; }
   }
   &.escala-lg {
-    .votante-row     { padding: 1rem 0.8rem; }
-    .foco            { width: 34px; height: 34px; }
-    .nombre-diputado { font-size: 2.2rem; }
-    .comision-nombre-header { font-size: 1.7rem; padding: 0.5rem 1.2rem; color: #000000; background: #ffffff; border-left-color: #ffffff; }
+    .votante-row     { padding: calc(1rem * var(--fit-scale, 1)) calc(0.8rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(2.125rem * var(--fit-scale, 1)); height: calc(2.125rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(2.2rem * var(--fit-scale, 1)); }
+    .comision-nombre-header { font-size: calc(1.7rem * var(--fit-scale, 1)); padding: calc(0.5rem * var(--fit-scale, 1)) calc(1.2rem * var(--fit-scale, 1)); color: #000000; background: #ffffff; border-left-color: #ffffff; }
   }
   &.escala-md {
-    .votante-row     { padding: 0.7rem 0.7rem; }
-    .foco            { width: 28px; height: 28px; }
-    .nombre-diputado { font-size: 1.75rem; }
-    .comision-nombre-header { font-size: 1.4rem; padding: 0.4rem 1.2rem; color: #000000; background: #ffffff; border-left-color: #ffffff; }
+    .votante-row     { padding: calc(0.7rem * var(--fit-scale, 1)) calc(0.7rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.75rem * var(--fit-scale, 1)); height: calc(1.75rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.75rem * var(--fit-scale, 1)); }
+    .comision-nombre-header { font-size: calc(1.4rem * var(--fit-scale, 1)); padding: calc(0.4rem * var(--fit-scale, 1)) calc(1.2rem * var(--fit-scale, 1)); color: #000000; background: #ffffff; border-left-color: #ffffff; }
   }
   &.escala-sm {
-    .votante-row     { padding: 0.5rem 0.6rem; }
-    .foco            { width: 24px; height: 24px; }
-    .nombre-diputado { font-size: 1.45rem; }
-    .comision-nombre-header { font-size: 1.15rem; padding: 0.35rem 1rem; color: #000000; background: #ffffff; border-left-color: #ffffff; }
+    .votante-row     { padding: calc(0.5rem * var(--fit-scale, 1)) calc(0.6rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.5rem * var(--fit-scale, 1)); height: calc(1.5rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.45rem * var(--fit-scale, 1)); }
+    .comision-nombre-header { font-size: calc(1.15rem * var(--fit-scale, 1)); padding: calc(0.35rem * var(--fit-scale, 1)) calc(1rem * var(--fit-scale, 1)); color: #000000; background: #ffffff; border-left-color: #ffffff; }
   }
   &.escala-xs {
-    .votante-row     { padding: 0.35rem 0.5rem; }
-    .foco            { width: 20px; height: 20px; }
-    .nombre-diputado { font-size: 1.2rem; }
-    .comision-nombre-header { font-size: 0.95rem; padding: 0.25rem 0.8rem; color: #000000; background: #ffffff; border-left-color: #ffffff; }
+    .votante-row     { padding: calc(0.35rem * var(--fit-scale, 1)) calc(0.5rem * var(--fit-scale, 1)); }
+    .foco            { width: calc(1.25rem * var(--fit-scale, 1)); height: calc(1.25rem * var(--fit-scale, 1)); }
+    .nombre-diputado { font-size: calc(1.2rem * var(--fit-scale, 1)); }
+    .comision-nombre-header { font-size: calc(0.95rem * var(--fit-scale, 1)); padding: calc(0.25rem * var(--fit-scale, 1)) calc(0.8rem * var(--fit-scale, 1)); color: #000000; background: #ffffff; border-left-color: #ffffff; }
   }
 }
 
@@ -331,7 +331,7 @@
   letter-spacing: 1px;
   font-weight: 600;
 
-  .foco { width: 24px; height: 24px; }
+  .foco { width: 1.5rem; height: 1.5rem; }
 }
 
 .leyenda-total {
