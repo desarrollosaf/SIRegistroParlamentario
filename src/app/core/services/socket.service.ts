@@ -26,7 +26,7 @@ export class SocketService {
     if (socket.connected) {
       socket.emit('unirse-sesion', idComision);
     } else {
-      socket.once('connect', () => socket.emit('unirse-sesion', idComision));
+      socket.on('connect', () => socket.emit('unirse-sesion', idComision));
     }
   }
 
@@ -41,7 +41,7 @@ export class SocketService {
     if (socket.connected) {
       socket.emit('unirse-diputado');
     } else {
-      socket.once('connect', () => socket.emit('unirse-diputado'));
+      socket.on('connect', () => socket.emit('unirse-diputado'));
     }
   }
 
@@ -280,7 +280,7 @@ export class SocketService {
     if (socket.connected) {
       socket.emit('unirse-transcripcion', idAgenda);
     } else {
-      socket.once('connect', () => socket.emit('unirse-transcripcion', idAgenda));
+      socket.on('connect', () => socket.emit('unirse-transcripcion', idAgenda));
     }
   }
 
