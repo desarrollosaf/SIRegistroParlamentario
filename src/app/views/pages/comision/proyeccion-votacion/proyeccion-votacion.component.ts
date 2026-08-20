@@ -98,8 +98,8 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         intentos++;
       }
     } else {
-      while (this.medirAltoContenido(el) <= disponible - 4 && this.fitScale < 1.24 && intentos < 25) {
-        this.fitScale = Math.min(1.24, this.fitScale + 0.04);
+      while (this.medirAltoContenido(el) <= disponible - 4 && this.fitScale < 1.2 && intentos < 25) {
+        this.fitScale = Math.min(1.2, this.fitScale + 0.04);
         this.cdr.detectChanges();
         intentos++;
       }
