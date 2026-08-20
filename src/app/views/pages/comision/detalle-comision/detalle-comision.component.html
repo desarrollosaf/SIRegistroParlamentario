@@ -2028,7 +2028,8 @@
                                                             [addTag]="true" [clearable]="true"
                                                             placeholder="Busca un diputado..."
                                                             notFoundText="Sin coincidencias (puedes escribir un nombre)"
-                                                            addTagText="Usar: ">
+                                                            addTagText="Usar: "
+                                                            (change)="onDiputadoMesaSeleccionado($event, i)">
                                                         </ng-select>
                                                     </div>
                                                     <div class="campo campo-cargo">

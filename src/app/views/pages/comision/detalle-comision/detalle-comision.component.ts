@@ -192,6 +192,8 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   private _transcripcionService = inject(TranscripcionService);
   guardadas: any[] = [];
   diputadosNombres: string[] = [];
+  // Nombre → URL de foto (para autocompletar al elegir un diputado en la mesa).
+  diputadosFotoPorNombre: Record<string, string> = {};
   subiendoArchivo: boolean = false;
   guardandoComposicion: boolean = false;
   isUpdatingAsistencia: boolean = false;
@@ -3609,13 +3611,30 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   cargarDiputadosNombres(): void {
     this._aliasService.listarDiputados().subscribe({
       next: (res: any) => {
-        this.diputadosNombres = (res.data || [])
+        const lista = (res.data || []) as any[];
+        this.diputadosNombres = lista
           .map((d: any) => d.alias?.trim() || `${d.nombres ?? ''} ${d.apaterno ?? ''} ${d.amaterno ?? ''}`.trim())
           .filter((n: string) => n)
           .sort((a: string, b: string) => a.localeCompare(b));
+
+        this.diputadosFotoPorNombre = {};
+        for (const d of lista) {
+          const nombre = d.alias?.trim() || `${d.nombres ?? ''} ${d.apaterno ?? ''} ${d.amaterno ?? ''}`.trim();
+          if (nombre && d.foto) this.diputadosFotoPorNombre[nombre] = d.foto;
+        }
       },
-      error: () => { this.diputadosNombres = []; }
+      error: () => { this.diputadosNombres = []; this.diputadosFotoPorNombre = {}; }
     });
+  }
+
+  /** Al elegir un diputado en la mesa, autocompleta su foto (sin pisar una URL puesta a mano). */
+  onDiputadoMesaSeleccionado(nombre: string, i: number): void {
+    const integrante = this.mesaIntegrantes[i];
+    if (!integrante) return;
+    const foto = this.diputadosFotoPorNombre[nombre];
+    if (foto && !integrante.foto) {
+      integrante.foto = foto;
+    }
   }
 
   agregarIntegranteMesa(): void {
@@ -3629,7 +3648,7 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
   /** Precarga en la mesa los integrantes actuales de la asistencia (nombre y partido). */
   cargarIntegrantesEnMesa(): void {
     this.mesaIntegrantes = (this.integrantes || []).map((i: any) => ({
-      foto: '',
+      foto: this.diputadosFotoPorNombre[i.diputado] || '',
       nombre: i.diputado || '',
       cargo: i.partido || ''
     }));
