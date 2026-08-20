@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cerrarsesion = exports.getCurrentUser = exports.LoginUser = exports.ReadUser = void 0;
+exports.cerrarsesion = exports.ChangePassword = exports.getCurrentUser = exports.LoginUser = exports.ReadUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = __importDefault(require("../models/user"));
 const role_users_1 = __importDefault(require("../models/role_users"));
@@ -89,6 +89,22 @@ const getCurrentUser = (req, res) => {
     });
 };
 exports.getCurrentUser = getCurrentUser;
+const ChangePassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { newPassword } = req.body;
+    const rfc = (_a = req.user) === null || _a === void 0 ? void 0 : _a.rfc;
+    if (!newPassword) {
+        return res.status(400).json({ msg: 'Debes enviar la nueva contraseña' });
+    }
+    const user = yield user_1.default.findOne({ where: { name: rfc } });
+    if (!user) {
+        return res.status(404).json({ msg: 'Usuario no encontrado' });
+    }
+    const newHash = yield bcrypt_1.default.hash(newPassword, 10);
+    yield user.update({ password: newHash });
+    return res.json({ msg: 'Contraseña actualizada correctamente' });
+});
+exports.ChangePassword = ChangePassword;
 const cerrarsesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.clearCookie('accessToken', {
         httpOnly: true,
