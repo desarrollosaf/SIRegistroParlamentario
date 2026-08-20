@@ -94,6 +94,26 @@ export const getCurrentUser = (req: Request, res: Response) => {
     });
 };
 
+export const ChangePassword = async (req: Request, res: Response): Promise<any> => {
+    const { newPassword } = req.body;
+    const rfc = (req as any).user?.rfc;
+
+    if (!newPassword) {
+        return res.status(400).json({ msg: 'Debes enviar la nueva contraseña' });
+    }
+
+    const user = await User.findOne({ where: { name: rfc } }) as any;
+
+    if (!user) {
+        return res.status(404).json({ msg: 'Usuario no encontrado' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: newHash });
+
+    return res.json({ msg: 'Contraseña actualizada correctamente' });
+}
+
 export const cerrarsesion = async (req: Request, res: Response):  Promise<any> => {
   res.clearCookie('accessToken', {
     httpOnly: true,
