@@ -13,10 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resetearPasswordDiputado = exports.actualizarUsuarioDiputado = exports.actualizarAliasDiputado = exports.listarDiputadosAlias = void 0;
+const sequelize_1 = require("sequelize");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const diputado_1 = __importDefault(require("../models/diputado"));
 const integrante_legislaturas_1 = __importDefault(require("../models/integrante_legislaturas"));
 const user_1 = __importDefault(require("../models/user"));
+const fotos_1 = __importDefault(require("../models/fotos"));
+const FOTOS_BASE_URL = 'https://sistema.congresoedomex.gob.mx/';
 // Contraseña por defecto al resetear (configurable con DEFAULT_PASSWORD).
 const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'Spid24_62';
 // Lista los diputados con integrante_legislatura activo (fecha_fin = null) junto con
@@ -34,8 +37,8 @@ const listarDiputadosAlias = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (diputadoIds.length === 0) {
             return res.json({ msg: 'Diputados obtenidos correctamente', data: [] });
         }
-        // Diputados y usuarios son consultas independientes entre sí — en paralelo.
-        const [diputados, usuarios] = yield Promise.all([
+        // Diputados, usuarios y fotos son consultas independientes entre sí — en paralelo.
+        const [diputados, usuarios, fotos] = yield Promise.all([
             diputado_1.default.findAll({
                 where: { id: diputadoIds },
                 attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
@@ -46,14 +49,28 @@ const listarDiputadosAlias = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
                 raw: true,
             }),
+            fotos_1.default.findAll({
+                where: { fotoableType: { [sequelize_1.Op.like]: '%Diputado%' }, fotoableId: diputadoIds },
+                attributes: ['fotoableId', 'path'],
+                order: [['createdAt', 'DESC']],
+                raw: true,
+            }),
         ]);
         const diputadoMap = Object.fromEntries(diputados.map((d) => [d.id, d]));
         const userMap = Object.fromEntries(usuarios.map((u) => [u.integrante_legislatura_id, u]));
+        // Si hay varias fotos por diputado (histórico), se queda con la más reciente
+        // gracias al ORDER BY createdAt DESC de arriba y no sobrescribir si ya existe.
+        const fotoMap = {};
+        for (const f of fotos) {
+            if (!fotoMap[f.fotoableId] && f.path) {
+                fotoMap[f.fotoableId] = FOTOS_BASE_URL + String(f.path).replace(/^\/+/, '');
+            }
+        }
         // Una fila por integrante activo, con su diputado y su usuario (si existe).
         const data = integrantes
             .filter((i) => diputadoMap[i.diputado_id])
             .map((i) => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e;
             const dip = diputadoMap[i.diputado_id];
             const user = (_a = userMap[i.id]) !== null && _a !== void 0 ? _a : null;
             return {
@@ -63,9 +80,10 @@ const listarDiputadosAlias = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 apaterno: dip.apaterno,
                 amaterno: dip.amaterno,
                 alias: dip.alias,
-                user_id: (_b = user === null || user === void 0 ? void 0 : user.id) !== null && _b !== void 0 ? _b : null,
-                name: (_c = user === null || user === void 0 ? void 0 : user.name) !== null && _c !== void 0 ? _c : null,
-                email: (_d = user === null || user === void 0 ? void 0 : user.email) !== null && _d !== void 0 ? _d : null,
+                foto: (_b = fotoMap[dip.id]) !== null && _b !== void 0 ? _b : null,
+                user_id: (_c = user === null || user === void 0 ? void 0 : user.id) !== null && _c !== void 0 ? _c : null,
+                name: (_d = user === null || user === void 0 ? void 0 : user.name) !== null && _d !== void 0 ? _d : null,
+                email: (_e = user === null || user === void 0 ? void 0 : user.email) !== null && _e !== void 0 ? _e : null,
                 tiene_usuario: !!user,
             };
         })

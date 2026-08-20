@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
 import Diputado from '../models/diputado';
 import IntegranteLegislatura from '../models/integrante_legislaturas';
 import User from '../models/user';
+import Fotos from '../models/fotos';
+
+const FOTOS_BASE_URL = 'https://sistema.congresoedomex.gob.mx/';
 
 // Contraseña por defecto al resetear (configurable con DEFAULT_PASSWORD).
 const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'Spid24_62';
@@ -25,8 +29,8 @@ export const listarDiputadosAlias = async (req: Request, res: Response): Promise
             return res.json({ msg: 'Diputados obtenidos correctamente', data: [] });
         }
 
-        // Diputados y usuarios son consultas independientes entre sí — en paralelo.
-        const [diputados, usuarios] = await Promise.all([
+        // Diputados, usuarios y fotos son consultas independientes entre sí — en paralelo.
+        const [diputados, usuarios, fotos] = await Promise.all([
             Diputado.findAll({
                 where: { id: diputadoIds },
                 attributes: ['id', 'nombres', 'apaterno', 'amaterno', 'alias'],
@@ -37,11 +41,25 @@ export const listarDiputadosAlias = async (req: Request, res: Response): Promise
                 attributes: ['id', 'name', 'email', 'integrante_legislatura_id'],
                 raw: true,
             }) as Promise<any[]>,
+            Fotos.findAll({
+                where: { fotoableType: { [Op.like]: '%Diputado%' }, fotoableId: diputadoIds },
+                attributes: ['fotoableId', 'path'],
+                order: [['createdAt', 'DESC']],
+                raw: true,
+            }) as Promise<any[]>,
         ]);
         const diputadoMap: Record<string, any> = Object.fromEntries(diputados.map((d: any) => [d.id, d]));
         const userMap: Record<string, any> = Object.fromEntries(
             usuarios.map((u: any) => [u.integrante_legislatura_id, u])
         );
+        // Si hay varias fotos por diputado (histórico), se queda con la más reciente
+        // gracias al ORDER BY createdAt DESC de arriba y no sobrescribir si ya existe.
+        const fotoMap: Record<string, string> = {};
+        for (const f of fotos as any[]) {
+            if (!fotoMap[f.fotoableId] && f.path) {
+                fotoMap[f.fotoableId] = FOTOS_BASE_URL + String(f.path).replace(/^\/+/, '');
+            }
+        }
 
         // Una fila por integrante activo, con su diputado y su usuario (si existe).
         const data = integrantes
@@ -56,6 +74,7 @@ export const listarDiputadosAlias = async (req: Request, res: Response): Promise
                     apaterno: dip.apaterno,
                     amaterno: dip.amaterno,
                     alias: dip.alias,
+                    foto: fotoMap[dip.id] ?? null,
                     user_id: user?.id ?? null,
                     name: user?.name ?? null,
                     email: user?.email ?? null,
