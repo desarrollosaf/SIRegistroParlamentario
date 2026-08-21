@@ -49,16 +49,19 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
   private segPlanoInterval: any = null;
   private segPlanoActivo: boolean = false;
-  private readonly SEGUNDO_PLANO_INTERVAL_MS = 5000;
+  // Respaldo por si se pierde algún evento de socket (reconexión, etc.) — la
+  // actualización normal ya es instantánea vía voto-registrado/asistencia-registrada.
+  private readonly SEGUNDO_PLANO_INTERVAL_MS = 30000;
 
   // IDs (de asistencia/voto) que se acaban de marcar a mano — el polling de
   // fondo no debe pisar ese valor con datos viejos mientras el cambio todavía
   // no se refleja en el servidor (evita el "regresa a pendiente solo").
   private escriturasPendientes = new Set<number>();
+  private readonly PROTECCION_ESCRITURA_MS = 6000;
 
   private marcarEscrituraPendiente(id: number): void {
     this.escriturasPendientes.add(id);
-    setTimeout(() => this.escriturasPendientes.delete(id), this.SEGUNDO_PLANO_INTERVAL_MS + 2000);
+    setTimeout(() => this.escriturasPendientes.delete(id), this.PROTECCION_ESCRITURA_MS);
   }
 
   /** Antes de pintar datos frescos del polling, conserva el valor local de
@@ -72,6 +75,35 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       }
       return item;
     });
+  }
+
+  /** Aplica en el momento un cambio de asistencia que llegó por socket
+   *  (de otro admin o de un diputado desde su app), sin esperar al polling. */
+  private actualizarSentidoLocalAsistencia(idDiputado: string, sentido: number): void {
+    if (this.esComision) {
+      for (const comision of this.listaComisiones) {
+        const integrante = comision.integrantes.find((i: any) => i.id_diputado === idDiputado);
+        if (integrante) integrante.sentido_voto = sentido;
+      }
+    } else {
+      const integrante = this.integrantes.find(i => i.id_diputado === idDiputado);
+      if (integrante) integrante.sentido_voto = sentido;
+    }
+    this.cdr.detectChanges();
+  }
+
+  /** Igual que arriba pero para votación. */
+  private actualizarSentidoLocalVotacion(idDiputado: string, sentido: number): void {
+    if (this.esComision) {
+      for (const comision of this.listaComisionesVotacion) {
+        const integrante = comision.integrantes.find((i: any) => i.id_diputado === idDiputado);
+        if (integrante) integrante.sentido = sentido;
+      }
+    } else {
+      const votante = this.votantes.find(v => v.id_diputado === idDiputado);
+      if (votante) votante.sentido = sentido;
+    }
+    this.cdr.detectChanges();
   }
 
   @ViewChild('xlModal') xlModal!: TemplateRef<any>;
@@ -386,6 +418,27 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Actualización instantánea de asistencia/votación (de otro admin o de un
+    // diputado desde su app) — reemplaza tener que esperar al polling de fondo.
+    this._socketService.onVotoRegistrado((data) => {
+      this.actualizarSentidoLocalVotacion(data.id_diputado, data.sentido_voto);
+    });
+    this._socketService.onAsistenciaRegistrada((data) => {
+      this.actualizarSentidoLocalAsistencia(data.id_diputado, data.sentido ?? 1);
+    });
+    this._socketService.onVotosActualizadosMasivo(() => {
+      this.actualizarVotacionesAutomaticamente();
+    });
+    this._socketService.onAsistenciasActualizadasMasivo(() => {
+      this.actualizarAsistenciaAutomaticamente();
+    });
+
+    // Si se recupera la conexión (p.ej. tras un corte de internet), se refresca
+    // todo por si se perdió algún evento mientras estuvo desconectado.
+    this._socketService.onReconnect(() => {
+      this.cargarDatosSeccion(this.step);
+    });
+
     this.cargarDatosIniciales();
     this.cargarCatalogosBase();
 
@@ -455,6 +508,11 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     this.detenerSegPlano();
     this._socketService.offTranscripcionLinea();
     this._socketService.offTranscripcionEstado();
+    this._socketService.offVotoRegistrado();
+    this._socketService.offAsistenciaRegistrada();
+    this._socketService.offVotosActualizadosMasivo();
+    this._socketService.offAsistenciasActualizadasMasivo();
+    this._socketService.offReconnect();
     this._socketService.disconnect();
   }
 
