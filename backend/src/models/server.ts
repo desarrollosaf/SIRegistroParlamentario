@@ -455,6 +455,20 @@ class Server {
 
     
     midlewares(){
+       // Log de tiempos de respuesta: ayuda a diagnosticar lentitud intermitente.
+       // Las requests que tardan más de 800ms salen marcadas con LENTO para
+       // poder buscarlas fácil en los logs.
+       this.app.use((req: Request, res: Response, next: NextFunction) => {
+           const inicio = Date.now();
+           res.on('finish', () => {
+               const ms = Date.now() - inicio;
+               if (ms > 800) {
+                   console.warn(`[LENTO] ${ms}ms  ${req.method} ${req.originalUrl}  status=${res.statusCode}`);
+               }
+           });
+           next();
+       });
+
        this.app.use(express.json())
        this.app.use(cors({
            origin: function (origin, callback) {
