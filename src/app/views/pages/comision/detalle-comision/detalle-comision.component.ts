@@ -368,7 +368,10 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
 
 
   ngOnInit(): void {
-    this._socketService.conectar();
+    // conectar() solo abre el socket — para RECIBIR voto-registrado/
+    // asistencia-registrada hace falta además unirse a la sala de esta
+    // comisión/sesión (la misma 'proyeccion-${id}' que usa la proyección).
+    this._socketService.conectarYUnirse(this.idComisionRuta);
 
     // Composiciones guardadas del proyector rápido
     this.cargarGuardadas();
