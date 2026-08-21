@@ -149,6 +149,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this._socketService.offAsistenciaRegistrada();
     this._socketService.offVotosActualizadosMasivo();
     this._socketService.offAsistenciasActualizadasMasivo();
+    this._socketService.offReconnect();
     this._socketService.offProyeccionIniciada();
     this._socketService.offContenidoProyectado();
     this._socketService.offContenidoLimpiado();
@@ -157,6 +158,12 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   private conectarSocket(): void {
     this._socketService.conectarYUnirse(this.idComision);
+
+    // Si se recupera la conexión (p.ej. tras un corte de internet), se refresca
+    // todo por si se perdió algún evento mientras estuvo desconectado.
+    this._socketService.onReconnect(() => {
+      if (this.modo !== 'contenido') this.cargarDatos();
+    });
 
     this._socketService.onVotacionTerminada(() => {
       this.detenerPolling();

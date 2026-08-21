@@ -5,6 +5,7 @@ import { enviroment } from '../../../enviroments/enviroment';
 @Injectable({ providedIn: 'root' })
 export class SocketService {
   private socket?: Socket;
+  private reconnectHandler?: () => void;
 
   private ensureConnected(): Socket {
     if (!this.socket) {
@@ -302,6 +303,23 @@ export class SocketService {
 
   offTranscripcionEstado(): void {
     this.socket?.off('transcripcion-estado');
+  }
+
+  // Se dispara cuando el socket recupera la conexión (p.ej. tras un corte de
+  // internet) — el momento exacto en que conviene refrescar todo, sin tener
+  // que estar preguntando a cada rato mientras la conexión está bien.
+  onReconnect(cb: () => void): void {
+    const socket = this.ensureConnected();
+    if (this.reconnectHandler) socket.io.off('reconnect', this.reconnectHandler);
+    this.reconnectHandler = cb;
+    socket.io.on('reconnect', cb);
+  }
+
+  offReconnect(): void {
+    if (this.reconnectHandler) {
+      this.socket?.io.off('reconnect', this.reconnectHandler);
+      this.reconnectHandler = undefined;
+    }
   }
 
   disconnect(): void {
