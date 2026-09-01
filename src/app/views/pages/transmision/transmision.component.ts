@@ -45,11 +45,11 @@ export class TransmisionComponent implements OnInit, OnDestroy {
     this.socketService.conectar();
 
     this.socketService.onSesionesActivas((lista: any[]) => {
-      this.sesionesActivas = lista.filter(s => s.esComision);
+      this.sesionesActivas = lista;
     });
 
     this.socketService.onSesionIniciada((data: any) => {
-      if (data.esComision && !this.sesionesActivas.find(s => s.clave === data.clave)) {
+      if (!this.sesionesActivas.find(s => s.clave === data.clave)) {
         this.sesionesActivas = [...this.sesionesActivas, data];
       }
     });
