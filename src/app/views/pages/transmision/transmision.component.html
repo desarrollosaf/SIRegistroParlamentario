@@ -10,7 +10,7 @@
             <h4 class="tr-title mb-0">Transmisión en Vivo</h4>
             <p class="tr-subtitle mb-0">
               @if (sesionesActivas.length === 0) { Sin sesiones activas }
-              @else { {{ sesionesActivas.length }} sesión{{ sesionesActivas.length !== 1 ? 'es' : '' }} de comisión en curso }
+              @else { {{ sesionesActivas.length }} sesión{{ sesionesActivas.length !== 1 ? 'es' : '' }} en curso }
             </p>
           </div>
         </div>
@@ -24,7 +24,7 @@
         <div class="tr-empty">
           <i class="feather icon-radio tr-empty-icon" appFeatherIcon data-feather="radio"></i>
           <p class="tr-empty-title">Sin transmisiones activas</p>
-          <p class="tr-empty-sub">Las sesiones de comisión iniciadas desde la agenda aparecerán aquí y podrás cerrarlas desde este panel.</p>
+          <p class="tr-empty-sub">Las sesiones (de comisión o del Pleno) iniciadas desde la agenda aparecerán aquí y podrás cerrarlas desde este panel.</p>
         </div>
       }
 
