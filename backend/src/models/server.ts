@@ -14,6 +14,7 @@ import aliasDiputado from "../routes/aliasDiputado";
 import proyeccion from "../routes/proyeccion";
 import transcripcion from "../routes/transcripcion";
 import capturadora from "../routes/capturadora";
+import pleno from "../routes/pleno";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -204,6 +205,13 @@ class Server {
             if (data?.integranteId) {
                 socket.join(`diputado-${data.integranteId}`);
             }
+        });
+
+        // Pantalla física del Pleno: se une a su propia sala para recibir
+        // identidad-detectada/identidad-perdida cuando el reconocimiento
+        // facial (proceso aparte en Python) reporta quién está sentado ahí.
+        wrap('unirse-pantalla', (idPantalla: string) => {
+            socket.join(`pantalla-${idPantalla}`);
         });
 
         // Eventos para el panel del diputado
@@ -451,6 +459,7 @@ class Server {
        this.app.use(proyeccion);
        this.app.use(transcripcion);
        this.app.use(capturadora);
+       this.app.use(pleno);
     }
 
     
@@ -538,6 +547,7 @@ class Server {
                 '/api/inteligencia/',
                 '/api/transcripcion/linea',   // webhook del transcriptor (sin JWT)
                 '/api/capturadora/voto',      // webhook de la capturadora de votos (sin JWT)
+                '/api/pleno/',                 // pantallas del Pleno con reconocimiento facial (sin JWT, solo LAN)
             ];
 
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path)) ;

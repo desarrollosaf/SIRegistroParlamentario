@@ -8,7 +8,7 @@ import TipoEventos from '../models/tipo_eventos';
 
 const router = Router();
 
-function normalizar(valor: string): string {
+export function normalizar(valor: string): string {
   return (valor || '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

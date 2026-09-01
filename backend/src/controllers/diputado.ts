@@ -111,6 +111,69 @@ export const crearCuentasDiputados = async (req: Request, res: Response): Promis
     }
 };
 
+// Núcleo de "registrar asistencia" — reutilizado tanto por el panel del
+// diputado (JWT) como por la pantalla de pleno (diputado_id ya resuelto por
+// reconocimiento facial, sin JWT). Regresa {status, body} en vez de escribir
+// directo en `res` para que ambos wrappers controlen la respuesta HTTP.
+export async function registrarAsistenciaCore(
+    diputadoId: string,
+    body: { id_agenda: string; id_comision?: string; partido_dip?: string; id_cargo_dip?: string; orden?: number },
+    req: Request
+): Promise<{ status: number; body: any }> {
+    const { id_agenda, id_comision, partido_dip, id_cargo_dip, orden } = body;
+
+    if (!id_agenda) {
+        return { status: 400, body: { msg: 'id_agenda es requerido' } };
+    }
+
+    // Para eventos conjuntos hay un registro por comisión — filtrar por comision_dip_id cuando se provee
+    const whereAsistencia: any = { id_diputado: diputadoId, id_agenda };
+    if (id_comision) whereAsistencia.comision_dip_id = id_comision;
+
+    const registro = await AsistenciaVoto.findOne({ where: whereAsistencia });
+
+    if (!registro) {
+        return { status: 404, body: { msg: 'No se encontró registro de asistencia. El administrador debe iniciar la sesión.' } };
+    }
+
+    if (registro.sentido_voto !== 0) {
+        return { status: 409, body: { msg: 'Ya se registró la asistencia en esta sesión' } };
+    }
+
+    // sentido_voto=1 = ASISTENCIA (igual que cuando el admin marca manualmente)
+    await registro.update({
+        sentido_voto: 1,
+        mensaje: 'ASISTENCIA',
+        ...(partido_dip && { partido_dip }),
+        ...(id_cargo_dip && { id_cargo_dip }),
+        ...(orden !== undefined && { orden }),
+    });
+
+    // El room lo provee el frontend: es idComisionRuta del admin.
+    // Para comisiones coincide con comision_dip_id; para sesiones plenarias
+    // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
+    // de proyección es directamente el id de la agenda.
+    let roomId = id_comision || registro.comision_dip_id || id_agenda;
+    // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+    // por sala-diputados), pero la proyección está en la sala del SAF id
+    // (idComisionRuta del admin) — hay que traducir uno al otro.
+    if (roomId) {
+        const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
+        const abierta = asistenciasAbiertas.get(roomId);
+        if (abierta?.safId) roomId = abierta.safId;
+    }
+    const io = req.app.get('io');
+    if (io && roomId) {
+        io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
+            id_diputado: diputadoId,
+            id_agenda,
+            sentido: 1,
+        });
+    }
+
+    return { status: 200, body: { msg: 'Asistencia registrada correctamente', data: registro } };
+}
+
 // Registrar asistencia del diputado: busca el registro PENDIENTE y lo actualiza.
 // El frontend pasa id_comision para que el backend emita el socket al room correcto.
 export const registrarAsistencia = async (req: Request, res: Response): Promise<any> => {
@@ -122,67 +185,104 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
             return res.status(403).json({ msg: 'Tu cuenta no está vinculada a un perfil de diputado' });
         }
 
-        const { id_agenda, id_comision, partido_dip, id_cargo_dip, orden } = req.body;
-
-        if (!id_agenda) {
-            return res.status(400).json({ msg: 'id_agenda es requerido' });
-        }
-
         const diputadoId = await getDiputadoId(integranteLegislaturaId);
         if (!diputadoId) {
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
 
-        // Para eventos conjuntos hay un registro por comisión — filtrar por comision_dip_id cuando se provee
-        const whereAsistencia: any = { id_diputado: diputadoId, id_agenda };
-        if (id_comision) whereAsistencia.comision_dip_id = id_comision;
-
-        const registro = await AsistenciaVoto.findOne({ where: whereAsistencia });
-
-        if (!registro) {
-            return res.status(404).json({ msg: 'No se encontró registro de asistencia. El administrador debe iniciar la sesión.' });
-        }
-
-        if (registro.sentido_voto !== 0) {
-            return res.status(409).json({ msg: 'Ya registraste tu asistencia en esta sesión' });
-        }
-
-        // sentido_voto=1 = ASISTENCIA (igual que cuando el admin marca manualmente)
-        await registro.update({
-            sentido_voto: 1,
-            mensaje: 'ASISTENCIA',
-            ...(partido_dip && { partido_dip }),
-            ...(id_cargo_dip && { id_cargo_dip }),
-            ...(orden !== undefined && { orden }),
-        });
-
-        // El room lo provee el frontend: es idComisionRuta del admin.
-        // Para comisiones coincide con comision_dip_id; para sesiones plenarias
-        // (donde comision_dip_id es NULL y la app no manda id_comision) la sala
-        // de proyección es directamente el id de la agenda.
-        let roomId = id_comision || registro.comision_dip_id || id_agenda;
-        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
-        // por sala-diputados), pero la proyección está en la sala del SAF id
-        // (idComisionRuta del admin) — hay que traducir uno al otro.
-        if (roomId) {
-            const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
-            const abierta = asistenciasAbiertas.get(roomId);
-            if (abierta?.safId) roomId = abierta.safId;
-        }
-        const io = req.app.get('io');
-        if (io && roomId) {
-            io.to(`proyeccion-${roomId}`).emit('asistencia-registrada', {
-                id_diputado: diputadoId,
-                id_agenda,
-                sentido: 1,
-            });
-        }
-
-        return res.status(200).json({ msg: 'Asistencia registrada correctamente', data: registro });
+        const { status, body } = await registrarAsistenciaCore(diputadoId, req.body, req);
+        return res.status(status).json(body);
     } catch (error: any) {
         return res.status(500).json({ msg: 'Error al registrar asistencia', error: error.message });
     }
 };
+
+// Núcleo de "registrar voto" — mismo patrón que registrarAsistenciaCore.
+export async function registrarVotoCore(
+    diputadoId: string,
+    body: { sentido_voto: number; id_voto_punto?: string; id_comision?: string },
+    req: Request
+): Promise<{ status: number; body: any }> {
+    const { sentido_voto, id_voto_punto, id_comision } = body;
+
+    if (sentido_voto === undefined) {
+        return { status: 400, body: { msg: 'sentido_voto es requerido' } };
+    }
+
+    // 0 = Sin Registro (reset a pendiente), 1-3 = votos normales
+    if (![0, 1, 2, 3].includes(Number(sentido_voto))) {
+        return { status: 400, body: { msg: 'sentido_voto debe ser 0 (sin registro), 1 (a favor), 2 (abstención) o 3 (en contra)' } };
+    }
+
+    // Buscar el registro de voto correcto
+    let votoRegistro: any = null;
+
+    // Para eventos conjuntos: buscar por comision_dip_id usando votacionesAbiertas
+    if (id_comision) {
+        const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
+        const votAbierta = votacionesAbiertas.get(id_comision);
+        if (votAbierta) {
+            const whereVoto: any = { id_diputado: diputadoId, id_comision_dip: id_comision };
+            if (votAbierta.idReserva) {
+                whereVoto.id_tema_punto_voto = votAbierta.idReserva;
+            } else if (votAbierta.idPunto && votAbierta.idIniciativa) {
+                whereVoto.id_punto = votAbierta.idPunto;
+                whereVoto.id_iniciativa = votAbierta.idIniciativa;
+            } else if (votAbierta.idPunto) {
+                whereVoto.id_punto = votAbierta.idPunto;
+            }
+            votoRegistro = await VotosPunto.findOne({ where: whereVoto });
+        }
+    }
+
+    // Fallback: buscar por id_voto_punto directo
+    if (!votoRegistro && id_voto_punto) {
+        votoRegistro = await VotosPunto.findOne({
+            where: { id: id_voto_punto, id_diputado: diputadoId }
+        });
+    }
+
+    if (!votoRegistro) {
+        return { status: 404, body: { msg: 'No se encontró el registro de votación para este diputado.' } };
+    }
+
+    const sentido = Number(sentido_voto);
+    // sentido 0 = Sin Registro del diputado → mismo estado que pendiente (0 / PENDIENTE)
+    const mensajeVoto = sentido === 0 ? 'PENDIENTE' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
+
+    await votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
+
+    // Para sesiones plenarias (comision_dip_id es NULL y la app no manda id_comision)
+    // la sala de proyección es el id de la agenda, resuelto vía el punto/tema votado.
+    let roomIdVoto = id_comision || votoRegistro.id_comision_dip;
+    if (!roomIdVoto) {
+        if (votoRegistro.id_tema_punto_voto) {
+            const tema = await TemasPuntosVotos.findByPk(votoRegistro.id_tema_punto_voto);
+            roomIdVoto = tema?.id_evento || null;
+        } else if (votoRegistro.id_punto) {
+            const puntoVotado = await PuntosOrden.findByPk(votoRegistro.id_punto);
+            roomIdVoto = (puntoVotado as any)?.id_evento || null;
+        }
+    }
+    // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
+    // por sala-diputados), pero la proyección está en la sala del SAF id
+    // (idComisionRuta del admin) — hay que traducir uno al otro.
+    if (roomIdVoto) {
+        const votacionesAbiertasRoom: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
+        const abierta = votacionesAbiertasRoom.get(roomIdVoto);
+        if (abierta?.safId) roomIdVoto = abierta.safId;
+    }
+    const io = req.app.get('io');
+    if (io && roomIdVoto) {
+        io.to(`proyeccion-${roomIdVoto}`).emit('voto-registrado', {
+            id_diputado: diputadoId,
+            sentido_voto: sentido,
+            id: votoRegistro.id,
+        });
+    }
+
+    return { status: 200, body: { msg: 'Voto registrado correctamente', data: votoRegistro } };
+}
 
 // Registrar voto del diputado: busca el VotosPunto PENDIENTE y lo actualiza.
 export const registrarVoto = async (req: Request, res: Response): Promise<any> => {
@@ -194,117 +294,25 @@ export const registrarVoto = async (req: Request, res: Response): Promise<any> =
             return res.status(403).json({ msg: 'Tu cuenta no está vinculada a un perfil de diputado' });
         }
 
-        const { sentido_voto, id_voto_punto, id_comision } = req.body;
-
-        if (sentido_voto === undefined) {
-            return res.status(400).json({ msg: 'sentido_voto es requerido' });
-        }
-
-        // 0 = Sin Registro (reset a pendiente), 1-3 = votos normales
-        if (![0, 1, 2, 3].includes(Number(sentido_voto))) {
-            return res.status(400).json({ msg: 'sentido_voto debe ser 0 (sin registro), 1 (a favor), 2 (abstención) o 3 (en contra)' });
-        }
-
         const diputadoIdVoto = await getDiputadoId(integranteLegislaturaId);
         if (!diputadoIdVoto) {
             return res.status(404).json({ msg: 'No se encontró el perfil de diputado vinculado a tu cuenta.' });
         }
 
-        // Buscar el registro de voto correcto
-        let votoRegistro: any = null;
-
-        // Para eventos conjuntos: buscar por comision_dip_id usando votacionesAbiertas
-        if (id_comision) {
-            const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
-            const votAbierta = votacionesAbiertas.get(id_comision);
-            if (votAbierta) {
-                const whereVoto: any = { id_diputado: diputadoIdVoto, id_comision_dip: id_comision };
-                if (votAbierta.idReserva) {
-                    whereVoto.id_tema_punto_voto = votAbierta.idReserva;
-                } else if (votAbierta.idPunto && votAbierta.idIniciativa) {
-                    whereVoto.id_punto = votAbierta.idPunto;
-                    whereVoto.id_iniciativa = votAbierta.idIniciativa;
-                } else if (votAbierta.idPunto) {
-                    whereVoto.id_punto = votAbierta.idPunto;
-                }
-                votoRegistro = await VotosPunto.findOne({ where: whereVoto });
-            }
-        }
-
-        // Fallback: buscar por id_voto_punto directo
-        if (!votoRegistro && id_voto_punto) {
-            votoRegistro = await VotosPunto.findOne({
-                where: { id: id_voto_punto, id_diputado: diputadoIdVoto }
-            });
-        }
-
-        if (!votoRegistro) {
-            return res.status(404).json({ msg: 'No se encontró el registro de votación para este diputado.' });
-        }
-
-        const sentido = Number(sentido_voto);
-        // sentido 0 = Sin Registro del diputado → mismo estado que pendiente (0 / PENDIENTE)
-        const mensajeVoto = sentido === 0 ? 'PENDIENTE' : sentido === 1 ? 'A favor' : sentido === 2 ? 'Abstención' : 'En contra';
-
-        await votoRegistro.update({ sentido: sentido, mensaje: mensajeVoto });
-
-        // Para sesiones plenarias (comision_dip_id es NULL y la app no manda id_comision)
-        // la sala de proyección es el id de la agenda, resuelto vía el punto/tema votado.
-        let roomIdVoto = id_comision || votoRegistro.id_comision_dip;
-        if (!roomIdVoto) {
-            if (votoRegistro.id_tema_punto_voto) {
-                const tema = await TemasPuntosVotos.findByPk(votoRegistro.id_tema_punto_voto);
-                roomIdVoto = tema?.id_evento || null;
-            } else if (votoRegistro.id_punto) {
-                const puntoVotado = await PuntosOrden.findByPk(votoRegistro.id_punto);
-                roomIdVoto = (puntoVotado as any)?.id_evento || null;
-            }
-        }
-        // En comisiones conjuntas, la app manda el UUID interno (el que le llegó
-        // por sala-diputados), pero la proyección está en la sala del SAF id
-        // (idComisionRuta del admin) — hay que traducir uno al otro.
-        if (roomIdVoto) {
-            const votacionesAbiertasRoom: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
-            const abierta = votacionesAbiertasRoom.get(roomIdVoto);
-            if (abierta?.safId) roomIdVoto = abierta.safId;
-        }
-        const io = req.app.get('io');
-        if (io && roomIdVoto) {
-            io.to(`proyeccion-${roomIdVoto}`).emit('voto-registrado', {
-                id_diputado: diputadoIdVoto,
-                sentido_voto: sentido,
-                id: votoRegistro.id,
-            });
-        }
-
-        return res.status(200).json({ msg: 'Voto registrado correctamente', data: votoRegistro });
+        const { status, body } = await registrarVotoCore(diputadoIdVoto, req.body, req);
+        return res.status(status).json(body);
     } catch (error: any) {
         return res.status(500).json({ msg: 'Error al registrar voto', error: error.message });
     }
 };
 
-// Retorna el estado actual del panel para el diputado (persiste al recargar).
-// Incluye descripcion y fecha del evento para mostrar en pantalla.
-export const getEstadoPanel = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const tokenUser = (req as any).user;
-        const integranteLegislaturaId: string = tokenUser.integrante_legislatura_id;
-
-        if (!integranteLegislaturaId) {
-            return res.status(403).json({ msg: 'Tu cuenta no está vinculada a un perfil de diputado' });
-        }
-
-        const diputadoIdPanel = await getDiputadoId(integranteLegislaturaId);
-        if (!diputadoIdPanel) {
-            return res.json({ asistencia: null, votacion: null });
-        }
-
+// Núcleo de "estado del panel" — reutilizado por el panel del diputado (JWT)
+// y por la pantalla de pleno (diputado_id ya resuelto, sin JWT).
+export async function obtenerEstadoPanel(diputadoIdPanel: string, filtroAgenda: string | undefined, req: Request): Promise<{ asistencia: any; votacion: any }> {
         const asistenciasAbiertas: Map<string, { idAgenda: string }> =
             req.app.get('asistenciasAbiertas') || new Map();
         const votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null }> =
             req.app.get('votacionesAbiertas') || new Map();
-
-        const filtroAgenda = req.query.idAgenda as string | undefined;
 
         let asistenciaPanel: any = null;
         let votacionPanel: any = null;
@@ -368,7 +376,28 @@ export const getEstadoPanel = async (req: Request, res: Response): Promise<any> 
             }
         }
 
-        return res.json({ asistencia: asistenciaPanel, votacion: votacionPanel });
+    return { asistencia: asistenciaPanel, votacion: votacionPanel };
+}
+
+// Retorna el estado actual del panel para el diputado (persiste al recargar).
+// Incluye descripcion y fecha del evento para mostrar en pantalla.
+export const getEstadoPanel = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const tokenUser = (req as any).user;
+        const integranteLegislaturaId: string = tokenUser.integrante_legislatura_id;
+
+        if (!integranteLegislaturaId) {
+            return res.status(403).json({ msg: 'Tu cuenta no está vinculada a un perfil de diputado' });
+        }
+
+        const diputadoIdPanel = await getDiputadoId(integranteLegislaturaId);
+        if (!diputadoIdPanel) {
+            return res.json({ asistencia: null, votacion: null });
+        }
+
+        const filtroAgenda = req.query.idAgenda as string | undefined;
+        const estado = await obtenerEstadoPanel(diputadoIdPanel, filtroAgenda, req);
+        return res.json(estado);
     } catch (error: any) {
         return res.status(500).json({ msg: 'Error al obtener estado del panel', error: error.message });
     }
@@ -484,23 +513,9 @@ export const getOrdenDelDia = async (req: Request, res: Response): Promise<any> 
   }
 };
 
-/** Devuelve los votos del diputado para los puntos de una sesión */
-export const getMisVotos = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const integranteLegislaturaId = (req as any).user?.integrante_legislatura_id;
-
-        if (!integranteLegislaturaId) {
-            return res.status(403).json({ msg: 'Sin perfil de diputado' });
-        }
-
-        const { idAgenda } = req.params;
-
-        const diputadoId = await getDiputadoId(integranteLegislaturaId);
-
-        if (!diputadoId) {
-            return res.json({ votos: [] });
-        }
-
+/** Núcleo de "mis votos" — reutilizado por el panel del diputado (JWT) y por
+ *  la pantalla de pleno (diputado_id ya resuelto, sin JWT). */
+export async function obtenerMisVotos(diputadoId: string, idAgenda: string): Promise<any[]> {
         const puntos = await PuntosOrden.findAll({
             where: {
                 id_evento: idAgenda
@@ -514,7 +529,7 @@ export const getMisVotos = async (req: Request, res: Response): Promise<any> => 
         });
 
         if (!puntos.length) {
-            return res.json({ votos: [] });
+            return [];
         }
 
         const puntoIds = puntos.map(p => p.id);
@@ -534,7 +549,7 @@ export const getMisVotos = async (req: Request, res: Response): Promise<any> => 
             }
         });
 
-        const votos = puntos
+        return puntos
             .map((p: any) => {
                 const voto = votoMap[p.id];
 
@@ -550,9 +565,27 @@ export const getMisVotos = async (req: Request, res: Response): Promise<any> => 
                 };
             })
             .filter(Boolean);
+}
 
+/** Devuelve los votos del diputado para los puntos de una sesión */
+export const getMisVotos = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const integranteLegislaturaId = (req as any).user?.integrante_legislatura_id;
+
+        if (!integranteLegislaturaId) {
+            return res.status(403).json({ msg: 'Sin perfil de diputado' });
+        }
+
+        const { idAgenda } = req.params;
+
+        const diputadoId = await getDiputadoId(integranteLegislaturaId);
+
+        if (!diputadoId) {
+            return res.json({ votos: [] });
+        }
+
+        const votos = await obtenerMisVotos(diputadoId, idAgenda);
         return res.json({ votos });
-
     } catch (error: any) {
         return res.status(500).json({
             msg: 'Error al obtener votos',
