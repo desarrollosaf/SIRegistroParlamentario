@@ -14,6 +14,7 @@ import { User } from '../../../core/interfaces/user';
 const NOMBRES_ROL: Record<string, string> = {
   admin: 'Administrador',
   diputado: 'Diputado/a',
+  comunicacion: 'Comunicación Social',
 };
 
 @Component({
@@ -60,7 +61,10 @@ export class NavbarComponent implements OnInit {
       this.showActiveTheme(this.currentTheme);
     });
 
-    this.menuItems = MENU;
+    // Comunicación Social solo debe ver el enlace a Transmisión.
+    this.menuItems = this.userService.getRol() === 'comunicacion'
+      ? MENU.filter(item => item.link === '/transmision')
+      : MENU;
 
     /**
      * Close the header menu after a route change on tablet and mobile devices

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SocketService } from '../../../core/services/socket.service';
+import { UserService } from '../../../core/services/auth.service';
 import { FeatherIconDirective } from '../../../core/feather-icon/feather-icon.directive';
 
 interface SesionActiva {
@@ -26,7 +27,19 @@ export class TransmisionComponent implements OnInit, OnDestroy {
   sesionesActivas: SesionActiva[] = [];
   cerrando = new Set<string>();
 
-  constructor(private socketService: SocketService) {}
+  constructor(private socketService: SocketService, private userService: UserService) {}
+
+  /** Comunicación Social solo abre el link, no puede cerrar la sesión. */
+  get puedeCerrarSesion(): boolean {
+    return this.userService.getRol() !== 'comunicacion';
+  }
+
+  /** Link de la pantalla de proyección para compartir/proyectar esta sesión. */
+  enlaceProyeccion(sesion: SesionActiva): string | null {
+    if (!sesion.idComision) return null;
+    const qs = `id=${sesion.idComision}&modo=contenido`;
+    return `/proyeccion-votacion?t=${btoa(qs)}`;
+  }
 
   ngOnInit(): void {
     this.socketService.conectar();

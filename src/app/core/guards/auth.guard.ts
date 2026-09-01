@@ -15,6 +15,11 @@ export const authGuard: CanActivateFn = (route, state) => {
         router.navigate(['/auth/login']);
         return false;
       }
+      // Comunicación Social solo puede ver la pantalla de Transmisión.
+      if (user?.role === 'comunicacion' && !state.url.startsWith('/transmision')) {
+        router.navigate(['/transmision']);
+        return false;
+      }
       return true;
     }),
     catchError(() => {
