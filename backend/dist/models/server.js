@@ -28,6 +28,7 @@ const aliasDiputado_1 = __importDefault(require("../routes/aliasDiputado"));
 const proyeccion_1 = __importDefault(require("../routes/proyeccion"));
 const transcripcion_1 = __importDefault(require("../routes/transcripcion"));
 const capturadora_1 = __importDefault(require("../routes/capturadora"));
+const pleno_1 = __importDefault(require("../routes/pleno"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -188,6 +189,12 @@ class Server {
                 if (data === null || data === void 0 ? void 0 : data.integranteId) {
                     socket.join(`diputado-${data.integranteId}`);
                 }
+            });
+            // Pantalla física del Pleno: se une a su propia sala para recibir
+            // identidad-detectada/identidad-perdida cuando el reconocimiento
+            // facial (proceso aparte en Python) reporta quién está sentado ahí.
+            wrap('unirse-pantalla', (idPantalla) => {
+                socket.join(`pantalla-${idPantalla}`);
             });
             // Eventos para el panel del diputado
             wrap('abrir-asistencia', (data) => __awaiter(this, void 0, void 0, function* () {
@@ -415,6 +422,7 @@ class Server {
         this.app.use(proyeccion_1.default);
         this.app.use(transcripcion_1.default);
         this.app.use(capturadora_1.default);
+        this.app.use(pleno_1.default);
     }
     midlewares() {
         // Log de tiempos de respuesta: ayuda a diagnosticar lentitud intermitente.
@@ -498,6 +506,7 @@ class Server {
                 '/api/inteligencia/',
                 '/api/transcripcion/linea', // webhook del transcriptor (sin JWT)
                 '/api/capturadora/voto', // webhook de la capturadora de votos (sin JWT)
+                '/api/pleno/', // pantallas del Pleno con reconocimiento facial (sin JWT, solo LAN)
             ];
             const isPublic = publicPaths.some(path => req.originalUrl.startsWith(path));
             if (isPublic) {

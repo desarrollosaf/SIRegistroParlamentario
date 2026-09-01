@@ -97,6 +97,11 @@ export const routes: Routes = [
     loadComponent: () => import('./views/pages/comision/proyeccion-votacion/proyeccion-votacion.component').then(c => c.ProyeccionVotacionComponent)
   },
   {
+    // Pantallas físicas del Pleno — sin login, identidad por reconocimiento facial.
+    path: 'pleno/pantalla/:idPantalla',
+    loadComponent: () => import('./views/pages/pleno/pantalla-diputado/pantalla-diputado.component').then(c => c.PantallaDiputadoComponent)
+  },
+  {
     path: 'error',
     loadComponent: () => import('./views/pages/error/error.component').then(c => c.ErrorComponent),
   },

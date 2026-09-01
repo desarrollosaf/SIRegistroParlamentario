@@ -5,7 +5,7 @@ import { enviroment } from '../../../enviroments/enviroment';
 @Injectable({ providedIn: 'root' })
 export class SocketService {
   private socket?: Socket;
-  private reconnectHandler?: () => void;
+  private reconnectHandlers = new Set<() => void>();
 
   private ensureConnected(): Socket {
     if (!this.socket) {
@@ -17,6 +17,14 @@ export class SocketService {
         transports: ['websocket', 'polling'],
         path: socketPath
       });
+      // Un solo listener de manager que reenvía a todos los suscriptores activos,
+      // para que dos pantallas/componentes vivos a la vez (p.ej. detalle-comision
+      // y pantalla-diputado) no se pisen el callback de reconexión entre sí.
+      this.socket.io.on('reconnect', () => {
+        this.reconnectHandlers.forEach(cb => cb());
+      });
+      this.socket.on('connect_error', (err) => console.warn('Socket connect_error:', err.message));
+      this.socket.on('disconnect', (reason) => console.warn('Socket desconectado:', reason));
     }
     return this.socket;
   }
@@ -44,6 +52,33 @@ export class SocketService {
     } else {
       socket.on('connect', () => socket.emit('unirse-diputado'));
     }
+  }
+
+  /** Pantalla física del Pleno: conecta y se une a la sala de esa pantalla
+   *  para recibir identidad-detectada/identidad-perdida. */
+  conectarComoPantalla(idPantalla: string): void {
+    const socket = this.ensureConnected();
+    if (socket.connected) {
+      socket.emit('unirse-pantalla', idPantalla);
+    } else {
+      socket.on('connect', () => socket.emit('unirse-pantalla', idPantalla));
+    }
+  }
+
+  onIdentidadDetectada(cb: (data: { diputado_id: string; nombre: string; alias?: string | null }) => void): void {
+    this.socket?.on('identidad-detectada', cb);
+  }
+
+  offIdentidadDetectada(): void {
+    this.socket?.off('identidad-detectada');
+  }
+
+  onIdentidadPerdida(cb: () => void): void {
+    this.socket?.on('identidad-perdida', cb);
+  }
+
+  offIdentidadPerdida(): void {
+    this.socket?.off('identidad-perdida');
   }
 
   emitTerminarVotacion(idComision: string): void {
@@ -309,16 +344,15 @@ export class SocketService {
   // internet) — el momento exacto en que conviene refrescar todo, sin tener
   // que estar preguntando a cada rato mientras la conexión está bien.
   onReconnect(cb: () => void): void {
-    const socket = this.ensureConnected();
-    if (this.reconnectHandler) socket.io.off('reconnect', this.reconnectHandler);
-    this.reconnectHandler = cb;
-    socket.io.on('reconnect', cb);
+    this.ensureConnected();
+    this.reconnectHandlers.add(cb);
   }
 
-  offReconnect(): void {
-    if (this.reconnectHandler) {
-      this.socket?.io.off('reconnect', this.reconnectHandler);
-      this.reconnectHandler = undefined;
+  offReconnect(cb?: () => void): void {
+    if (cb) {
+      this.reconnectHandlers.delete(cb);
+    } else {
+      this.reconnectHandlers.clear();
     }
   }
 

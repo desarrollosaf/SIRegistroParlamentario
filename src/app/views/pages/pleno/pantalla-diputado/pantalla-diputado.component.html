@@ -1,0 +1,221 @@
+<div class="pantalla-pleno">
+
+  <!-- ══ Banner superior — siempre visible cuando hay sesión activa ══ -->
+  @if (sesionActiva) {
+    <div class="top-banner">
+      <div class="banner-left">
+        <span class="pulse-dot"></span>
+        <div>
+          <div class="banner-status">EN VIVO</div>
+          <div class="banner-org">{{ sesionNombre || 'Sesión en Curso' }}</div>
+        </div>
+      </div>
+      <div class="banner-right">
+        @if (identificado) {
+          <div class="identidad-chip">
+            <i class="bi bi-person-circle"></i>
+            <span>{{ nombreDiputado }}</span>
+          </div>
+        } @else {
+          <div class="identidad-chip identidad-chip-pendiente">
+            <i class="bi bi-eye"></i>
+            <span>Identificando…</span>
+          </div>
+        }
+        @if (asistenciaRegistrada) {
+          <div class="asistencia-badge">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Asistencia</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="center-area">
+
+    <!-- ══ Asistencia ══ -->
+    @if (evento === 2) {
+      <div class="attend-card">
+        <div class="attend-header">
+          <i class="bi bi-people-fill"></i>
+          <div class="attend-header-label">REGISTRO DE ASISTENCIA</div>
+          <div class="attend-header-sub">{{ sesionNombre || 'Sesión Plenaria' }}</div>
+        </div>
+
+        @if (!identificado) {
+          <div class="attend-waiting">
+            <i class="bi bi-hourglass-split"></i>
+            <span>Identificando diputado…</span>
+          </div>
+        } @else if (!asistenciaRegistrada) {
+          <button class="btn-attend" [disabled]="registrandoAsistencia" (click)="registrarAsistencia()">
+            @if (registrandoAsistencia) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            } @else {
+              <i class="bi bi-fingerprint me-2"></i>
+            }
+            Registrar Asistencia
+          </button>
+        } @else {
+          <div class="attend-success">
+            <i class="bi bi-check-circle success-ico"></i>
+            <div class="attend-success-title">Asistencia Registrada</div>
+            <div class="attend-success-sub">Tu asistencia ha sido confirmada</div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══ Votación ══ -->
+    @else if (evento === 3) {
+      <div class="vote-card">
+        <div class="vote-header">
+          <div class="vote-meta-row">
+            @if (noPuntoVotacion) { <span class="vote-tag">Punto {{ noPuntoVotacion }}</span> }
+            @if (tipoPuntoVotacion) { <span class="vote-tag vote-tag-outline">{{ tipoPuntoVotacion }}</span> }
+            @if (!noPuntoVotacion && !tipoPuntoVotacion) { <span class="vote-tag">VOTACIÓN EN CURSO</span> }
+          </div>
+          <div class="vote-topic">
+            {{ textoExpandido ? temaVotacion : temaVotacionCorto }}
+            @if (!textoExpandido && temaVotacion.length > 110) {
+              <button class="vote-mas-btn" (click)="textoExpandido = true">… ver más</button>
+            }
+            @if (textoExpandido && temaVotacion.length > 110) {
+              <button class="vote-mas-btn" (click)="textoExpandido = false">ver menos</button>
+            }
+          </div>
+          <div class="vote-gold-line"></div>
+        </div>
+
+        @if (!identificado) {
+          <div class="attend-waiting">
+            <i class="bi bi-hourglass-split"></i>
+            <span>Identificando diputado para poder votar…</span>
+          </div>
+        } @else {
+          @if (miVoto) {
+            <div class="vote-status-bar"
+              [class.vs-favor]="miVoto === 'FAVOR'"
+              [class.vs-contra]="miVoto === 'CONTRA'"
+              [class.vs-abstencion]="miVoto === 'ABSTENCION'"
+              [class.vs-sin-registro]="miVoto === 'SIN REGISTRO'">
+              <span>Tu voto: <strong>{{ miVotoLabel }}</strong></span>
+            </div>
+          }
+
+          <div class="vote-buttons-row">
+            <button class="sv-btn sv-favor" [class.sv-active]="miVoto === 'FAVOR'" [disabled]="votando"
+                    (click)="votar('FAVOR')" title="A Favor">
+              <i class="bi bi-hand-thumbs-up"></i>
+            </button>
+            <button class="sv-btn sv-contra" [class.sv-active]="miVoto === 'CONTRA'" [disabled]="votando"
+                    (click)="votar('CONTRA')" title="En Contra">
+              <i class="bi bi-hand-thumbs-down"></i>
+            </button>
+            <button class="sv-btn sv-abs" [class.sv-active]="miVoto === 'ABSTENCION'" [disabled]="votando"
+                    (click)="votar('ABSTENCION')" title="Abstención">
+              <i class="bi bi-dash-circle"></i>
+            </button>
+            <button class="sv-btn sv-sin" [class.sv-active]="miVoto === 'SIN REGISTRO'" [disabled]="votando"
+                    (click)="votar('SIN REGISTRO')" title="Sin Registro">
+              <i class="bi bi-slash-circle"></i>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══ Sin evento activo ══ -->
+    @else {
+      @if (sesionActiva) {
+        <div class="detalle-wrap">
+          <div class="detalle-btns">
+            <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'orden'" (click)="verOrden()">
+              <i class="bi bi-list-ul"></i>
+              <span>Orden del día</span>
+            </button>
+            <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'votos'" (click)="verVotos()">
+              <i class="bi bi-check2-all"></i>
+              <span>Mis votos</span>
+            </button>
+          </div>
+
+          @if (vistaDetalle === 'none') {
+            <div class="idle-wrap idle-wrap-small">
+              <div class="idle-seal">
+                <i class="bi bi-hourglass-split"></i>
+              </div>
+              <div class="idle-org">{{ sesionNombre }}</div>
+              <div class="idle-title-small">Sesión en curso</div>
+            </div>
+          }
+
+          @if (vistaDetalle !== 'none') {
+            <div class="detalle-panel">
+              @if (cargandoDetalle) {
+                <div class="detalle-loading">
+                  <span class="spinner-border"></span>
+                </div>
+              }
+
+              @if (vistaDetalle === 'orden' && !cargandoDetalle) {
+                @if (ordenDelDia.length === 0) {
+                  <div class="detalle-empty">
+                    <i class="bi bi-file-earmark"></i>
+                    <span>Sin puntos registrados</span>
+                  </div>
+                }
+                @for (punto of ordenDelDia; track punto.id) {
+                  <div class="punto-item">
+                    <div class="punto-num">{{ punto.nopunto }}</div>
+                    <div class="punto-texto">{{ punto.punto }}</div>
+                  </div>
+                }
+              }
+
+              @if (vistaDetalle === 'votos' && !cargandoDetalle) {
+                @if (!identificado) {
+                  <div class="detalle-empty">
+                    <i class="bi bi-person-bounding-box"></i>
+                    <span>Esperando identificar diputado</span>
+                  </div>
+                } @else if (misVotos.length === 0) {
+                  <div class="detalle-empty">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Aún no ha participado en votaciones</span>
+                  </div>
+                }
+                @for (voto of misVotos; track voto.nopunto) {
+                  <div class="voto-item">
+                    <div class="voto-num">{{ voto.nopunto }}</div>
+                    <div class="voto-info">
+                      <div class="voto-punto">{{ voto.punto }}</div>
+                      <div class="voto-sentido"
+                           [class.vs-favor]="voto.sentido === 1"
+                           [class.vs-abstencion]="voto.sentido === 2"
+                           [class.vs-contra]="voto.sentido === 3">
+                        <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down' : 'bi bi-dash-circle'"></i>
+                        {{ voto.mensaje }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="idle-wrap">
+          <div class="idle-seal">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div class="idle-org">Congreso del Estado de México</div>
+          <div class="idle-title">Sin evento activo</div>
+        </div>
+      }
+    }
+
+  </div>
+
+</div>

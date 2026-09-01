@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.normalizar = normalizar;
 const express_1 = require("express");
 const sequelize_1 = require("sequelize");
 const diputado_1 = __importDefault(require("../models/diputado"));
