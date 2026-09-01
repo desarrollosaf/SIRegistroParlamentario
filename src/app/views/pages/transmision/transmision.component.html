@@ -63,18 +63,26 @@
               </div>
 
               <div class="tr-card-footer">
-                <button class="tr-btn-cerrar"
-                        [class.tr-cerrando]="cerrando.has(sesion.clave)"
-                        [disabled]="cerrando.has(sesion.clave)"
-                        (click)="cerrarSesion(sesion)">
-                  @if (cerrando.has(sesion.clave)) {
-                    <i class="feather icon-loader" appFeatherIcon data-feather="loader"></i>
-                    Cerrando sesión...
-                  } @else {
-                    <i class="feather icon-stop-circle" appFeatherIcon data-feather="stop-circle"></i>
-                    Cerrar Sesión
-                  }
-                </button>
+                @if (enlaceProyeccion(sesion); as link) {
+                  <a class="tr-btn-abrir" [href]="link" target="_blank" rel="noopener">
+                    <i class="feather icon-external-link" appFeatherIcon data-feather="external-link"></i>
+                    Abrir transmisión
+                  </a>
+                }
+                @if (puedeCerrarSesion) {
+                  <button class="tr-btn-cerrar"
+                          [class.tr-cerrando]="cerrando.has(sesion.clave)"
+                          [disabled]="cerrando.has(sesion.clave)"
+                          (click)="cerrarSesion(sesion)">
+                    @if (cerrando.has(sesion.clave)) {
+                      <i class="feather icon-loader" appFeatherIcon data-feather="loader"></i>
+                      Cerrando sesión...
+                    } @else {
+                      <i class="feather icon-stop-circle" appFeatherIcon data-feather="stop-circle"></i>
+                      Cerrar Sesión
+                    }
+                  </button>
+                }
               </div>
 
             </div>
