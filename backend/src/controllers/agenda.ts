@@ -8,7 +8,7 @@ import IntegranteLegislatura from "../models/integrante_legislaturas";
 import Diputado from "../models/diputado";
 import IntegranteComision from "../models/integrante_comisions";
 import AsistenciaVoto from "../models/asistencia_votos";
-import { setEngine } from "node:crypto";
+import { setEngine, createHash } from "node:crypto";
 import Partidos from "../models/partidos";
 import Proponentes from "../models/proponentes";
 import ExpedienteEstudiosPuntos from "../models/expedientes_estudio_puntos";
@@ -2619,6 +2619,28 @@ export const eliminarinter = async (req: Request, res: Response): Promise<any> =
 };
 
 
+/**
+ * Id determinístico (mismo diputado + mismo punto/reserva + misma
+ * iniciativa => siempre el mismo id) para que las filas de votos_punto
+ * creadas por getvotacionpunto sean idempotentes: si dos peticiones
+ * concurrentes (panel de admin + varias pantallas de proyección abriendo el
+ * mismo punto casi al mismo tiempo) intentan crear el mismo registro, la
+ * segunda choca contra la llave primaria en vez de insertar un duplicado.
+ * No requiere ningún cambio de esquema (a diferencia de un índice único
+ * sobre columnas nulleables, que en MySQL no detecta duplicados cuando esas
+ * columnas son NULL).
+ */
+function idVotoPuntoDeterministico(
+  idDiputado: string,
+  idPunto: string | null,
+  idIniciativa: string | null,
+  idTemaPuntoVoto: string | null
+): string {
+  const clave = `${idDiputado}|${idPunto ?? ""}|${idIniciativa ?? ""}|${idTemaPuntoVoto ?? ""}`;
+  const hash = createHash("sha1").update(clave).digest("hex").slice(0, 32);
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+}
+
 export const getvotacionpunto = async (req: Request, res: Response): Promise<Response> => {
   try {
     const body = req.body;
@@ -2673,6 +2695,7 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     if (!votos) {
       const listadoDiputados = await obtenerListadoDiputados(evento);
       const votospunto = listadoDiputados.map((dip) => ({
+        id: idVotoPuntoDeterministico(dip.id_diputado, puntoa, body.idIniciativa || null, tema),
         sentido: 0,
         mensaje: "PENDIENTE",
         id_punto: puntoa,
@@ -2684,8 +2707,11 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
         id_cargo_dip: dip.id_cargo_dip,
         orden: dip.orden,
       }));
-      
-      await VotosPunto.bulkCreate(votospunto);
+
+      // ignoreDuplicates: si otra petición concurrente ya insertó estas
+      // mismas filas (mismo id determinístico) una fracción de segundo antes,
+      // MySQL las salta en vez de fallar o duplicar.
+      await VotosPunto.bulkCreate(votospunto, { ignoreDuplicates: true });
       mensajeRespuesta = "Votacion creada correctamente";
     }
     

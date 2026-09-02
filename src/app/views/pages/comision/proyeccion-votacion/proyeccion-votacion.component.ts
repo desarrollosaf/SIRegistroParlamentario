@@ -20,6 +20,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   private aRouter = inject(ActivatedRoute);
   private sanitizer = inject(DomSanitizer);
   private pollInterval: any = null;
+  private syncEstadoInterval: any = null;
 
   terminado: boolean = false;
   mensajeFin: string = '';
@@ -143,6 +144,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     document.documentElement.style.fontSize = '';
     this.detenerPolling();
+    if (this.syncEstadoInterval) clearInterval(this.syncEstadoInterval);
     this._socketService.offVotacionTerminada();
     this._socketService.offAsistenciaTerminada();
     this._socketService.offVotoRegistrado();
@@ -153,16 +155,72 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this._socketService.offProyeccionIniciada();
     this._socketService.offContenidoProyectado();
     this._socketService.offContenidoLimpiado();
+    this._socketService.offEstadoEventos();
     this._socketService.disconnect();
+  }
+
+  private sincronizarConEstadoReal(): void {
+    this._socketService.emitGetEstadoEventos();
   }
 
   private conectarSocket(): void {
     this._socketService.conectarYUnirse(this.idComision);
 
-    // Si se recupera la conexión (p.ej. tras un corte de internet), se refresca
-    // todo por si se perdió algún evento mientras estuvo desconectado.
-    this._socketService.onReconnect(() => {
-      if (this.modo !== 'contenido') this.cargarDatos();
+    // Si se recupera la conexión (p.ej. tras un corte de internet), no basta
+    // con recargar el punto que ya se tenía en memoria: puede estar
+    // desactualizado (se cerró y se abrió otro distinto mientras el socket
+    // estuvo caído). Hay que preguntar qué está realmente abierto ahora.
+    this._socketService.onReconnect(() => this.sincronizarConEstadoReal());
+
+    // Respaldo independiente del socket: esta pantalla puede quedar horas
+    // proyectada sin que pase nada (entre eventos), y ahí no hay polling
+    // activo (se detiene en onVotacionTerminada/onAsistenciaTerminada) — si
+    // el socket se queda "zombie" (parece conectado pero dejó de recibir)
+    // sin llegar a disparar 'disconnect'/'reconnect', esto es lo único que
+    // la puede sacar del estado pegado cuando se abra el siguiente evento.
+    this.syncEstadoInterval = setInterval(() => this.sincronizarConEstadoReal(), 30000);
+
+    this._socketService.onEstadoEventos((data: { asistencias: any[]; votaciones: any[] }) => {
+      const votacion = data.votaciones.find((v: any) => v.idAgenda === this.idComision);
+      const asistencia = data.asistencias.find((a: any) => a.idAgenda === this.idComision);
+
+      if (votacion) {
+        const idPuntoReal = String(votacion.idPunto ?? '');
+        const idReservaReal = String(votacion.idReserva ?? '');
+        const yaCorrecto = !this.terminado && this.modo === 'votacion'
+          && this.idPunto === idPuntoReal && this.idReserva === idReservaReal;
+        if (!yaCorrecto) {
+          this.detenerPolling();
+          this.contenidoCustom = null;
+          this.videoEmbedUrl = null;
+          this.mensajeFin = '';
+          this.terminado = false;
+          this.modo = 'votacion';
+          this.idPunto = idPuntoReal;
+          this.idReserva = idReservaReal;
+          this.cargando = true;
+          this.cargarDatos();
+          this.iniciarPolling();
+          this.cdr.detectChanges();
+        }
+      } else if (asistencia) {
+        const yaCorrecto = !this.terminado && this.modo === 'asistencia';
+        if (!yaCorrecto) {
+          this.detenerPolling();
+          this.contenidoCustom = null;
+          this.videoEmbedUrl = null;
+          this.mensajeFin = '';
+          this.terminado = false;
+          this.modo = 'asistencia';
+          this.cargando = true;
+          this.cargarDatos();
+          this.iniciarPolling();
+          this.cdr.detectChanges();
+        }
+      }
+      // Si no hay nada abierto para este idAgenda, no se toca el estado
+      // actual (puede estar correctamente en 'terminado' o mostrando
+      // contenido libre).
     });
 
     this._socketService.onVotacionTerminada(() => {
