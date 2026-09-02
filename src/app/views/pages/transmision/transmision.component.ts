@@ -26,6 +26,8 @@ export class TransmisionComponent implements OnInit, OnDestroy {
 
   sesionesActivas: SesionActiva[] = [];
   cerrando = new Set<string>();
+  private estadoEventos: { asistencias: any[]; votaciones: any[] } = { asistencias: [], votaciones: [] };
+  private estadoPollInterval: any = null;
 
   constructor(private socketService: SocketService, private userService: UserService) {}
 
@@ -34,10 +36,38 @@ export class TransmisionComponent implements OnInit, OnDestroy {
     return this.userService.getRol() !== 'comunicacion';
   }
 
-  /** Link de la pantalla de proyección para compartir/proyectar esta sesión. */
+  /**
+   * Link de la pantalla de proyección para compartir/proyectar esta sesión.
+   * Usa idAgenda (siempre presente) y no idComision: ese último solo se
+   * resuelve en el backend cuando hay una comisión anfitriona registrada
+   * (AnfitrionAgenda), y queda vacío para sesiones sin comisión asociada
+   * (p.ej. una sesión solemne/protocolaria) — pero detalle-comision.component.ts
+   * ya usa idAgenda como clave de la sala de proyección para cualquier sesión.
+   *
+   * El modo no puede ser fijo ('contenido' se queda en "en espera", nunca
+   * carga nada): hay que preguntar qué está realmente abierto ahora mismo
+   * (asistencia o votación) para esta sesión, vía get-estado-eventos.
+   */
   enlaceProyeccion(sesion: SesionActiva): string | null {
-    if (!sesion.idComision) return null;
-    const qs = `id=${sesion.idComision}&modo=contenido`;
+    if (!sesion.idAgenda) return null;
+    const votacion = this.estadoEventos.votaciones.find(v => v.idAgenda === sesion.idAgenda);
+    const asistencia = this.estadoEventos.asistencias.find(a => a.idAgenda === sesion.idAgenda);
+
+    // Igual que proyectarVotacion()/proyectarAsistencia() en detalle-comision:
+    // votación necesita idPunto/idReserva del punto realmente abierto, o
+    // cargarVotacion() no carga nada (corta si idPunto viene vacío).
+    const params: Record<string, string> = { id: sesion.idAgenda };
+    if (votacion) {
+      params['modo'] = 'votacion';
+      params['idPunto'] = String(votacion.idPunto ?? '');
+      params['idReserva'] = String(votacion.idReserva ?? '');
+    } else if (asistencia) {
+      params['modo'] = 'asistencia';
+    } else {
+      params['modo'] = 'votacion';
+    }
+
+    const qs = new URLSearchParams(params).toString();
     return `/proyeccion-votacion?t=${btoa(qs)}`;
   }
 
@@ -59,13 +89,25 @@ export class TransmisionComponent implements OnInit, OnDestroy {
       this.cerrando.delete(data.clave);
     });
 
+    this.socketService.onEstadoEventos((data: { asistencias: any[]; votaciones: any[] }) => {
+      this.estadoEventos = data;
+    });
+
     this.socketService.emitGetSesionesActivas();
+    this.socketService.emitGetEstadoEventos();
+    // Refresco periódico: esta pantalla puede quedar abierta mucho tiempo, y
+    // asistencia-abierta/votacion-abierta no le llegan en vivo (son solo para
+    // la sala de diputados), así que sin esto el modo del link se quedaría
+    // desactualizado si asistencia/votación abre después de cargar la página.
+    this.estadoPollInterval = setInterval(() => this.socketService.emitGetEstadoEventos(), 15000);
   }
 
   ngOnDestroy(): void {
     this.socketService.offSesionesActivas();
     this.socketService.offSesionIniciada();
     this.socketService.offSesionTerminada();
+    this.socketService.offEstadoEventos();
+    if (this.estadoPollInterval) clearInterval(this.estadoPollInterval);
   }
 
   cerrarSesion(sesion: SesionActiva): void {
