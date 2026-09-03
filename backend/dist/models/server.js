@@ -205,7 +205,7 @@ class Server {
                     ? sesion.idComisiones
                     : yield this.resolveUUIDs(data.idComision, data.idAgenda);
                 for (const uuid of uuids) {
-                    this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids });
+                    this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids, abiertaEn: new Date().toISOString() });
                 }
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
                 for (const uuid of uuids) {
@@ -238,6 +238,7 @@ class Server {
                         idIniciativa: (_d = data.idIniciativa) !== null && _d !== void 0 ? _d : null,
                         safId: data.idComision,
                         idComisiones: uuids,
+                        abiertaEn: new Date().toISOString(),
                     });
                 }
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
