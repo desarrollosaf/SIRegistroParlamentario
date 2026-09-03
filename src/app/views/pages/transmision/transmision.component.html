@@ -63,7 +63,12 @@
               </div>
 
               <div class="tr-card-footer">
-                @if (enlaceProyeccion(sesion); as link) {
+                @if (!estadoCargado) {
+                  <div class="tr-btn-verificando">
+                    <i class="feather icon-loader" appFeatherIcon data-feather="loader"></i>
+                    Verificando estado...
+                  </div>
+                } @else if (enlaceProyeccion(sesion); as link) {
                   <a class="tr-btn-abrir" [href]="link" target="_blank" rel="noopener">
                     <i class="feather icon-external-link" appFeatherIcon data-feather="external-link"></i>
                     Abrir transmisión

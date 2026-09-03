@@ -27,6 +27,8 @@ export class TransmisionComponent implements OnInit, OnDestroy {
   sesionesActivas: SesionActiva[] = [];
   cerrando = new Set<string>();
   private estadoEventos: { asistencias: any[]; votaciones: any[] } = { asistencias: [], votaciones: [] };
+  /** Público para que la plantilla muestre "cargando" en vez de nada mientras esto es false. */
+  estadoCargado = false;
   private estadoPollInterval: any = null;
 
   constructor(private socketService: SocketService, private userService: UserService) {}
@@ -47,20 +49,32 @@ export class TransmisionComponent implements OnInit, OnDestroy {
    * El modo no puede ser fijo ('contenido' se queda en "en espera", nunca
    * carga nada): hay que preguntar qué está realmente abierto ahora mismo
    * (asistencia o votación) para esta sesión, vía get-estado-eventos.
+   *
+   * Asistencia y votación son mapas independientes en el servidor — nada
+   * impide que ambos tengan una entrada para la misma sesión a la vez (por
+   * ejemplo, una votación que quedó sin cerrar de un evento anterior). Por
+   * eso no se puede asumir que "si hay votación, es la vigente": se compara
+   * abiertaEn y se usa la más reciente.
    */
   enlaceProyeccion(sesion: SesionActiva): string | null {
     if (!sesion.idAgenda) return null;
+    // Todavía no llega la respuesta de get-estado-eventos (recién se entró a
+    // la página): mejor no mostrar el botón que armar un link con modo por
+    // default y sin idPunto, que se queda en "Esperando datos...".
+    if (!this.estadoCargado) return null;
     const votacion = this.estadoEventos.votaciones.find(v => v.idAgenda === sesion.idAgenda);
     const asistencia = this.estadoEventos.asistencias.find(a => a.idAgenda === sesion.idAgenda);
+    const votacionEsMasReciente = votacion && (!asistencia
+      || new Date(votacion.abiertaEn ?? 0).getTime() >= new Date(asistencia.abiertaEn ?? 0).getTime());
 
     // Igual que proyectarVotacion()/proyectarAsistencia() en detalle-comision:
     // votación necesita idPunto/idReserva del punto realmente abierto, o
     // cargarVotacion() no carga nada (corta si idPunto viene vacío).
     const params: Record<string, string> = { id: sesion.idAgenda };
-    if (votacion) {
+    if (votacionEsMasReciente) {
       params['modo'] = 'votacion';
-      params['idPunto'] = String(votacion.idPunto ?? '');
-      params['idReserva'] = String(votacion.idReserva ?? '');
+      params['idPunto'] = String(votacion!.idPunto ?? '');
+      params['idReserva'] = String(votacion!.idReserva ?? '');
     } else if (asistencia) {
       params['modo'] = 'asistencia';
     } else {
@@ -91,6 +105,7 @@ export class TransmisionComponent implements OnInit, OnDestroy {
 
     this.socketService.onEstadoEventos((data: { asistencias: any[]; votaciones: any[] }) => {
       this.estadoEventos = data;
+      this.estadoCargado = true;
     });
 
     this.socketService.emitGetSesionesActivas();

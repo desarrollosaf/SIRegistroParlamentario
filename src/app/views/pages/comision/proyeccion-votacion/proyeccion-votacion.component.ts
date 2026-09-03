@@ -183,8 +183,14 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this._socketService.onEstadoEventos((data: { asistencias: any[]; votaciones: any[] }) => {
       const votacion = data.votaciones.find((v: any) => v.idAgenda === this.idComision);
       const asistencia = data.asistencias.find((a: any) => a.idAgenda === this.idComision);
+      // Asistencia y votación son mapas independientes en el servidor — puede
+      // quedar una votación sin cerrar de un evento anterior mientras ya se
+      // abrió asistencia para otro. No asumir que "si hay votación, es la
+      // vigente": se usa la que se abrió más recientemente.
+      const votacionEsMasReciente = votacion && (!asistencia
+        || new Date(votacion.abiertaEn ?? 0).getTime() >= new Date(asistencia.abiertaEn ?? 0).getTime());
 
-      if (votacion) {
+      if (votacionEsMasReciente) {
         const idPuntoReal = String(votacion.idPunto ?? '');
         const idReservaReal = String(votacion.idReserva ?? '');
         const yaCorrecto = !this.terminado && this.modo === 'votacion'
