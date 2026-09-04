@@ -373,6 +373,17 @@ class Server {
             const sesionPrevia = this.sesionesActivas.get(clave);
             this.sesionesActivas.delete(clave);
 
+            // Purgar cualquier asistencia/votación de esta agenda que haya quedado
+            // abierta (si el operador terminó la sesión sin cerrarla antes). De lo
+            // contrario el registro se queda fantasma en memoria para siempre y
+            // vuelve a aparecer como "activo" en el panel de cualquier diputado.
+            for (const [key, estado] of this.asistenciasAbiertas.entries()) {
+                if (estado.idAgenda === data.idAgenda) this.asistenciasAbiertas.delete(key);
+            }
+            for (const [key, estado] of this.votacionesAbiertas.entries()) {
+                if (estado.idAgenda === data.idAgenda) this.votacionesAbiertas.delete(key);
+            }
+
             let idComisiones: string[] = sesionPrevia?.idComisiones ?? [];
 
             // Si no hay UUIDs guardados (sesión iniciada con código viejo), consultar directo
