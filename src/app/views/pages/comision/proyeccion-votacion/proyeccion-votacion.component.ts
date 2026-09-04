@@ -137,6 +137,14 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
           this.cargarDatos();
           this.iniciarPolling();
         }
+
+        // El modo/idPunto del link puede estar desactualizado (se generó en
+        // otro momento, o alguien cerró ese punto y abrió otro distinto
+        // después). No basta con esperar los 30s del respaldo periódico: se
+        // pregunta de una vez qué está realmente abierto ahora mismo, para
+        // que una recarga de página nunca se quede ni un instante mostrando
+        // el estado viejo del link en vez del real.
+        this.sincronizarConEstadoReal();
       }
     });
   }
@@ -181,6 +189,13 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     this.syncEstadoInterval = setInterval(() => this.sincronizarConEstadoReal(), 30000);
 
     this._socketService.onEstadoEventos((data: { asistencias: any[]; votaciones: any[] }) => {
+      // 'contenido' es una decisión explícita del admin (proyectar una imagen/
+      // video/mesa durante un receso) — no debe interrumpirse solo porque
+      // haya quedado una asistencia/votación vieja sin cerrar de otro punto.
+      // Solo sale de este modo por un evento explícito ('proyeccion-iniciada'
+      // cuando alguien da clic en Proyectar), nunca por este respaldo.
+      if (this.modo === 'contenido') return;
+
       const votacion = data.votaciones.find((v: any) => v.idAgenda === this.idComision);
       const asistencia = data.asistencias.find((a: any) => a.idAgenda === this.idComision);
       // Asistencia y votación son mapas independientes en el servidor — puede
@@ -364,17 +379,28 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Sube en cada cargarDatos() y viaja con cada petición en vuelo; si al
+   * responder ya no coincide con el valor actual, es que otra carga más
+   * nueva la superó (p.ej. la corrección de sincronizarConEstadoReal() que
+   * corre casi al mismo tiempo que la carga inicial basada en el link) y su
+   * resultado se descarta en vez de pisar el dato correcto con uno viejo.
+   */
+  private cargaToken = 0;
+
   private cargarDatos(): void {
+    const miToken = ++this.cargaToken;
     if (this.modo === 'asistencia') {
-      this.cargarAsistencia();
+      this.cargarAsistencia(miToken);
     } else {
-      this.cargarVotacion();
+      this.cargarVotacion(miToken);
     }
   }
 
-  private cargarAsistencia(): void {
+  private cargarAsistencia(miToken: number): void {
     this._eventoService.getEvento(this.idComision).subscribe({
       next: (response: any) => {
+        if (miToken !== this.cargaToken) return;
         this.tituloEvento = response.titulo || '';
         this.fechaEvento = response.evento?.fecha || '';
 
@@ -411,6 +437,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
+        if (miToken !== this.cargaToken) return;
         console.error('Error asistencia:', e);
         this.cargando = false;
         this.cdr.detectChanges();
@@ -418,13 +445,14 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
     });
   }
 
-  private cargarVotacion(): void {
+  private cargarVotacion(miToken: number): void {
     if (!this.idPunto) { this.cargando = false; return; }
 
     // Carga el título del evento solo la primera vez
     if (!this.tituloEvento) {
       this._eventoService.getEvento(this.idComision).subscribe({
         next: (response: any) => {
+          if (miToken !== this.cargaToken) return;
           this.tituloEvento = response.titulo || '';
           this.fechaEvento = response.evento?.fecha || '';
         },
@@ -433,6 +461,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
       this._eventoService.getPuntos(this.idComision).subscribe({
         next: (response: any) => {
+          if (miToken !== this.cargaToken) return;
           const puntos: any[] = response.data || [];
           const p = puntos.find((x: any) => String(x.id) === String(this.idPunto));
           if (p) this.textoPunto = `${p.nopunto ? 'Punto ' + p.nopunto : 'Punto'}: ${p.punto}`;
@@ -449,6 +478,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
     this._eventoService.getIntegrantesVotosPunto(datos).subscribe({
       next: (response: any) => {
+        if (miToken !== this.cargaToken) return;
         if (Array.isArray(response.integrantes) && response.integrantes.length > 0) {
           const primero = response.integrantes[0];
 
@@ -482,6 +512,7 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
         setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
+        if (miToken !== this.cargaToken) return;
         console.error('Error votación:', e);
         this.cargando = false;
         this.cdr.detectChanges();
