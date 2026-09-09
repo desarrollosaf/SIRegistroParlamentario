@@ -122,7 +122,7 @@ const geteventos = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // Armar la respuesta en memoria sin más queries
         const eventosConComisiones = eventos.map(evento => {
             var _a;
-            const comisionIds = (_a = anfitrionesMap.get(evento.id)) !== null && _a !== void 0 ? _a : [];
+            const comisionIds = [...new Set((_a = anfitrionesMap.get(evento.id)) !== null && _a !== void 0 ? _a : [])];
             const comisiones = comisionIds
                 .filter(id => comisionesMap.has(id))
                 .map(id => ({ id, nombre: comisionesMap.get(id) }));
@@ -352,7 +352,7 @@ function obtenerTituloYPuntos(evento, esSesion) {
         if (anfitriones.length === 0) {
             return { titulo: "", puntos: [] };
         }
-        const comisionIds = anfitriones.map((a) => a.autor_id).filter(Boolean);
+        const comisionIds = [...new Set(anfitriones.map((a) => a.autor_id).filter(Boolean))];
         const [puntos, comisiones] = yield Promise.all([
             calcularPuntosTurnados(anfitriones),
             comisionIds.length > 0
@@ -2846,6 +2846,7 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 ? parseInt(agendaBody.reunion)
                 : null
         });
+        const anfitrionesInsertados = new Set();
         for (const item of anfitriones) {
             // console.log("esto es anfitriones", anfitriones)
             // console.log("esto es item", item)
@@ -2858,6 +2859,10 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 continue;
             if (Array.isArray(item.autor_id)) {
                 for (const autor of item.autor_id) {
+                    const clave = `${tipoAutorId}:${autor.autor_id}`;
+                    if (anfitrionesInsertados.has(clave))
+                        continue;
+                    anfitrionesInsertados.add(clave);
                     yield anfitrion_agendas_1.default.create({
                         agenda_id: agenda.id,
                         tipo_autor_id: tipoAutorId,
@@ -2866,6 +2871,10 @@ const saveagenda = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 }
             }
             else if (typeof item.autor_id === "string") {
+                const clave = `${tipoAutorId}:${item.autor_id}`;
+                if (anfitrionesInsertados.has(clave))
+                    continue;
+                anfitrionesInsertados.add(clave);
                 yield anfitrion_agendas_1.default.create({
                     agenda_id: agenda.id,
                     tipo_autor_id: tipoAutorId,
@@ -3011,6 +3020,7 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         yield anfitrion_agendas_1.default.destroy({
             where: { agenda_id: agendaId }
         });
+        const anfitrionesInsertados = new Set();
         for (const item of anfitriones) {
             const tipoAutorRecord = yield tipo_autors_1.default.findOne({
                 where: { valor: item.tipo }
@@ -3020,6 +3030,10 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 continue;
             if (Array.isArray(item.autor_id)) {
                 for (const autor of item.autor_id) {
+                    const clave = `${tipoAutorId}:${autor.autor_id}`;
+                    if (anfitrionesInsertados.has(clave))
+                        continue;
+                    anfitrionesInsertados.add(clave);
                     yield anfitrion_agendas_1.default.create({
                         agenda_id: agendaId,
                         tipo_autor_id: tipoAutorId,
@@ -3028,6 +3042,10 @@ const updateAgenda = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 }
             }
             else if (typeof item.autor_id === "string") {
+                const clave = `${tipoAutorId}:${item.autor_id}`;
+                if (anfitrionesInsertados.has(clave))
+                    continue;
+                anfitrionesInsertados.add(clave);
                 yield anfitrion_agendas_1.default.create({
                     agenda_id: agendaId,
                     tipo_autor_id: tipoAutorId,
