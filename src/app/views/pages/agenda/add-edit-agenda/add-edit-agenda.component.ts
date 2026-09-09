@@ -259,7 +259,11 @@ export class AddEditAgendaComponent {
 
   // ── Envío ───────────────────────────────────────────────────────
 
+  guardando = false;
+
   enviarDatos(): void {
+    if (this.guardando) return;
+
     Object.keys(this.formAgenda.controls).forEach(key => {
       this.formAgenda.get(key)?.markAsTouched();
     });
@@ -308,9 +312,12 @@ formData.forEach((valor, clave) => {
     });
 
 
+    this.guardando = true;
+
     if (this.operacion === 'Editar') {
       this._agendaService.updateAgenda(formData, this.idAgenda).subscribe({
         next: (response: any) => {
+          this.guardando = false;
           Swal.fire({
             position: "center", icon: "success", title: "¡Correcto!",
             text: `Se guardó correctamente.`, showConfirmButton: false, timer: 2000
@@ -318,6 +325,7 @@ formData.forEach((valor, clave) => {
           this.router.navigate(['/agenda-comision/sesiones']);
         },
         error: (e: HttpErrorResponse) => {
+          this.guardando = false;
           const msg = e.error?.msg || 'Error desconocido';
           console.error('Error del servidor:', msg);
         }
@@ -325,6 +333,7 @@ formData.forEach((valor, clave) => {
     } else {
       this._agendaService.saveAgenda(formData).subscribe({
         next: (response: any) => {
+          this.guardando = false;
           Swal.fire({
             title: "Se guardó correctamente", text: "¿Desea agregar otro registro?", icon: "success",
             showCancelButton: true, confirmButtonColor: "#3085d6", cancelButtonColor: "#d33",
@@ -338,6 +347,7 @@ formData.forEach((valor, clave) => {
           });
         },
         error: (e: HttpErrorResponse) => {
+          this.guardando = false;
           const msg = e.error?.msg || 'Error desconocido';
           console.error('Error del servidor:', msg);
         }

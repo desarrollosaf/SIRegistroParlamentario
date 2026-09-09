@@ -123,7 +123,7 @@ export const geteventos = async (req: Request, res: Response): Promise<Response>
 
     // Armar la respuesta en memoria sin más queries
     const eventosConComisiones = eventos.map(evento => {
-      const comisionIds = anfitrionesMap.get(evento.id) ?? [];
+      const comisionIds = [...new Set(anfitrionesMap.get(evento.id) ?? [])];
       const comisiones = comisionIds
         .filter(id => comisionesMap.has(id))
         .map(id => ({ id, nombre: comisionesMap.get(id) }));
@@ -373,7 +373,7 @@ async function obtenerTituloYPuntos(evento: any, esSesion: boolean): Promise<{ t
     return { titulo: "", puntos: [] };
   }
 
-  const comisionIds = anfitriones.map((a: any) => a.autor_id).filter(Boolean);
+  const comisionIds = [...new Set(anfitriones.map((a: any) => a.autor_id).filter(Boolean))];
 
   const [puntos, comisiones] = await Promise.all([
     calcularPuntosTurnados(anfitriones),
@@ -3260,6 +3260,8 @@ export const saveagenda = async (req: Request, res: Response) => {
 
     });
 
+    const anfitrionesInsertados = new Set<string>();
+
     for (const item of anfitriones) {
       // console.log("esto es anfitriones", anfitriones)
       // console.log("esto es item", item)
@@ -3271,6 +3273,9 @@ export const saveagenda = async (req: Request, res: Response) => {
       if (!tipoAutorId) continue;
       if (Array.isArray(item.autor_id)) {
         for (const autor of item.autor_id) {
+          const clave = `${tipoAutorId}:${autor.autor_id}`;
+          if (anfitrionesInsertados.has(clave)) continue;
+          anfitrionesInsertados.add(clave);
           await AnfitrionAgenda.create({
             agenda_id: agenda.id,
             tipo_autor_id: tipoAutorId,
@@ -3279,6 +3284,9 @@ export const saveagenda = async (req: Request, res: Response) => {
         }
       }
       else if (typeof item.autor_id === "string") {
+        const clave = `${tipoAutorId}:${item.autor_id}`;
+        if (anfitrionesInsertados.has(clave)) continue;
+        anfitrionesInsertados.add(clave);
         await AnfitrionAgenda.create({
           agenda_id: agenda.id,
           tipo_autor_id: tipoAutorId,
@@ -3451,6 +3459,8 @@ export const updateAgenda = async (req: Request, res: Response) => {
       where: { agenda_id: agendaId }
     });
 
+    const anfitrionesInsertados = new Set<string>();
+
     for (const item of anfitriones) {
       const tipoAutorRecord = await TipoAutor.findOne({
         where: { valor: item.tipo }
@@ -3461,6 +3471,9 @@ export const updateAgenda = async (req: Request, res: Response) => {
 
       if (Array.isArray(item.autor_id)) {
         for (const autor of item.autor_id) {
+          const clave = `${tipoAutorId}:${autor.autor_id}`;
+          if (anfitrionesInsertados.has(clave)) continue;
+          anfitrionesInsertados.add(clave);
           await AnfitrionAgenda.create({
             agenda_id: agendaId,
             tipo_autor_id: tipoAutorId,
@@ -3470,6 +3483,9 @@ export const updateAgenda = async (req: Request, res: Response) => {
       }
 
       else if (typeof item.autor_id === "string") {
+        const clave = `${tipoAutorId}:${item.autor_id}`;
+        if (anfitrionesInsertados.has(clave)) continue;
+        anfitrionesInsertados.add(clave);
         await AnfitrionAgenda.create({
           agenda_id: agendaId,
           tipo_autor_id: tipoAutorId,

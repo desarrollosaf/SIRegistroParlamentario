@@ -241,9 +241,9 @@
 
                     <div class="text-center mt-4">
                         <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-                            <button type="submit" class="btn btn-primary px-4"
+                            <button type="submit" class="btn btn-primary px-4" [disabled]="guardando"
                                 style="background-color: #800048; color: white; border: none;">
-                                Enviar
+                                {{ guardando ? 'Guardando...' : 'Enviar' }}
                             </button>
                         </div>
                     </div>
