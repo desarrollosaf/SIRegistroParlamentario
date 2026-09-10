@@ -49,6 +49,12 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   cargando: boolean = true;
 
+  // Se activa cuando se está mostrando la última lista de diputados guardada
+  // localmente en lo que responde la petición real (ver mostrarRespaldoLocal).
+  // El voto real de cada quien se sigue registrando en su propia pantalla y
+  // llega igual por socket, esto solo afecta lo que se ve aquí mientras tanto.
+  mostrandoRespaldo: boolean = false;
+
   // Factor fino que reduce texto/focos (además de la escala xl/lg/md/sm/xs) hasta que
   // la lista de diputados quepa completa sin scroll, sin importar cuántos sean ni la
   // resolución de la pantalla.
@@ -390,10 +396,70 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   private cargarDatos(): void {
     const miToken = ++this.cargaToken;
+    // No hay que esperar nada para tener algo que mostrar: si ya se cargó bien
+    // antes esta comisión+modo en este navegador, se pinta de inmediato (en
+    // pendiente) mientras la petición real de abajo viaja y la reemplaza.
+    this.mostrarRespaldoLocal(miToken);
     if (this.modo === 'asistencia') {
       this.cargarAsistencia(miToken);
     } else {
       this.cargarVotacion(miToken);
+    }
+  }
+
+  /** Clave de respaldo: la lista de integrantes es la misma para todos los
+   *  puntos de una comisión/sesión, así que se guarda por comisión+modo, no por punto. */
+  private claveRespaldo(): string {
+    return `proyeccion-respaldo-${this.idComision}-${this.modo}`;
+  }
+
+  /** Guarda la lista de diputados (sin el sentido de voto/asistencia, que puede
+   *  quedar obsoleto) para poder mostrarla de inmediato si una futura carga tarda. */
+  private guardarRespaldoLocal(): void {
+    try {
+      const datos = {
+        esComision: this.esComision,
+        tituloEvento: this.tituloEvento,
+        fechaEvento: this.fechaEvento,
+        participantes: this.participantes.map((p: any) => ({ ...p, sentido: 0 })),
+        listaComisiones: this.listaComisiones.map((c: any) => ({
+          ...c,
+          integrantes: c.integrantes.map((i: any) => ({ ...i, sentido: 0 }))
+        }))
+      };
+      localStorage.setItem(this.claveRespaldo(), JSON.stringify(datos));
+    } catch {
+      // localStorage no disponible (modo privado, cuota llena, etc.) — no es crítico, se sigue sin respaldo.
+    }
+  }
+
+  /** Pinta de inmediato la última lista de diputados guardada (todos en pendiente)
+   *  para no dejar la pantalla en "Cargando..." ni un segundo si ya se tiene algo
+   *  que mostrar. La petición real sigue en curso en paralelo: cuando responda,
+   *  pisa esto con los datos reales (el guard de cargaToken en cada callback
+   *  sigue aplicando igual). */
+  private mostrarRespaldoLocal(miToken: number): boolean {
+    if (miToken !== this.cargaToken) return false;
+    try {
+      const guardado = localStorage.getItem(this.claveRespaldo());
+      if (!guardado) return false;
+      const datos = JSON.parse(guardado);
+      this.esComision = datos.esComision;
+      this.tituloEvento = this.tituloEvento || datos.tituloEvento || '';
+      this.fechaEvento = this.fechaEvento || datos.fechaEvento || '';
+      this.participantes = datos.participantes || [];
+      this.listaComisiones = datos.listaComisiones || [];
+      if (!this.esComision) this.distribuirColumnas(this.participantes);
+      this.mostrandoRespaldo = true;
+      this.cargando = false;
+      // No se muestra nada al público: solo queda en consola por si alguien
+      // técnico necesita revisar qué pasó después del evento.
+      console.info('[proyeccion] Mostrando lista de respaldo guardada localmente mientras responde el servidor.');
+      this.cdr.detectChanges();
+      setTimeout(() => this.ajustarFitScale());
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -432,14 +498,16 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
           this.participantes = [];
           this.listaComisiones = [];
         }
+        this.mostrandoRespaldo = false;
         this.cargando = false;
+        this.guardarRespaldoLocal();
         this.cdr.detectChanges();
         setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
         if (miToken !== this.cargaToken) return;
         console.error('Error asistencia:', e);
-        this.cargando = false;
+        if (!this.mostrarRespaldoLocal(miToken)) this.cargando = false;
         this.cdr.detectChanges();
       }
     });
@@ -507,14 +575,16 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
           this.participantes = [];
           this.listaComisiones = [];
         }
+        this.mostrandoRespaldo = false;
         this.cargando = false;
+        this.guardarRespaldoLocal();
         this.cdr.detectChanges();
         setTimeout(() => this.ajustarFitScale());
       },
       error: (e: HttpErrorResponse) => {
         if (miToken !== this.cargaToken) return;
         console.error('Error votación:', e);
-        this.cargando = false;
+        if (!this.mostrarRespaldoLocal(miToken)) this.cargando = false;
         this.cdr.detectChanges();
       }
     });
