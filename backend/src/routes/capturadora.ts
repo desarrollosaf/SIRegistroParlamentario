@@ -24,6 +24,42 @@ const SENTIDO_POR_TEXTO: Record<string, { codigo: number; mensaje: string }> = {
   CONTRA: { codigo: 3, mensaje: 'En contra' },
 };
 
+// La capturadora manda una petición por cada diputado detectado (~75 casi de
+// golpe cuando abre una votación) — sin caché, cada una repetía un
+// Diputado.findAll() completo. nombre_captura casi no cambia (se pobló una
+// sola vez), así que basta refrescar cada pocos minutos en vez de por voto.
+const CACHE_DIPUTADOS_TTL_MS = 5 * 60 * 1000;
+let cacheDiputadosCaptura: { data: any[]; expiraEn: number } | null = null;
+
+async function obtenerDiputadosConNombreCaptura(): Promise<any[]> {
+  const ahora = Date.now();
+  if (cacheDiputadosCaptura && cacheDiputadosCaptura.expiraEn > ahora) {
+    return cacheDiputadosCaptura.data;
+  }
+  const data = await Diputado.findAll({ where: { nombre_captura: { [Op.ne]: null } } as any });
+  cacheDiputadosCaptura = { data, expiraEn: ahora + CACHE_DIPUTADOS_TTL_MS };
+  return data;
+}
+
+/** Busca en un mapa de eventos abiertos (votacionesAbiertas/asistenciasAbiertas)
+ *  cuál corresponde a una Sesión — las consultas de agenda son independientes
+ *  entre sí, así que corren en paralelo en vez de una por una. */
+async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ idComision: string; estado: any } | null> {
+  const entradas = Array.from(mapa.entries());
+  if (entradas.length === 0) return null;
+
+  const agendas = await Promise.all(
+    entradas.map(([, estado]) =>
+      Agenda.findByPk(estado.idAgenda, {
+        include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
+      })
+    )
+  );
+
+  const idx = agendas.findIndex((agenda: any) => agenda?.tipoevento?.nombre === 'Sesión');
+  return idx >= 0 ? { idComision: entradas[idx][0], estado: entradas[idx][1] } : null;
+}
+
 /**
  * Webhook (público, sin JWT — igual que /api/transcripcion/linea): la
  * capturadora del Pleno manda aquí cada voto detectado por color en el
@@ -48,7 +84,7 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
     }
 
     const nombreNormalizado = normalizar(nombre);
-    const candidatos = await Diputado.findAll({ where: { nombre_captura: { [Op.ne]: null } } as any });
+    const candidatos = await obtenerDiputadosConNombreCaptura();
     const diputado = (candidatos as any[]).find((d) => normalizar(d.nombre_captura) === nombreNormalizado) || null;
 
     if (!diputado) {
@@ -57,18 +93,9 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
 
     const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
 
-    let idComisionSesion: string | null = null;
-    let votAbierta: any = null;
-    for (const [idComision, estado] of votacionesAbiertas.entries()) {
-      const agenda = await Agenda.findByPk(estado.idAgenda, {
-        include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
-      });
-      if ((agenda as any)?.tipoevento?.nombre === 'Sesión') {
-        idComisionSesion = idComision;
-        votAbierta = estado;
-        break;
-      }
-    }
+    const sesionVotando = await buscarAbiertaDeSesion(votacionesAbiertas);
+    const idComisionSesion = sesionVotando?.idComision ?? null;
+    const votAbierta = sesionVotando?.estado ?? null;
 
     if (!votAbierta) {
       // No hay votación abierta: puede que el tablero esté en fase de ASISTENCIA.
@@ -77,18 +104,9 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
       // de un diputado en esta fase significa simplemente "está presente".
       const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
 
-      let idComisionSesionAsist: string | null = null;
-      let asistAbierta: any = null;
-      for (const [idComision, estado] of asistenciasAbiertas.entries()) {
-        const agenda = await Agenda.findByPk(estado.idAgenda, {
-          include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
-        });
-        if ((agenda as any)?.tipoevento?.nombre === 'Sesión') {
-          idComisionSesionAsist = idComision;
-          asistAbierta = estado;
-          break;
-        }
-      }
+      const sesionAsistiendo = await buscarAbiertaDeSesion(asistenciasAbiertas);
+      const idComisionSesionAsist = sesionAsistiendo?.idComision ?? null;
+      const asistAbierta = sesionAsistiendo?.estado ?? null;
 
       if (!asistAbierta) {
         return res.status(404).json({ msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' });
