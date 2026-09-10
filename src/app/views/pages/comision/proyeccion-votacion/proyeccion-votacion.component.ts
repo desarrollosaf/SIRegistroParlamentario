@@ -396,10 +396,12 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
 
   private cargarDatos(): void {
     const miToken = ++this.cargaToken;
-    // No hay que esperar nada para tener algo que mostrar: si ya se cargó bien
-    // antes esta comisión+modo en este navegador, se pinta de inmediato (en
-    // pendiente) mientras la petición real de abajo viaja y la reemplaza.
-    this.mostrarRespaldoLocal(miToken);
+    // Solo tiene sentido adelantar el respaldo cuando todavía no hay nada real
+    // en pantalla (primera carga, o cambio de punto que ya puso cargando=true).
+    // cargarDatos() también se dispara en cada refresco de fondo (polling cada
+    // 30s, "marcar todos") con datos reales ya mostrándose — ahí NO hay que
+    // taparlos con la foto vieja ni una fracción de segundo.
+    if (this.cargando) this.mostrarRespaldoLocal(miToken);
     if (this.modo === 'asistencia') {
       this.cargarAsistencia(miToken);
     } else {
@@ -507,7 +509,11 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       error: (e: HttpErrorResponse) => {
         if (miToken !== this.cargaToken) return;
         console.error('Error asistencia:', e);
-        if (!this.mostrarRespaldoLocal(miToken)) this.cargando = false;
+        // Solo cae al respaldo si de verdad no hay nada real en pantalla todavía
+        // (this.cargando ya era true) — si esto fue solo un refresco de fondo
+        // que falló una vez, se deja lo que ya se estaba mostrando en vez de
+        // taparlo con la foto vieja (eso fue justo el bug que ya se corrigió).
+        if (this.cargando && !this.mostrarRespaldoLocal(miToken)) this.cargando = false;
         this.cdr.detectChanges();
       }
     });
@@ -584,7 +590,11 @@ export class ProyeccionVotacionComponent implements OnInit, OnDestroy {
       error: (e: HttpErrorResponse) => {
         if (miToken !== this.cargaToken) return;
         console.error('Error votación:', e);
-        if (!this.mostrarRespaldoLocal(miToken)) this.cargando = false;
+        // Solo cae al respaldo si de verdad no hay nada real en pantalla todavía
+        // (this.cargando ya era true) — si esto fue solo un refresco de fondo
+        // que falló una vez, se deja lo que ya se estaba mostrando en vez de
+        // taparlo con la foto vieja (eso fue justo el bug que ya se corrigió).
+        if (this.cargando && !this.mostrarRespaldoLocal(miToken)) this.cargando = false;
         this.cdr.detectChanges();
       }
     });

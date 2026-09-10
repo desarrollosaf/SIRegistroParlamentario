@@ -35,6 +35,38 @@ const SENTIDO_POR_TEXTO = {
     ABSTENCION: { codigo: 2, mensaje: 'Abstención' },
     CONTRA: { codigo: 3, mensaje: 'En contra' },
 };
+// La capturadora manda una petición por cada diputado detectado (~75 casi de
+// golpe cuando abre una votación) — sin caché, cada una repetía un
+// Diputado.findAll() completo. nombre_captura casi no cambia (se pobló una
+// sola vez), así que basta refrescar cada pocos minutos en vez de por voto.
+const CACHE_DIPUTADOS_TTL_MS = 5 * 60 * 1000;
+let cacheDiputadosCaptura = null;
+function obtenerDiputadosConNombreCaptura() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const ahora = Date.now();
+        if (cacheDiputadosCaptura && cacheDiputadosCaptura.expiraEn > ahora) {
+            return cacheDiputadosCaptura.data;
+        }
+        const data = yield diputado_1.default.findAll({ where: { nombre_captura: { [sequelize_1.Op.ne]: null } } });
+        cacheDiputadosCaptura = { data, expiraEn: ahora + CACHE_DIPUTADOS_TTL_MS };
+        return data;
+    });
+}
+/** Busca en un mapa de eventos abiertos (votacionesAbiertas/asistenciasAbiertas)
+ *  cuál corresponde a una Sesión — las consultas de agenda son independientes
+ *  entre sí, así que corren en paralelo en vez de una por una. */
+function buscarAbiertaDeSesion(mapa) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const entradas = Array.from(mapa.entries());
+        if (entradas.length === 0)
+            return null;
+        const agendas = yield Promise.all(entradas.map(([, estado]) => agendas_1.default.findByPk(estado.idAgenda, {
+            include: [{ model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] }],
+        })));
+        const idx = agendas.findIndex((agenda) => { var _a; return ((_a = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === 'Sesión'; });
+        return idx >= 0 ? { idComision: entradas[idx][0], estado: entradas[idx][1] } : null;
+    });
+}
 /**
  * Webhook (público, sin JWT — igual que /api/transcripcion/linea): la
  * capturadora del Pleno manda aquí cada voto detectado por color en el
@@ -47,7 +79,7 @@ const SENTIDO_POR_TEXTO = {
  * scripts/capturadora/cruzar-nombres-spid.ts), no es fuzzy-match en vivo.
  */
 router.post('/api/capturadora/voto', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c, _d;
     try {
         const { nombre, sentido } = req.body || {};
         if (!nombre || !sentido) {
@@ -58,42 +90,24 @@ router.post('/api/capturadora/voto', (req, res) => __awaiter(void 0, void 0, voi
             return res.status(400).json({ msg: 'sentido inválido. Usa FAVOR, ABSTENCION o CONTRA' });
         }
         const nombreNormalizado = normalizar(nombre);
-        const candidatos = yield diputado_1.default.findAll({ where: { nombre_captura: { [sequelize_1.Op.ne]: null } } });
+        const candidatos = yield obtenerDiputadosConNombreCaptura();
         const diputado = candidatos.find((d) => normalizar(d.nombre_captura) === nombreNormalizado) || null;
         if (!diputado) {
             return res.status(404).json({ msg: `No se encontró ningún diputado con nombre_captura = "${nombre}"` });
         }
         const votacionesAbiertas = req.app.get('votacionesAbiertas') || new Map();
-        let idComisionSesion = null;
-        let votAbierta = null;
-        for (const [idComision, estado] of votacionesAbiertas.entries()) {
-            const agenda = yield agendas_1.default.findByPk(estado.idAgenda, {
-                include: [{ model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] }],
-            });
-            if (((_a = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === 'Sesión') {
-                idComisionSesion = idComision;
-                votAbierta = estado;
-                break;
-            }
-        }
+        const sesionVotando = yield buscarAbiertaDeSesion(votacionesAbiertas);
+        const idComisionSesion = (_a = sesionVotando === null || sesionVotando === void 0 ? void 0 : sesionVotando.idComision) !== null && _a !== void 0 ? _a : null;
+        const votAbierta = (_b = sesionVotando === null || sesionVotando === void 0 ? void 0 : sesionVotando.estado) !== null && _b !== void 0 ? _b : null;
         if (!votAbierta) {
             // No hay votación abierta: puede que el tablero esté en fase de ASISTENCIA.
             // La capturadora no distingue el modo — durante asistencia manda siempre
             // sentido=ABSTENCION sin importar el color real, así que cualquier señal
             // de un diputado en esta fase significa simplemente "está presente".
             const asistenciasAbiertas = req.app.get('asistenciasAbiertas') || new Map();
-            let idComisionSesionAsist = null;
-            let asistAbierta = null;
-            for (const [idComision, estado] of asistenciasAbiertas.entries()) {
-                const agenda = yield agendas_1.default.findByPk(estado.idAgenda, {
-                    include: [{ model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] }],
-                });
-                if (((_b = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _b === void 0 ? void 0 : _b.nombre) === 'Sesión') {
-                    idComisionSesionAsist = idComision;
-                    asistAbierta = estado;
-                    break;
-                }
-            }
+            const sesionAsistiendo = yield buscarAbiertaDeSesion(asistenciasAbiertas);
+            const idComisionSesionAsist = (_c = sesionAsistiendo === null || sesionAsistiendo === void 0 ? void 0 : sesionAsistiendo.idComision) !== null && _c !== void 0 ? _c : null;
+            const asistAbierta = (_d = sesionAsistiendo === null || sesionAsistiendo === void 0 ? void 0 : sesionAsistiendo.estado) !== null && _d !== void 0 ? _d : null;
             if (!asistAbierta) {
                 return res.status(404).json({ msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' });
             }
