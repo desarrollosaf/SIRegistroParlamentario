@@ -56,4 +56,6 @@ router.get("/api/eventos/exportevento", agenda_1.exportdatos);
 router.get("/api/eventos/getagendaHoy/:fecha", agenda_1.getAgendaHoy);
 router.post("/api/eventos/savecomentarios/", agenda_1.saveComentarioEvento);
 router.get("/api/eventos/deletecomentario/:id", agenda_1.deleteComentarioEvento);
+// Guarda el link del video de un punto — lo llama el panel de cámaras (sin JWT, ver whitelist en server.ts).
+router.post("/api/eventos/savevideopunto/:id", agenda_1.guardarVideoPunto);
 exports.default = router;

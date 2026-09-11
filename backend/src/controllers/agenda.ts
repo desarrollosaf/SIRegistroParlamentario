@@ -2509,6 +2509,32 @@ export const eliminarpunto = async (req: Request, res: Response): Promise<any> =
   }
 };
 
+// Guarda (o actualiza) el link del video de este punto. Lo llama el panel de
+// cámaras (python/camaras/servidor.py) cuando termina de exportar un fragmento
+// — sin JWT de este sistema, ver el whitelist de rutas públicas en server.ts.
+export const guardarVideoPunto = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { video_url } = req.body;
+
+    if (!video_url || typeof video_url !== "string") {
+      return res.status(400).json({ msg: "video_url es requerido" });
+    }
+
+    const punto = await PuntosOrden.findByPk(id);
+    if (!punto) {
+      return res.status(404).json({ msg: "Punto no encontrado" });
+    }
+
+    await punto.update({ video_url, video_actualizado_en: new Date() });
+
+    return res.status(200).json({ msg: "Video guardado", punto });
+  } catch (error: any) {
+    console.error("Error al guardar el video del punto:", error);
+    return res.status(500).json({ msg: "Error interno del servidor", error: error?.message });
+  }
+};
+
 export const saveintervencion = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;

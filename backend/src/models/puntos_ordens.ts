@@ -34,6 +34,8 @@ class PuntosOrden extends Model {
   declare id_dictamen: number | null;
   declare dispensa: number | null;
   declare editado: number;
+  declare video_url: string | null;
+  declare video_actualizado_en: Date | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date>;
@@ -105,6 +107,14 @@ PuntosOrden.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    video_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    video_actualizado_en: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     se_turna_comision: {
       type: DataTypes.BOOLEAN,

@@ -514,6 +514,9 @@ class Server {
                 '/api/eventos/asistenciaevento/',
                 '/api/eventos/getpuntos/',
                 '/api/eventos/getvotospunto/',
+                '/api/eventos/getagendaHoy/', // SIPresidencia: buscar sesion por fecha (sin JWT, solo LAN/integracion)
+                '/api/eventos/getagenda/', // SIPresidencia: detalle de un evento
+                '/api/eventos/savevideopunto/', // camaras: guarda el link del video de un punto
                 '/api/estadistico/getordenes',
                 '/api/diputado/crear-cuentas',
                 '/api/inteligencia/',
