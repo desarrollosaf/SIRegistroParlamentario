@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.getAsistenciaEvento = exports.getUltimosEventosConLiga = exports.geteventos = void 0;
+exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.guardarVideoPunto = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.getAsistenciaEvento = exports.getUltimosEventosConLiga = exports.geteventos = void 0;
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -2227,6 +2227,29 @@ const eliminarpunto = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.eliminarpunto = eliminarpunto;
+// Guarda (o actualiza) el link del video de este punto. Lo llama el panel de
+// cámaras (python/camaras/servidor.py) cuando termina de exportar un fragmento
+// — sin JWT de este sistema, ver el whitelist de rutas públicas en server.ts.
+const guardarVideoPunto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const { video_url } = req.body;
+        if (!video_url || typeof video_url !== "string") {
+            return res.status(400).json({ msg: "video_url es requerido" });
+        }
+        const punto = yield puntos_ordens_1.default.findByPk(id);
+        if (!punto) {
+            return res.status(404).json({ msg: "Punto no encontrado" });
+        }
+        yield punto.update({ video_url, video_actualizado_en: new Date() });
+        return res.status(200).json({ msg: "Video guardado", punto });
+    }
+    catch (error) {
+        console.error("Error al guardar el video del punto:", error);
+        return res.status(500).json({ msg: "Error interno del servidor", error: error === null || error === void 0 ? void 0 : error.message });
+    }
+});
+exports.guardarVideoPunto = guardarVideoPunto;
 const saveintervencion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { body } = req;

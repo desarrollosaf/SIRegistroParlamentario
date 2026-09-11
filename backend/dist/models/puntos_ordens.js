@@ -67,6 +67,14 @@ PuntosOrden.init({
         allowNull: false,
         defaultValue: 0,
     },
+    video_url: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    video_actualizado_en: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
     se_turna_comision: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,

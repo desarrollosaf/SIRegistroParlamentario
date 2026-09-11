@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { actualizar, getevento, geteventos, getUltimosEventosConLiga, getAsistenciaEvento, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto} from "../controllers/agenda";
+import { actualizar, getevento, geteventos, getUltimosEventosConLiga, getAsistenciaEvento, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto, guardarVideoPunto} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 import  uploadAgenda from  "../controllers/uploadAgenda";
 const router = Router();
@@ -61,5 +61,7 @@ router.get("/api/eventos/exportevento", exportdatos );
 router.get("/api/eventos/getagendaHoy/:fecha", getAgendaHoy );
 router.post("/api/eventos/savecomentarios/", saveComentarioEvento );
 router.get("/api/eventos/deletecomentario/:id", deleteComentarioEvento);
+// Guarda el link del video de un punto — lo llama el panel de cámaras (sin JWT, ver whitelist en server.ts).
+router.post("/api/eventos/savevideopunto/:id", guardarVideoPunto );
 
 export default router
