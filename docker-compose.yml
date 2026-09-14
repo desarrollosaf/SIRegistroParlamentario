@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/storage:/app/storage
+    extra_hosts:
+      # host.docker.internal solo resuelve solo en Docker Desktop (Mac/Windows) por
+      # defecto; esto lo hace resolver también si la VM corre Docker en Linux.
+      - "host.docker.internal:host-gateway"
+    ports:
+      # Expuesto al host solo para poder pegarle directo mientras pruebas
+      # (ej. curl http://<IP-VM>:3013/api/...). El front no lo necesita:
+      # habla con el backend por la red interna de Docker (nginx.conf).
+      - "3013:3013"
+    restart: unless-stopped
+
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

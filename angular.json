@@ -66,6 +66,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "docker": {
+              "fileReplacements": [
+                {
+                  "replace": "src/enviroments/enviroment.ts",
+                  "with": "src/enviroments/enviroment.docker.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
