@@ -10,7 +10,10 @@ export class SocketService {
   private ensureConnected(): Socket {
     if (!this.socket) {
       const url = enviroment.endpoint.replace(/\/$/, '');
-      const parsed = new URL(url);
+      // El endpoint puede ser relativo (mismo origen, detrás de un reverse proxy
+      // como nginx) o absoluto (URL completa) — window.location.origin como base
+      // hace que new URL() funcione en ambos casos.
+      const parsed = new URL(url, window.location.origin);
       const socketPath = parsed.pathname.replace(/\/$/, '') + '/socket.io';
       this.socket = io(parsed.origin, {
         withCredentials: true,
