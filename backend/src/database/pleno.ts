@@ -1,24 +1,13 @@
 import { Sequelize } from "sequelize"
 
-<<<<<<< HEAD
-const sequelizeCuestionarios = new Sequelize('pleno', 'usr_siregistro', 'T64X4ZOuiHRCnVWqHVEL', {
-    host: '192.168.35.102',
-    dialect: 'mysql',
-    define: {
-        freezeTableName: true
-    },
-    pool: {
-        max: 20,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-=======
+// Vive en un servidor MySQL aparte del resto (192.168.35.102, no 192.168.36.53) —
+// por eso tiene su propia variable de host en vez de compartir DB_HOST.
 const sequelizeCuestionarios = new Sequelize(
     process.env.DB_NAME_PLENO || 'pleno',
-    process.env.DB_USER || 'homestead',
-    process.env.DB_PASSWORD || 'secret',
+    process.env.DB_USER || 'usr_siregistro',
+    process.env.DB_PASSWORD || 'T64X4ZOuiHRCnVWqHVEL',
     {
-        host: process.env.DB_HOST || '192.168.10.10',
+        host: process.env.DB_HOST_PLENO || '192.168.35.102',
         port: Number(process.env.DB_PORT) || 3306,
         dialect: 'mysql',
         define: {
@@ -30,7 +19,6 @@ const sequelizeCuestionarios = new Sequelize(
             acquire: 30000,
             idle: 10000
         }
->>>>>>> e5f037e017d5bda08a33a28acebe4e719a603356
     }
 )
 

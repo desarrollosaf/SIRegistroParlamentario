@@ -2,10 +2,10 @@ import { Sequelize } from "sequelize"
 
 const sequelize = new Sequelize(
     process.env.DB_NAME_SAF || 'adminplem_saf',
-    process.env.DB_USER || 'root',
-    process.env.DB_PASSWORD || '',
+    process.env.DB_USER || 'usr_siregistro',
+    process.env.DB_PASSWORD || 'T64X4ZOuiHRCnVWqHVEL',
     {
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST || '192.168.36.53',
         port: Number(process.env.DB_PORT) || 3306,
         dialect: 'mysql',
         define: {
