@@ -5,6 +5,7 @@ import 'dotenv/config'   // carga .env antes que cualquier módulo lea process.e
 // import Direccion from "./models/saf/t_direccion"
 import Server from "./models/server"
 import './models/associations'
+import { startSpidVotingSync } from './services/spidVotingSync'
 
 // Red de seguridad: evita que un error no capturado (fuera de los handlers de
 // socket, que ya están protegidos) tumbe el proceso completo en producción.
@@ -16,6 +17,10 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const server =  new Server()
+
+// Plan de contingencia: espejo (solo lectura) de spid hacia este backend.
+// Opt-in vía SPID_SYNC_ENABLED, ver services/spidVotingSync.ts.
+startSpidVotingSync()
 
 const models = {
     // SUsuario,

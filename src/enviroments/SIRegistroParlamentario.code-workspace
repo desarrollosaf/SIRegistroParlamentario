@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../SIPresidencia"
+		},
+		{
+			"path": "../../../../python/SICamaras"
+		}
+	],
+	"settings": {}
+}
