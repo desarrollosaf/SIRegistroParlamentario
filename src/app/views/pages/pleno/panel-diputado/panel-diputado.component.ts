@@ -42,6 +42,18 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
   registrandoAsistencia: boolean = false;
   votando: boolean = false;
 
+  // Sesión plenaria activa (independiente de si hay asistencia/votación abierta ahora mismo)
+  sesionActiva: boolean = false;
+  sesionNombre: string = '';
+  private sesionIdAgenda: string = '';
+
+  // Vista de detalle (orden del día / mis votos) cuando la sesión está activa
+  // pero no hay asistencia ni votación abierta en este momento.
+  vistaDetalle: 'none' | 'orden' | 'votos' = 'none';
+  ordenDelDia: any[] = [];
+  misVotos: any[] = [];
+  cargandoDetalle: boolean = false;
+
   ngOnInit(): void {
     this._diputadoService.getMiPerfil().subscribe({
       next: (r: any) => {
@@ -62,6 +74,9 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this._socketService.offAsistenciaCerrada();
     this._socketService.offVotacionAbierta();
     this._socketService.offVotacionCerrada();
+    this._socketService.offSesionesActivas();
+    this._socketService.offSesionIniciada();
+    this._socketService.offSesionTerminada();
     this._socketService.offReconnect();
   }
 
@@ -73,7 +88,68 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this._socketService.onAsistenciaCerrada(() => this.cargarEstado());
     this._socketService.onVotacionAbierta(() => this.cargarEstado());
     this._socketService.onVotacionCerrada(() => this.cargarEstado());
-    this._socketService.onReconnect(() => this.cargarEstado());
+
+    this._socketService.onSesionesActivas((lista: any[]) => {
+      const plenaria = lista.find((s: any) => !s.esComision);
+      if (plenaria) {
+        this.sesionActiva = true;
+        this.sesionNombre = plenaria.titulo ?? '';
+        this.sesionIdAgenda = plenaria.idAgenda ?? '';
+      } else {
+        this.limpiarSesion();
+      }
+      this.cdr.detectChanges();
+    });
+    this._socketService.emitGetSesionesActivas();
+
+    this._socketService.onSesionIniciada((data) => {
+      if (data.esComision) return;
+      this.sesionActiva = true;
+      this.sesionNombre = data.titulo ?? '';
+      this.sesionIdAgenda = data.idAgenda ?? '';
+      this.vistaDetalle = 'none';
+      this.cdr.detectChanges();
+    });
+
+    this._socketService.onSesionTerminada((data) => {
+      if (this.sesionIdAgenda && data.idAgenda !== this.sesionIdAgenda) return;
+      this.limpiarSesion();
+      this.cdr.detectChanges();
+    });
+
+    this._socketService.onReconnect(() => {
+      this.cargarEstado();
+      this._socketService.emitGetSesionesActivas();
+    });
+  }
+
+  private limpiarSesion(): void {
+    this.sesionActiva = false;
+    this.sesionNombre = '';
+    this.sesionIdAgenda = '';
+    this.vistaDetalle = 'none';
+  }
+
+  verOrden(): void {
+    if (this.vistaDetalle === 'orden') { this.vistaDetalle = 'none'; return; }
+    this.vistaDetalle = 'orden';
+    if (!this.sesionIdAgenda) return;
+    this.cargandoDetalle = true;
+    this._diputadoService.getOrdenDelDia(this.sesionIdAgenda).subscribe({
+      next: (r: any) => { this.ordenDelDia = r.puntos || []; this.cargandoDetalle = false; this.cdr.detectChanges(); },
+      error: () => { this.cargandoDetalle = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  verVotos(): void {
+    if (this.vistaDetalle === 'votos') { this.vistaDetalle = 'none'; return; }
+    this.vistaDetalle = 'votos';
+    if (!this.sesionIdAgenda) return;
+    this.cargandoDetalle = true;
+    this._diputadoService.getMisVotos(this.sesionIdAgenda).subscribe({
+      next: (r: any) => { this.misVotos = r.votos || []; this.cargandoDetalle = false; this.cdr.detectChanges(); },
+      error: () => { this.cargandoDetalle = false; this.cdr.detectChanges(); }
+    });
   }
 
   private cargarEstado(): void {
@@ -102,6 +178,9 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
   private finalizarSesionLocal(): void {
     this._userService.clearSession();
     this._socketService.disconnect();
+    this.asistencia = null;
+    this.votacion = null;
+    this.limpiarSesion();
     this.router.navigate(['/auth/login']);
   }
 
@@ -110,7 +189,6 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this.registrandoAsistencia = true;
     this._diputadoService.registrarAsistencia({
       id_agenda: this.asistencia.idAgenda,
-      id_comision: this.asistencia.idComision,
     }).subscribe({
       next: () => {
         this.registrandoAsistencia = false;

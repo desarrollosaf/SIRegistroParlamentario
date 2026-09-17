@@ -93,14 +93,84 @@
           </div>
         }
 
-        <!-- Nada abierto -->
-        @if (!asistencia && !votacion) {
+        <!-- Sesión activa pero sin asistencia/votación abierta ahora mismo -->
+        @if (!asistencia && !votacion && sesionActiva) {
+          <div class="detalle-wrap">
+            <div class="detalle-sesion-nombre">
+              <i class="bi bi-broadcast"></i>
+              <span>{{ sesionNombre || 'Sesión en curso' }}</span>
+            </div>
+
+            <div class="detalle-btns">
+              <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'orden'" (click)="verOrden()">
+                <i class="bi bi-list-ul"></i>
+                <span>Orden del día</span>
+              </button>
+              <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'votos'" (click)="verVotos()">
+                <i class="bi bi-check2-all"></i>
+                <span>Mis votos</span>
+              </button>
+            </div>
+
+            @if (vistaDetalle !== 'none') {
+              <div class="detalle-panel">
+                @if (cargandoDetalle) {
+                  <div class="detalle-loading">
+                    <span class="spinner-border"></span>
+                  </div>
+                }
+
+                @if (vistaDetalle === 'orden' && !cargandoDetalle) {
+                  @if (ordenDelDia.length === 0) {
+                    <div class="detalle-empty">
+                      <i class="bi bi-file-earmark"></i>
+                      <span>Sin puntos registrados</span>
+                    </div>
+                  }
+                  @for (punto of ordenDelDia; track punto.id) {
+                    <div class="punto-item">
+                      <div class="punto-num">{{ punto.nopunto }}</div>
+                      <div class="punto-texto">{{ punto.punto }}</div>
+                    </div>
+                  }
+                }
+
+                @if (vistaDetalle === 'votos' && !cargandoDetalle) {
+                  @if (misVotos.length === 0) {
+                    <div class="detalle-empty">
+                      <i class="bi bi-clipboard-check"></i>
+                      <span>Aún no has participado en votaciones</span>
+                    </div>
+                  }
+                  @for (voto of misVotos; track voto.nopunto) {
+                    <div class="voto-item">
+                      <div class="voto-num">{{ voto.nopunto }}</div>
+                      <div class="voto-info">
+                        <div class="voto-punto">{{ voto.punto }}</div>
+                        <div class="voto-sentido"
+                             [class.vs-favor]="voto.sentido === 1"
+                             [class.vs-abstencion]="voto.sentido === 2"
+                             [class.vs-contra]="voto.sentido === 3">
+                          <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down' : 'bi bi-dash-circle'"></i>
+                          {{ voto.mensaje }}
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Sin sesión activa -->
+        @if (!asistencia && !votacion && !sesionActiva) {
           <div class="idle-wrap">
             <div class="idle-seal">
               <i class="bi bi-hourglass-split"></i>
             </div>
-            <div class="idle-title">Esperando sesión</div>
-            <div class="idle-sub">Aquí aparecerá la asistencia o votación en cuanto se abra.</div>
+            <div class="idle-title">Sin sesión activa</div>
+            <div class="idle-sub">Aquí aparecerá la sesión en cuanto el administrador la inicie.</div>
           </div>
         }
 

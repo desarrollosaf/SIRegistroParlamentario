@@ -20,9 +20,17 @@ export class DiputadoService {
     return this.http.get(`${this.base}/sesion-activa/${idComision}`, { withCredentials: true });
   }
 
+  getOrdenDelDia(idAgenda: string): Observable<any> {
+    return this.http.get(`${this.base}/orden-del-dia/${idAgenda}`, { withCredentials: true });
+  }
+
+  getMisVotos(idAgenda: string): Observable<any> {
+    return this.http.get(`${this.base}/mis-votos/${idAgenda}`, { withCredentials: true });
+  }
+
   registrarAsistencia(body: {
     id_agenda: string;
-    id_comision: string;
+    id_comision?: string;
     partido_dip?: string;
     id_cargo_dip?: string;
     orden?: number;
@@ -33,7 +41,7 @@ export class DiputadoService {
   registrarVoto(body: {
     sentido_voto: number;
     id_voto_punto: string;
-    id_comision: string;
+    id_comision?: string;
   }): Observable<any> {
     return this.http.post(`${this.base}/registrar-voto`, body, { withCredentials: true });
   }
