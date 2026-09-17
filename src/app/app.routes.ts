@@ -102,6 +102,13 @@ export const routes: Routes = [
     loadComponent: () => import('./views/pages/pleno/pantalla-diputado/pantalla-diputado.component').then(c => c.PantallaDiputadoComponent)
   },
   {
+    // Panel del diputado (celular propio) — login propio, sin authGuard (ese
+    // guard bloquea el rol 'diputado'). Control de sesión lo hace el propio
+    // componente vía getMiPerfil().
+    path: 'diputado',
+    loadComponent: () => import('./views/pages/pleno/panel-diputado/panel-diputado.component').then(c => c.PanelDiputadoComponent)
+  },
+  {
     path: 'error',
     loadComponent: () => import('./views/pages/error/error.component').then(c => c.ErrorComponent),
   },
