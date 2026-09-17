@@ -920,8 +920,22 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+// Los catálogos (proponentes, partidos, comisiones, dictámenes) cambian poco,
+// pero la consulta es pesada — dictámenes cruza varias tablas sin acotar por
+// sesión a propósito (es un catálogo histórico para poder referenciar un
+// dictamen de cualquier sesión pasada). Se recalculaba en cada carga de
+// detalle-comisión; se cachea unos minutos en vez de repetirla en cada
+// petición, mismo patrón que el caché de diputados en routes/capturadora.ts.
+const CATALOGOS_CACHE_TTL_MS = 5 * 60 * 1000;
+let catalogosCache: { data: any; expiraEn: number } | null = null;
+
 export const catalogos = async (req: Request, res: Response): Promise<any> => {
     try {
+        const ahora = Date.now();
+        if (catalogosCache && catalogosCache.expiraEn > ahora) {
+          return res.json(catalogosCache.data);
+        }
+
         // Cuatro consultas independientes entre sí — corren en paralelo.
         const [proponentes, partidos, comisiones, dictamenesRaw] = await Promise.all([
           Proponentes.findAll({
@@ -987,7 +1001,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           sesionIdsByExpediente.get(key)!.push(ep.punto_origen_sesion_id);
         }
         const allSesionIds = (expedPuntos as any[]).map(ep => ep.punto_origen_sesion_id).filter(Boolean);
-        console.log(allSesionIds)
         const iniType2Raw = allSesionIds.length > 0
           ? await IniciativaPuntoOrden.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
           : [];
@@ -997,7 +1010,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
           if (!iniByPunto2.has(ini.id_punto)) iniByPunto2.set(ini.id_punto, []);
           iniByPunto2.get(ini.id_punto)!.push(ini.id);
         }
-        console.log(iniByPunto2)
         const dictamenes = dictamenesRaw.map((p: any) => {
           const d = p.toJSON();
           const fecha = d.evento?.fecha
@@ -1013,7 +1025,6 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
               }
             }
           }
-          console.log(idsIniciativas)
           return {
             id: d.id,
             punto: `${fecha} - ${d.evento?.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
@@ -1066,15 +1077,16 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         }
 
 
-        return res.json({
+        const resultado = {
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray,
             tipointer: tipointer,
             partidos:partidos,
             dictamenes: dictamenes
-
-        });
+        };
+        catalogosCache = { data: resultado, expiraEn: ahora + CATALOGOS_CACHE_TTL_MS };
+        return res.json(resultado);
 
     } catch (error) {
         console.error('Error al generar consulta:', error);

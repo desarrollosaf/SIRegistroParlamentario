@@ -15,7 +15,11 @@ const sequelizeCuestionarios = new Sequelize(
         },
         pool: {
             max: 20,
-            min: 0,
+            // min:0 dejaba cerrar TODAS las conexiones tras 10s de inactividad
+            // (idle) — la siguiente petición pagaba el costo completo de
+            // reconectar (aquí es peor: este host está en otra red que las
+            // demás). Con min:2 siempre quedan conexiones vivas listas.
+            min: 2,
             acquire: 30000,
             idle: 10000
         }
