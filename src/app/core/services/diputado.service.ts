@@ -40,8 +40,11 @@ export class DiputadoService {
 
   registrarVoto(body: {
     sentido_voto: number;
-    id_voto_punto: string;
+    id_voto_punto?: string;
     id_comision?: string;
+    idPunto?: any;
+    idReserva?: string | null;
+    idIniciativa?: string | null;
   }): Observable<any> {
     return this.http.post(`${this.base}/registrar-voto`, body, { withCredentials: true });
   }

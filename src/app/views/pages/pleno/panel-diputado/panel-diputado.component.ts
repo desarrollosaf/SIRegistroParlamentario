@@ -12,10 +12,17 @@ import { SocketService } from '../../../../core/services/socket.service';
  * El login pasa por el mismo /auth/login de siempre (login.component.ts ya
  * redirige aquí cuando el rol es 'diputado') — este componente solo confirma
  * la sesión con `getMiPerfil` y, si no hay sesión válida, manda a loguearse.
- * A diferencia de pantalla-diputado.ts (pantalla física del Pleno, sin
- * login, identidad por reconocimiento facial), aquí REST (`getEstadoPanel`)
- * es la fuente de verdad y el socket solo avisa cuándo volver a preguntar.
+ *
+ * El socket ('asistencia-abierta'/'votacion-abierta') ya trae todo lo
+ * necesario para pintar la tarjeta al instante, sin pedirle nada al
+ * backend — igual que pantalla-diputado.ts. Con ~75 diputados conectados a
+ * la vez, si cada uno reaccionara a ese aviso llamando a getEstadoPanel()
+ * REST, sería una ráfaga de 75 peticiones simultáneas a la BD justo en el
+ * momento más cargado (pasó en producción). `getEstadoPanel()` solo se usa
+ * en la carga inicial y al reconectar, para saber si YA había votado/
+ * registrado asistencia antes de que este celular se conectara.
  */
+const SENTIDO_LABEL: Record<number, string> = { 1: 'A favor', 2: 'Abstención', 3: 'En contra' };
 @Component({
   selector: 'app-panel-diputado',
   imports: [CommonModule],
@@ -84,10 +91,35 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this._socketService.conectarComoDiputado();
     this.cargarEstado();
 
-    this._socketService.onAsistenciaAbierta(() => this.cargarEstado());
-    this._socketService.onAsistenciaCerrada(() => this.cargarEstado());
-    this._socketService.onVotacionAbierta(() => this.cargarEstado());
-    this._socketService.onVotacionCerrada(() => this.cargarEstado());
+    // Se pinta directo del payload del socket — cero peticiones a la BD.
+    // Se asume "todavía no registrado/votado" porque el evento recién abre;
+    // si este celular ya tenía el estado real (por ejemplo, se reconectó a
+    // media votación), cargarEstado() en onReconnect lo corrige.
+    this._socketService.onAsistenciaAbierta((data) => {
+      this.asistencia = { idAgenda: data.idAgenda, idComision: data.idComision, yaRegistro: false };
+      this.cdr.detectChanges();
+    });
+    this._socketService.onAsistenciaCerrada(() => {
+      this.asistencia = null;
+      this.cdr.detectChanges();
+    });
+    this._socketService.onVotacionAbierta((data) => {
+      this.votacion = {
+        idAgenda: data.idAgenda,
+        idComision: data.idComision,
+        idPunto: data.idPunto ?? null,
+        idReserva: data.idReserva ?? null,
+        idIniciativa: data.idIniciativa ?? null,
+        puntoTexto: this.extraerTextoVotacion(data.punto, data.idReserva, data.idIniciativa),
+        yaVoto: false,
+        sentidoActual: 0,
+      };
+      this.cdr.detectChanges();
+    });
+    this._socketService.onVotacionCerrada(() => {
+      this.votacion = null;
+      this.cdr.detectChanges();
+    });
 
     this._socketService.onSesionesActivas((lista: any[]) => {
       const plenaria = lista.find((s: any) => !s.esComision);
@@ -128,6 +160,8 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this.sesionNombre = '';
     this.sesionIdAgenda = '';
     this.vistaDetalle = 'none';
+    this.asistencia = null;
+    this.votacion = null;
   }
 
   verOrden(): void {
@@ -157,7 +191,18 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this._diputadoService.getEstadoPanel().subscribe({
       next: (r: any) => {
         this.asistencia = r?.asistencia ?? null;
-        this.votacion = r?.votacion ?? null;
+        const v = r?.votacion;
+        this.votacion = v ? {
+          idAgenda: v.idAgenda,
+          idComision: v.idComision,
+          idPunto: v.idPunto ?? null,
+          idReserva: v.idReserva ?? null,
+          idIniciativa: v.idIniciativa ?? null,
+          id_voto_punto: v.id_voto_punto,
+          puntoTexto: this.extraerTextoVotacion(v.punto, v.idReserva, v.idIniciativa),
+          yaVoto: v.yaVoto,
+          sentidoActual: v.sentidoActual ?? 0,
+        } : null;
         this.cargandoEstado = false;
         this.cdr.detectChanges();
       },
@@ -166,6 +211,20 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private extraerTextoVotacion(punto: any, idReserva?: any, idIniciativa?: any): string {
+    if (!punto) return 'Punto en votación';
+    if (typeof punto === 'string') return punto;
+    if (idReserva && punto.reservas?.length) {
+      const r = punto.reservas.find((x: any) => String(x.id) === String(idReserva));
+      if (r?.tema_votacion) return r.tema_votacion;
+    }
+    if (idIniciativa && punto.iniciativas?.length) {
+      const i = punto.iniciativas.find((x: any) => String(x.id) === String(idIniciativa));
+      if (i?.iniciativa) return i.iniciativa;
+    }
+    return punto.punto ?? punto.descripcion ?? punto.titulo ?? 'Punto en votación';
   }
 
   cerrarSesion(): void {
@@ -192,7 +251,10 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.registrandoAsistencia = false;
-        this.cargarEstado();
+        // Actualización optimista: la petición ya confirmó el registro, no
+        // hace falta otra ida y vuelta a la BD solo para refrescar la vista.
+        if (this.asistencia) this.asistencia.yaRegistro = true;
+        this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         this.registrandoAsistencia = false;
@@ -208,11 +270,17 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
     this._diputadoService.registrarVoto({
       sentido_voto: sentido,
       id_voto_punto: this.votacion.id_voto_punto,
-      id_comision: this.votacion.idComision,
+      idPunto: this.votacion.idPunto,
+      idReserva: this.votacion.idReserva,
+      idIniciativa: this.votacion.idIniciativa,
     }).subscribe({
       next: () => {
         this.votando = false;
-        this.cargarEstado();
+        if (this.votacion) {
+          this.votacion.yaVoto = true;
+          this.votacion.sentidoActual = sentido;
+        }
+        this.cdr.detectChanges();
       },
       error: (e: HttpErrorResponse) => {
         this.votando = false;
@@ -223,11 +291,6 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
   }
 
   get sentidoActualLabel(): string {
-    switch (this.votacion?.sentidoActual) {
-      case 1: return 'A favor';
-      case 2: return 'Abstención';
-      case 3: return 'En contra';
-      default: return '';
-    }
+    return SENTIDO_LABEL[this.votacion?.sentidoActual] ?? '';
   }
 }

@@ -200,10 +200,10 @@ export const registrarAsistencia = async (req: Request, res: Response): Promise<
 // Núcleo de "registrar voto" — mismo patrón que registrarAsistenciaCore.
 export async function registrarVotoCore(
     diputadoId: string,
-    body: { sentido_voto: number; id_voto_punto?: string; id_comision?: string },
+    body: { sentido_voto: number; id_voto_punto?: string; id_comision?: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null },
     req: Request
 ): Promise<{ status: number; body: any }> {
-    const { sentido_voto, id_voto_punto, id_comision } = body;
+    const { sentido_voto, id_voto_punto, id_comision, idPunto, idReserva, idIniciativa } = body;
 
     if (sentido_voto === undefined) {
         return { status: 400, body: { msg: 'sentido_voto es requerido' } };
@@ -233,6 +233,23 @@ export async function registrarVotoCore(
             }
             votoRegistro = await VotosPunto.findOne({ where: whereVoto });
         }
+    }
+
+    // Sesión plenaria (comision_dip_id NULL): el cliente ya trae idPunto/idReserva/
+    // idIniciativa directo del socket 'votacion-abierta', sin pasar por id_comision
+    // — mismo patrón que usa routes/capturadora.ts para el tablero físico.
+    if (!votoRegistro && (idPunto || idReserva)) {
+        const whereVotoDirecto: any = { id_diputado: diputadoId };
+        if (idReserva) {
+            whereVotoDirecto.id_tema_punto_voto = idReserva;
+        } else if (idPunto && idIniciativa) {
+            whereVotoDirecto.id_punto = idPunto;
+            whereVotoDirecto.id_iniciativa = idIniciativa;
+        } else if (idPunto) {
+            whereVotoDirecto.id_punto = idPunto;
+            whereVotoDirecto.id_iniciativa = null;
+        }
+        votoRegistro = await VotosPunto.findOne({ where: whereVotoDirecto });
     }
 
     // Fallback: buscar por id_voto_punto directo

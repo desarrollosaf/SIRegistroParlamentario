@@ -29,7 +29,7 @@
               <i class="bi bi-people-fill"></i>
               <div>
                 <div class="tarjeta-label">REGISTRO DE ASISTENCIA</div>
-                <div class="tarjeta-sub">{{ asistencia.descripcion || 'Sesión' }} — {{ asistencia.fecha }}</div>
+                <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
               </div>
             </div>
 
@@ -58,11 +58,11 @@
               <i class="bi bi-check2-square"></i>
               <div>
                 <div class="tarjeta-label">VOTACIÓN EN CURSO</div>
-                <div class="tarjeta-sub">{{ votacion.descripcion || 'Sesión' }} — {{ votacion.fecha }}</div>
+                <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
               </div>
             </div>
 
-            <div class="tarjeta-punto">{{ votacion.punto?.punto || votacion.punto || 'Punto en votación' }}</div>
+            <div class="tarjeta-punto">{{ votacion.puntoTexto }}</div>
 
             @if (votacion.yaVoto) {
               <div class="voto-actual"
