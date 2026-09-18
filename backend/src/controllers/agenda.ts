@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { createTtlCache } from "../utils/cachedAsync";
 import Agenda from '../models/agendas';
 import Sedes from "../models/sedes";
 import TipoEventos from "../models/tipo_eventos";
@@ -926,16 +927,10 @@ export const actualizar = async (req: Request, res: Response): Promise<any> => {
 // dictamen de cualquier sesión pasada). Se recalculaba en cada carga de
 // detalle-comisión; se cachea unos minutos en vez de repetirla en cada
 // petición, mismo patrón que el caché de diputados en routes/capturadora.ts.
-const CATALOGOS_CACHE_TTL_MS = 5 * 60 * 1000;
-let catalogosCache: { data: any; expiraEn: number } | null = null;
-
-export const catalogos = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const ahora = Date.now();
-        if (catalogosCache && catalogosCache.expiraEn > ahora) {
-          return res.json(catalogosCache.data);
-        }
-
+// createTtlCache además evita cache stampede: si vencen los 5 min justo
+// cuando llegan varias peticiones a la vez, todas comparten la misma
+// promesa en construcción en vez de recalcular cada una por su cuenta.
+const calcularCatalogos = async () => {
         // Cuatro consultas independientes entre sí — corren en paralelo.
         const [proponentes, partidos, comisiones, dictamenesRaw] = await Promise.all([
           Proponentes.findAll({
@@ -1077,7 +1072,7 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
         }
 
 
-        const resultado = {
+        return {
             proponentes: proponentes,
             comisiones: comisiones,
             diputados: diputadosArray,
@@ -1085,9 +1080,14 @@ export const catalogos = async (req: Request, res: Response): Promise<any> => {
             partidos:partidos,
             dictamenes: dictamenes
         };
-        catalogosCache = { data: resultado, expiraEn: ahora + CATALOGOS_CACHE_TTL_MS };
-        return res.json(resultado);
+};
 
+const catalogosCache = createTtlCache(calcularCatalogos, 5 * 60 * 1000);
+
+export const catalogos = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const resultado = await catalogosCache();
+        return res.json(resultado);
     } catch (error) {
         console.error('Error al generar consulta:', error);
         return res.status(500).json({ msg: 'Error interno del servidor' });

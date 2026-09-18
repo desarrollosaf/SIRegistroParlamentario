@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
+import { createTtlCache } from "../utils/cachedAsync";
 const ExcelJS = require("exceljs");
 
 import Agenda from "../models/agendas";
@@ -280,7 +281,7 @@ const obtenerIniciativasBase = async () =>
 // CONSTRUCCIÓN DEL REPORTE  (N+1 eliminado)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+const construirReporteBaseSinCache = async (): Promise<ReporteBaseItem[]> => {
   // 1) Todas las queries en paralelo — catálogos + iniciativas + relaciones auxiliares
   const [iniciativasRaw, catalogos, todasPresentan, todosAnfitriones, todosPuntosComisiones] =
     await Promise.all([
@@ -498,6 +499,15 @@ export const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
     };
   });
 };
+
+// Se llama desde 11 endpoints distintos de este archivo, cada uno recalculando
+// el histórico completo de iniciativas (joins profundos, sin acotar por
+// fecha) de forma independiente — es exactamente el mismo patrón caro que ya
+// se cacheó en agenda.ts:catalogos. createTtlCache también evita cache
+// stampede: si vencen los 5 min justo cuando llegan varias peticiones a la
+// vez, todas comparten la misma promesa en construcción en vez de recalcular
+// cada una por su cuenta.
+export const construirReporteBase = createTtlCache(construirReporteBaseSinCache, 5 * 60 * 1000);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EXCEL HELPER (sin cambios)
