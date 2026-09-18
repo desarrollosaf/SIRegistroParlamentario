@@ -15,6 +15,7 @@ import proyeccion from "../routes/proyeccion";
 import transcripcion from "../routes/transcripcion";
 import capturadora from "../routes/capturadora";
 import pleno from "../routes/pleno";
+import diagnostico from "../routes/diagnostico";
 import { verifyToken } from '../middlewares/auth';
 import cookieParser from 'cookie-parser';
 import http from 'http';
@@ -472,6 +473,7 @@ class Server {
        this.app.use(transcripcion);
        this.app.use(capturadora);
        this.app.use(pleno);
+       this.app.use(diagnostico);
     }
 
     

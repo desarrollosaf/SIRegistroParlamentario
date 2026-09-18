@@ -6,7 +6,6 @@ import  Roles  from '../models/role'
 import { Op } from 'sequelize'
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import  sequelizeSAF  from '../database/connection'
 import IntegranteLegislatura from '../models/integrante_legislaturas'
 import Diputado from '../models/diputado'
 
