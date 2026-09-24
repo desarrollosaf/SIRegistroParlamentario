@@ -23,6 +23,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import Comision from './comisions';
 import AnfitrionAgenda from './anfitrion_agendas';
 import Agenda from './agendas';
+import TipoEventos from './tipo_eventos';
 import Sedes from './sedes';
 import TranscripcionSesion from './transcripcion_sesiones';
 import TranscripcionParticipacion from './transcripcion_participaciones';
@@ -36,8 +37,10 @@ class Server {
     private httpServer: http.Server;
     private io: SocketIOServer;
 
-    private asistenciasAbiertas: Map<string, { idAgenda: string; safId?: string; idComisiones: string[]; abiertaEn?: string }> = new Map();
-    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string; idComisiones: string[]; abiertaEn?: string }> = new Map();
+    // esSesion se resuelve UNA vez al abrir (no cambia mientras está abierto):
+    // la capturadora/pleno lo leen de aquí en vez de consultar la agenda por voto.
+    private asistenciasAbiertas: Map<string, { idAgenda: string; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }> = new Map();
+    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }> = new Map();
 
     // Mapa SAF-ID → UUID de registrocomisiones para comisiones
     private safIdToUUID: Map<string, string> = new Map();
@@ -104,6 +107,20 @@ class Server {
             }
         } catch {}
         return [idComisionSAF];
+    }
+
+    /** ¿La agenda es de tipo "Sesión"? — una sola consulta al abrir asistencia/votación.
+     *  Si la consulta falla devuelve undefined y quien lee el mapa consulta la BD. */
+    private async esAgendaSesion(idAgenda: string): Promise<boolean | undefined> {
+        try {
+            const agenda = await Agenda.findByPk(idAgenda, {
+                attributes: ['id'],
+                include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
+            });
+            return (agenda as any)?.tipoevento?.nombre === 'Sesión';
+        } catch {
+            return undefined;
+        }
     }
 
     /** Busca en un mapa todos los UUIDs cuyo safId coincide con el SAF commission ID. */
@@ -222,9 +239,10 @@ class Server {
             const uuids = sesion?.idComisiones?.length
                 ? sesion.idComisiones
                 : await this.resolveUUIDs(data.idComision, data.idAgenda);
+            const esSesion = await this.esAgendaSesion(data.idAgenda);
 
             for (const uuid of uuids) {
-                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids, abiertaEn: new Date().toISOString() });
+                this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids, abiertaEn: new Date().toISOString(), esSesion });
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
             for (const uuid of uuids) {
@@ -249,6 +267,7 @@ class Server {
             const uuids = sesion?.idComisiones?.length
                 ? sesion.idComisiones
                 : await this.resolveUUIDs(data.idComision, data.idAgenda);
+            const esSesion = await this.esAgendaSesion(data.idAgenda);
 
             for (const uuid of uuids) {
                 this.votacionesAbiertas.set(uuid, {
@@ -260,6 +279,7 @@ class Server {
                     safId: data.idComision,
                     idComisiones: uuids,
                     abiertaEn: new Date().toISOString(),
+                    esSesion,
                 });
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });

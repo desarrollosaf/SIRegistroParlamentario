@@ -1,25 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { Op } from 'sequelize';
-import Diputado from '../models/diputado';
-import Agenda from '../models/agendas';
-import TipoEventos from '../models/tipo_eventos';
-import { normalizar } from './capturadora';
+import { normalizar, buscarAbiertaDeSesion, obtenerDiputadosConNombreCaptura } from './capturadora';
 import { registrarAsistenciaCore, registrarVotoCore, obtenerEstadoPanel, obtenerMisVotos, getOrdenDelDia } from '../controllers/diputado';
 
 const router = Router();
-
-/** Encuentra la entrada de tipo Sesión dentro de un mapa de asistencias/votaciones abiertas. */
-async function buscarSesionAbierta(mapa: Map<string, any>): Promise<{ idComision: string; estado: any } | null> {
-  for (const [idComision, estado] of mapa.entries()) {
-    const agenda = await Agenda.findByPk(estado.idAgenda, {
-      include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
-    });
-    if ((agenda as any)?.tipoevento?.nombre === 'Sesión') {
-      return { idComision, estado };
-    }
-  }
-  return null;
-}
 
 /**
  * Webhook (público, solo red local — igual que /api/capturadora/voto) del
@@ -40,7 +23,7 @@ router.post('/api/pleno/identidad', async (req: Request, res: Response): Promise
     }
 
     const nombreNormalizado = normalizar(nombre);
-    const candidatos = await Diputado.findAll({ where: { nombre_captura: { [Op.ne]: null } } as any });
+    const candidatos = await obtenerDiputadosConNombreCaptura();
     const diputado = (candidatos as any[]).find((d) => normalizar((d as any).nombre_captura) === nombreNormalizado) || null;
 
     if (!diputado) {
@@ -53,7 +36,7 @@ router.post('/api/pleno/identidad', async (req: Request, res: Response): Promise
     // Asistencia automática: si hay una Sesión con asistencia abierta y este
     // diputado todavía no la registraba, se marca presente sin intervención.
     const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
-    const sesionAsist = await buscarSesionAbierta(asistenciasAbiertas);
+    const sesionAsist = await buscarAbiertaDeSesion(asistenciasAbiertas);
     if (sesionAsist) {
       // Se ignora el resultado a propósito: si ya estaba registrada o no
       // aplica, no es un error para este flujo — solo importa intentarlo.

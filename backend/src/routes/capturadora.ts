@@ -31,7 +31,7 @@ const SENTIDO_POR_TEXTO: Record<string, { codigo: number; mensaje: string }> = {
 const CACHE_DIPUTADOS_TTL_MS = 5 * 60 * 1000;
 let cacheDiputadosCaptura: { data: any[]; expiraEn: number } | null = null;
 
-async function obtenerDiputadosConNombreCaptura(): Promise<any[]> {
+export async function obtenerDiputadosConNombreCaptura(): Promise<any[]> {
   const ahora = Date.now();
   if (cacheDiputadosCaptura && cacheDiputadosCaptura.expiraEn > ahora) {
     return cacheDiputadosCaptura.data;
@@ -42,22 +42,26 @@ async function obtenerDiputadosConNombreCaptura(): Promise<any[]> {
 }
 
 /** Busca en un mapa de eventos abiertos (votacionesAbiertas/asistenciasAbiertas)
- *  cuál corresponde a una Sesión — las consultas de agenda son independientes
- *  entre sí, así que corren en paralelo en vez de una por una. */
-async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ idComision: string; estado: any } | null> {
-  const entradas = Array.from(mapa.entries());
-  if (entradas.length === 0) return null;
-
-  const agendas = await Promise.all(
-    entradas.map(([, estado]) =>
-      Agenda.findByPk(estado.idAgenda, {
-        include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
-      })
-    )
-  );
-
-  const idx = agendas.findIndex((agenda: any) => agenda?.tipoevento?.nombre === 'Sesión');
-  return idx >= 0 ? { idComision: entradas[idx][0], estado: entradas[idx][1] } : null;
+ *  cuál corresponde a una Sesión. `esSesion` se guarda al abrir (models/server.ts),
+ *  así que normalmente no toca la BD; solo consulta la agenda de las entradas
+ *  donde no se pudo resolver (undefined), una vez por idAgenda. */
+export async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ idComision: string; estado: any } | null> {
+  const sinResolver = new Map<string, boolean>();
+  for (const [idComision, estado] of mapa.entries()) {
+    let esSesion: boolean | undefined = estado.esSesion;
+    if (esSesion === undefined) {
+      if (!sinResolver.has(estado.idAgenda)) {
+        const agenda = await Agenda.findByPk(estado.idAgenda, {
+          attributes: ['id'],
+          include: [{ model: TipoEventos, as: 'tipoevento', attributes: ['nombre'] }],
+        });
+        sinResolver.set(estado.idAgenda, (agenda as any)?.tipoevento?.nombre === 'Sesión');
+      }
+      esSesion = sinResolver.get(estado.idAgenda);
+    }
+    if (esSesion) return { idComision, estado };
+  }
+  return null;
 }
 
 /**
@@ -65,7 +69,12 @@ async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ idComisi
  * capturadora del Pleno manda aquí cada voto detectado por color en el
  * tablero físico. Reemplaza al viejo spid.local/api/votoDipNom.
  *
- * Body: { nombre: string, sentido: "FAVOR" | "ABSTENCION" | "CONTRA" }
+ * Body: { nombre: string, sentido: "FAVOR" | "ABSTENCION" | "CONTRA", tipo?: "ASISTENCIA" }
+ *
+ * tipo="ASISTENCIA" (lo manda services/spidVotingSync.ts) fuerza el camino de
+ * asistencia: nunca se registra como voto aunque haya una votación abierta.
+ * Los 404 traen `codigo` (SIN_DIPUTADO | SIN_EVENTO_ABIERTO | SIN_REGISTRO)
+ * para que quien llama distinga "no existe el nombre" de "todavía no abren".
  *
  * El "nombre" se matchea EXACTO (normalizado) contra diputados.nombre_captura
  * — poblado una sola vez desde el nombre_db del sistema viejo (ver
@@ -73,7 +82,8 @@ async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ idComisi
  */
 router.post('/api/capturadora/voto', async (req: Request, res: Response): Promise<any> => {
   try {
-    const { nombre, sentido } = req.body || {};
+    const { nombre, sentido, tipo } = req.body || {};
+    const soloAsistencia = String(tipo || '').toUpperCase() === 'ASISTENCIA';
     if (!nombre || !sentido) {
       return res.status(400).json({ msg: 'Faltan nombre y/o sentido' });
     }
@@ -88,12 +98,12 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
     const diputado = (candidatos as any[]).find((d) => normalizar(d.nombre_captura) === nombreNormalizado) || null;
 
     if (!diputado) {
-      return res.status(404).json({ msg: `No se encontró ningún diputado con nombre_captura = "${nombre}"` });
+      return res.status(404).json({ codigo: 'SIN_DIPUTADO', msg: `No se encontró ningún diputado con nombre_captura = "${nombre}"` });
     }
 
     const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
 
-    const sesionVotando = await buscarAbiertaDeSesion(votacionesAbiertas);
+    const sesionVotando = soloAsistencia ? null : await buscarAbiertaDeSesion(votacionesAbiertas);
     const idComisionSesion = sesionVotando?.idComision ?? null;
     const votAbierta = sesionVotando?.estado ?? null;
 
@@ -109,14 +119,14 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
       const asistAbierta = sesionAsistiendo?.estado ?? null;
 
       if (!asistAbierta) {
-        return res.status(404).json({ msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' });
+        return res.status(404).json({ codigo: 'SIN_EVENTO_ABIERTO', msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' });
       }
 
       const asistenciaRegistro = await AsistenciaVoto.findOne({
         where: { id_diputado: (diputado as any).id, id_agenda: asistAbierta.idAgenda },
       });
       if (!asistenciaRegistro) {
-        return res.status(404).json({ msg: 'No se encontró el registro de asistencia para este diputado' });
+        return res.status(404).json({ codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de asistencia para este diputado' });
       }
       if ((asistenciaRegistro as any).sentido_voto !== 0) {
         return res.status(200).json({ msg: 'Este diputado ya tenía asistencia registrada' });
@@ -152,7 +162,7 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
 
     const votoRegistro = await VotosPunto.findOne({ where: whereVoto });
     if (!votoRegistro) {
-      return res.status(404).json({ msg: 'No se encontró el registro de votación para este diputado en el punto abierto' });
+      return res.status(404).json({ codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de votación para este diputado en el punto abierto' });
     }
 
     await (votoRegistro as any).update({ sentido: sentidoInfo.codigo, mensaje: sentidoInfo.mensaje });
