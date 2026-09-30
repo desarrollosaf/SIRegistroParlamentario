@@ -30,15 +30,30 @@ const SENTIDO_POR_TEXTO: Record<string, { codigo: number; mensaje: string }> = {
 // sola vez), así que basta refrescar cada pocos minutos en vez de por voto.
 const CACHE_DIPUTADOS_TTL_MS = 5 * 60 * 1000;
 let cacheDiputadosCaptura: { data: any[]; expiraEn: number } | null = null;
+// Si llegan varias peticiones en paralelo con el caché vencido (el espejo de
+// spid registra en tandas), comparten una sola consulta en vez de N findAll.
+let cargaDiputadosEnCurso: Promise<any[]> | null = null;
 
 export async function obtenerDiputadosConNombreCaptura(): Promise<any[]> {
   const ahora = Date.now();
   if (cacheDiputadosCaptura && cacheDiputadosCaptura.expiraEn > ahora) {
     return cacheDiputadosCaptura.data;
   }
-  const data = await Diputado.findAll({ where: { nombre_captura: { [Op.ne]: null } } as any });
-  cacheDiputadosCaptura = { data, expiraEn: ahora + CACHE_DIPUTADOS_TTL_MS };
-  return data;
+  if (!cargaDiputadosEnCurso) {
+    cargaDiputadosEnCurso = Diputado.findAll({ where: { nombre_captura: { [Op.ne]: null } } as any })
+      .then(
+        (data) => {
+          cacheDiputadosCaptura = { data, expiraEn: Date.now() + CACHE_DIPUTADOS_TTL_MS };
+          cargaDiputadosEnCurso = null;
+          return data;
+        },
+        (err) => {
+          cargaDiputadosEnCurso = null;
+          throw err;
+        }
+      );
+  }
+  return cargaDiputadosEnCurso;
 }
 
 /** Busca en un mapa de eventos abiertos (votacionesAbiertas/asistenciasAbiertas)
@@ -79,18 +94,35 @@ export async function buscarAbiertaDeSesion(mapa: Map<string, any>): Promise<{ i
  * El "nombre" se matchea EXACTO (normalizado) contra diputados.nombre_captura
  * — poblado una sola vez desde el nombre_db del sistema viejo (ver
  * scripts/capturadora/cruzar-nombres-spid.ts), no es fuzzy-match en vivo.
+ *
+ * tipo="VOTO" (lo manda services/spidVotingSync.ts) es lo contrario: solo el
+ * camino de votación. Si no hay votación abierta responde SIN_EVENTO_ABIERTO
+ * en vez de tomarlo como asistencia, para que el espejo lo reintente.
  */
-router.post('/api/capturadora/voto', async (req: Request, res: Response): Promise<any> => {
+export interface ResultadoCapturadora {
+  status: number;
+  body: { codigo?: string; msg: string; error?: string };
+}
+
+/** Lógica del webhook sin HTTP, para que services/spidVotingSync.ts registre
+ *  directo en vez de llamarse a sí mismo por localhost. `app` es la app de
+ *  Express (de ahí salen votacionesAbiertas, asistenciasAbiertas e io). */
+export async function registrarDesdeCapturadora(
+  app: { get(nombre: string): any },
+  datos: { nombre?: any; sentido?: any; tipo?: any }
+): Promise<ResultadoCapturadora> {
   try {
-    const { nombre, sentido, tipo } = req.body || {};
-    const soloAsistencia = String(tipo || '').toUpperCase() === 'ASISTENCIA';
+    const { nombre, sentido, tipo } = datos || {};
+    const tipoNormalizado = String(tipo || '').toUpperCase();
+    const soloAsistencia = tipoNormalizado === 'ASISTENCIA';
+    const soloVoto = tipoNormalizado === 'VOTO';
     if (!nombre || !sentido) {
-      return res.status(400).json({ msg: 'Faltan nombre y/o sentido' });
+      return { status: 400, body: { msg: 'Faltan nombre y/o sentido' } };
     }
 
     const sentidoInfo = SENTIDO_POR_TEXTO[String(sentido).toUpperCase()];
     if (!sentidoInfo) {
-      return res.status(400).json({ msg: 'sentido inválido. Usa FAVOR, ABSTENCION o CONTRA' });
+      return { status: 400, body: { msg: 'sentido inválido. Usa FAVOR, ABSTENCION o CONTRA' } };
     }
 
     const nombreNormalizado = normalizar(nombre);
@@ -98,43 +130,47 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
     const diputado = (candidatos as any[]).find((d) => normalizar(d.nombre_captura) === nombreNormalizado) || null;
 
     if (!diputado) {
-      return res.status(404).json({ codigo: 'SIN_DIPUTADO', msg: `No se encontró ningún diputado con nombre_captura = "${nombre}"` });
+      return { status: 404, body: { codigo: 'SIN_DIPUTADO', msg: `No se encontró ningún diputado con nombre_captura = "${nombre}"` } };
     }
 
-    const votacionesAbiertas: Map<string, any> = req.app.get('votacionesAbiertas') || new Map();
+    const votacionesAbiertas: Map<string, any> = app.get('votacionesAbiertas') || new Map();
 
     const sesionVotando = soloAsistencia ? null : await buscarAbiertaDeSesion(votacionesAbiertas);
     const idComisionSesion = sesionVotando?.idComision ?? null;
     const votAbierta = sesionVotando?.estado ?? null;
+
+    if (!votAbierta && soloVoto) {
+      return { status: 404, body: { codigo: 'SIN_EVENTO_ABIERTO', msg: 'No hay ninguna votación de Sesión abierta actualmente' } };
+    }
 
     if (!votAbierta) {
       // No hay votación abierta: puede que el tablero esté en fase de ASISTENCIA.
       // La capturadora no distingue el modo — durante asistencia manda siempre
       // sentido=ABSTENCION sin importar el color real, así que cualquier señal
       // de un diputado en esta fase significa simplemente "está presente".
-      const asistenciasAbiertas: Map<string, any> = req.app.get('asistenciasAbiertas') || new Map();
+      const asistenciasAbiertas: Map<string, any> = app.get('asistenciasAbiertas') || new Map();
 
       const sesionAsistiendo = await buscarAbiertaDeSesion(asistenciasAbiertas);
       const idComisionSesionAsist = sesionAsistiendo?.idComision ?? null;
       const asistAbierta = sesionAsistiendo?.estado ?? null;
 
       if (!asistAbierta) {
-        return res.status(404).json({ codigo: 'SIN_EVENTO_ABIERTO', msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' });
+        return { status: 404, body: { codigo: 'SIN_EVENTO_ABIERTO', msg: 'No hay ninguna votación ni asistencia de Sesión abierta actualmente' } };
       }
 
       const asistenciaRegistro = await AsistenciaVoto.findOne({
         where: { id_diputado: (diputado as any).id, id_agenda: asistAbierta.idAgenda },
       });
       if (!asistenciaRegistro) {
-        return res.status(404).json({ codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de asistencia para este diputado' });
+        return { status: 404, body: { codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de asistencia para este diputado' } };
       }
       if ((asistenciaRegistro as any).sentido_voto !== 0) {
-        return res.status(200).json({ msg: 'Este diputado ya tenía asistencia registrada' });
+        return { status: 200, body: { msg: 'Este diputado ya tenía asistencia registrada' } };
       }
 
       await (asistenciaRegistro as any).update({ sentido_voto: 1, mensaje: 'ASISTENCIA' });
 
-      const ioAsist = req.app.get('io');
+      const ioAsist = app.get('io');
       // La sala de proyección usa el SAF id (safId), no el UUID interno que es la
       // clave del mapa — igual que hace registrarAsistencia en diputado.ts.
       const roomIdAsist = asistAbierta.safId || idComisionSesionAsist || (asistenciaRegistro as any).comision_dip_id;
@@ -146,7 +182,7 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
         });
       }
 
-      return res.status(200).json({ msg: 'Asistencia registrada correctamente' });
+      return { status: 200, body: { msg: 'Asistencia registrada correctamente' } };
     }
 
     const whereVoto: any = { id_diputado: (diputado as any).id };
@@ -162,12 +198,12 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
 
     const votoRegistro = await VotosPunto.findOne({ where: whereVoto });
     if (!votoRegistro) {
-      return res.status(404).json({ codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de votación para este diputado en el punto abierto' });
+      return { status: 404, body: { codigo: 'SIN_REGISTRO', msg: 'No se encontró el registro de votación para este diputado en el punto abierto' } };
     }
 
     await (votoRegistro as any).update({ sentido: sentidoInfo.codigo, mensaje: sentidoInfo.mensaje });
 
-    const io = req.app.get('io');
+    const io = app.get('io');
     // La sala de proyección usa el SAF id (safId), no el UUID interno que es la
     // clave del mapa — igual que hace registrarVoto en diputado.ts.
     const roomId = votAbierta.safId || idComisionSesion || (votoRegistro as any).id_comision_dip;
@@ -179,11 +215,16 @@ router.post('/api/capturadora/voto', async (req: Request, res: Response): Promis
       });
     }
 
-    return res.status(200).json({ msg: 'Voto registrado correctamente' });
+    return { status: 200, body: { msg: 'Voto registrado correctamente' } };
   } catch (error: any) {
     console.error('[capturadora/voto]', error?.message || error);
-    return res.status(500).json({ msg: 'Error interno del servidor', error: error?.message });
+    return { status: 500, body: { msg: 'Error interno del servidor', error: error?.message } };
   }
+}
+
+router.post('/api/capturadora/voto', async (req: Request, res: Response): Promise<any> => {
+  const { status, body } = await registrarDesdeCapturadora(req.app, req.body);
+  return res.status(status).json(body);
 });
 
 export default router;

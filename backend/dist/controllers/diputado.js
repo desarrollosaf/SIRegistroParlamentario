@@ -192,7 +192,7 @@ exports.registrarAsistencia = registrarAsistencia;
 // Núcleo de "registrar voto" — mismo patrón que registrarAsistenciaCore.
 function registrarVotoCore(diputadoId, body, req) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { sentido_voto, id_voto_punto, id_comision } = body;
+        const { sentido_voto, id_voto_punto, id_comision, idPunto, idReserva, idIniciativa } = body;
         if (sentido_voto === undefined) {
             return { status: 400, body: { msg: 'sentido_voto es requerido' } };
         }
@@ -220,6 +220,24 @@ function registrarVotoCore(diputadoId, body, req) {
                 }
                 votoRegistro = yield votos_punto_1.default.findOne({ where: whereVoto });
             }
+        }
+        // Sesión plenaria (comision_dip_id NULL): el cliente ya trae idPunto/idReserva/
+        // idIniciativa directo del socket 'votacion-abierta', sin pasar por id_comision
+        // — mismo patrón que usa routes/capturadora.ts para el tablero físico.
+        if (!votoRegistro && (idPunto || idReserva)) {
+            const whereVotoDirecto = { id_diputado: diputadoId };
+            if (idReserva) {
+                whereVotoDirecto.id_tema_punto_voto = idReserva;
+            }
+            else if (idPunto && idIniciativa) {
+                whereVotoDirecto.id_punto = idPunto;
+                whereVotoDirecto.id_iniciativa = idIniciativa;
+            }
+            else if (idPunto) {
+                whereVotoDirecto.id_punto = idPunto;
+                whereVotoDirecto.id_iniciativa = null;
+            }
+            votoRegistro = yield votos_punto_1.default.findOne({ where: whereVotoDirecto });
         }
         // Fallback: buscar por id_voto_punto directo
         if (!votoRegistro && id_voto_punto) {

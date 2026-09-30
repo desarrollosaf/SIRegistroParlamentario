@@ -472,6 +472,12 @@ class Server {
         this.app.set('sesionesActivas', this.sesionesActivas);
     }
 
+    // Para servicios que corren fuera de una petición (services/spidVotingSync.ts)
+    // y necesitan votacionesAbiertas / asistenciasAbiertas / io.
+    getApp(): Application {
+        return this.app;
+    }
+
     listen(){
         this.httpServer.listen(this.port, () => {
             console.log("La aplicación se esta corriendo exitosamente en el puerto => "+ this.port)

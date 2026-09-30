@@ -20,7 +20,7 @@ const server =  new Server()
 
 // Plan de contingencia: espejo (solo lectura) de spid hacia este backend.
 // Opt-in vía SPID_SYNC_ENABLED, ver services/spidVotingSync.ts.
-startSpidVotingSync()
+startSpidVotingSync(server.getApp())
 
 const models = {
     // SUsuario,

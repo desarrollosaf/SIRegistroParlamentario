@@ -1,21 +1,25 @@
 /**
  * Espejo de contingencia: spid (legado, Laravel, no se toca) sigue siendo
  * donde los diputados registran asistencia/voto. Este poller solo LEE su
- * base MySQL y reenvía cada cambio al webhook existente
- * POST /api/capturadora/voto (routes/capturadora.ts), como si fuera el
- * tablero físico — así se prueba el flujo real de SIRegistroParlamentario en
- * producción sin depender de él ni modificar spid.
+ * base MySQL y registra cada cambio con la misma lógica del webhook
+ * POST /api/capturadora/voto (registrarDesdeCapturadora en
+ * routes/capturadora.ts), llamándola directo en vez de por HTTP — así se
+ * prueba el flujo real de SIRegistroParlamentario en producción sin depender
+ * de él ni modificar spid.
  *
  * Opt-in: si SPID_SYNC_ENABLED !== 'true' o faltan credenciales de spid, no
  * se abre ni siquiera la conexión. Cualquier error (spid caído, red, sin
  * match, sin votación abierta en SIRegistroParlamentario) se loguea y el
  * poller sigue en el siguiente tick — nunca debe afectar al resto del backend.
  */
-import axios from 'axios';
 import { QueryTypes } from 'sequelize';
 import spidConnection from '../database/spidConnection';
+import { registrarDesdeCapturadora } from '../routes/capturadora';
 
 const LOG_PREFIX = '[spid-sync]';
+
+type AppExpress = { get(nombre: string): any };
+let app: AppExpress | null = null;
 
 const MENSAJE_A_SENTIDO: Record<string, 'FAVOR' | 'ABSTENCION' | 'CONTRA'> = {
   FAVOR: 'FAVOR',
@@ -29,19 +33,45 @@ const MENSAJE_A_SENTIDO: Record<string, 'FAVOR' | 'ABSTENCION' | 'CONTRA'> = {
 // ese mismo segundo. Por eso se relee una ventana hacia atrás y se deduplica.
 const VENTANA_RELECTURA_MS = 15 * 1000;
 
-// Una asistencia de spid que llega cuando SIRegistroParlamentario todavía no
-// abre la asistencia de la Sesión (o por un error de red) se reintenta cada
-// tick hasta que entre — antes se perdía para siempre. Pasado este tiempo se
-// descarta (ya no es la misma sesión).
-const REINTENTO_ASISTENCIA_MAX_MS = 4 * 60 * 60 * 1000;
+// Cuántos registros se hacen a la vez contra la BD de SIRegistroParlamentario.
+const CONCURRENCIA = 10;
 
-const TIMEOUT_HTTP_MS = 10 * 1000;
+// Un voto de spid que llega antes de que SIRegistroParlamentario abra la
+// votación se queda pendiente MIENTRAS su votación siga abierta en spid
+// (temas_votos.status = 1); en cuanto spid la cierra se descarta, así nunca
+// cae en un punto posterior. Este tope es solo por si spid nunca la cierra.
+const VOTO_PENDIENTE_MAX_MS = 30 * 60 * 1000;
+
+// Una asistencia de spid que llega cuando SIRegistroParlamentario todavía no
+// abre la asistencia de la Sesión se reintenta hasta que entre. Pasado este
+// tiempo se descarta (ya no es la misma sesión).
+const REINTENTO_ASISTENCIA_MAX_MS = 4 * 60 * 60 * 1000;
+// Las asistencias pendientes se reintentan cada tanto, no en cada tick, para
+// que no retrasen los votos.
+const REINTENTO_ASISTENCIA_CADA_MS = 5 * 1000;
+
+// Si la lectura a spid tarda más que esto, se avisa en el log.
+const LECTURA_LENTA_MS = 500;
 
 interface FilaCambio {
   id: number;
   mensaje: string;
   updated_at: Date | string;
   nombre_db: string | null;
+  id_votacion?: number;
+}
+
+interface VotoPendiente {
+  nombre: string;
+  sentido: 'FAVOR' | 'ABSTENCION' | 'CONTRA';
+  idVotacion: number;
+  desde: number;
+  avisadoEsperando: boolean;
+}
+
+interface AsistenciaPendiente {
+  desde: number;
+  proximoIntento: number;
 }
 
 let checkpointVotos: Date = new Date();
@@ -56,10 +86,15 @@ let cicloEnCurso = false;
 const votosVistos = new Map<string, number>();
 const asistenciasVistas = new Map<string, number>();
 
-// nombre_db -> primera vez que se vio pendiente
-const asistenciasPendientes = new Map<string, number>();
+// `${id_votacion}|${nombre_db}` -> último voto de ese diputado en esa votación
+const votosPendientes = new Map<string, VotoPendiente>();
+// nombre_db -> estado de reintento
+const asistenciasPendientes = new Map<string, AsistenciaPendiente>();
 // nombres sin nombre_captura en SIRegistroParlamentario: se avisa una sola vez
 const nombresSinMatchAvisados = new Set<string>();
+// id_votacion de spid -> votos registrados en SIRegistroParlamentario, para
+// comparar contra el conteo que muestra spid.
+const registradosPorVotacion = new Map<number, number>();
 
 async function obtenerCheckpointInicial(tabla: 'mensajes_votos' | 'asistencia_votos'): Promise<Date> {
   const [fila] = await spidConnection.query(
@@ -71,24 +106,27 @@ async function obtenerCheckpointInicial(tabla: 'mensajes_votos' | 'asistencia_vo
   return fila?.maxUpdated ? new Date(fila.maxUpdated) : new Date();
 }
 
-type ResultadoEnvio = 'OK' | 'SIN_DIPUTADO' | 'SIN_EVENTO_ABIERTO' | 'SIN_REGISTRO' | 'ERROR';
-
-async function enviarACapturadora(nombre: string, sentido: string, tipo?: 'ASISTENCIA'): Promise<{ resultado: ResultadoEnvio; detalle?: string }> {
-  const port = process.env.PORT || 3013;
-  try {
-    await axios.post(
-      `http://localhost:${port}/api/capturadora/voto`,
-      { nombre, sentido, tipo },
-      { timeout: TIMEOUT_HTTP_MS }
-    );
-    return { resultado: 'OK' };
-  } catch (err: any) {
-    const codigo = err?.response?.data?.codigo;
-    if (err?.response?.status === 404 && codigo) {
-      return { resultado: codigo };
-    }
-    return { resultado: 'ERROR', detalle: err?.response?.data?.msg || err?.message || String(err) };
+async function registrar(nombre: string, sentido: string, tipo: 'VOTO' | 'ASISTENCIA') {
+  if (!app) {
+    return { status: 500, body: { msg: 'spid-sync sin app de Express' } as { codigo?: string; msg: string } };
   }
+  return registrarDesdeCapturadora(app, { nombre, sentido, tipo });
+}
+
+/** Corre fn sobre items con a lo más `limite` a la vez. */
+async function enParalelo<T>(items: T[], limite: number, fn: (item: T) => Promise<void>) {
+  let siguiente = 0;
+  const trabajadores = Array.from({ length: Math.min(limite, items.length) }, async () => {
+    while (siguiente < items.length) {
+      const item = items[siguiente++];
+      try {
+        await fn(item);
+      } catch (err: any) {
+        console.error(`${LOG_PREFIX} error inesperado registrando:`, err?.message || err);
+      }
+    }
+  });
+  await Promise.all(trabajadores);
 }
 
 function avisarSinMatch(nombre: string) {
@@ -103,12 +141,14 @@ async function leerCambios(
   checkpoint: Date,
   piso: Date,
   vistos: Map<string, number>
-): Promise<{ nuevas: FilaCambio[]; nuevoCheckpoint: Date }> {
+): Promise<{ nuevas: FilaCambio[]; nuevoCheckpoint: Date; msLectura: number }> {
   const desde = new Date(checkpoint.getTime() - VENTANA_RELECTURA_MS);
+  const inicio = Date.now();
   const filas = await spidConnection.query(sql, {
     type: QueryTypes.SELECT,
     replacements: { desde },
   }) as FilaCambio[];
+  const msLectura = Date.now() - inicio;
 
   let nuevoCheckpoint = checkpoint;
   const nuevas: FilaCambio[] = [];
@@ -127,12 +167,31 @@ async function leerCambios(
   for (const [clave, ms] of vistos) {
     if (ms < limite) vistos.delete(clave);
   }
-  return { nuevas, nuevoCheckpoint };
+  return { nuevas, nuevoCheckpoint, msLectura };
 }
 
-async function procesarVotos() {
-  const { nuevas, nuevoCheckpoint } = await leerCambios(
-    `SELECT m.id, m.mensaje, m.updated_at, d.nombre_db
+async function votacionesActivasEnSpid(): Promise<Set<number>> {
+  const filas = await spidConnection.query(
+    `SELECT id FROM temas_votos WHERE status = 1`,
+    { type: QueryTypes.SELECT }
+  ) as { id: number }[];
+  return new Set(filas.map((f) => Number(f.id)));
+}
+
+interface Estadisticas {
+  msLecturaSpid: number;
+  votosLeidos: number;
+  votosRegistrados: number;
+  votosDescartados: number;
+  asistLeidas: number;
+  asistRegistradas: number;
+  asistDescartadas: number;
+  votacionesTocadas: Set<number>;
+}
+
+async function procesarVotos(est: Estadisticas) {
+  const { nuevas, nuevoCheckpoint, msLectura } = await leerCambios(
+    `SELECT m.id, m.mensaje, m.updated_at, m.id_votacion, d.nombre_db
      FROM mensajes_votos m
      JOIN datos_users d ON d.id = m.id_diputado
      WHERE m.status = 1
@@ -144,37 +203,97 @@ async function procesarVotos() {
     votosVistos
   );
   checkpointVotos = nuevoCheckpoint;
+  est.msLecturaSpid += msLectura;
+  est.votosLeidos = nuevas.length;
 
-  // Los votos NO se reintentan: si se reenvían más tarde podrían caer en otro
-  // punto que SIRegistroParlamentario haya abierto para entonces.
+  const ahora = Date.now();
   for (const fila of nuevas) {
     if (!fila.nombre_db) {
       console.warn(`${LOG_PREFIX} voto id=${fila.id} sin nombre_db en spid, se omite`);
       continue;
     }
-    const sentido = MENSAJE_A_SENTIDO[fila.mensaje];
-    const { resultado, detalle } = await enviarACapturadora(fila.nombre_db, sentido);
-    switch (resultado) {
-      case 'OK':
-        console.log(`${LOG_PREFIX} voto reenviado: "${fila.nombre_db}" -> ${sentido}`);
-        break;
-      case 'SIN_DIPUTADO':
-        avisarSinMatch(fila.nombre_db);
-        break;
-      case 'SIN_EVENTO_ABIERTO':
-        console.log(`${LOG_PREFIX} voto "${fila.nombre_db}" sin votación abierta en SIRegistroParlamentario, se ignora`);
-        break;
-      case 'SIN_REGISTRO':
-        console.warn(`${LOG_PREFIX} voto "${fila.nombre_db}": no existe su registro de voto en el punto abierto`);
-        break;
-      default:
-        console.error(`${LOG_PREFIX} error reenviando voto de "${fila.nombre_db}": ${detalle}`);
+    const idVotacion = Number(fila.id_votacion);
+    const clave = `${idVotacion}|${fila.nombre_db}`;
+    const previo = votosPendientes.get(clave);
+    // Si el diputado cambia su voto antes de que entre, vale el último.
+    votosPendientes.set(clave, {
+      nombre: fila.nombre_db,
+      sentido: MENSAJE_A_SENTIDO[fila.mensaje],
+      idVotacion,
+      desde: previo?.desde ?? ahora,
+      avisadoEsperando: previo?.avisadoEsperando ?? false,
+    });
+  }
+
+  if (votosPendientes.size === 0) return;
+
+  // Los pendientes de una votación que spid ya cerró se descartan: si se
+  // registraran más tarde caerían en otro punto de SIRegistroParlamentario.
+  const activas = await votacionesActivasEnSpid();
+  for (const [clave, p] of Array.from(votosPendientes.entries())) {
+    if (!activas.has(p.idVotacion)) {
+      votosPendientes.delete(clave);
+      est.votosDescartados++;
+      console.warn(`${LOG_PREFIX} voto "${p.nombre}" -> ${p.sentido} descartado: la votación ${p.idVotacion} de spid se cerró sin que hubiera votación abierta en SIRegistroParlamentario`);
+    } else if (ahora - p.desde > VOTO_PENDIENTE_MAX_MS) {
+      votosPendientes.delete(clave);
+      est.votosDescartados++;
+      console.warn(`${LOG_PREFIX} voto "${p.nombre}" -> ${p.sentido} descartado tras ${VOTO_PENDIENTE_MAX_MS / 60000} min pendiente`);
     }
+  }
+
+  await enParalelo(Array.from(votosPendientes.entries()), CONCURRENCIA, async ([clave, p]) => {
+    const { status, body } = await registrar(p.nombre, p.sentido, 'VOTO');
+    // Mientras esperaba pudo llegar un voto más nuevo del mismo diputado:
+    // solo se borra si sigue siendo el mismo pendiente.
+    const quitar = () => {
+      if (votosPendientes.get(clave) === p) votosPendientes.delete(clave);
+    };
+
+    if (status === 200) {
+      quitar();
+      est.votosRegistrados++;
+      est.votacionesTocadas.add(p.idVotacion);
+      registradosPorVotacion.set(p.idVotacion, (registradosPorVotacion.get(p.idVotacion) || 0) + 1);
+      return;
+    }
+    switch (body.codigo) {
+      case 'SIN_EVENTO_ABIERTO':
+        // Se queda pendiente hasta que se abra la votación o spid la cierre.
+        if (!p.avisadoEsperando) {
+          p.avisadoEsperando = true;
+          console.log(`${LOG_PREFIX} voto "${p.nombre}" -> ${p.sentido} en espera: aún no hay votación abierta en SIRegistroParlamentario`);
+        }
+        return;
+      case 'SIN_DIPUTADO':
+        quitar();
+        est.votosDescartados++;
+        avisarSinMatch(p.nombre);
+        return;
+      case 'SIN_REGISTRO':
+        quitar();
+        est.votosDescartados++;
+        console.warn(`${LOG_PREFIX} voto "${p.nombre}": no existe su registro de voto en el punto abierto`);
+        return;
+    }
+    if (status >= 500) {
+      console.error(`${LOG_PREFIX} error registrando voto de "${p.nombre}" (se reintenta): ${body.msg}`);
+      return;
+    }
+    quitar();
+    est.votosDescartados++;
+    console.warn(`${LOG_PREFIX} voto "${p.nombre}" rechazado (${status}): ${body.msg}`);
+  });
+
+  // Evita que el mapa crezca sin límite a lo largo de muchas sesiones.
+  if (registradosPorVotacion.size > 50) {
+    const masViejas = Array.from(registradosPorVotacion.keys()).sort((a, b) => a - b).slice(0, registradosPorVotacion.size - 50);
+    masViejas.forEach((id) => registradosPorVotacion.delete(id));
   }
 }
 
-async function procesarAsistencias() {
-  const { nuevas, nuevoCheckpoint } = await leerCambios(
+async function procesarAsistencias(est: Estadisticas) {
+  const { nuevas, nuevoCheckpoint, msLectura } = await leerCambios(
     `SELECT a.id, a.mensaje, a.updated_at, d.nombre_db
      FROM asistencia_votos a
      JOIN datos_users d ON d.id = a.id_diputado
@@ -187,6 +306,8 @@ async function procesarAsistencias() {
     asistenciasVistas
   );
   checkpointAsistencias = nuevoCheckpoint;
+  est.msLecturaSpid += msLectura;
+  est.asistLeidas = nuevas.length;
 
   const ahora = Date.now();
   for (const fila of nuevas) {
@@ -194,55 +315,98 @@ async function procesarAsistencias() {
       console.warn(`${LOG_PREFIX} asistencia id=${fila.id} sin nombre_db en spid, se omite`);
       continue;
     }
-    if (!asistenciasPendientes.has(fila.nombre_db)) {
-      asistenciasPendientes.set(fila.nombre_db, ahora);
+    const previo = asistenciasPendientes.get(fila.nombre_db);
+    // Lo recién leído se intenta ya, aunque hubiera un reintento programado.
+    asistenciasPendientes.set(fila.nombre_db, { desde: previo?.desde ?? ahora, proximoIntento: 0 });
+  }
+
+  for (const [nombre, p] of Array.from(asistenciasPendientes.entries())) {
+    if (ahora - p.desde > REINTENTO_ASISTENCIA_MAX_MS) {
+      asistenciasPendientes.delete(nombre);
+      est.asistDescartadas++;
+      console.warn(`${LOG_PREFIX} asistencia "${nombre}" descartada tras ${REINTENTO_ASISTENCIA_MAX_MS / 3600000}h sin sesión abierta`);
     }
   }
 
+  const aIntentar = Array.from(asistenciasPendientes.entries()).filter(([, p]) => p.proximoIntento <= ahora);
+
   // Cada nombre es independiente: uno sin match o con error no detiene al resto.
-  for (const [nombre, desde] of Array.from(asistenciasPendientes.entries())) {
+  await enParalelo(aIntentar, CONCURRENCIA, async ([nombre, p]) => {
     // tipo=ASISTENCIA: aunque haya una votación abierta, nunca se registra
     // como voto de abstención.
-    const { resultado, detalle } = await enviarACapturadora(nombre, 'ABSTENCION', 'ASISTENCIA');
-    switch (resultado) {
-      case 'OK':
-        asistenciasPendientes.delete(nombre);
-        console.log(`${LOG_PREFIX} asistencia reenviada: "${nombre}"`);
-        continue;
+    const { status, body } = await registrar(nombre, 'ABSTENCION', 'ASISTENCIA');
+    if (status === 200) {
+      asistenciasPendientes.delete(nombre);
+      est.asistRegistradas++;
+      return;
+    }
+    switch (body.codigo) {
       case 'SIN_DIPUTADO':
         asistenciasPendientes.delete(nombre);
+        est.asistDescartadas++;
         avisarSinMatch(nombre);
-        continue;
+        return;
       case 'SIN_REGISTRO':
         asistenciasPendientes.delete(nombre);
+        est.asistDescartadas++;
         console.warn(`${LOG_PREFIX} asistencia "${nombre}": no existe su registro en la asistencia abierta`);
-        continue;
-      case 'ERROR':
-        console.error(`${LOG_PREFIX} error reenviando asistencia de "${nombre}" (se reintenta): ${detalle}`);
-        break;
-      // SIN_EVENTO_ABIERTO: SIRegistroParlamentario aún no abre la asistencia — se reintenta.
+        return;
     }
-    if (ahora - desde > REINTENTO_ASISTENCIA_MAX_MS) {
-      asistenciasPendientes.delete(nombre);
-      console.warn(`${LOG_PREFIX} asistencia "${nombre}" descartada tras ${REINTENTO_ASISTENCIA_MAX_MS / 3600000}h sin sesión abierta`);
+    if (status >= 500) {
+      console.error(`${LOG_PREFIX} error registrando asistencia de "${nombre}" (se reintenta): ${body.msg}`);
     }
+    // SIN_EVENTO_ABIERTO o error: se reintenta más tarde sin frenar los votos.
+    p.proximoIntento = Date.now() + REINTENTO_ASISTENCIA_CADA_MS;
+  });
+}
+
+function loguearCiclo(est: Estadisticas, msTotal: number) {
+  const huboActividad =
+    est.votosLeidos + est.votosRegistrados + est.votosDescartados +
+    est.asistLeidas + est.asistRegistradas + est.asistDescartadas > 0;
+
+  if (huboActividad) {
+    const porVotacion = Array.from(est.votacionesTocadas)
+      .map((id) => `#${id}=${registradosPorVotacion.get(id) || 0}`)
+      .join(' ');
+    console.log(
+      `${LOG_PREFIX} ciclo ${msTotal}ms (spid ${est.msLecturaSpid}ms)` +
+      ` | votos: leídos ${est.votosLeidos}, registrados ${est.votosRegistrados}, en espera ${votosPendientes.size}, descartados ${est.votosDescartados}` +
+      ` | asistencias: leídas ${est.asistLeidas}, registradas ${est.asistRegistradas}, en espera ${asistenciasPendientes.size}, descartadas ${est.asistDescartadas}` +
+      (porVotacion ? ` | total registrados por votación spid: ${porVotacion}` : '')
+    );
+  }
+  if (est.msLecturaSpid > LECTURA_LENTA_MS) {
+    console.warn(`${LOG_PREFIX} lectura a spid lenta: ${est.msLecturaSpid}ms`);
   }
 }
 
 async function tick() {
   if (cicloEnCurso) return;
   cicloEnCurso = true;
+  const inicio = Date.now();
+  const est: Estadisticas = {
+    msLecturaSpid: 0,
+    votosLeidos: 0,
+    votosRegistrados: 0,
+    votosDescartados: 0,
+    asistLeidas: 0,
+    asistRegistradas: 0,
+    asistDescartadas: 0,
+    votacionesTocadas: new Set(),
+  };
   try {
-    await procesarVotos();
-    await procesarAsistencias();
+    await procesarVotos(est);
+    await procesarAsistencias(est);
   } catch (err: any) {
     console.error(`${LOG_PREFIX} error en el ciclo de sincronización:`, err?.message || err);
   } finally {
+    loguearCiclo(est, Date.now() - inicio);
     cicloEnCurso = false;
   }
 }
 
-export async function startSpidVotingSync() {
+export async function startSpidVotingSync(appExpress: AppExpress) {
   if (process.env.SPID_SYNC_ENABLED !== 'true') {
     return;
   }
@@ -250,6 +414,7 @@ export async function startSpidVotingSync() {
     console.error(`${LOG_PREFIX} SPID_SYNC_ENABLED=true pero faltan DB_HOST_SPID/DB_USER_SPID — no se inicia el sync.`);
     return;
   }
+  app = appExpress;
 
   try {
     checkpointVotos = await obtenerCheckpointInicial('mensajes_votos');
@@ -261,7 +426,7 @@ export async function startSpidVotingSync() {
     return;
   }
 
-  const intervalMs = Number(process.env.SPID_SYNC_INTERVAL_MS) || 3000;
+  const intervalMs = Number(process.env.SPID_SYNC_INTERVAL_MS) || 1000;
   console.log(`${LOG_PREFIX} activo, revisando spid cada ${intervalMs}ms`);
   setInterval(tick, intervalMs);
 }

@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getIniciativasPorPunto = exports.deleteComentarioEvento = exports.saveComentarioEvento = exports.exportdatos = exports.enviarNotInicioEvento = exports.enviarWhatsAsistenciaPDF = exports.generarPDFAsistencia = exports.enviarWhatsVotacionPDF = exports.generarPDFVotacion = exports.EliminardipAsociado = exports.Eliminarlista = exports.addDipLista = exports.gestionIntegrantes = exports.enviarWhatsPunto = exports.updateAgenda = exports.getAgendaHoy = exports.getAgenda = exports.saveagenda = exports.catalogossave = exports.reiniciarvoto = exports.actualizarvoto = exports.getvotacionpunto = exports.eliminarinter = exports.getintervenciones = exports.saveintervencion = exports.guardarVideoPunto = exports.eliminarpunto = exports.actualizarPunto = exports.getreservas = exports.eliminarreserva = exports.actualizarReserva = exports.crearreserva = exports.getpuntos = exports.guardarpunto = exports.getTiposPuntos = exports.catalogos = exports.actualizar = exports.getevento = exports.getAsistenciaEvento = exports.getUltimosEventosConLiga = exports.geteventos = void 0;
+const cachedAsync_1 = require("../utils/cachedAsync");
 const agendas_1 = __importDefault(require("../models/agendas"));
 const sedes_1 = __importDefault(require("../models/sedes"));
 const tipo_eventos_1 = __importDefault(require("../models/tipo_eventos"));
@@ -830,159 +831,170 @@ const actualizar = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.actualizar = actualizar;
-const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Los catálogos (proponentes, partidos, comisiones, dictámenes) cambian poco,
+// pero la consulta es pesada — dictámenes cruza varias tablas sin acotar por
+// sesión a propósito (es un catálogo histórico para poder referenciar un
+// dictamen de cualquier sesión pasada). Se recalculaba en cada carga de
+// detalle-comisión; se cachea unos minutos en vez de repetirla en cada
+// petición, mismo patrón que el caché de diputados en routes/capturadora.ts.
+// createTtlCache además evita cache stampede: si vencen los 5 min justo
+// cuando llegan varias peticiones a la vez, todas comparten la misma
+// promesa en construcción en vez de recalcular cada una por su cuenta.
+const calcularCatalogos = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    // Cuatro consultas independientes entre sí — corren en paralelo.
+    const [proponentes, partidos, comisiones, dictamenesRaw] = yield Promise.all([
+        proponentes_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        }),
+        partidos_1.default.findAll({
+            attributes: ['id', 'siglas'],
+            raw: true,
+        }),
+        comisions_1.default.findAll({
+            attributes: ['id', 'nombre'],
+            raw: true,
+        }),
+        puntos_ordens_1.default.findAll({
+            where: { id_dictamen: 0 },
+            include: [
+                {
+                    model: iniciativas_estudio_1.default,
+                    as: 'puntosestudiados',
+                    where: { status: 2 },
+                    attributes: ['id', 'type', 'punto_origen_id'],
+                },
+                {
+                    model: agendas_1.default,
+                    as: 'evento',
+                    attributes: ["fecha", "id"]
+                }
+            ]
+        }),
+    ]);
+    // Recolectar punto_origen_id por tipo para hacer queries en batch
+    const origenIdsType1 = new Set();
+    const origenIdsType2 = new Set();
+    for (const p of dictamenesRaw) {
+        for (const est of ((_a = p.toJSON().puntosestudiados) !== null && _a !== void 0 ? _a : [])) {
+            if (String(est.type) === '1' && est.punto_origen_id)
+                origenIdsType1.add(est.punto_origen_id);
+            if (String(est.type) === '2' && est.punto_origen_id)
+                origenIdsType2.add(est.punto_origen_id);
+        }
+    }
+    // type=1 (punto origen directo) y type=2 (via ExpedienteEstudiosPuntos) son
+    // independientes entre sí — corren en paralelo.
+    const [iniType1Raw, expedPuntos] = yield Promise.all([
+        origenIdsType1.size > 0
+            ? inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
+            : Promise.resolve([]),
+        origenIdsType2.size > 0
+            ? expedientes_estudio_puntos_1.default.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
+            : Promise.resolve([]),
+    ]);
+    const iniByPunto1 = new Map();
+    for (const ini of iniType1Raw) {
+        if (!iniByPunto1.has(ini.id_punto))
+            iniByPunto1.set(ini.id_punto, []);
+        iniByPunto1.get(ini.id_punto).push(ini.id);
+    }
+    const sesionIdsByExpediente = new Map();
+    for (const ep of expedPuntos) {
+        const key = String(ep.expediente_id);
+        if (!sesionIdsByExpediente.has(key))
+            sesionIdsByExpediente.set(key, []);
+        sesionIdsByExpediente.get(key).push(ep.punto_origen_sesion_id);
+    }
+    const allSesionIds = expedPuntos.map(ep => ep.punto_origen_sesion_id).filter(Boolean);
+    const iniType2Raw = allSesionIds.length > 0
+        ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
+        : [];
+    const iniByPunto2 = new Map();
+    for (const ini of iniType2Raw) {
+        if (!iniByPunto2.has(ini.id_punto))
+            iniByPunto2.set(ini.id_punto, []);
+        iniByPunto2.get(ini.id_punto).push(ini.id);
+    }
+    const dictamenes = dictamenesRaw.map((p) => {
+        var _a, _b, _c, _d, _e, _f;
+        const d = p.toJSON();
+        const fecha = ((_a = d.evento) === null || _a === void 0 ? void 0 : _a.fecha)
+            ? new Date(d.evento.fecha).toISOString().split('T')[0]
+            : '';
+        const idsIniciativas = [];
+        for (const est of ((_b = d.puntosestudiados) !== null && _b !== void 0 ? _b : [])) {
+            if (String(est.type) === '1') {
+                idsIniciativas.push(...((_c = iniByPunto1.get(est.punto_origen_id)) !== null && _c !== void 0 ? _c : []));
+            }
+            else if (String(est.type) === '2') {
+                for (const sesId of ((_d = sesionIdsByExpediente.get(est.punto_origen_id)) !== null && _d !== void 0 ? _d : [])) {
+                    idsIniciativas.push(...((_e = iniByPunto2.get(String(sesId))) !== null && _e !== void 0 ? _e : []));
+                }
+            }
+        }
+        return {
+            id: d.id,
+            punto: `${fecha} - ${(_f = d.evento) === null || _f === void 0 ? void 0 : _f.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
+        };
+    });
+    // const dictamenes = dictamenesRaw.map((p: any) => {
+    //   const d = p.toJSON();
+    //   const fecha = d.evento?.fecha 
+    //     ? new Date(d.evento.fecha).toISOString().split('T')[0] 
+    //     : '';
+    //   return {
+    //     id: d.id,
+    //     punto: `${fecha} - ${d.evento?.id} - ${d.punto}`
+    //   };
+    // });
+    // legislatura y tipointer no dependen entre sí — en paralelo.
+    const [legislatura, tipointer] = yield Promise.all([
+        legislaturas_1.default.findOne({
+            order: [["fecha_inicio", "DESC"]],
+        }),
+        tipo_intervencions_1.default.findAll({
+            attributes: ['id', 'valor'],
+            raw: true,
+        }),
+    ]);
+    let diputadosArray = [];
+    if (legislatura) {
+        const diputados = yield integrante_legislaturas_1.default.findAll({
+            where: { legislatura_id: legislatura.id },
+            include: [
+                {
+                    model: diputado_1.default,
+                    as: "diputado",
+                    attributes: ["id", "nombres", "apaterno", "amaterno"],
+                },
+            ],
+        });
+        diputadosArray = diputados
+            .filter(d => d.diputado)
+            .map(d => {
+            var _a, _b, _c;
+            return ({
+                id: d.diputado.id,
+                nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
+            });
+        });
+    }
+    return {
+        proponentes: proponentes,
+        comisiones: comisiones,
+        diputados: diputadosArray,
+        tipointer: tipointer,
+        partidos: partidos,
+        dictamenes: dictamenes
+    };
+});
+const catalogosCache = (0, cachedAsync_1.createTtlCache)(calcularCatalogos, 5 * 60 * 1000);
+const catalogos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Cuatro consultas independientes entre sí — corren en paralelo.
-        const [proponentes, partidos, comisiones, dictamenesRaw] = yield Promise.all([
-            proponentes_1.default.findAll({
-                attributes: ['id', 'valor'],
-                raw: true,
-            }),
-            partidos_1.default.findAll({
-                attributes: ['id', 'siglas'],
-                raw: true,
-            }),
-            comisions_1.default.findAll({
-                attributes: ['id', 'nombre'],
-                raw: true,
-            }),
-            puntos_ordens_1.default.findAll({
-                where: { id_dictamen: 0 },
-                include: [
-                    {
-                        model: iniciativas_estudio_1.default,
-                        as: 'puntosestudiados',
-                        where: { status: 2 },
-                        attributes: ['id', 'type', 'punto_origen_id'],
-                    },
-                    {
-                        model: agendas_1.default,
-                        as: 'evento',
-                        attributes: ["fecha", "id"]
-                    }
-                ]
-            }),
-        ]);
-        // Recolectar punto_origen_id por tipo para hacer queries en batch
-        const origenIdsType1 = new Set();
-        const origenIdsType2 = new Set();
-        for (const p of dictamenesRaw) {
-            for (const est of ((_a = p.toJSON().puntosestudiados) !== null && _a !== void 0 ? _a : [])) {
-                if (String(est.type) === '1' && est.punto_origen_id)
-                    origenIdsType1.add(est.punto_origen_id);
-                if (String(est.type) === '2' && est.punto_origen_id)
-                    origenIdsType2.add(est.punto_origen_id);
-            }
-        }
-        // type=1 (punto origen directo) y type=2 (via ExpedienteEstudiosPuntos) son
-        // independientes entre sí — corren en paralelo.
-        const [iniType1Raw, expedPuntos] = yield Promise.all([
-            origenIdsType1.size > 0
-                ? inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: [...origenIdsType1] }, attributes: ['id', 'id_punto'], raw: true })
-                : Promise.resolve([]),
-            origenIdsType2.size > 0
-                ? expedientes_estudio_puntos_1.default.findAll({ where: { expediente_id: [...origenIdsType2] }, attributes: ['expediente_id', 'punto_origen_sesion_id'], raw: true })
-                : Promise.resolve([]),
-        ]);
-        const iniByPunto1 = new Map();
-        for (const ini of iniType1Raw) {
-            if (!iniByPunto1.has(ini.id_punto))
-                iniByPunto1.set(ini.id_punto, []);
-            iniByPunto1.get(ini.id_punto).push(ini.id);
-        }
-        const sesionIdsByExpediente = new Map();
-        for (const ep of expedPuntos) {
-            const key = String(ep.expediente_id);
-            if (!sesionIdsByExpediente.has(key))
-                sesionIdsByExpediente.set(key, []);
-            sesionIdsByExpediente.get(key).push(ep.punto_origen_sesion_id);
-        }
-        const allSesionIds = expedPuntos.map(ep => ep.punto_origen_sesion_id).filter(Boolean);
-        console.log(allSesionIds);
-        const iniType2Raw = allSesionIds.length > 0
-            ? yield inciativas_puntos_ordens_1.default.findAll({ where: { id_punto: allSesionIds }, attributes: ['id', 'id_punto'], raw: true })
-            : [];
-        const iniByPunto2 = new Map();
-        for (const ini of iniType2Raw) {
-            if (!iniByPunto2.has(ini.id_punto))
-                iniByPunto2.set(ini.id_punto, []);
-            iniByPunto2.get(ini.id_punto).push(ini.id);
-        }
-        console.log(iniByPunto2);
-        const dictamenes = dictamenesRaw.map((p) => {
-            var _a, _b, _c, _d, _e, _f;
-            const d = p.toJSON();
-            const fecha = ((_a = d.evento) === null || _a === void 0 ? void 0 : _a.fecha)
-                ? new Date(d.evento.fecha).toISOString().split('T')[0]
-                : '';
-            const idsIniciativas = [];
-            for (const est of ((_b = d.puntosestudiados) !== null && _b !== void 0 ? _b : [])) {
-                if (String(est.type) === '1') {
-                    idsIniciativas.push(...((_c = iniByPunto1.get(est.punto_origen_id)) !== null && _c !== void 0 ? _c : []));
-                }
-                else if (String(est.type) === '2') {
-                    for (const sesId of ((_d = sesionIdsByExpediente.get(est.punto_origen_id)) !== null && _d !== void 0 ? _d : [])) {
-                        idsIniciativas.push(...((_e = iniByPunto2.get(String(sesId))) !== null && _e !== void 0 ? _e : []));
-                    }
-                }
-            }
-            console.log(idsIniciativas);
-            return {
-                id: d.id,
-                punto: `${fecha} - ${(_f = d.evento) === null || _f === void 0 ? void 0 : _f.id} - [${idsIniciativas.join(' | ')}] - ${d.punto}`
-            };
-        });
-        // const dictamenes = dictamenesRaw.map((p: any) => {
-        //   const d = p.toJSON();
-        //   const fecha = d.evento?.fecha 
-        //     ? new Date(d.evento.fecha).toISOString().split('T')[0] 
-        //     : '';
-        //   return {
-        //     id: d.id,
-        //     punto: `${fecha} - ${d.evento?.id} - ${d.punto}`
-        //   };
-        // });
-        // legislatura y tipointer no dependen entre sí — en paralelo.
-        const [legislatura, tipointer] = yield Promise.all([
-            legislaturas_1.default.findOne({
-                order: [["fecha_inicio", "DESC"]],
-            }),
-            tipo_intervencions_1.default.findAll({
-                attributes: ['id', 'valor'],
-                raw: true,
-            }),
-        ]);
-        let diputadosArray = [];
-        if (legislatura) {
-            const diputados = yield integrante_legislaturas_1.default.findAll({
-                where: { legislatura_id: legislatura.id },
-                include: [
-                    {
-                        model: diputado_1.default,
-                        as: "diputado",
-                        attributes: ["id", "nombres", "apaterno", "amaterno"],
-                    },
-                ],
-            });
-            diputadosArray = diputados
-                .filter(d => d.diputado)
-                .map(d => {
-                var _a, _b, _c;
-                return ({
-                    id: d.diputado.id,
-                    nombre: `${(_a = d.diputado.nombres) !== null && _a !== void 0 ? _a : ""} ${(_b = d.diputado.apaterno) !== null && _b !== void 0 ? _b : ""} ${(_c = d.diputado.amaterno) !== null && _c !== void 0 ? _c : ""}`.trim(),
-                });
-            });
-        }
-        return res.json({
-            proponentes: proponentes,
-            comisiones: comisiones,
-            diputados: diputadosArray,
-            tipointer: tipointer,
-            partidos: partidos,
-            dictamenes: dictamenes
-        });
+        const resultado = yield catalogosCache();
+        return res.json(resultado);
     }
     catch (error) {
         console.error('Error al generar consulta:', error);

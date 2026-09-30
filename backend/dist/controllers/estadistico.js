@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrdenesDia = exports.generarPdfOrdenDia = exports.getPuntosOrdenDia = exports.ultimasesion = exports.getasistencia = exports.geteventos = exports.getVotosCierre = exports.getReporteIniciativasIntegrantes = exports.getTotalesPorPeriodo = exports.getIniciativasPorGrupoYDiputado = exports.getIniciativasAprobadas = exports.getIniciativasEnEstudio = exports.getifnini = exports.getEventosPorComision = exports.getIniciativasTurnadasPorComision = exports.getIniciativasPresentadasPorDiputado = exports.getResumenTotalesEndpoint = exports.construirReporteBase = void 0;
 const sequelize_1 = require("sequelize");
+const cachedAsync_1 = require("../utils/cachedAsync");
 const ExcelJS = require("exceljs");
 const agendas_1 = __importDefault(require("../models/agendas"));
 const puntos_ordens_1 = __importDefault(require("../models/puntos_ordens"));
@@ -235,7 +236,7 @@ const obtenerIniciativasBase = () => __awaiter(void 0, void 0, void 0, function*
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTRUCCIÓN DEL REPORTE  (N+1 eliminado)
 // ─────────────────────────────────────────────────────────────────────────────
-const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* () {
+const construirReporteBaseSinCache = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     // 1) Todas las queries en paralelo — catálogos + iniciativas + relaciones auxiliares
     const [iniciativasRaw, catalogos, todasPresentan, todosAnfitriones, todosPuntosComisiones] = yield Promise.all([
@@ -446,7 +447,14 @@ const construirReporteBase = () => __awaiter(void 0, void 0, void 0, function* (
         };
     });
 });
-exports.construirReporteBase = construirReporteBase;
+// Se llama desde 11 endpoints distintos de este archivo, cada uno recalculando
+// el histórico completo de iniciativas (joins profundos, sin acotar por
+// fecha) de forma independiente — es exactamente el mismo patrón caro que ya
+// se cacheó en agenda.ts:catalogos. createTtlCache también evita cache
+// stampede: si vencen los 5 min justo cuando llegan varias peticiones a la
+// vez, todas comparten la misma promesa en construcción en vez de recalcular
+// cada una por su cuenta.
+exports.construirReporteBase = (0, cachedAsync_1.createTtlCache)(construirReporteBaseSinCache, 5 * 60 * 1000);
 // ─────────────────────────────────────────────────────────────────────────────
 // EXCEL HELPER (sin cambios)
 // ─────────────────────────────────────────────────────────────────────────────

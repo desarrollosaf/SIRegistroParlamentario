@@ -29,6 +29,7 @@ const proyeccion_1 = __importDefault(require("../routes/proyeccion"));
 const transcripcion_1 = __importDefault(require("../routes/transcripcion"));
 const capturadora_1 = __importDefault(require("../routes/capturadora"));
 const pleno_1 = __importDefault(require("../routes/pleno"));
+const diagnostico_1 = __importDefault(require("../routes/diagnostico"));
 const auth_1 = require("../middlewares/auth");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
@@ -36,12 +37,15 @@ const socket_io_1 = require("socket.io");
 const comisions_1 = __importDefault(require("./comisions"));
 const anfitrion_agendas_1 = __importDefault(require("./anfitrion_agendas"));
 const agendas_1 = __importDefault(require("./agendas"));
+const tipo_eventos_1 = __importDefault(require("./tipo_eventos"));
 const sedes_1 = __importDefault(require("./sedes"));
 const transcripcion_sesiones_1 = __importDefault(require("./transcripcion_sesiones"));
 const transcripcion_participaciones_1 = __importDefault(require("./transcripcion_participaciones"));
 const transcripcion_resumenes_1 = __importDefault(require("./transcripcion_resumenes"));
 class Server {
     constructor() {
+        // esSesion se resuelve UNA vez al abrir (no cambia mientras está abierto):
+        // la capturadora/pleno lo leen de aquí en vez de consultar la agenda por voto.
         this.asistenciasAbiertas = new Map();
         this.votacionesAbiertas = new Map();
         // Mapa SAF-ID → UUID de registrocomisiones para comisiones
@@ -96,6 +100,23 @@ class Server {
             }
             catch (_a) { }
             return [idComisionSAF];
+        });
+    }
+    /** ¿La agenda es de tipo "Sesión"? — una sola consulta al abrir asistencia/votación.
+     *  Si la consulta falla devuelve undefined y quien lee el mapa consulta la BD. */
+    esAgendaSesion(idAgenda) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const agenda = yield agendas_1.default.findByPk(idAgenda, {
+                    attributes: ['id'],
+                    include: [{ model: tipo_eventos_1.default, as: 'tipoevento', attributes: ['nombre'] }],
+                });
+                return ((_a = agenda === null || agenda === void 0 ? void 0 : agenda.tipoevento) === null || _a === void 0 ? void 0 : _a.nombre) === 'Sesión';
+            }
+            catch (_b) {
+                return undefined;
+            }
         });
     }
     /** Busca en un mapa todos los UUIDs cuyo safId coincide con el SAF commission ID. */
@@ -204,8 +225,9 @@ class Server {
                 const uuids = ((_a = sesion === null || sesion === void 0 ? void 0 : sesion.idComisiones) === null || _a === void 0 ? void 0 : _a.length)
                     ? sesion.idComisiones
                     : yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                const esSesion = yield this.esAgendaSesion(data.idAgenda);
                 for (const uuid of uuids) {
-                    this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids, abiertaEn: new Date().toISOString() });
+                    this.asistenciasAbiertas.set(uuid, { idAgenda: data.idAgenda, safId: data.idComision, idComisiones: uuids, abiertaEn: new Date().toISOString(), esSesion });
                 }
                 this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
                 for (const uuid of uuids) {
@@ -229,6 +251,7 @@ class Server {
                 const uuids = ((_a = sesion === null || sesion === void 0 ? void 0 : sesion.idComisiones) === null || _a === void 0 ? void 0 : _a.length)
                     ? sesion.idComisiones
                     : yield this.resolveUUIDs(data.idComision, data.idAgenda);
+                const esSesion = yield this.esAgendaSesion(data.idAgenda);
                 for (const uuid of uuids) {
                     this.votacionesAbiertas.set(uuid, {
                         idAgenda: data.idAgenda,
@@ -239,6 +262,7 @@ class Server {
                         safId: data.idComision,
                         idComisiones: uuids,
                         abiertaEn: new Date().toISOString(),
+                        esSesion,
                     });
                 }
                 this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
@@ -416,6 +440,11 @@ class Server {
         this.app.set('votacionesAbiertas', this.votacionesAbiertas);
         this.app.set('sesionesActivas', this.sesionesActivas);
     }
+    // Para servicios que corren fuera de una petición (services/spidVotingSync.ts)
+    // y necesitan votacionesAbiertas / asistenciasAbiertas / io.
+    getApp() {
+        return this.app;
+    }
     listen() {
         this.httpServer.listen(this.port, () => {
             console.log("La aplicación se esta corriendo exitosamente en el puerto => " + this.port);
@@ -436,6 +465,7 @@ class Server {
         this.app.use(transcripcion_1.default);
         this.app.use(capturadora_1.default);
         this.app.use(pleno_1.default);
+        this.app.use(diagnostico_1.default);
     }
     midlewares() {
         // Log de tiempos de respuesta: ayuda a diagnosticar lentitud intermitente.
