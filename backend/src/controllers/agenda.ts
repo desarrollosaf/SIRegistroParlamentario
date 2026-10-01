@@ -2672,9 +2672,16 @@ function idVotoPuntoDeterministico(
   idDiputado: string,
   idPunto: string | null,
   idIniciativa: string | null,
-  idTemaPuntoVoto: string | null
+  idTemaPuntoVoto: string | null,
+  idComisionDip: string | null
 ): string {
-  const clave = `${idDiputado}|${idPunto ?? ""}|${idIniciativa ?? ""}|${idTemaPuntoVoto ?? ""}`;
+  // idComisionDip es necesario para comisiones unidas: un diputado que
+  // pertenece a varias comisiones del mismo evento tiene una fila de
+  // AsistenciaVoto por comisión (ver obtenerListadoDiputados), y necesita
+  // una fila de VotosPunto por cada una también — sin esto, las filas de
+  // las distintas comisiones generaban el mismo id y bulkCreate
+  // (ignoreDuplicates) descartaba todas menos una.
+  const clave = `${idDiputado}|${idPunto ?? ""}|${idIniciativa ?? ""}|${idTemaPuntoVoto ?? ""}|${idComisionDip ?? ""}`;
   const hash = createHash("sha1").update(clave).digest("hex").slice(0, 32);
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
 }
@@ -2733,7 +2740,7 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
     if (!votos) {
       const listadoDiputados = await obtenerListadoDiputados(evento);
       const votospunto = listadoDiputados.map((dip) => ({
-        id: idVotoPuntoDeterministico(dip.id_diputado, puntoa, body.idIniciativa || null, tema),
+        id: idVotoPuntoDeterministico(dip.id_diputado, puntoa, body.idIniciativa || null, tema, dip.comision_dip_id),
         sentido: 0,
         mensaje: "PENDIENTE",
         id_punto: puntoa,
