@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
 <div class="panel-diputado">
 
   <!-- ══ Cargando sesión inicial ══ -->
@@ -12,8 +14,11 @@
     <div class="panel-wrap">
       <div class="top-bar">
         <div class="top-bar-nombre">
-          <i class="bi bi-person-circle"></i>
-          <span>{{ nombreCompleto || 'Diputado/a' }}</span>
+          <div class="top-bar-avatar"><i class="bi bi-person-fill"></i></div>
+          <div>
+            <div class="top-bar-nombre-texto">{{ nombreCompleto || 'Diputado/a' }}</div>
+            <div class="top-bar-institucion">Congreso del Estado de México</div>
+          </div>
         </div>
         <button class="btn-salir" (click)="cerrarSesion()" title="Cerrar sesión">
           <i class="bi bi-box-arrow-right"></i>
@@ -24,28 +29,27 @@
 
         <!-- Asistencia abierta -->
         @if (asistencia) {
-          <div class="tarjeta">
-            <div class="tarjeta-header">
+          <div class="tarjeta tarjeta-entrada">
+            <div class="tarjeta-icono tarjeta-icono-asistencia">
               <i class="bi bi-people-fill"></i>
-              <div>
-                <div class="tarjeta-label">REGISTRO DE ASISTENCIA</div>
-                <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
-              </div>
             </div>
+            <div class="tarjeta-label">Registro de asistencia</div>
+            <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
 
             @if (!asistencia.yaRegistro) {
               <button class="btn-grande" [disabled]="registrandoAsistencia" (click)="registrarAsistencia()">
                 @if (registrandoAsistencia) {
                   <span class="spinner-border spinner-border-sm me-2"></span>
+                  <span>Registrando…</span>
                 } @else {
                   <i class="bi bi-check2-circle me-2"></i>
+                  <span>Registrar asistencia</span>
                 }
-                Registrar asistencia
               </button>
             } @else {
               <div class="confirmado">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>Asistencia registrada</span>
+                <div class="confirmado-icono"><i class="bi bi-check-lg"></i></div>
+                <div class="confirmado-texto">Asistencia registrada</div>
               </div>
             }
           </div>
@@ -53,40 +57,47 @@
 
         <!-- Votación abierta -->
         @if (votacion) {
-          <div class="tarjeta">
-            <div class="tarjeta-header">
-              <i class="bi bi-check2-square"></i>
-              <div>
-                <div class="tarjeta-label">VOTACIÓN EN CURSO</div>
-                <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
-              </div>
+          <div class="tarjeta tarjeta-entrada tarjeta-votacion">
+            <div class="tarjeta-header-votacion">
+              <span class="pulso-vivo"></span>
+              <span class="tarjeta-label-votacion">Votación en curso</span>
             </div>
+            <div class="tarjeta-sub tarjeta-sub-votacion">{{ sesionNombre || 'Sesión' }}</div>
 
-            <div class="tarjeta-punto">{{ votacion.puntoTexto }}</div>
+            <div class="punto-cita">
+              <i class="bi bi-quote"></i>
+              <p>{{ votacion.puntoTexto }}</p>
+            </div>
 
             @if (votacion.yaVoto) {
               <div class="voto-actual"
                    [class.vs-favor]="votacion.sentidoActual === 1"
                    [class.vs-contra]="votacion.sentidoActual === 3"
                    [class.vs-abstencion]="votacion.sentidoActual === 2">
+                <i class="bi bi-check-circle-fill me-2"></i>
                 Tu voto: <strong>{{ sentidoActualLabel }}</strong>
+              </div>
+            } @else {
+              <div class="voto-pendiente">
+                <i class="bi bi-hourglass-split me-2"></i>
+                Selecciona el sentido de tu voto
               </div>
             }
 
             <div class="voto-botones">
               <button class="sv-btn sv-favor" [class.sv-active]="votacion.sentidoActual === 1"
                       [disabled]="votando" (click)="votar(1)">
-                <i class="bi bi-hand-thumbs-up"></i>
+                <i class="bi bi-hand-thumbs-up-fill"></i>
                 <span>A favor</span>
               </button>
               <button class="sv-btn sv-abs" [class.sv-active]="votacion.sentidoActual === 2"
                       [disabled]="votando" (click)="votar(2)">
-                <i class="bi bi-dash-circle"></i>
+                <i class="bi bi-dash-circle-fill"></i>
                 <span>Abstención</span>
               </button>
               <button class="sv-btn sv-contra" [class.sv-active]="votacion.sentidoActual === 3"
                       [disabled]="votando" (click)="votar(3)">
-                <i class="bi bi-hand-thumbs-down"></i>
+                <i class="bi bi-hand-thumbs-down-fill"></i>
                 <span>En contra</span>
               </button>
             </div>
@@ -95,11 +106,12 @@
 
         <!-- Sesión activa pero sin asistencia/votación abierta ahora mismo -->
         @if (!asistencia && !votacion && sesionActiva) {
-          <div class="detalle-wrap">
+          <div class="tarjeta tarjeta-entrada detalle-wrap">
             <div class="detalle-sesion-nombre">
-              <i class="bi bi-broadcast"></i>
+              <span class="pulso-vivo pulso-vivo-sm"></span>
               <span>{{ sesionNombre || 'Sesión en curso' }}</span>
             </div>
+            <div class="detalle-sesion-hint">Esperando a que se abra asistencia o votación…</div>
 
             <div class="detalle-btns">
               <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'orden'" (click)="verOrden()">
@@ -151,7 +163,7 @@
                              [class.vs-favor]="voto.sentido === 1"
                              [class.vs-abstencion]="voto.sentido === 2"
                              [class.vs-contra]="voto.sentido === 3">
-                          <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down' : 'bi bi-dash-circle'"></i>
+                          <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up-fill' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down-fill' : 'bi bi-dash-circle-fill'"></i>
                           {{ voto.mensaje }}
                         </div>
                       </div>
@@ -165,10 +177,11 @@
 
         <!-- Sin sesión activa -->
         @if (!asistencia && !votacion && !sesionActiva) {
-          <div class="idle-wrap">
+          <div class="idle-wrap tarjeta-entrada">
             <div class="idle-seal">
-              <i class="bi bi-hourglass-split"></i>
+              <i class="bi bi-shield-check"></i>
             </div>
+            <div class="idle-org">Congreso del Estado de México</div>
             <div class="idle-title">Sin sesión activa</div>
             <div class="idle-sub">Aquí aparecerá la sesión en cuanto el administrador la inicie.</div>
           </div>
