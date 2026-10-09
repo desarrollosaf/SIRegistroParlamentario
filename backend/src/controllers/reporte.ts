@@ -26,6 +26,8 @@ import IntegranteComision from "../models/integrante_comisions";
 import AsistenciaVoto from "../models/asistencia_votos";
 import Gender from "../models/gender";
 import VotosPunto from "../models/votos_punto";
+import { createTtlCache } from "../utils/cachedAsync";
+import { mapConLimite, LIMITE_REPORTES } from "../utils/mapConLimite";
 
 type ReporteBaseItem = {
   no: number;
@@ -379,13 +381,14 @@ const obtenerIniciativasBase = async () => {
   });
 };
 
-const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+const construirReporteBaseSinCache = async (): Promise<ReporteBaseItem[]> => {
   const iniciativas = await obtenerIniciativasBase();
 
  
 
-  const reporte = await Promise.all(
-    iniciativas.map(async (iniciativa, index) => {
+  // Con tope de concurrencia: antes era Promise.all sobre TODAS las iniciativas
+  // y acaparaba el pool completo (ver utils/mapConLimite.ts).
+  const reporte = await mapConLimite(iniciativas, LIMITE_REPORTES, async (iniciativa, index) => {
       const data: any = iniciativa.toJSON();
 
       const {
@@ -589,11 +592,15 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
           ? (data.punto?.nopunto ?? null)
           : (cierrePrincipal?.iniciativa?.nopunto ?? null),
       };
-    })
-  );
+    });
 
   return reporte;
 };
+
+// Mismo patrón que estadistico.ts: el reporte no depende de parámetros, se
+// arma una vez y se comparte 5 min entre todas las peticiones (y si llegan
+// varias a la vez mientras se arma, comparten la misma promesa).
+const construirReporteBase = createTtlCache(construirReporteBaseSinCache, 5 * 60 * 1000);
 
 const aplicarEstiloHoja = (worksheet: any) => {
   const headerRow = worksheet.getRow(1);

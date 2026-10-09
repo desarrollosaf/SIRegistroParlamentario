@@ -28,6 +28,8 @@ import Sedes from "../models/sedes";
 import IntegranteLegislatura from "../models/integrante_legislaturas";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
 import IntegranteComision from "../models/integrante_comisions";
+import { createTtlCache } from "../utils/cachedAsync";
+import { mapConLimite, LIMITE_REPORTES } from "../utils/mapConLimite";
 
 
 type ReporteBaseItem = {
@@ -206,11 +208,12 @@ const obtenerIniciativasBase = async () => {
   });
 };
 
-const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
+const construirReporteBaseSinCache = async (): Promise<ReporteBaseItem[]> => {
   const iniciativas = await obtenerIniciativasBase();
 
-  const reporte = await Promise.all(
-    iniciativas.map(async (iniciativa, index) => {
+  // Con tope de concurrencia: antes era Promise.all sobre TODAS las iniciativas
+  // y acaparaba el pool completo (ver utils/mapConLimite.ts).
+  const reporte = await mapConLimite(iniciativas, LIMITE_REPORTES, async (iniciativa, index) => {
       const data: any = iniciativa.toJSON();
     //   const {
     //     proponentesString,
@@ -381,11 +384,15 @@ const construirReporteBase = async (): Promise<ReporteBaseItem[]> => {
         publico: data.publico,
 
       };
-    })
-  );
+    });
   return reporte;
 
 };
+
+// Mismo patrón que estadistico.ts: el reporte no depende de parámetros, se
+// arma una vez y se comparte 5 min entre todas las peticiones (y si llegan
+// varias a la vez mientras se arma, comparten la misma promesa).
+const construirReporteBase = createTtlCache(construirReporteBaseSinCache, 5 * 60 * 1000);
 
 const formatearFechaCorta = (fecha?: string | null): string => {
   if (!fecha) return "-";

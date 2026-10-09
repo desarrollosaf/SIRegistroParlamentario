@@ -21,8 +21,10 @@
  *      (reserva: --reserva <idTemaPuntoVoto>; con iniciativa: --iniciativa <id>)
  *      (asistencia: --modo asistencia --agenda <idAgenda>)
  *
- *   Los diputados se toman de la BD (lee backend/.env) o de --ids archivo.json
- *   (arreglo de diputado_id).
+ *   Los diputados se toman del propio servidor (lista de asistencia del
+ *   evento, ruta pública /api/estadistico/getasistencia/:idAgenda). Si eso
+ *   falla, de la BD (DB_HOST/DB_USER/DB_PASSWORD en backend/.env) o de
+ *   --ids archivo.json (arreglo de diputado_id).
  *
  * Prueba de reinicio (verifica la Fase 1):
  *   1) Abrir votación en el admin.
@@ -111,14 +113,47 @@ async function obtenerDiputados() {
     if (!Array.isArray(ids) || !ids.length) salir('--ids debe ser un arreglo JSON de diputado_id');
     return ids.map(String);
   }
+
+  // 1) Del servidor: no requiere acceso a la BD desde esta PC.
+  const { status, json } = await pedir(null, 'GET', `/api/estadistico/getasistencia/${encodeURIComponent(AGENDA)}`);
+  if (status === 200) {
+    const ids = new Set();
+    // Sesión: lista plana; comisiones: agrupada por comisión. Se recorre todo.
+    const recorrer = (x) => {
+      if (Array.isArray(x)) return x.forEach(recorrer);
+      if (x && typeof x === 'object') {
+        if (x.id_diputado) ids.add(String(x.id_diputado));
+        Object.values(x).forEach((v) => { if (v && typeof v === 'object') recorrer(v); });
+      }
+    };
+    recorrer(json?.integrantes);
+    if (ids.size) {
+      console.log(`Diputados obtenidos del servidor (lista de asistencia del evento): ${ids.size}`);
+      return [...ids];
+    }
+    console.log('El servidor respondió, pero el evento no tiene lista de asistencia todavía. Se intenta con la BD...');
+  } else {
+    console.log(`No se pudo obtener la lista del servidor (http=${status}). Se intenta con la BD...`);
+  }
+
+  // 2) Respaldo: BD directa. Credenciales SOLO desde backend/.env.
+  if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+    salir('No hay DB_HOST/DB_USER/DB_PASSWORD en backend/.env para el respaldo por BD. Usa --ids archivo.json con los diputado_id.');
+  }
   const mysql = require('mysql2/promise');
-  const cx = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME_REGISTROCOMISIONES || 'adminplem_siregistroparlamentario',
-  });
+  let cx;
+  try {
+    cx = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME_REGISTROCOMISIONES || 'adminplem_siregistroparlamentario',
+      connectTimeout: 10000,
+    });
+  } catch (e) {
+    salir(`No se pudo conectar a la BD ${process.env.DB_HOST} (${e.code || e.message}). Usa --ids archivo.json con los diputado_id.`);
+  }
   try {
     let filas;
     if (MODO === 'voto') {
@@ -263,4 +298,5 @@ async function modoRegistro(diputados) {
   console.log(`URL: ${URL_BASE} · modo: ${MODO} · diputados: ${diputados.length}`);
   if (MODO === 'estado') return modoEstado(diputados);
   return modoRegistro(diputados);
-})().catch((e) => salir(e?.stack || e));
+})().catch((e) => salir(`${e?.code ? e.code + ' — ' : ''}${e?.message || ''}
+${e?.stack || e}`));
