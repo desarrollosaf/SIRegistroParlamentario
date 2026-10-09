@@ -184,7 +184,7 @@ const RUTAS_PESADAS = [
 ];
 
 function rutasPresidencia() {
-  const r = [`/api/eventos/getagenda/${AGENDA}`, `/api/eventos/getpuntos/${AGENDA}`, '/api/estadistico/getordendia'];
+  const r = [`/api/eventos/getagenda/${AGENDA}`, `/api/eventos/getpuntos/${AGENDA}`, `/api/estadistico/getordendia?id=${encodeURIComponent(AGENDA)}`];
   if (PUNTO) r.push(`/api/estadistico/getvotospunto/${PUNTO}`);
   return r;
 }
@@ -234,6 +234,14 @@ async function modoRegistro(diputados) {
   const fondo = iniciarCargaFondo(gPesada, gPresidencia, () => corriendo);
   await new Promise((r) => setTimeout(r, 2000)); // que la carga ya esté encima
 
+  // Calentamiento (NO se mide): cada "tableta" abre su conexión antes, como
+  // en la vida real, donde la app ya está conectada cuando se abre la
+  // votación. Sin esto se mediría el saludo TLS de 75 conexiones nuevas
+  // saliendo de UNA sola PC, no lo que tarda el servidor.
+  console.log('Calentando conexiones (no se mide)...');
+  await Promise.all(diputados.map((id) => pedir(null, 'GET', `/api/pleno/estado/${id}?idAgenda=${encodeURIComponent(AGENDA)}`)));
+  const antes = TOKEN ? (await pedir(null, 'GET', '/api/diagnostico/metricas')).json : null;
+
   const rondas = MODO === 'asistencia' ? 1 : RONDAS;
   for (let ronda = 1; ronda <= rondas; ronda++) {
     console.log(`Ronda ${ronda}/${rondas}: ${diputados.length} diputados registrando al mismo tiempo...`);
@@ -267,9 +275,18 @@ async function modoRegistro(diputados) {
   console.log(gPresidencia.linea());
   console.log(gPesada.linea());
 
+  let p95Servidor = null;
   if (TOKEN) {
     const { status, json } = await pedir(null, 'GET', '/api/diagnostico/metricas');
     if (status === 200) {
+      const tipo = MODO === 'voto' ? 'voto' : 'asistencia';
+      const r = json.registros?.[tipo];
+      if (r) {
+        p95Servidor = r.p95;
+        const nuevos = r.total - (antes?.registros?.[tipo]?.total ?? 0);
+        console.log(`\nTiempo DENTRO del servidor (${tipo}): p50=${r.p50}ms p95=${r.p95}ms max=${r.max}ms · registros nuevos en esta prueba: ${nuevos}`);
+        console.log('  (la diferencia contra la tabla de arriba es red + TLS + nginx, no el backend)');
+      }
       console.log('\n──────── Métricas del servidor ────────');
       console.log('Event loop (ventana actual):', JSON.stringify(json.eventLoop?.ventanaActual));
       for (const [n, p] of Object.entries(json.pools || {})) {
@@ -284,9 +301,13 @@ async function modoRegistro(diputados) {
   const fallas = Object.entries(gRegistro.estados)
     .filter(([s]) => !(Number(s) >= 200 && Number(s) < 300) && !(MODO === 'asistencia' && s === '409'))
     .reduce((t, [, n]) => t + n, 0);
-  const p95 = gRegistro.p(0.95);
+  // Con --token se califica con el tiempo medido DENTRO del servidor (lo que
+  // controla el backend); sin token, con el medido desde esta PC (incluye red).
+  const p95 = p95Servidor ?? gRegistro.p(0.95);
+  const origen = p95Servidor != null ? 'servidor' : 'desde esta PC, incluye red';
   const pasa = fallas === 0 && p95 <= META_P95_MS;
-  console.log(`\n${pasa ? '✔ PASA' : '✖ FALLA'}: ${fallas} registro(s) con error, p95=${p95}ms (meta ≤ ${META_P95_MS}ms)`);
+  console.log(`\n${pasa ? '✔ PASA' : '✖ FALLA'}: ${fallas} registro(s) con error, p95=${p95}ms [${origen}] (meta ≤ ${META_P95_MS}ms)`);
+  if (p95Servidor == null) console.log('  Tip: agrega --token <JWT> para calificar con el tiempo real del servidor, sin la red.');
   if (gRegistro.estados['409'] && MODO === 'voto') console.log('  (409 = la votación no estaba abierta en el servidor: ¿la abriste en el admin?)');
   if (gRegistro.estados['404']) console.log('  (404 = no existe el registro de voto/asistencia de ese diputado para ese punto/agenda)');
   process.exit(pasa ? 0 : 2);

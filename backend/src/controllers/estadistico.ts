@@ -642,7 +642,8 @@ export const getResumenTotalesEndpoint = async (req: Request, res: Response): Pr
 
 export const getIniciativasPresentadasPorDiputado = async (req: Request, res: Response): Promise<any> => {
   try {
-    const id = req.params.id ?? req.query.id ?? req.body.id;
+    // req.body es undefined en un GET sin cuerpo: sin el ?. tronaba con 500.
+    const id = req.params.id ?? req.query.id ?? req.body?.id;
     if (!id) return res.status(400).json({ ok: false, message: "El id del diputado es obligatorio" });
 
     const diputadoId = String(id);
@@ -703,7 +704,8 @@ export const getIniciativasPresentadasPorDiputado = async (req: Request, res: Re
 
 export const getIniciativasTurnadasPorComision = async (req: Request, res: Response): Promise<any> => {
   try {
-    const id = req.params.id ?? req.query.id ?? req.body.id;
+    // req.body es undefined en un GET sin cuerpo: sin el ?. tronaba con 500.
+    const id = req.params.id ?? req.query.id ?? req.body?.id;
     if (!id) return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
 
     const comisionId = String(id).trim();
@@ -779,7 +781,8 @@ export const getIniciativasTurnadasPorComision = async (req: Request, res: Respo
 
 export const getEventosPorComision = async (req: Request, res: Response): Promise<any> => {
   try {
-    const id = req.params.id ?? req.query.id ?? req.body.id;
+    // req.body es undefined en un GET sin cuerpo: sin el ?. tronaba con 500.
+    const id = req.params.id ?? req.query.id ?? req.body?.id;
     if (!id) return res.status(400).json({ ok: false, message: "El id de la comisión es obligatorio" });
 
     const comisionId = String(id).trim();
@@ -2087,7 +2090,8 @@ export const ultimasesion = async (req: Request, res: Response): Promise<Respons
 // =====================================================
 export const getPuntosOrdenDia = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = req.params.id ?? req.query.id ?? req.body.id;
+    // req.body es undefined en un GET sin cuerpo: sin el ?. tronaba con 500.
+    const id = req.params.id ?? req.query.id ?? req.body?.id;
 
     //// hola
     const evento = await Agenda.findOne({
