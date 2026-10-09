@@ -6,6 +6,20 @@ import 'dotenv/config'   // carga .env antes que cualquier módulo lea process.e
 import Server from "./models/server"
 import './models/associations'
 import { startSpidVotingSync } from './services/spidVotingSync'
+import { monitorearPool } from './utils/metricas'
+import sequelizeSaf from './database/connection'
+import sequelizeLegislativo from './database/legislativoConnection'
+import sequelizeRegistro from './database/registrocomisiones'
+import sequelizePleno from './database/pleno'
+import sequelizeSpid from './database/spidConnection'
+
+// Fase 0: mide cuánto espera cada petición por una conexión libre de cada
+// pool (ver GET /api/diagnostico/metricas y los logs [POOL-ESPERA]).
+monitorearPool('saf', sequelizeSaf)
+monitorearPool('legislativo', sequelizeLegislativo)
+monitorearPool('registrocomisiones', sequelizeRegistro)
+monitorearPool('pleno', sequelizePleno)
+monitorearPool('spid', sequelizeSpid)
 
 // Red de seguridad: evita que un error no capturado (fuera de los handlers de
 // socket, que ya están protegidos) tumbe el proceso completo en producción.

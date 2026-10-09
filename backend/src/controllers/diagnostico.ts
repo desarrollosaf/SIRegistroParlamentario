@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import legislativoConnection from '../database/legislativoConnection';
 import registrocomisiones from '../database/registrocomisiones';
 import pleno from '../database/pleno';
+import { obtenerMetricas } from '../utils/metricas';
+import { estadoModoSesion } from '../middlewares/modoSesion';
 
 /**
  * Corre un SELECT 1 dos veces seguidas contra una conexión YA VIVA en este
@@ -46,4 +48,14 @@ export const pingDb = async (req: Request, res: Response): Promise<any> => {
         registrocomisiones: registrocomisionesRes,
         pleno: plenoRes,
     });
+};
+
+/**
+ * Fase 0 del plan de estabilidad: foto en memoria (no toca la BD) del
+ * event loop, la espera por conexión de cada pool y la duración de los
+ * registros de voto/asistencia. Consultarla durante una sesión real o
+ * durante la prueba de carga (scripts/prueba-carga.js).
+ */
+export const getMetricas = (req: Request, res: Response): any => {
+    return res.json({ ...obtenerMetricas(), modoSesion: estadoModoSesion() });
 };

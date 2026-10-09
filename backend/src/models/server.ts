@@ -28,6 +28,8 @@ import Sedes from './sedes';
 import TranscripcionSesion from './transcripcion_sesiones';
 import TranscripcionParticipacion from './transcripcion_participaciones';
 import TranscripcionResumen from './transcripcion_resumenes';
+import { MapaPersistente } from '../utils/estadoPersistente';
+import { crearModoSesion } from '../middlewares/modoSesion';
 
 class Server {
 
@@ -39,8 +41,10 @@ class Server {
 
     // esSesion se resuelve UNA vez al abrir (no cambia mientras está abierto):
     // la capturadora/pleno lo leen de aquí en vez de consultar la agenda por voto.
-    private asistenciasAbiertas: Map<string, { idAgenda: string; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }> = new Map();
-    private votacionesAbiertas: Map<string, { idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }> = new Map();
+    // MapaPersistente: se respaldan en BD en cada cambio y se recargan al
+    // arrancar, para que un reinicio no tumbe una votación/asistencia abierta.
+    private asistenciasAbiertas = new MapaPersistente<{ idAgenda: string; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }>('asistencias');
+    private votacionesAbiertas = new MapaPersistente<{ idAgenda: string; punto: any; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; safId?: string; idComisiones: string[]; abiertaEn?: string; esSesion?: boolean }>('votaciones');
 
     // Mapa SAF-ID → UUID de registrocomisiones para comisiones
     private safIdToUUID: Map<string, string> = new Map();
@@ -49,7 +53,7 @@ class Server {
     private contenidoProyectado: Map<string, any> = new Map();
 
     // Sesiones activas: clave = idAgenda para comisiones, 'sesion-plenaria' para sesión
-    private sesionesActivas: Map<string, {
+    private sesionesActivas = new MapaPersistente<{
         idAgenda: string;
         titulo: string;
         fecha: string;
@@ -58,7 +62,7 @@ class Server {
         idComisiones: string[];   // todos los UUIDs (incluye conjuntas)
         ordenDia: any[];
         iniciadaEn: string;
-    }> = new Map();
+    }>('sesiones');
 
     constructor(){
         this.app = express()
@@ -86,7 +90,35 @@ class Server {
         this.midlewares();
         this.router();
         this.DBconnetc();
-        this.listen();
+        // Primero se recupera lo que estaba abierto antes del reinicio y DESPUÉS
+        // se aceptan conexiones: así ningún diputado ve "no hay votación" por
+        // haberse reconectado en el segundo equivocado.
+        this.cargarEstadoPersistido().finally(() => this.listen());
+    }
+
+    /** Recarga asistencias/votaciones/sesiones abiertas guardadas en BD.
+     *  Con tope de tiempo: si la BD no responde, el servidor arranca igual
+     *  (vacío, como antes) en vez de quedarse sin escuchar. */
+    private async cargarEstadoPersistido() {
+        const cargar = Promise.all([
+            this.asistenciasAbiertas.cargar((v) => v.abiertaEn),
+            this.votacionesAbiertas.cargar((v) => v.abiertaEn),
+            this.sesionesActivas.cargar((v) => v.iniciadaEn),
+        ]);
+        const tope = new Promise<'tope'>((resolve) => setTimeout(() => resolve('tope'), 15000).unref());
+        try {
+            const r = await Promise.race([cargar, tope]);
+            if (r === 'tope') {
+                console.error('[ESTADO] La BD no respondió en 15s; se arranca sin estado recuperado (se seguirá cargando en segundo plano)');
+            } else {
+                const [asist, vot, ses] = r;
+                if (asist || vot || ses) {
+                    console.log(`[ESTADO] Recuperado tras reinicio: ${asist} asistencia(s), ${vot} votación(es), ${ses} sesión(es) abiertas`);
+                }
+            }
+        } catch (err: any) {
+            console.error('[ESTADO] No se pudo recuperar el estado guardado:', err?.message || err);
+        }
     }
 
     /** Resuelve el SAF commission ID a uno o varios UUIDs de registrocomisiones.
@@ -604,6 +636,14 @@ class Server {
 
            return verifyToken(req, res, next);
         });
+
+        // Fase 2: mientras haya asistencia o votación abierta, las consultas
+        // pesadas (reportes/estadísticas históricas) salen de caché y tienen
+        // un tope de concurrencia, para que no le quiten conexiones ni CPU al
+        // registro de votos. Fuera de eso, todo se comporta igual que antes.
+        this.app.use(crearModoSesion(
+            () => this.asistenciasAbiertas.size > 0 || this.votacionesAbiertas.size > 0
+        ));
 
     }
 

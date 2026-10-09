@@ -16,6 +16,42 @@ import AnfitrionAgenda from '../models/anfitrion_agendas';
 import Agenda from '../models/agendas';
 import Sedes from '../models/sedes';
 import TemasPuntosVotos from '../models/temas_puntos_votos';
+import { registrarDuracion } from '../utils/metricas';
+
+// Fase 1 del plan de estabilidad: el servidor confirma que la votación /
+// asistencia SIGUE ABIERTA antes de aceptar un registro. Antes, en sesión
+// plenaria bastaba con mandar idPunto para votar aunque ya se hubiera
+// cerrado (app con estado viejo, reconexión tardía, petición repetida).
+// Válvula de escape: VALIDAR_EVENTO_ABIERTO=false regresa al comportamiento anterior.
+const VALIDAR_EVENTO_ABIERTO = process.env.VALIDAR_EVENTO_ABIERTO !== 'false';
+
+const mismoId = (a: any, b: any) => a != null && b != null && String(a) === String(b);
+
+/** ¿El registro de voto pertenece a alguna votación abierta ahora mismo?
+ *  Mismo criterio que routes/capturadora.ts para ubicar el registro. */
+function votoEnVotacionAbierta(votoRegistro: any, votacionesAbiertas: Map<string, any>): boolean {
+    for (const [idComision, estado] of votacionesAbiertas.entries()) {
+        if (estado.idReserva) {
+            if (mismoId(votoRegistro.id_tema_punto_voto, estado.idReserva)) return true;
+        } else if (estado.idPunto) {
+            if (!mismoId(votoRegistro.id_punto, estado.idPunto)) continue;
+            if (estado.idIniciativa && !mismoId(votoRegistro.id_iniciativa, estado.idIniciativa)) continue;
+            return true;
+        } else {
+            // Apertura sin ids de punto (flujo viejo): basta con que sea de esa comisión.
+            const comisiones: string[] = estado.idComisiones ?? [idComision];
+            if (votoRegistro.id_comision_dip == null || comisiones.some((c) => mismoId(c, votoRegistro.id_comision_dip))) return true;
+        }
+    }
+    return false;
+}
+
+function asistenciaAbierta(idAgenda: any, asistenciasAbiertas: Map<string, any>): boolean {
+    for (const estado of asistenciasAbiertas.values()) {
+        if (mismoId(estado.idAgenda, idAgenda)) return true;
+    }
+    return false;
+}
 
 // Helper: obtiene el diputado_id real desde el integrante_legislatura_id del token.
 // AsistenciaVoto y VotosPunto almacenan diputado.id, no integrante_legislatura.id.
@@ -120,10 +156,27 @@ export async function registrarAsistenciaCore(
     body: { id_agenda: string; id_comision?: string; partido_dip?: string; id_cargo_dip?: string; orden?: number },
     req: Request
 ): Promise<{ status: number; body: any }> {
+    const inicio = Date.now();
+    try {
+        return await registrarAsistenciaImpl(diputadoId, body, req);
+    } finally {
+        registrarDuracion('asistencia', Date.now() - inicio, `diputado=${diputadoId}`);
+    }
+}
+
+async function registrarAsistenciaImpl(
+    diputadoId: string,
+    body: { id_agenda: string; id_comision?: string; partido_dip?: string; id_cargo_dip?: string; orden?: number },
+    req: Request
+): Promise<{ status: number; body: any }> {
     const { id_agenda, id_comision, partido_dip, id_cargo_dip, orden } = body;
 
     if (!id_agenda) {
         return { status: 400, body: { msg: 'id_agenda es requerido' } };
+    }
+
+    if (VALIDAR_EVENTO_ABIERTO && !asistenciaAbierta(id_agenda, req.app.get('asistenciasAbiertas') || new Map())) {
+        return { status: 409, body: { codigo: 'EVENTO_CERRADO', msg: 'El pase de asistencia no está abierto en este momento' } };
     }
 
     // Para eventos conjuntos hay un registro por comisión — filtrar por comision_dip_id cuando se provee
@@ -203,6 +256,19 @@ export async function registrarVotoCore(
     body: { sentido_voto: number; id_voto_punto?: string; id_comision?: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null },
     req: Request
 ): Promise<{ status: number; body: any }> {
+    const inicio = Date.now();
+    try {
+        return await registrarVotoImpl(diputadoId, body, req);
+    } finally {
+        registrarDuracion('voto', Date.now() - inicio, `diputado=${diputadoId}`);
+    }
+}
+
+async function registrarVotoImpl(
+    diputadoId: string,
+    body: { sentido_voto: number; id_voto_punto?: string; id_comision?: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null },
+    req: Request
+): Promise<{ status: number; body: any }> {
     const { sentido_voto, id_voto_punto, id_comision, idPunto, idReserva, idIniciativa } = body;
 
     if (sentido_voto === undefined) {
@@ -261,6 +327,10 @@ export async function registrarVotoCore(
 
     if (!votoRegistro) {
         return { status: 404, body: { msg: 'No se encontró el registro de votación para este diputado.' } };
+    }
+
+    if (VALIDAR_EVENTO_ABIERTO && !votoEnVotacionAbierta(votoRegistro, req.app.get('votacionesAbiertas') || new Map())) {
+        return { status: 409, body: { codigo: 'EVENTO_CERRADO', msg: 'La votación de este punto ya no está abierta' } };
     }
 
     const sentido = Number(sentido_voto);
