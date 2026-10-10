@@ -31,6 +31,17 @@ import TranscripcionResumen from './transcripcion_resumenes';
 import { MapaPersistente } from '../utils/estadoPersistente';
 import { crearModoSesion } from '../middlewares/modoSesion';
 
+/**
+ * Fase 3 del plan de estabilidad: el mismo código corre en dos contenedores.
+ *  - 'nucleo':    votos, asistencia, sockets, pleno, capturadora, SPID, eventos,
+ *                 Presidencia... TODO lo que es en vivo.
+ *  - 'consultas': reportes, estadísticas, inteligencia (CPU pesado). Si un
+ *                 reporte congela este proceso, el núcleo ni se entera.
+ *  - 'completo':  (default, p.ej. `npm run dev`) todo junto, como antes.
+ * El gateway (gateway.conf) reparte las peticiones por prefijo de ruta.
+ */
+export const ROLE = (process.env.ROLE || 'completo') as 'nucleo' | 'consultas' | 'completo';
+
 class Server {
 
     private app: Application
@@ -85,10 +96,19 @@ class Server {
         }
         });
 
-        this.setupSocket();
+        console.log(`[ROLE] Este contenedor corre como: ${ROLE}`);
+
+        // Consultas no maneja nada en vivo: ni sockets ni estado de votaciones.
+        if (ROLE !== 'consultas') this.setupSocket();
 
         this.midlewares();
         this.router();
+
+        if (ROLE === 'consultas') {
+            this.listen();
+            return;
+        }
+
         this.DBconnetc();
         // Primero se recupera lo que estaba abierto antes del reinicio y DESPUÉS
         // se aceptan conexiones: así ningún diputado ve "no hay votación" por
@@ -517,15 +537,26 @@ class Server {
     }
 
     router(){
+       // Rutas pesadas (CPU): en 'consultas'. /api/iniciativas/iniciativas/ también
+       // va a consultas por el gateway, pero el router de iniciativas se monta en
+       // ambos porque el resto de sus rutas (decretos, ediciones) son del admin.
+       const pesadas = [reportes, estadistico, inteligencia];
+
+       if (ROLE === 'consultas') {
+           for (const r of pesadas) this.app.use(r);
+           this.app.use(iniciativas);
+           return;
+       }
+
        this.app.use(eventos);
        this.app.use(user);
        this.app.use(diputados);
        this.app.use(catalogos);
-       this.app.use(reportes);
+       if (ROLE === 'completo') this.app.use(reportes);
        this.app.use(iniciativas);
-       this.app.use(estadistico);
+       if (ROLE === 'completo') this.app.use(estadistico);
        this.app.use(diputadoRoutes);
-       this.app.use(inteligencia);
+       if (ROLE === 'completo') this.app.use(inteligencia);
        this.app.use(aliasDiputado);
        this.app.use(proyeccion);
        this.app.use(transcripcion);

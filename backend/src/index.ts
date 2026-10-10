@@ -3,7 +3,7 @@ import 'dotenv/config'   // carga .env antes que cualquier módulo lea process.e
 // import Departamento from "./models/saf/t_departamento"
 // import Dependencia from "./models/saf/t_dependencia"
 // import Direccion from "./models/saf/t_direccion"
-import Server from "./models/server"
+import Server, { ROLE } from "./models/server"
 import './models/associations'
 import { startSpidVotingSync } from './services/spidVotingSync'
 import { monitorearPool } from './utils/metricas'
@@ -34,7 +34,8 @@ const server =  new Server()
 
 // Plan de contingencia: espejo (solo lectura) de spid hacia este backend.
 // Opt-in vía SPID_SYNC_ENABLED, ver services/spidVotingSync.ts.
-startSpidVotingSync(server.getApp())
+// Solo en el núcleo: escribe votos y necesita el estado de votaciones abiertas.
+if (ROLE !== 'consultas') startSpidVotingSync(server.getApp())
 
 const models = {
     // SUsuario,

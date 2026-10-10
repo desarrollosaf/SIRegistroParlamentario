@@ -176,7 +176,9 @@ async function obtenerDiputados() {
 // ── Carga de fondo: otros sistemas + Presidencia ───────────────────────
 const RUTAS_PESADAS = [
   '/api/reporte/iniciativas/estadisticas/',
-  '/api/reporte/iniciativas/general/',
+  // Excel del admin: no se descarga durante una sesión en vivo, así que no se
+  // simula. Generarlo congela Node ~2-3 s (CPU), ver controllers/reporte.ts:getifnini.
+  // '/api/reporte/iniciativas/general/',
   '/api/estadistico/iniciativas/resumen',
   '/api/estadistico/getordenes',
   '/api/iniciativas/iniciativas/',
@@ -185,7 +187,8 @@ const RUTAS_PESADAS = [
 
 function rutasPresidencia() {
   const r = [`/api/eventos/getagenda/${AGENDA}`, `/api/eventos/getpuntos/${AGENDA}`, `/api/estadistico/getordendia?id=${encodeURIComponent(AGENDA)}`];
-  if (PUNTO) r.push(`/api/estadistico/getvotospunto/${PUNTO}`);
+  // getvotospunto/:id recibe el id de la INICIATIVA (no del punto).
+  if (INICIATIVA) r.push(`/api/estadistico/getvotospunto/${INICIATIVA}`);
   return r;
 }
 
@@ -222,6 +225,16 @@ async function modoEstado(diputados) {
     console.log(`  ${id}  http=${status}  asistencia=${asis}  votación=${vot}`);
   }
   console.log('\nTras un reinicio, si estaba abierta antes, aquí debe seguir ABIERTA.');
+
+  // Si hay votación abierta, se muestran sus ids y el comando listo para copiar.
+  const { json } = await pedir(null, 'GET', `/api/pleno/estado/${muestra[0]}?idAgenda=${encodeURIComponent(AGENDA)}`);
+  const v = json?.votacion;
+  if (v) {
+    console.log(`\nVotación abierta → idPunto=${v.idPunto ?? '-'}  idIniciativa=${v.idIniciativa ?? '-'}  idReserva=${v.idReserva ?? '-'}`);
+    const ids = v.idReserva ? `--reserva ${v.idReserva}` : `--punto ${v.idPunto}${v.idIniciativa ? ` --iniciativa ${v.idIniciativa}` : ''}`;
+    console.log('\nComando para la prueba de votación:');
+    console.log(`node scripts/prueba-carga.js --confirmo --si-es-produccion --url ${URL_BASE} --modo voto --agenda ${AGENDA} ${ids} --rondas 3 --limpiar --token <accessToken>`);
+  }
 }
 
 async function modoRegistro(diputados) {
@@ -298,9 +311,17 @@ async function modoRegistro(diputados) {
 
   // Un 409 en asistencia = "ya estaba registrada" (repetir la prueba). En voto
   // un 409 significa que la votación NO estaba abierta: eso sí es falla.
+  // 'red'/'timeout' = la petición ni llegó o no regresó (red entre esta PC y
+  // el servidor); se reporta aparte de los errores que respondió el backend.
+  const DE_RED = ['red', 'timeout'];
+  const fallasRed = DE_RED.reduce((t, s) => t + (gRegistro.estados[s] || 0), 0);
   const fallas = Object.entries(gRegistro.estados)
-    .filter(([s]) => !(Number(s) >= 200 && Number(s) < 300) && !(MODO === 'asistencia' && s === '409'))
+    .filter(([s]) => !(Number(s) >= 200 && Number(s) < 300) && !(MODO === 'asistencia' && s === '409') && !DE_RED.includes(s))
     .reduce((t, [, n]) => t + n, 0);
+  if (fallasRed) {
+    console.log(`\n⚠ ${fallasRed} petición(es) se perdieron en la RED (no llegaron o no regresaron). No es error del backend,`);
+    console.log('  pero en la vida real la app debe reintentar el voto si pasa esto.');
+  }
   // Con --token se califica con el tiempo medido DENTRO del servidor (lo que
   // controla el backend); sin token, con el medido desde esta PC (incluye red).
   const p95 = p95Servidor ?? gRegistro.p(0.95);

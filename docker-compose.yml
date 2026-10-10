@@ -1,19 +1,60 @@
 services:
+  # Núcleo: votos, asistencia, sockets, pleno, capturadora, SPID, eventos,
+  # Presidencia — todo lo que es EN VIVO. Se queda con el nombre "backend"
+  # para que `docker compose logs -f backend` siga funcionando igual.
   backend:
     build: ./backend
+    # La imagen se construye UNA vez y la reutiliza backend-consultas.
+    image: siregistroparlamentario-backend:latest
     env_file:
       - ./backend/.env
+    environment:
+      - ROLE=nucleo
     volumes:
       - ./backend/storage:/app/storage
     extra_hosts:
       # host.docker.internal solo resuelve solo en Docker Desktop (Mac/Windows) por
       # defecto; esto lo hace resolver también si la VM corre Docker en Linux.
       - "host.docker.internal:host-gateway"
+    # Ya no publica el 3013: ahora lo publica el gateway (ver gateway.conf).
+    restart: unless-stopped
+
+  # Consultas: reportes, estadísticas, inteligencia (CPU pesado). Mismo código,
+  # otro proceso: si un reporte lo congela, el núcleo sigue respondiendo.
+  backend-consultas:
+    image: siregistroparlamentario-backend:latest
+    pull_policy: never
+    env_file:
+      - ./backend/.env
+    environment:
+      - ROLE=consultas
+      # Pool más chico: nunca puede acaparar las conexiones de la BD.
+      - DB_POOL_MAX=10
+    volumes:
+      # Lectura/escritura: el PDF del orden del día (estadistico.ts) se genera
+      # en storage/pdfs y el núcleo lo sirve en /storage (mismo volumen).
+      - ./backend/storage:/app/storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # La VM no tiene swap: si un reporte se dispara de memoria, Docker reinicia
+    # SOLO este contenedor en vez de que el sistema mate otro proceso al azar
+    # (el núcleo o el MySQL de SIPresidencia).
+    mem_limit: 1g
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Única entrada al backend en el 3013 de siempre (página pública,
+  # SIPresidencia, capturadora... no cambian nada). Reparte por ruta.
+  gateway:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./gateway.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      # Expuesto al host solo para poder pegarle directo mientras pruebas
-      # (ej. curl http://<IP-VM>:3013/api/...). El front no lo necesita:
-      # habla con el backend por la red interna de Docker (nginx.conf).
       - "3013:3013"
+    depends_on:
+      - backend
+      - backend-consultas
     restart: unless-stopped
 
   frontend:
@@ -21,5 +62,5 @@ services:
     ports:
       - "8010:80"
     depends_on:
-      - backend
+      - gateway
     restart: unless-stopped

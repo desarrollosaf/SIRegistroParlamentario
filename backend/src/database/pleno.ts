@@ -21,7 +21,8 @@ const sequelizeCuestionarios = new Sequelize(
             freezeTableName: true
         },
         pool: {
-            max: 20,
+            // DB_POOL_MAX: el contenedor de consultas usa un pool más chico (docker-compose.yml).
+            max: Number(process.env.DB_POOL_MAX) || 20,
             // min:0 dejaba cerrar TODAS las conexiones tras 10s de inactividad
             // (idle) — la siguiente petición pagaba el costo completo de
             // reconectar (aquí es peor: este host está en otra red que las
