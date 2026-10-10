@@ -537,9 +537,11 @@ class Server {
     }
 
     router(){
-       // Rutas pesadas (CPU): en 'consultas'. /api/iniciativas/iniciativas/ también
-       // va a consultas por el gateway, pero el router de iniciativas se monta en
-       // ambos porque el resto de sus rutas (decretos, ediciones) son del admin.
+       // Rutas pesadas (CPU): en 'consultas'. Los routers de iniciativas y
+       // estadístico se montan en AMBOS: el gateway solo manda a consultas la
+       // parte pesada (/api/iniciativas/iniciativas/, reportes de estadístico) y
+       // al núcleo lo demás (decretos del admin; votos/asistencia/última sesión
+       // EN VIVO de estadístico, que son consultas ligeras por id).
        const pesadas = [reportes, estadistico, inteligencia];
 
        if (ROLE === 'consultas') {
@@ -554,7 +556,7 @@ class Server {
        this.app.use(catalogos);
        if (ROLE === 'completo') this.app.use(reportes);
        this.app.use(iniciativas);
-       if (ROLE === 'completo') this.app.use(estadistico);
+       this.app.use(estadistico);
        this.app.use(diputadoRoutes);
        if (ROLE === 'completo') this.app.use(inteligencia);
        this.app.use(aliasDiputado);
@@ -672,8 +674,11 @@ class Server {
         // pesadas (reportes/estadísticas históricas) salen de caché y tienen
         // un tope de concurrencia, para que no le quiten conexiones ni CPU al
         // registro de votos. Fuera de eso, todo se comporta igual que antes.
+        // En el contenedor de consultas va SIEMPRE activo: ahí protege al propio
+        // contenedor (sin tope, armar todos los reportes a la vez agotó la
+        // memoria de Node y lo reinició).
         this.app.use(crearModoSesion(
-            () => this.asistenciasAbiertas.size > 0 || this.votacionesAbiertas.size > 0
+            () => ROLE === 'consultas' || this.asistenciasAbiertas.size > 0 || this.votacionesAbiertas.size > 0
         ));
 
     }

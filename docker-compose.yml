@@ -30,6 +30,19 @@ services:
       - ROLE=consultas
       # Pool más chico: nunca puede acaparar las conexiones de la BD.
       - DB_POOL_MAX=10
+      # Aquí el "modo sesión" va siempre activo (ver middlewares/modoSesion.ts):
+      # a lo más 2 reportes armándose a la vez; las peticiones idénticas
+      # comparten respuesta. Sin esto, armar todos a la vez agotó la memoria
+      # de Node y reinició el contenedor (3 veces en la prueba de carga).
+      - MODO_SESION_MAX_CONCURRENTES=2
+      # No hay votos que proteger aquí: mejor esperar turno que dar 503.
+      - MODO_SESION_ESPERA_MAX_MS=90000
+      # Igual que la caché interna de los reportes (5 min).
+      - MODO_SESION_CACHE_TTL_MS=300000
+      - MODO_SESION_CACHE_MAX_MB=150
+      # Memoria de Node explícita (antes la calculaba sola a partir del límite
+      # del contenedor y quedó corta). Deja ~500 MB del contenedor para lo demás.
+      - NODE_OPTIONS=--max-old-space-size=1024
     volumes:
       # Lectura/escritura: el PDF del orden del día (estadistico.ts) se genera
       # en storage/pdfs y el núcleo lo sirve en /storage (mismo volumen).
@@ -39,7 +52,7 @@ services:
     # La VM no tiene swap: si un reporte se dispara de memoria, Docker reinicia
     # SOLO este contenedor en vez de que el sistema mate otro proceso al azar
     # (el núcleo o el MySQL de SIPresidencia).
-    mem_limit: 1g
+    mem_limit: 1536m
     depends_on:
       - backend
     restart: unless-stopped
