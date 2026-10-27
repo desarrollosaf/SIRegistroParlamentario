@@ -1,3 +1,12 @@
+# Rotación de logs: sin esto Docker guarda todo lo que imprime cada contenedor
+# en un archivo que crece para siempre (llena el disco y engorda a dockerd).
+# Máximo 5 archivos de 10 MB por contenedor.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # Núcleo: votos, asistencia, sockets, pleno, capturadora, SPID, eventos,
   # Presidencia — todo lo que es EN VIVO. Se queda con el nombre "backend"
@@ -17,6 +26,7 @@ services:
       # defecto; esto lo hace resolver también si la VM corre Docker en Linux.
       - "host.docker.internal:host-gateway"
     # Ya no publica el 3013: ahora lo publica el gateway (ver gateway.conf).
+    logging: *logging
     restart: unless-stopped
 
   # Consultas: reportes, estadísticas, inteligencia (CPU pesado). Mismo código,
@@ -55,6 +65,7 @@ services:
     mem_limit: 1536m
     depends_on:
       - backend
+    logging: *logging
     restart: unless-stopped
 
   # Única entrada al backend en el 3013 de siempre (página pública,
@@ -68,6 +79,7 @@ services:
     depends_on:
       - backend
       - backend-consultas
+    logging: *logging
     restart: unless-stopped
 
   frontend:
@@ -76,4 +88,5 @@ services:
       - "8010:80"
     depends_on:
       - gateway
+    logging: *logging
     restart: unless-stopped

@@ -55,7 +55,6 @@ import ComentarioEvento from '../models/comentario_evento';
 export const geteventos = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-    console.log(id)
     const uuidSesion = 'd5687f72-a328-4be1-a23c-4c3575092163';
 
     let whereTipoEvento;
@@ -1393,7 +1392,6 @@ export const guardarpunto = async (req: Request, res: Response): Promise<any> =>
               descripcion: "Inicitativas en conjunto"
             });
             for (const item of puntosTurnadosArray) {
-              console.log(item)
               const iniciativas = await IniciativaPuntoOrden.findAll({
                 where: {
                   id_punto: item,
@@ -1851,7 +1849,6 @@ export const getpuntos = async (req: Request, res: Response): Promise<any> => {
 
         } else if (estudiado.type === "2") {
           if (esSesion) {
-            console.log('estudiado.punto_destino_id', estudiado.punto_destino_id);
             const info: any[] = [];
             const puntoss = await PuntosOrden.findAll({
               where: { id_dictamen: estudiado.punto_destino_id },
@@ -2088,7 +2085,6 @@ export const getreservas = async (req: Request, res: Response): Promise<any> => 
 };
 
 export const actualizarPunto = async (req: Request, res: Response): Promise<any> => {
-  console.log("LLEGUE ACTUALIZAR PUNTO: ")
   try {
     const { id } = req.params;
     const { body } = req;
@@ -2139,7 +2135,6 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
     let puntoDesc: string = body.punto;
     
     if (body.tipo_evento != 0 && punto.evento.tipo_evento_id != "a413e44b-550b-47ab-b004-a6f28c73a750" ) {
-      console.log("EVENTO 1")
       if (puntosTurnadosArray.length > 0) {
 
         const estudioExistente = await IniciativaEstudio.findOne({
@@ -2300,10 +2295,8 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
     } else {
       
-      console.log("EVENTO 0")
       const dictamenesArray: any[] = JSON.parse(body.dictamenes || "[]");
 
-     console.log("DICTAMENES ARRAY: ") 
       const punto_estudio = await IniciativaEstudio.findOne({
         where: { punto_destino_id: punto.id },
       });
@@ -2318,9 +2311,7 @@ export const actualizarPunto = async (req: Request, res: Response): Promise<any>
 
 
      
-      console.log(dictamenesArray)
       if (dictamenesArray.length === 1) {
-         console.log("DICTAMENES UPDATE ARRAY: ") 
          let data: any = null;
 
         const whereCondition =  type == "1" ? { punto_origen_id: dictamenesArray[0] } : { punto_destino_id: dictamenesArray[0] };
@@ -2562,7 +2553,6 @@ export const saveintervencion = async (req: Request, res: Response): Promise<any
       liga: body.liga,
       destacado: body.destacada, 
     }));
-    console.log(registros)
     const nuevasIntervenciones = await Intervencion.bulkCreate(registros, {
       returning: true,
     });
@@ -2713,7 +2703,6 @@ export const getvotacionpunto = async (req: Request, res: Response): Promise<Res
       PuntosOrden.findOne({ where: { id: body.idPunto } }),
     ]);
 
-    console.log("tema:", tema, "punto:", puntoa);
 
     if (!punto) {
       return res.status(404).json({ msg: "Punto no encontrado" });
@@ -3233,12 +3222,10 @@ export const catalogossave = async (req: Request, res: Response) => {
 
     let permanente: SelectOption[] = [];
     if (idPermanente) {
-      console.log(permanenteRaw)
       permanente = permanenteRaw.map(item => ({
         id: item.id,
         name: item.nombre
       }));
-      console.log('permanente:', permanente)
     }
 
     let diputadosArray: { id: string; name: string }[] = [];
@@ -3382,7 +3369,6 @@ export const getAgenda = async (req: Request, res: Response) => {
 export const getAgendaHoy = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { fecha } = req.params;
-    console.log(fecha)
 
     const eventos = await Agenda.findAll(
       {
@@ -3410,7 +3396,6 @@ export const getAgendaHoy = async (req: Request, res: Response): Promise<Respons
         order: [['fecha', 'DESC']]  
       }
     );
-    console.log(eventos)
 
     const eventosConComisiones = [];
 
@@ -3790,7 +3775,6 @@ export const gestionIntegrantes = async (req: Request, res: Response): Promise<a
         .sort((a, b) => a.nombre.localeCompare(b.nombre)); 
     }
 
-    console.log(diputadosArray.length); 
 
     return res.json({
       diputados: diputadosArray,
@@ -3950,7 +3934,6 @@ export const generarPDFVotacion = async (req: Request, res: Response): Promise<a
   try {
     const { id } = req.params;
     // const body = req.body;
-    console.log("punto",id);
     // return 500;
     const punto = await PuntosOrden.findOne({ where: { id } });
     if (!punto) {
@@ -4640,7 +4623,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
           .map((e: any) => e.punto_origen_sesion_id)
           .filter(Boolean);
 
-        console.log("PUNTOS ORIGEN IDS:", puntosOrigenIds);
 
         if (puntosOrigenIds.length > 0) {
           const puntosOrigen = await PuntosOrden.findAll({
@@ -4688,7 +4670,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
             ...new Set(todosLosExpedientes.map((e: any) => e.expediente_id).filter(Boolean))
           ];
 
-          console.log("TODOS EXPEDIENTE IDS:", todosExpedienteIds);
 
           if (todosExpedienteIds.length > 0) {
             // ===== ESTUDIOS TYPE=2 =====
@@ -5208,7 +5189,6 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
     const pdfBuffer = fs.readFileSync(outputPath);
     const base64PDF = pdfBuffer.toString('base64');
 
-    console.log('Tamaño del PDF:', pdfBuffer.length, 'bytes');
 
     const formData = new URLSearchParams();
     formData.append('token', 'ml56a7d6tn7ha7cc');

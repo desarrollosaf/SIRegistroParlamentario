@@ -18,7 +18,6 @@ import '../models/associations';
 export const getCatalogos = async (req: Request, res: Response): Promise<Response> => {
   try {
    const proponentes =  await  Proponentes.findAll();
-   console.log('propo' , proponentes)
     
    return res.status(200).json({
       msg: "Exito",
@@ -73,10 +72,8 @@ export const getCatalogo = async (req: Request, res: Response): Promise<Response
       }));
     }
     
-    console.log('proponente', proponenteConCategorias);
     
     const categoriasInciativas = await TipoCategoriaIniciativas.findAll();
-    console.log('categoriasIniciativas:', categoriasInciativas);
     
     return res.status(200).json({
       msg: "Exito",
@@ -98,7 +95,6 @@ export const getCatalogo = async (req: Request, res: Response): Promise<Response
 export const saveCategoriaProponente = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body)
     const saveDatos = await ProponentesTipoCategoriaDetalle.create({
       proponente_id: body.proponete,
       tipo_categoria_id: body.categoria
@@ -132,7 +128,6 @@ export const saveCategoriaProponente = async (req: Request, res: Response): Prom
 export const deleteCategoriaProponente = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body)
     const deleteeDatos = await ProponentesTipoCategoriaDetalle.destroy({
       where: {
         proponente_id: body.proponete,
@@ -168,7 +163,6 @@ export const deleteCategoriaProponente = async (req: Request, res: Response): Pr
 export const saveTitularProponente = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body);
     
     const proponente = await Proponentes.findOne({
       where: { id: body.proponenteId },
@@ -222,7 +216,6 @@ export const saveTitularProponente = async (req: Request, res: Response): Promis
 export const saveCategoriaInicitavias = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body)
 
     const saveDatos = await TipoCategoriaIniciativas.create({
       valor: body.nombre,
@@ -245,7 +238,6 @@ export const saveCategoriaInicitavias = async (req: Request, res: Response): Pro
 export const saveProponentes = async (req: Request, res: Response): Promise<any> => {
   try {
     const { body } = req;
-    console.log(body)
     
     const saveDatos = await Proponentes.create({
       valor: body.nombre,

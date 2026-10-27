@@ -192,7 +192,6 @@ class Server {
 
     private setupSocket() {
         this.io.on('connection', (socket) => {
-        console.log('Socket conectado:', socket.id);
 
         // Evita que una excepción (síncrona o promesa rechazada) dentro de un handler
         // tumbe todo el proceso Node: se loguea y solo afecta a ese evento/socket.
@@ -512,10 +511,6 @@ class Server {
             const asistencias = Array.from(this.asistenciasAbiertas.entries()).map(([idComision, data]) => ({ idComision, ...data }));
             const votaciones = Array.from(this.votacionesAbiertas.entries()).map(([idComision, data]) => ({ idComision, ...data }));
             socket.emit('estado-eventos', { asistencias, votaciones });
-        });
-
-        wrap('disconnect', () => {
-            console.log('Socket desconectado:', socket.id);
         });
         });
         this.app.set('io', this.io);

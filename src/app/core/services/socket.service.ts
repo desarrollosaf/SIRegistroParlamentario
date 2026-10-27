@@ -6,6 +6,16 @@ import { enviroment } from '../../../enviroments/enviroment';
 export class SocketService {
   private socket?: Socket;
   private reconnectHandlers = new Set<() => void>();
+  // Salas a las que este cliente pidió unirse (clave → emit de unión). Tras un
+  // corte, el servidor ve un socket NUEVO sin salas: se vuelven a emitir todas
+  // en cada 'connect' para que el diputado siga recibiendo votacion-abierta, etc.
+  private salas = new Map<string, () => void>();
+
+  private unirseSala(clave: string, emitir: (socket: Socket) => void): void {
+    const socket = this.ensureConnected();
+    this.salas.set(clave, () => emitir(socket));
+    if (socket.connected) emitir(socket);
+  }
 
   private ensureConnected(): Socket {
     if (!this.socket) {
@@ -26,6 +36,9 @@ export class SocketService {
       this.socket.io.on('reconnect', () => {
         this.reconnectHandlers.forEach(cb => cb());
       });
+      this.socket.on('connect', () => {
+        this.salas.forEach(emitir => emitir());
+      });
       this.socket.on('connect_error', (err) => console.warn('Socket connect_error:', err.message));
       this.socket.on('disconnect', (reason) => console.warn('Socket desconectado:', reason));
     }
@@ -34,12 +47,7 @@ export class SocketService {
 
   /** Proyeccion: conecta y se une a la sala de la comisión para escuchar eventos */
   conectarYUnirse(idComision: string): void {
-    const socket = this.ensureConnected();
-    if (socket.connected) {
-      socket.emit('unirse-sesion', idComision);
-    } else {
-      socket.on('connect', () => socket.emit('unirse-sesion', idComision));
-    }
+    this.unirseSala(`sesion:${idComision}`, s => s.emit('unirse-sesion', idComision));
   }
 
   /** Detalle-comision: solo conecta para poder emitir eventos */
@@ -49,23 +57,13 @@ export class SocketService {
 
   /** Panel diputado: conecta y se une a la sala general de diputados */
   conectarComoDiputado(): void {
-    const socket = this.ensureConnected();
-    if (socket.connected) {
-      socket.emit('unirse-diputado');
-    } else {
-      socket.on('connect', () => socket.emit('unirse-diputado'));
-    }
+    this.unirseSala('diputado', s => s.emit('unirse-diputado'));
   }
 
   /** Pantalla física del Pleno: conecta y se une a la sala de esa pantalla
    *  para recibir identidad-detectada/identidad-perdida. */
   conectarComoPantalla(idPantalla: string): void {
-    const socket = this.ensureConnected();
-    if (socket.connected) {
-      socket.emit('unirse-pantalla', idPantalla);
-    } else {
-      socket.on('connect', () => socket.emit('unirse-pantalla', idPantalla));
-    }
+    this.unirseSala(`pantalla:${idPantalla}`, s => s.emit('unirse-pantalla', idPantalla));
   }
 
   onIdentidadDetectada(cb: (data: { diputado_id: string; nombre: string; alias?: string | null }) => void): void {
@@ -315,15 +313,11 @@ export class SocketService {
 
   /** Se une a la sala de la sesión para recibir las líneas transcritas. */
   unirseTranscripcion(idAgenda: string): void {
-    const socket = this.ensureConnected();
-    if (socket.connected) {
-      socket.emit('unirse-transcripcion', idAgenda);
-    } else {
-      socket.on('connect', () => socket.emit('unirse-transcripcion', idAgenda));
-    }
+    this.unirseSala(`transcripcion:${idAgenda}`, s => s.emit('unirse-transcripcion', idAgenda));
   }
 
   salirTranscripcion(idAgenda: string): void {
+    this.salas.delete(`transcripcion:${idAgenda}`);
     this.socket?.emit('salir-transcripcion', idAgenda);
   }
 
@@ -362,5 +356,6 @@ export class SocketService {
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = undefined;
+    this.salas.clear();
   }
 }

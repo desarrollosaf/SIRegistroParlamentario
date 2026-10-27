@@ -35,7 +35,6 @@ import Intervencion from "../models/intervenciones";
 
 export const cargoDiputados = async (req: Request, res: Response): Promise<Response> => {
   try {
-    console.log('holi')
     const diputados = await VotosPunto.findAll({
         where: {
             id_comision_dip: {
@@ -58,7 +57,6 @@ export const cargoDiputados = async (req: Request, res: Response): Promise<Respo
        })
        if(comision){
             await dips.update({ id_cargo_dip: comision.tipo_cargo_comision_id });
-            console.log('entre comision')
        }
 
     }
@@ -851,8 +849,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
         const data = iniciativa.toJSON();
         let decretos = data.decretos ?? [];
 
-        console.log("DATA INICIATIVA:");
-        console.log(data);
 
         const todosEstudios = [
           ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
@@ -863,8 +859,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             : [])
         ];
 
-        console.log("TODOS ESTUDIOS:");
-        console.log(todosEstudios);
 
         const fuenteEstudios = todosEstudios.filter(
           (e: any, index: number, self: any[]) =>
@@ -886,8 +880,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
         const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
 
-        console.log("POSIBLES PUNTOS PARA CIERRE:");
-        console.log(posiblesPuntosUnicos);
 
         // 1. Buscar si alguno de esos puntos está en expedientes_estudio_puntos
         const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
@@ -899,8 +891,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           attributes: ["id", "expediente_id", "punto_origen_sesion_id"]
         });
 
-        console.log("EXPEDIENTES RELACIONADOS:");
-        console.log(expedientesRelacionados.map((e: any) => e.toJSON()));
 
         // 2. Sacar los expediente_id encontrados
         const expedienteIds = [
@@ -911,8 +901,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           )
         ];
 
-        console.log("EXPEDIENTE IDS:");
-        console.log(expedienteIds);
 
         // 3. Buscar cierres:
         //    a) directos por punto_origen_id = 201, etc.
@@ -960,7 +948,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
 
         // console.log("CIERRES DB:", data.evento);
         // return 500;
-        console.log(cierresDB.map((c: any) => c.toJSON()));
 
         // 4. Unir con los que ya venían en fuenteEstudios
         const cierresMerge = [
@@ -974,8 +961,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
             index === self.findIndex((x: any) => x.id === e.id)
         );
 
-        console.log("CIERRES FINALES:");
-        console.log(cierres);
 
         // -----------------------------
         // resto de tu lógica
@@ -995,7 +980,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
               .join(" ")
           : null;
 
-        console.log("holaaaaaaaaa", data.evento?.id)
         const intervenci = await Intervencion.findAll({
           where: {
             id_evento: data.evento?.id,
@@ -1118,8 +1102,6 @@ export const getifnini = async (req: Request, res: Response): Promise<any> => {
           })
         );
 
-        console.log("CIERRE INFO:");
-        console.log(cierresConInfo);
 
         const ReSesion = await Promise.all(
           rechazosesion.map(async (s: any) => {
@@ -1240,7 +1222,6 @@ export const terminarvotacion = async (req: Request, res: Response): Promise<any
           }
         }),
       ]);
-      console.log("Lo encontreeeeeeeeeeeeeeeeeeeeeeeee:", iniestudio)
       if (!iniestudio) {
         return res.status(404).json({ message: "No tiene ninguna iniciativa" });
       }
