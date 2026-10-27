@@ -203,7 +203,7 @@ export class SocketService {
   }
 
   // Diputado escucha cuándo se abre/cierra asistencia
-  onAsistenciaAbierta(cb: (data: { idAgenda: string; idComision: string }) => void): void {
+  onAsistenciaAbierta(cb: (data: { idAgenda: string; idComision: string; esSesion?: boolean | null }) => void): void {
     this.socket?.on('asistencia-abierta', cb);
   }
 
@@ -220,7 +220,7 @@ export class SocketService {
   }
 
   // Diputado escucha cuándo se abre/cierra una votación
-  onVotacionAbierta(cb: (data: { idAgenda: string; punto: any; idComision: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null }) => void): void {
+  onVotacionAbierta(cb: (data: { idAgenda: string; punto: any; idComision: string; idPunto?: any; idReserva?: string | null; idIniciativa?: string | null; esSesion?: boolean | null }) => void): void {
     this.socket?.on('votacion-abierta', cb);
   }
 

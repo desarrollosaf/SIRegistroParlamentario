@@ -12,8 +12,11 @@ export class DiputadoService {
     return this.http.get(`${this.base}/mi-perfil`, { withCredentials: true });
   }
 
-  getEstadoPanel(): Observable<any> {
-    return this.http.get(`${this.base}/estado-panel`, { withCredentials: true });
+  getEstadoPanel(idAgenda?: string): Observable<any> {
+    const url = idAgenda
+      ? `${this.base}/estado-panel?idAgenda=${encodeURIComponent(idAgenda)}`
+      : `${this.base}/estado-panel`;
+    return this.http.get(url, { withCredentials: true });
   }
 
   getSesionActiva(idComision: string): Observable<any> {

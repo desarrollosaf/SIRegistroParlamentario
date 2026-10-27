@@ -89,21 +89,30 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
 
   private iniciarPanel(): void {
     this._socketService.conectarComoDiputado();
-    this.cargarEstado();
+    // El estado se carga cuando se sabe cuál es la sesión plenaria (respuesta
+    // de 'sesiones-activas'), para pedirlo filtrado por esa agenda.
 
+    // Este panel es SOLO del Pleno: sala-diputados también recibe las
+    // aperturas/cierres de comisiones (esas se votan en APP_SPID → Comisiones,
+    // que manda id_comision). Si se aceptaran aquí, el voto/asistencia iría sin
+    // id_comision y caería en la fila de otra comisión o daría 404.
+    //
     // Se pinta directo del payload del socket — cero peticiones a la BD.
     // Se asume "todavía no registrado/votado" porque el evento recién abre;
     // si este celular ya tenía el estado real (por ejemplo, se reconectó a
-    // media votación), cargarEstado() en onReconnect lo corrige.
+    // media votación), cargarEstado() tras la reconexión lo corrige.
     this._socketService.onAsistenciaAbierta((data) => {
+      if (!this.esDelPleno(data)) return;
       this.asistencia = { idAgenda: data.idAgenda, idComision: data.idComision, yaRegistro: false };
       this.cdr.detectChanges();
     });
-    this._socketService.onAsistenciaCerrada(() => {
+    this._socketService.onAsistenciaCerrada((data) => {
+      if (!this.asistencia || (data?.idComision ?? '') !== (this.asistencia.idComision ?? '')) return;
       this.asistencia = null;
       this.cdr.detectChanges();
     });
     this._socketService.onVotacionAbierta((data) => {
+      if (!this.esDelPleno(data)) return;
       this.votacion = {
         idAgenda: data.idAgenda,
         idComision: data.idComision,
@@ -116,7 +125,8 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
       };
       this.cdr.detectChanges();
     });
-    this._socketService.onVotacionCerrada(() => {
+    this._socketService.onVotacionCerrada((data) => {
+      if (!this.votacion || (data?.idComision ?? '') !== (this.votacion.idComision ?? '')) return;
       this.votacion = null;
       this.cdr.detectChanges();
     });
@@ -130,6 +140,7 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
       } else {
         this.limpiarSesion();
       }
+      this.cargarEstado();
       this.cdr.detectChanges();
     });
     this._socketService.emitGetSesionesActivas();
@@ -149,10 +160,17 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
+    // La respuesta de 'sesiones-activas' vuelve a cargar el estado.
     this._socketService.onReconnect(() => {
-      this.cargarEstado();
       this._socketService.emitGetSesionesActivas();
     });
+  }
+
+  /** Es de la sesión plenaria activa, o el backend dice que es una Sesión
+   *  (cubre que el admin abra asistencia/votación sin haber dado "Iniciar"). */
+  private esDelPleno(data: { idAgenda?: string; esSesion?: boolean | null }): boolean {
+    if (this.sesionIdAgenda && data.idAgenda === this.sesionIdAgenda) return true;
+    return data.esSesion === true;
   }
 
   private limpiarSesion(): void {
@@ -188,10 +206,13 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
 
   private cargarEstado(): void {
     this.cargandoEstado = true;
-    this._diputadoService.getEstadoPanel().subscribe({
+    // Con sesión plenaria iniciada se filtra por su agenda; sin ella, el
+    // backend regresa lo que haya abierto y aquí se descarta lo de comisiones.
+    this._diputadoService.getEstadoPanel(this.sesionIdAgenda || undefined).subscribe({
       next: (r: any) => {
-        this.asistencia = r?.asistencia ?? null;
-        const v = r?.votacion;
+        const a = r?.asistencia;
+        this.asistencia = a && this.esDelPleno(a) ? a : null;
+        const v = r?.votacion && this.esDelPleno(r.votacion) ? r.votacion : null;
         this.votacion = v ? {
           idAgenda: v.idAgenda,
           idComision: v.idComision,

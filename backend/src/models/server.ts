@@ -297,7 +297,7 @@ class Server {
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('asistencia-abierta', { idAgenda: data.idAgenda });
             for (const uuid of uuids) {
-                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: uuid });
+                this.io.to('sala-diputados').emit('asistencia-abierta', { idAgenda: data.idAgenda, idComision: uuid, esSesion });
             }
         });
 
@@ -335,7 +335,7 @@ class Server {
             }
             this.io.to(`proyeccion-${data.idComision}`).emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto });
             for (const uuid of uuids) {
-                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: uuid, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa });
+                this.io.to('sala-diputados').emit('votacion-abierta', { idAgenda: data.idAgenda, punto: data.punto, idComision: uuid, idPunto: data.idPunto, idReserva: data.idReserva, idIniciativa: data.idIniciativa, esSesion });
             }
         });
 
