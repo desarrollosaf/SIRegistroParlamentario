@@ -6,5 +6,7 @@ export const enviroment = {
     // IP/hostname con la que se acceda en la LAN, sin rebuild.
     // NO usar este esquema para el build del servidor real: ese usa su propio
     // proxy con prefijo /backend/ (ver enviroment.prod.ts).
-    endpoint: '/'
+    endpoint: '/',
+    // Transmisión en vivo que ve el diputado en su panel (mismo enlace que APP_SPID).
+    sesionVideoUrl: 'https://www.youtube.com/watch?v=XaqTPouuyE4'
   };

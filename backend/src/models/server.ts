@@ -24,6 +24,7 @@ import Comision from './comisions';
 import AnfitrionAgenda from './anfitrion_agendas';
 import Agenda from './agendas';
 import TipoEventos from './tipo_eventos';
+import IntegranteLegislatura from './integrante_legislaturas';
 import Sedes from './sedes';
 import TranscripcionSesion from './transcripcion_sesiones';
 import TranscripcionParticipacion from './transcripcion_participaciones';
@@ -161,6 +162,22 @@ class Server {
         return [idComisionSAF];
     }
 
+    /** integrante_legislatura.id → diputado.id, en caché: los ~75 celulares se
+     *  re-unen en cada reconexión y no tiene caso ir a la BD cada vez. */
+    private cacheDiputadoId = new Map<string, string>();
+    private async diputadoIdDeIntegrante(integranteId: string): Promise<string | null> {
+        const enCache = this.cacheDiputadoId.get(integranteId);
+        if (enCache) return enCache;
+        try {
+            const integrante = await IntegranteLegislatura.findByPk(integranteId, { attributes: ['diputado_id'] }) as any;
+            const diputadoId = integrante?.diputado_id ?? null;
+            if (diputadoId) this.cacheDiputadoId.set(integranteId, diputadoId);
+            return diputadoId;
+        } catch {
+            return null;
+        }
+    }
+
     /** ¿La agenda es de tipo "Sesión"? — una sola consulta al abrir asistencia/votación.
      *  Si la consulta falla devuelve undefined y quien lee el mapa consulta la BD. */
     private async esAgendaSesion(idAgenda: string): Promise<boolean | undefined> {
@@ -269,10 +286,19 @@ class Server {
         });
 
         // El diputado se une a la sala general y a su sala personal
-        wrap('unirse-diputado', (data?: { integranteId?: string }) => {
+        wrap('unirse-diputado', async (data?: { integranteId?: string; diputadoId?: string }) => {
             socket.join('sala-diputados');
+            // Los avisos de corrección del admin (asistencia/voto-actualizado-admin)
+            // se mandan a `diputado-<diputado.id>`. La web manda diputadoId directo;
+            // APP_SPID manda integranteId (integrante_legislatura.id), que se traduce
+            // aquí — sin esto la corrección nunca le llegaba al celular.
+            if (data?.diputadoId) {
+                socket.join(`diputado-${data.diputadoId}`);
+            }
             if (data?.integranteId) {
                 socket.join(`diputado-${data.integranteId}`);
+                const diputadoId = await this.diputadoIdDeIntegrante(data.integranteId);
+                if (diputadoId) socket.join(`diputado-${diputadoId}`);
             }
         });
 

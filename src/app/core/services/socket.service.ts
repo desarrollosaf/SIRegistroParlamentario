@@ -56,8 +56,29 @@ export class SocketService {
   }
 
   /** Panel diputado: conecta y se une a la sala general de diputados */
-  conectarComoDiputado(): void {
-    this.unirseSala('diputado', s => s.emit('unirse-diputado'));
+  conectarComoDiputado(diputadoId?: string | null): void {
+    this.unirseSala('diputado', s => s.emit('unirse-diputado', diputadoId ? { diputadoId } : undefined));
+  }
+
+  // El admin corrigió la asistencia/voto de este diputado (llega a su sala personal).
+  onAsistenciaActualizadaAdmin(cb: (data: { id_diputado: string; sentido: number; mensaje: string }) => void): void {
+    const s = this.ensureConnected();
+    s.off('asistencia-actualizada-admin');
+    s.on('asistencia-actualizada-admin', cb);
+  }
+
+  offAsistenciaActualizadaAdmin(): void {
+    this.socket?.off('asistencia-actualizada-admin');
+  }
+
+  onVotoActualizadoAdmin(cb: (data: { id_diputado: string; sentido: number; mensaje: string }) => void): void {
+    const s = this.ensureConnected();
+    s.off('voto-actualizado-admin');
+    s.on('voto-actualizado-admin', cb);
+  }
+
+  offVotoActualizadoAdmin(): void {
+    this.socket?.off('voto-actualizado-admin');
   }
 
   /** Pantalla física del Pleno: conecta y se une a la sala de esa pantalla

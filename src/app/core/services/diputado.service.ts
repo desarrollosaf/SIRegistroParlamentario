@@ -27,6 +27,10 @@ export class DiputadoService {
     return this.http.get(`${this.base}/orden-del-dia/${idAgenda}`, { withCredentials: true });
   }
 
+  getMiAsistencia(idAgenda: string): Observable<any> {
+    return this.http.get(`${this.base}/mi-asistencia/${idAgenda}`, { withCredentials: true });
+  }
+
   getMisVotos(idAgenda: string): Observable<any> {
     return this.http.get(`${this.base}/mis-votos/${idAgenda}`, { withCredentials: true });
   }

@@ -9,15 +9,24 @@
     </div>
   }
 
+  <!-- Reproductor de la transmisión (se reutiliza en los dos acomodos) -->
+  <ng-template #reproductor>
+    <div class="lv-frame">
+      <iframe [src]="videoUrl" title="Transmisión de la sesión"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+  </ng-template>
+
   <!-- ══ Panel ══ -->
   @if (vista === 'panel') {
     <div class="panel-wrap">
       <div class="top-bar">
         <div class="top-bar-nombre">
           <div class="top-bar-avatar"><i class="bi bi-person-fill"></i></div>
-          <div>
+          <div class="top-bar-textos">
+            <div class="top-bar-saludo">Hola,</div>
             <div class="top-bar-nombre-texto">{{ nombreCompleto || 'Diputado/a' }}</div>
-            <div class="top-bar-institucion">Congreso del Estado de México</div>
           </div>
         </div>
         <button class="btn-salir" (click)="cerrarSesion()" title="Cerrar sesión">
@@ -25,93 +34,165 @@
         </button>
       </div>
 
-      <div class="contenido">
+      <div class="contenido" [class.contenido-arriba]="sesionActiva || asistencia || votacion">
 
-        <!-- Asistencia abierta -->
-        @if (asistencia) {
-          <div class="tarjeta tarjeta-entrada">
-            <div class="tarjeta-icono tarjeta-icono-asistencia">
-              <i class="bi bi-people-fill"></i>
+        <!-- ══ Banner EN VIVO ══
+             Sin evento abierto y con video, el banner va integrado debajo del video (ver "live-card"). -->
+        @if (sesionActiva && !(videoUrl && !asistencia && !votacion)) {
+          <div class="session-banner tarjeta-entrada">
+            <div class="banner-left">
+              <span class="pulso-vivo"></span>
+              <div class="banner-text">
+                <div class="banner-status">En vivo</div>
+                <div class="banner-org">{{ sesionNombre || 'Sesión en curso' }}</div>
+              </div>
             </div>
-            <div class="tarjeta-label">Registro de asistencia</div>
-            <div class="tarjeta-sub">{{ sesionNombre || 'Sesión' }}</div>
-
-            @if (!asistencia.yaRegistro) {
-              <button class="btn-grande" [disabled]="registrandoAsistencia" (click)="registrarAsistencia()">
-                @if (registrandoAsistencia) {
-                  <span class="spinner-border spinner-border-sm me-2"></span>
-                  <span>Registrando…</span>
-                } @else {
-                  <i class="bi bi-check2-circle me-2"></i>
-                  <span>Registrar asistencia</span>
-                }
-              </button>
-            } @else {
-              <div class="confirmado">
-                <div class="confirmado-icono"><i class="bi bi-check-lg"></i></div>
-                <div class="confirmado-texto">Asistencia registrada</div>
+            @if (asistenciaRegistrada) {
+              <div class="badge-asistencia">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Asistencia</span>
               </div>
             }
           </div>
         }
 
-        <!-- Votación abierta -->
+        <!-- ══ Votación abierta (tiene prioridad sobre la asistencia) ══ -->
         @if (votacion) {
           <div class="tarjeta tarjeta-entrada tarjeta-votacion">
-            <div class="tarjeta-header-votacion">
-              <span class="pulso-vivo"></span>
-              <span class="tarjeta-label-votacion">Votación en curso</span>
-            </div>
-            <div class="tarjeta-sub tarjeta-sub-votacion">{{ sesionNombre || 'Sesión' }}</div>
-
-            <div class="punto-cita">
-              <i class="bi bi-quote"></i>
-              <p>{{ votacion.puntoTexto }}</p>
-            </div>
-
-            @if (votacion.yaVoto) {
-              <div class="voto-actual"
-                   [class.vs-favor]="votacion.sentidoActual === 1"
-                   [class.vs-contra]="votacion.sentidoActual === 3"
-                   [class.vs-abstencion]="votacion.sentidoActual === 2">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                Tu voto: <strong>{{ sentidoActualLabel }}</strong>
+            <div class="vote-header">
+              <div class="vote-meta-row">
+                @if (votacion.noPunto) {
+                  <span class="vote-num-badge">Punto {{ votacion.noPunto }}</span>
+                }
+                @if (votacion.tipoPunto) {
+                  <span class="vote-tipo-badge">{{ votacion.tipoPunto }}</span>
+                }
+                @if (!votacion.noPunto && !votacion.tipoPunto) {
+                  <span class="vote-label-tag"><span class="pulso-vivo pulso-vivo-sm"></span> Votación en curso</span>
+                }
               </div>
-            } @else {
-              <div class="voto-pendiente">
-                <i class="bi bi-hourglass-split me-2"></i>
-                Selecciona el sentido de tu voto
+              <div class="vote-topic">
+                {{ textoExpandido || votacion.puntoTexto.length <= largoTextoCorto ? votacion.puntoTexto : votacion.puntoTexto.slice(0, largoTextoCorto) }}
+                @if (votacion.puntoTexto.length > largoTextoCorto) {
+                  <button class="vote-mas-btn" (click)="textoExpandido = !textoExpandido">
+                    {{ textoExpandido ? ' ver menos' : '… ver más' }}
+                  </button>
+                }
               </div>
-            }
+            </div>
 
-            <div class="voto-botones">
-              <button class="sv-btn sv-favor" [class.sv-active]="votacion.sentidoActual === 1"
-                      [disabled]="votando" (click)="votar(1)">
-                <i class="bi bi-hand-thumbs-up-fill"></i>
-                <span>A favor</span>
-              </button>
-              <button class="sv-btn sv-abs" [class.sv-active]="votacion.sentidoActual === 2"
-                      [disabled]="votando" (click)="votar(2)">
-                <i class="bi bi-dash-circle-fill"></i>
-                <span>Abstención</span>
-              </button>
-              <button class="sv-btn sv-contra" [class.sv-active]="votacion.sentidoActual === 3"
-                      [disabled]="votando" (click)="votar(3)">
-                <i class="bi bi-hand-thumbs-down-fill"></i>
-                <span>En contra</span>
-              </button>
+            <div class="vote-body">
+              @if (votacion.yaVoto) {
+                <div class="voto-actual"
+                     [class.vs-favor]="votacion.sentidoActual === 1"
+                     [class.vs-contra]="votacion.sentidoActual === 3"
+                     [class.vs-abstencion]="votacion.sentidoActual === 2">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  Tu voto: <strong class="ms-1">{{ sentidoActualLabel }}</strong>
+                </div>
+              }
+
+              <div class="vote-prompt">{{ votacion.yaVoto ? 'Puedes cambiar tu voto mientras la votación esté abierta' : 'Emite tu voto' }}</div>
+
+              <div class="voto-botones">
+                <button class="sv-btn sv-favor" [class.sv-active]="esSentidoActivo(1)"
+                        [disabled]="votando" (click)="votar(1)">
+                  <i class="bi bi-hand-thumbs-up-fill"></i>
+                  <span>A favor</span>
+                </button>
+                <button class="sv-btn sv-contra" [class.sv-active]="esSentidoActivo(3)"
+                        [disabled]="votando" (click)="votar(3)">
+                  <i class="bi bi-hand-thumbs-down-fill"></i>
+                  <span>En contra</span>
+                </button>
+                <button class="sv-btn sv-abs" [class.sv-active]="esSentidoActivo(2)"
+                        [disabled]="votando" (click)="votar(2)">
+                  <i class="bi bi-dash-circle-fill"></i>
+                  <span>Abstención</span>
+                </button>
+                <button class="sv-btn sv-sin" [class.sv-active]="esSentidoActivo(0)"
+                        [disabled]="votando" (click)="votar(0)">
+                  <i class="bi bi-three-dots"></i>
+                  <span>Sin registro</span>
+                </button>
+              </div>
+
+              @if (votando) {
+                <div class="enviando"><span class="spinner-border spinner-border-sm me-2"></span>Enviando voto…</div>
+              }
             </div>
           </div>
         }
 
-        <!-- Sesión activa pero sin asistencia/votación abierta ahora mismo -->
-        @if (!asistencia && !votacion && sesionActiva) {
-          <div class="tarjeta tarjeta-entrada detalle-wrap">
-            <div class="detalle-sesion-nombre">
-              <span class="pulso-vivo pulso-vivo-sm"></span>
-              <span>{{ sesionNombre || 'Sesión en curso' }}</span>
+        <!-- ══ Asistencia abierta ══ -->
+        @else if (asistencia) {
+          <div class="tarjeta tarjeta-entrada tarjeta-asistencia">
+            <div class="attend-header">
+              <div class="attend-header-ico"><i class="bi bi-people-fill"></i></div>
+              <div class="attend-header-label">Registro de asistencia</div>
+              <div class="attend-header-sub">{{ sesionNombre || 'Sesión Plenaria' }}</div>
             </div>
-            <div class="detalle-sesion-hint">Esperando a que se abra asistencia o votación…</div>
+
+            <div class="attend-body">
+              @if (nombreCompleto) {
+                <div class="deputy-chip">
+                  <i class="bi bi-person-circle"></i>
+                  <span>{{ nombreCompleto }}</span>
+                </div>
+              }
+
+              @if (!asistencia.yaRegistro) {
+                <button class="btn-grande" [disabled]="registrandoAsistencia" (click)="registrarAsistencia()">
+                  @if (registrandoAsistencia) {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Registrando…</span>
+                  } @else {
+                    <i class="bi bi-fingerprint me-2"></i>
+                    <span>Registrar asistencia</span>
+                  }
+                </button>
+              } @else {
+                <div class="confirmado">
+                  <div class="confirmado-icono"><i class="bi bi-check-lg"></i></div>
+                  <div class="confirmado-texto">Asistencia registrada</div>
+                  <div class="confirmado-sub">Tu asistencia ha sido confirmada</div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Video debajo de la tarjeta cuando hay asistencia o votación abierta -->
+        @if (sesionActiva && videoUrl && (asistencia || votacion)) {
+          <div class="lv-section">
+            <div class="lv-label"><span class="pulso-vivo pulso-vivo-sm"></span>Transmisión en vivo</div>
+            <div class="lv-solo">
+              <ng-container *ngTemplateOutlet="reproductor"></ng-container>
+            </div>
+          </div>
+        }
+
+        <!-- ══ Sesión activa sin asistencia/votación abierta ══ -->
+        @if (!asistencia && !votacion && sesionActiva) {
+          <div class="ancho tarjeta-entrada">
+
+            @if (videoUrl) {
+              <div class="live-card">
+                <ng-container *ngTemplateOutlet="reproductor"></ng-container>
+                <div class="lc-info">
+                  <div class="lc-text">
+                    <span class="lc-live"><span class="pulso-vivo pulso-vivo-sm"></span>En vivo</span>
+                    <span class="lc-title">{{ sesionNombre || 'Sesión del Pleno' }}</span>
+                  </div>
+                  @if (asistenciaRegistrada) {
+                    <div class="badge-asistencia">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Asistencia</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
 
             <div class="detalle-btns">
               <button class="detalle-btn" [class.detalle-btn-active]="vistaDetalle === 'orden'" (click)="verOrden()">
@@ -124,6 +205,15 @@
               </button>
             </div>
 
+            @if (!videoUrl && vistaDetalle === 'none') {
+              <div class="idle-wrap">
+                <div class="idle-seal"><i class="bi bi-hourglass-split"></i></div>
+                <div class="idle-org">{{ sesionNombre }}</div>
+                <div class="idle-title">Sesión en curso</div>
+                <div class="idle-sub">Aquí aparecerán la asistencia y las votaciones en cuanto se abran.</div>
+              </div>
+            }
+
             @if (vistaDetalle !== 'none') {
               <div class="detalle-panel">
                 @if (cargandoDetalle) {
@@ -132,7 +222,18 @@
                   </div>
                 }
 
-                @if (vistaDetalle === 'orden' && !cargandoDetalle) {
+                @if (errorDetalle && !cargandoDetalle) {
+                  <div class="detalle-error">
+                    <i class="bi bi-wifi-off"></i>
+                    <span>No se pudo cargar la información. Verifica tu conexión.</span>
+                    <button class="btn-ghost" type="button" (click)="reintentarDetalle()">
+                      <i class="bi bi-arrow-clockwise"></i>
+                      Reintentar
+                    </button>
+                  </div>
+                }
+
+                @if (vistaDetalle === 'orden' && !cargandoDetalle && !errorDetalle) {
                   @if (ordenDelDia.length === 0) {
                     <div class="detalle-empty">
                       <i class="bi bi-file-earmark"></i>
@@ -147,7 +248,7 @@
                   }
                 }
 
-                @if (vistaDetalle === 'votos' && !cargandoDetalle) {
+                @if (vistaDetalle === 'votos' && !cargandoDetalle && !errorDetalle) {
                   @if (misVotos.length === 0) {
                     <div class="detalle-empty">
                       <i class="bi bi-clipboard-check"></i>
@@ -163,7 +264,7 @@
                              [class.vs-favor]="voto.sentido === 1"
                              [class.vs-abstencion]="voto.sentido === 2"
                              [class.vs-contra]="voto.sentido === 3">
-                          <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up-fill' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down-fill' : 'bi bi-dash-circle-fill'"></i>
+                          <i [class]="voto.sentido === 1 ? 'bi bi-hand-thumbs-up-fill' : voto.sentido === 3 ? 'bi bi-hand-thumbs-down-fill' : voto.sentido === 2 ? 'bi bi-dash-circle-fill' : 'bi bi-three-dots'"></i>
                           {{ voto.mensaje }}
                         </div>
                       </div>
@@ -175,15 +276,15 @@
           </div>
         }
 
-        <!-- Sin sesión activa -->
+        <!-- ══ Sin sesión activa ══ -->
         @if (!asistencia && !votacion && !sesionActiva) {
-          <div class="idle-wrap tarjeta-entrada">
+          <div class="idle-wrap idle-card tarjeta-entrada">
             <div class="idle-seal">
-              <i class="bi bi-shield-check"></i>
+              <i class="bi bi-calendar2-x"></i>
             </div>
             <div class="idle-org">Congreso del Estado de México</div>
             <div class="idle-title">Sin sesión activa</div>
-            <div class="idle-sub">Aquí aparecerá la sesión en cuanto el administrador la inicie.</div>
+            <div class="idle-sub">Cuando inicie una sesión del Pleno la verás aquí automáticamente.</div>
           </div>
         }
 

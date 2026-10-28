@@ -9,10 +9,9 @@ export const authGuard: CanActivateFn = (route, state) => {
   return userService.getCurrentUser().pipe(
     map((user: any) => {
       userService.setCurrentUser(user);
-      // Los diputados no usan esta app (usan la app de diputados aparte)
+      // Los diputados no usan la app admin: su pantalla es el panel de sesión.
       if (user?.role === 'diputado') {
-        userService.clearSession();
-        router.navigate(['/auth/login']);
+        router.navigate(['/diputado']);
         return false;
       }
       // Comunicación Social solo puede ver la pantalla de Transmisión.
