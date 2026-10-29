@@ -146,10 +146,19 @@ export const actualizartodos = async (req: Request, res: Response): Promise<any>
       }
     );
 
+    const io = (req as any).app.get('io');
     if (body.idComision) {
-      const io = (req as any).app.get('io');
       io?.to(`proyeccion-${body.idComision}`).emit('asistencias-actualizadas-masivo', { sentido: nuevoSentido });
     }
+    // Avisar también a los paneles de los diputados (web y APP_SPID): sin esto,
+    // al regresar a todos a "pendiente" seguían viendo "Asistencia registrada".
+    // Mismo evento que la corrección individual, sin id_diputado = es para todos.
+    io?.to('sala-diputados').emit('asistencia-actualizada-admin', {
+      masivo: true,
+      idAgenda: body.id,
+      sentido: nuevoSentido,
+      mensaje: nuevoMensaje,
+    });
 
     return res.status(200).json({
       msg: "Actualizados correctamente",
@@ -248,10 +257,19 @@ export const actvototodos = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
+    const io = (req as any).app.get('io');
     if (body.idComision) {
-      const io = (req as any).app.get('io');
       io?.to(`proyeccion-${body.idComision}`).emit('votos-actualizados-masivo', { sentido: nuevoSentido });
     }
+    // Igual que en la asistencia masiva: los paneles de los diputados también
+    // tienen que enterarse (sin id_diputado = aplica a todos).
+    io?.to('sala-diputados').emit('voto-actualizado-admin', {
+      masivo: true,
+      idPunto: body.idpunto,
+      idReserva: body.idReserva ?? null,
+      sentido: nuevoSentido,
+      mensaje: nuevoMensaje,
+    });
 
     return res.status(200).json({
       msg: "Voto(s) actualizado(s) correctamente",

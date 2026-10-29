@@ -2,6 +2,8 @@ import { Router } from "express";
 import { actualizar, getevento, geteventos, getUltimosEventosConLiga, getAsistenciaEvento, catalogos, getTiposPuntos, guardarpunto, getpuntos, actualizarPunto, eliminarpunto, saveintervencion, getintervenciones, eliminarinter, getvotacionpunto, actualizarvoto, reiniciarvoto, catalogossave, saveagenda, getAgenda, updateAgenda, enviarWhatsPunto, generarPDFVotacion, gestionIntegrantes, addDipLista, Eliminarlista, enviarWhatsVotacionPDF, generarPDFAsistencia, enviarWhatsAsistenciaPDF, crearreserva, eliminarreserva, actualizarReserva, getreservas, exportdatos, getAgendaHoy, EliminardipAsociado, enviarNotInicioEvento, saveComentarioEvento, deleteComentarioEvento, getIniciativasPorPunto, guardarVideoPunto} from "../controllers/agenda";
 import  upload  from "../controllers/multer";
 import  uploadAgenda from  "../controllers/uploadAgenda";
+import multer from "multer";
+import { importarOrdenDia } from "../controllers/ordenDiaPdf";
 const router = Router();
 
 
@@ -21,6 +23,13 @@ router.get("/api/eventos/getreservas/:id",getreservas );
 router.get("/api/eventos/getiniciativaspunto/:id", getIniciativasPorPunto );
 router.post("/api/eventos/actualizarPunto/:id",upload.single("documento"), actualizarPunto );
 router.get("/api/eventos/eliminarpunto/:id/:sesion",eliminarpunto );
+// PDF del orden del día → puntos del evento. En memoria: solo se lee, no se guarda.
+const uploadPdfOrdenDia = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype === 'application/pdf' || /\.pdf$/i.test(file.originalname)),
+});
+router.post("/api/eventos/importar-orden-dia/:id", uploadPdfOrdenDia.single("documento"), importarOrdenDia );
 router.post("/api/eventos/saveintervencion/", saveintervencion );
 router.post("/api/eventos/getintervenciones/", getintervenciones );
 router.get("/api/eventos/eliminarinter/:id",eliminarinter );

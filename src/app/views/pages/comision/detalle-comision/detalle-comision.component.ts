@@ -2998,6 +2998,87 @@ export class DetalleComisionComponent implements OnInit, OnDestroy {
     inputRef.value = '';
   }
 
+  // ── Orden del día desde PDF ────────────────────────────────────────────
+  // 1) se lee el PDF sin guardar (vista previa); 2) si algún punto actual ya
+  // tiene actividad se avisa y no se toca nada; 3) si no, se confirma y se
+  // reemplazan todos los puntos del evento por los del PDF.
+  importandoOrdenDia = false;
+
+  alElegirPdfOrdenDia(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const pdf = input.files?.[0];
+    input.value = ''; // para poder volver a elegir el mismo archivo
+    if (!pdf) return;
+
+    this.importandoOrdenDia = true;
+    this.cdr.detectChanges();
+    this._eventoService.importarOrdenDia(this.idComisionRuta, pdf, true).subscribe({
+      next: (vista: any) => {
+        this.importandoOrdenDia = false;
+        this.cdr.detectChanges();
+        if (vista.bloqueados?.length) {
+          this.avisarPuntosBloqueados(vista.bloqueados);
+          return;
+        }
+        this.confirmarImportacionOrdenDia(pdf, vista.puntos || [], vista.puntosActuales || 0);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.importandoOrdenDia = false;
+        this.cdr.detectChanges();
+        Swal.fire({ icon: 'error', title: 'No se pudo leer el PDF', text: e.error?.msg || 'Intenta de nuevo.' });
+      }
+    });
+  }
+
+  private confirmarImportacionOrdenDia(pdf: File, puntos: { nopunto: number; punto: string }[], actuales: number): void {
+    const escapar = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+    const lista = puntos
+      .map(p => `<div style="padding:6px 0;border-bottom:1px solid #eee"><b>${p.nopunto}.-</b> ${escapar(p.punto.length > 160 ? p.punto.slice(0, 160) + '…' : p.punto)}</div>`)
+      .join('');
+    const aviso = actuales > 0
+      ? `<p class="text-danger mb-2"><b>Se borrarán los ${actuales} puntos actuales</b> y se reemplazarán por estos.</p>`
+      : '';
+
+    Swal.fire({
+      title: `Se encontraron ${puntos.length} puntos`,
+      html: `${aviso}<div style="text-align:left;max-height:50vh;overflow-y:auto;font-size:.88rem">${lista}</div>`,
+      width: 760,
+      showCancelButton: true,
+      confirmButtonText: actuales > 0 ? 'Reemplazar orden del día' : 'Cargar orden del día',
+      cancelButtonText: 'Cancelar',
+    }).then(res => {
+      if (!res.isConfirmed) return;
+      this.importandoOrdenDia = true;
+      this.cdr.detectChanges();
+      this._eventoService.importarOrdenDia(this.idComisionRuta, pdf, false).subscribe({
+        next: (r: any) => {
+          this.importandoOrdenDia = false;
+          Swal.fire({ icon: 'success', title: 'Orden del día cargado', text: r.msg, timer: 2500, showConfirmButton: false });
+          this.cargarPuntosRegistrados();
+        },
+        error: (e: HttpErrorResponse) => {
+          this.importandoOrdenDia = false;
+          this.cdr.detectChanges();
+          // Entre la vista previa y la confirmación alguien pudo empezar a trabajar un punto.
+          if (e.status === 409 && e.error?.bloqueados) { this.avisarPuntosBloqueados(e.error.bloqueados); return; }
+          Swal.fire({ icon: 'error', title: 'No se pudo cargar', text: e.error?.msg || 'Intenta de nuevo.' });
+        }
+      });
+    });
+  }
+
+  private avisarPuntosBloqueados(bloqueados: { nopunto: number; motivos: string[] }[]): void {
+    const lista = bloqueados
+      .map(b => `<li><b>Punto ${b.nopunto}:</b> ${b.motivos.join(', ')}</li>`)
+      .join('');
+    Swal.fire({
+      icon: 'warning',
+      title: 'No se puede reemplazar el orden del día',
+      html: `<p>Estos puntos ya tienen actividad y se perdería:</p><ul style="text-align:left">${lista}</ul>
+             <p class="mb-0">Edita o agrega los puntos a mano.</p>`,
+    });
+  }
+
   toggleFormularioPunto() {
     this.mostrarFormularioPunto = !this.mostrarFormularioPunto;
     this.puntosTurnadosSeleccionados = [];

@@ -185,12 +185,32 @@ export class PanelDiputadoComponent implements OnInit, OnDestroy {
 
     // El admin corrigió la asistencia o el voto de este diputado desde su
     // pantalla: se vuelve a pedir el estado para que aquí se vea lo mismo.
+    // Si lo cambió para TODOS (masivo) el aviso ya trae el nuevo sentido y se
+    // aplica aquí mismo — si no, serían 75 peticiones a la BD a la vez.
     const alCorregirAdmin = () => {
       this.cargarMiAsistencia();
       this.cargarEstado();
     };
-    this._socketService.onAsistenciaActualizadaAdmin(alCorregirAdmin);
-    this._socketService.onVotoActualizadoAdmin(alCorregirAdmin);
+    this._socketService.onAsistenciaActualizadaAdmin((data) => {
+      if (!data.masivo) { alCorregirAdmin(); return; }
+      if (!this.sesionIdAgenda || data.idAgenda !== this.sesionIdAgenda) return;
+      const registrada = data.sentido !== 0;
+      this.asistenciaRegistrada = registrada;
+      if (this.asistencia && this.asistencia.idAgenda === data.idAgenda) this.asistencia.yaRegistro = registrada;
+      this.cdr.detectChanges();
+    });
+    this._socketService.onVotoActualizadoAdmin((data) => {
+      if (!data.masivo) { alCorregirAdmin(); return; }
+      const v = this.votacion;
+      if (!v) return;
+      const mismaVotacion = data.idReserva
+        ? String(data.idReserva) === String(v.idReserva)
+        : !v.idReserva && String(data.idPunto) === String(v.idPunto);
+      if (!mismaVotacion) return;
+      v.yaVoto = data.sentido !== 0;
+      v.sentidoActual = data.sentido;
+      this.cdr.detectChanges();
+    });
 
     // La respuesta de 'sesiones-activas' vuelve a cargar el estado.
     this._socketService.onReconnect(() => {

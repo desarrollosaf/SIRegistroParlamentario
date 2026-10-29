@@ -584,6 +584,18 @@
                                                 {{ mostrarFormularioPunto ? 'Ocultar' : 'Agregar' }} punto
                                             </button>
 
+                                            <input #inputPdfOrdenDia type="file" accept="application/pdf,.pdf" hidden
+                                                (change)="alElegirPdfOrdenDia($event)">
+                                            <button class="btn btn-outline-primary" [disabled]="importandoOrdenDia"
+                                                (click)="inputPdfOrdenDia.click()"
+                                                title="Carga los puntos desde el PDF del orden del día (1.-, 2.-, …)">
+                                                @if (importandoOrdenDia) {
+                                                    <span class="spinner-border spinner-border-sm me-1"></span> Leyendo PDF…
+                                                } @else {
+                                                    <i class="bi bi-file-earmark-pdf"></i> Subir orden del día (PDF)
+                                                }
+                                            </button>
+
                                             <button class="btn btn-info" (click)="abrirModalIntervencionGeneral()">
                                                 <i class="bi bi-mic-fill"></i> Intervención
                                             </button>

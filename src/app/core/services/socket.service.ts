@@ -2,6 +2,18 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { enviroment } from '../../../enviroments/enviroment';
 
+/** Corrección del admin. Individual: trae id_diputado (llega a su sala personal).
+ *  Masivo ("marcar a todos"): masivo=true, sin id_diputado, llega a sala-diputados. */
+export interface AvisoCorreccionAdmin {
+  id_diputado?: string;
+  masivo?: boolean;
+  idAgenda?: string;
+  idPunto?: any;
+  idReserva?: string | null;
+  sentido: number;
+  mensaje: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SocketService {
   private socket?: Socket;
@@ -61,7 +73,7 @@ export class SocketService {
   }
 
   // El admin corrigió la asistencia/voto de este diputado (llega a su sala personal).
-  onAsistenciaActualizadaAdmin(cb: (data: { id_diputado: string; sentido: number; mensaje: string }) => void): void {
+  onAsistenciaActualizadaAdmin(cb: (data: AvisoCorreccionAdmin) => void): void {
     const s = this.ensureConnected();
     s.off('asistencia-actualizada-admin');
     s.on('asistencia-actualizada-admin', cb);
@@ -71,7 +83,7 @@ export class SocketService {
     this.socket?.off('asistencia-actualizada-admin');
   }
 
-  onVotoActualizadoAdmin(cb: (data: { id_diputado: string; sentido: number; mensaje: string }) => void): void {
+  onVotoActualizadoAdmin(cb: (data: AvisoCorreccionAdmin) => void): void {
     const s = this.ensureConnected();
     s.off('voto-actualizado-admin');
     s.on('voto-actualizado-admin', cb);

@@ -48,6 +48,14 @@ export class EventoService {
     return this.http.post<string>(`${this.myAppUrl}${this.myAPIUrl}/savepunto/${id}`,data)
   }
 
+  /** Sube el PDF del orden del día. soloVista=true solo lo lee (no guarda nada). */
+  importarOrdenDia(id: string, pdf: File, soloVista: boolean): Observable<any> {
+    const data = new FormData();
+    data.append('documento', pdf);
+    const qs = soloVista ? '?soloVista=1' : '';
+    return this.http.post<any>(`${this.myAppUrl}${this.myAPIUrl}/importar-orden-dia/${id}${qs}`, data)
+  }
+
   getPuntos(id: any): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getpuntos/${id}`)
   }
