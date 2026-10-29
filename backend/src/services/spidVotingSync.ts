@@ -207,6 +207,11 @@ async function procesarVotos(est: Estadisticas) {
   est.votosLeidos = nuevas.length;
 
   const ahora = Date.now();
+  // Votos leídos en ESTE ciclo: aunque spid ya haya cerrado su votación, se
+  // intentan registrar una vez. Si no, un voto de último segundo (emitido
+  // poco antes de que spid cerrara, dentro del intervalo del poller) se
+  // descartaba sin intentarlo aunque SIRegistroParlamentario siguiera abierto.
+  const recienLeidos = new Set<string>();
   for (const fila of nuevas) {
     if (!fila.nombre_db) {
       console.warn(`${LOG_PREFIX} voto id=${fila.id} sin nombre_db en spid, se omite`);
@@ -214,6 +219,7 @@ async function procesarVotos(est: Estadisticas) {
     }
     const idVotacion = Number(fila.id_votacion);
     const clave = `${idVotacion}|${fila.nombre_db}`;
+    recienLeidos.add(clave);
     const previo = votosPendientes.get(clave);
     // Si el diputado cambia su voto antes de que entre, vale el último.
     votosPendientes.set(clave, {
@@ -229,9 +235,11 @@ async function procesarVotos(est: Estadisticas) {
 
   // Los pendientes de una votación que spid ya cerró se descartan: si se
   // registraran más tarde caerían en otro punto de SIRegistroParlamentario.
+  // Excepción: los recién leídos tienen un intento (ver recienLeidos); si ese
+  // intento no entra, en el siguiente ciclo ya no son recientes y se descartan.
   const activas = await votacionesActivasEnSpid();
   for (const [clave, p] of Array.from(votosPendientes.entries())) {
-    if (!activas.has(p.idVotacion)) {
+    if (!activas.has(p.idVotacion) && !recienLeidos.has(clave)) {
       votosPendientes.delete(clave);
       est.votosDescartados++;
       console.warn(`${LOG_PREFIX} voto "${p.nombre}" -> ${p.sentido} descartado: la votación ${p.idVotacion} de spid se cerró sin que hubiera votación abierta en SIRegistroParlamentario`);
