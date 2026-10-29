@@ -23,6 +23,28 @@
     </button>
   </div>
 
+  <!-- ══ EXCEL GENERAL DE COMISIONES ═════════════════════════════════════════ -->
+  <div class="selector-card reporte-general">
+    <div class="reporte-general-texto">
+      <span class="selector-label mb-0">
+        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Asistencia de todas las comisiones
+      </span>
+      <small class="text-muted">Resumen, por comisión, por diputado y detalle de cada reunión.</small>
+    </div>
+    <div class="reporte-general-acciones">
+      <select class="form-select" [(ngModel)]="anioComisiones" [disabled]="generandoExcelComisiones"
+        aria-label="Año del reporte">
+        <option value="todos">Todos los años</option>
+        <option *ngFor="let a of aniosComisiones" [ngValue]="a">{{ a }}</option>
+      </select>
+      <button class="btn-excel" [disabled]="generandoExcelComisiones" (click)="descargarExcelComisiones()">
+        <span *ngIf="generandoExcelComisiones" class="spinner-border spinner-border-sm me-2"></span>
+        <i class="bi bi-file-earmark-excel-fill me-2" *ngIf="!generandoExcelComisiones"></i>
+        {{ generandoExcelComisiones ? 'Generando...' : 'Descargar Excel' }}
+      </button>
+    </div>
+  </div>
+
   <!-- ══ SELECTOR DE DIPUTADO ════════════════════════════════════════════════ -->
   <div class="selector-card">
     <label class="selector-label">

@@ -337,6 +337,16 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/`);
   }
 
+  getAniosAsistenciaComisiones(): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}api/reporte/asistencia/comisiones-anios`);
+  }
+
+  descargarExcelAsistenciaComisiones(anio: number | 'todos'): Observable<Blob> {
+    return this.http.get(`${this.myAppUrl}api/reporte/asistencia/comisiones-excel?anio=${anio}`, {
+      responseType: 'blob'
+    });
+  }
+
   descargarExcelVotaciones(): Observable<Blob> {
     return this.http.get(`${this.myAppUrl}${this.myAPIUrl2}/estadisticas/excel-votaciones`, {
       responseType: 'blob'

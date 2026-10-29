@@ -85,6 +85,35 @@ $sin:         #d1d5db;
 
 .selector-wrapper { position: relative; }
 
+// ─── Excel general de comisiones ─────────────────────────────────────────────
+.reporte-general {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.reporte-general-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reporte-general-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .form-select {
+    width: auto;
+    min-width: 170px;
+    border-radius: 22px;
+    font-size: 0.85rem;
+  }
+}
+
 .selector-loading {
   display: flex;
   align-items: center;

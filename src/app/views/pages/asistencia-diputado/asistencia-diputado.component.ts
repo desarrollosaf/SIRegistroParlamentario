@@ -64,8 +64,37 @@ export class AsistenciaDiputadoComponent implements OnInit {
 
   constructor(private _eventoService: EventoService) {}
 
+  // Excel general: asistencia de TODAS las reuniones de comisión, por año o todo junto.
+  aniosComisiones: number[] = [];
+  anioComisiones: number | 'todos' = 'todos';
+  generandoExcelComisiones = false;
+
   ngOnInit(): void {
     this.cargarDiputados();
+    this._eventoService.getAniosAsistenciaComisiones().subscribe({
+      next: (res: any) => { this.aniosComisiones = res.anios || []; },
+      error: () => {}
+    });
+  }
+
+  descargarExcelComisiones(): void {
+    this.generandoExcelComisiones = true;
+    const anio = this.anioComisiones;
+    this._eventoService.descargarExcelAsistenciaComisiones(anio).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `asistencia_comisiones_${anio}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.generandoExcelComisiones = false;
+      },
+      error: () => {
+        this.generandoExcelComisiones = false;
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el Excel de asistencia de comisiones.', confirmButtonColor: '#800048' });
+      }
+    });
   }
 
   cargarDiputados(): void {
