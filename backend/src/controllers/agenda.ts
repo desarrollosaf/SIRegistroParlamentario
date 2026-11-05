@@ -3659,7 +3659,7 @@ export const enviarWhatsPunto = async (req: Request, res: Response) => {
     const mensaje = `*Punto número ${nopunto}:*\n${puntoTexto}\n\n*Descripción del evento:* ${descripcion}\n*Fecha:* ${fechaFormateada}`;
     const params = {
       token: "ml56a7d6tn7ha7cc",
-      to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+      to: "+527222035605, +527224986377, +527151605569, +527226303741, +7351799442",
       body: mensaje,
       priority: "1",
       referenceId: "",
@@ -5192,7 +5192,7 @@ export const enviarWhatsVotacionPDF = async (req: Request, res: Response): Promi
 
     const formData = new URLSearchParams();
     formData.append('token', 'ml56a7d6tn7ha7cc');
-    formData.append('to', '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127,+7292402580,+7221261368,+7121262090');
+    formData.append('to', '+527222035605, +527224986377, +527151605569, +527226303741, +7351799442, +7222450127,+7292402580,+7221261368,+7121262090');
     // formData.append('to', '+525561081154');
     formData.append('filename', fileName);
     formData.append('document', base64PDF);
@@ -6473,7 +6473,7 @@ export const enviarWhatsAsistenciaPDF = async (req: Request, res: Response): Pro
  
     const params = {
       token:    'ml56a7d6tn7ha7cc',
-      to: '+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442, +7222450127,+7292402580,+7221261368,+7121262090',
+      to: '+527222035605, +527224986377, +527151605569, +527226303741, +7351799442, +7222450127,+7292402580,+7221261368,+7121262090',
       // to:       '+525561081154 ,',
       filename: fileName,
       document: base64PDF,
@@ -6899,7 +6899,7 @@ export const enviarNotInicioEvento = async (req: Request, res: Response): Promis
     const params = {
       token: 'ml56a7d6tn7ha7cc',
       to: "+527222035605,",
-      // to: "+527222035605, +527224986377, +527151605569, +527222285798, +527226303741, +7351799442",
+      // to: "+527222035605, +527224986377, +527151605569, +527226303741, +7351799442",
       filename: fileName,
       document: base64PDF,
       caption: mensajeTexto
