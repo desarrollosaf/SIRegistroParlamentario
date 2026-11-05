@@ -26,6 +26,10 @@ services:
       # defecto; esto lo hace resolver también si la VM corre Docker en Linux.
       - "host.docker.internal:host-gateway"
     # Ya no publica el 3013: ahora lo publica el gateway (ver gateway.conf).
+    # Usa ~100-200 MB: el tope solo frena una fuga de memoria, y sin swap para
+    # que un voto nunca se alente por escribir a disco.
+    mem_limit: 2g
+    memswap_limit: 2g
     logging: *logging
     restart: unless-stopped
 
@@ -51,18 +55,19 @@ services:
       - MODO_SESION_CACHE_TTL_MS=300000
       - MODO_SESION_CACHE_MAX_MB=150
       # Memoria de Node explícita (antes la calculaba sola a partir del límite
-      # del contenedor y quedó corta). Deja ~500 MB del contenedor para lo demás.
-      - NODE_OPTIONS=--max-old-space-size=1024
+      # del contenedor y quedó corta). Deja ~1 GB del contenedor para lo demás.
+      - NODE_OPTIONS=--max-old-space-size=2048
     volumes:
       # Lectura/escritura: el PDF del orden del día (estadistico.ts) se genera
       # en storage/pdfs y el núcleo lo sirve en /storage (mismo volumen).
       - ./backend/storage:/app/storage
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # La VM no tiene swap: si un reporte se dispara de memoria, Docker reinicia
-    # SOLO este contenedor en vez de que el sistema mate otro proceso al azar
-    # (el núcleo o el MySQL de SIPresidencia).
-    mem_limit: 1536m
+    # Si un reporte se dispara de memoria, Docker reinicia SOLO este contenedor
+    # en vez de que el sistema mate otro proceso al azar (p. ej. el núcleo).
+    # El swap de la VM queda como red de seguridad, no para este contenedor.
+    mem_limit: 3g
+    memswap_limit: 3g
     depends_on:
       - backend
     logging: *logging
