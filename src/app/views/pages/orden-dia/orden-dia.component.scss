@@ -26,3 +26,8 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* En pantallas chicas la tabla se desplaza de lado en vez de aplastar columnas. */
+ngx-datatable.bootstrap {
+    min-width: 640px;
+}

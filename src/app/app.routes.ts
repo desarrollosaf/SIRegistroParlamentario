@@ -9,43 +9,7 @@ export const routes: Routes = [
     component: BaseComponent,
     canActivateChild: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      {
-        path: 'dashboard',
-        loadChildren: () => import('./views/pages/dashboard/dashboard.routes')
-      },
-      {
-        path: 'apps',
-        loadChildren: () => import('./views/pages/apps/apps.routes')
-      },
-      {
-        path: 'ui-components',
-        loadChildren: () => import('./views/pages/ui-components/ui-components.routes')
-      },
-      {
-        path: 'advanced-ui',
-        loadChildren: () => import('./views/pages/advanced-ui/advanced-ui.routes')
-      },
-      {
-        path: 'forms',
-        loadChildren: () => import('./views/pages/forms/forms.routes')
-      },
-      {
-        path: 'charts',
-        loadChildren: () => import('./views/pages/charts/charts.routes')
-      },
-      {
-        path: 'tables',
-        loadChildren: () => import('./views/pages/tables/tables.routes')
-      },
-      {
-        path: 'icons',
-        loadChildren: () => import('./views/pages/icons/icons.routes')
-      },
-      {
-        path: 'general',
-        loadChildren: () => import('./views/pages/general/general.routes')
-      },
+      { path: '', redirectTo: 'agenda-comision/sesiones', pathMatch: 'full' },
       {
       path: 'agenda',
        loadChildren: () => import('./views/pages/agenda/agenda.route')

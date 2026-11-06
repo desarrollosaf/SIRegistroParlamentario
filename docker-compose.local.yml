@@ -1,0 +1,87 @@
+# Entorno LOCAL de desarrollo. NO se usa en el servidor.
+#
+# Primero levanta la base, que es un servidor aparte (~/docker/mysql-bd):
+#
+#   cd ~/docker/mysql-bd && docker compose up -d --wait
+#   docker compose -f docker-compose.local.yml up -d --build
+#
+# Frontend: http://localhost:8011
+#
+# El backend vive en una red interna SIN salida a internet ni a la LAN: aunque
+# algo quede mal configurado, no puede tocar la BD de producción ni mandar
+# WhatsApp reales. No usa backend/.env a propósito.
+name: siregistro-local
+
+x-db-env: &db-env
+  DB_HOST: db
+  DB_HOST_PLENO: db
+  DB_PORT: "3306"
+  DB_USER: registro_local
+  DB_PASSWORD: local_dev_only
+  DB_NAME_SAF: local_saf
+  DB_NAME_LEGISLATIVO: local_legislativo
+  DB_NAME_REGISTROCOMISIONES: local_registrocomisiones
+  DB_NAME_PLENO: local_pleno
+
+services:
+  # Crea las tablas que falten y el usuario de prueba, y termina.
+  preparar-bd:
+    build:
+      context: ./backend
+      target: build
+    image: siregistro-local-preparar-bd
+    command: node preparar-bd.js
+    environment:
+      <<: *db-env
+    volumes:
+      - ./docker/local/preparar-bd.js:/app/preparar-bd.js:ro
+    networks:
+      - bd
+
+  backend:
+    build: ./backend
+    image: siregistro-local-backend
+    environment:
+      <<: *db-env
+      NODE_ENV: development
+      PORT: "3013"
+      ROLE: completo
+      SECRET_KEY: secreto-solo-local
+      JWT_SECRET: secreto-solo-local
+      SPID_SYNC_ENABLED: "false"
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      preparar-bd:
+        condition: service_completed_successfully
+    networks:
+      interna:
+        # nginx.conf del frontend busca al backend con este nombre.
+        aliases:
+          - gateway
+      bd:
+    restart: unless-stopped
+
+  frontend:
+    build: .
+    image: siregistro-local-frontend
+    ports:
+      - "127.0.0.1:8011:80"
+    depends_on:
+      - backend
+    networks:
+      - interna
+      - salida
+    restart: unless-stopped
+
+networks:
+  interna:
+    internal: true
+  salida:
+  # La crea ~/docker/mysql-bd. Tampoco tiene salida.
+  bd:
+    external: true
+    name: mysql-bd-red
+
+volumes:
+  storage:

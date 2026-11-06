@@ -2360,6 +2360,60 @@ export const generarPdfOrdenDia = async (req: Request, res: Response): Promise<R
   }
 };
 
+const UUID_TIPO_SESION = 'd5687f72-a328-4be1-a23c-4c3575092163';
+
+/** Orden del día de todos los eventos en una sola petición (panel de admin).
+ *  Vive en /api/estadistico/ para que el gateway lo mande a "consultas" y no al
+ *  núcleo de votos. tipo: 1 = sesiones, 0 = comisiones y demás eventos. */
+export const getResumenOrdenesDia = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { tipo } = req.params;
+    if (tipo !== '0' && tipo !== '1') {
+      return res.status(400).json({ msg: 'tipo debe ser 0 o 1' });
+    }
+
+    const eventos = await Agenda.findAll({
+      attributes: ['id', 'fecha'],
+      include: [{
+        model: TipoEventos,
+        as: 'tipoevento',
+        attributes: [],
+        required: true,
+        where: { id: tipo === '1' ? UUID_TIPO_SESION : { [Op.ne]: UUID_TIPO_SESION } },
+      }],
+      order: [['fecha', 'DESC']],
+    });
+
+    const puntos: any[] = await PuntosOrden.findAll({
+      where: { id_evento: eventos.map((e: any) => e.id) },
+      attributes: ['id_evento', 'punto'],
+      order: [['nopunto', 'ASC']],
+      raw: true,
+    });
+
+    const puntosPorEvento = new Map<string, string[]>();
+    for (const p of puntos) {
+      if (!p.punto) continue;
+      // String(): id_evento es texto y agendas.id puede venir numérico.
+      const clave = String(p.id_evento);
+      const lista = puntosPorEvento.get(clave);
+      if (lista) lista.push(p.punto);
+      else puntosPorEvento.set(clave, [p.punto]);
+    }
+
+    return res.status(200).json({
+      data: eventos.map((e: any) => ({
+        id: e.id,
+        fecha: e.fecha,
+        ordenDelDia: puntosPorEvento.get(String(e.id)) ?? [],
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error al obtener el orden del día:', error);
+    return res.status(500).json({ msg: 'Error interno del servidor' });
+  }
+};
+
 export const getOrdenesDia = async (req: Request, res: Response): Promise<Response> => {
   try {
     const [eventos, reporte] = await Promise.all([

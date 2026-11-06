@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { EventoService } from '../../../service/evento.service';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { NgZone } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 declare var bootstrap: any;
@@ -24,7 +24,7 @@ interface Integrante {
 
 @Component({
   selector: 'app-comision',
-  imports: [NgxDatatableModule, CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
+  imports: [NgxDatatableModule, CommonModule, RouterModule, ReactiveFormsModule, FormsModule, NgbDropdownModule],
   templateUrl: './comision.component.html',
   styleUrl: './comision.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

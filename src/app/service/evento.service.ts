@@ -27,6 +27,10 @@ export class EventoService {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/geteventos/${tipo}`)
   }
 
+  getResumenOrdenesDia(tipo: string): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}api/estadistico/resumen-ordenes-dia/${tipo}`)
+  }
+
   getEvento(id: String): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myAPIUrl}/getevento/${id}`)
   }

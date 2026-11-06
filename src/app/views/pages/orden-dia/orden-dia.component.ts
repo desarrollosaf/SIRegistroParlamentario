@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgZone } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { ColumnMode, NgxDatatableModule } from '@siemens/ngx-datatable';
 import { EventoService } from '../../../service/evento.service';
 import Swal from 'sweetalert2';
@@ -33,6 +31,20 @@ export class OrdenDiaComponent {
   titulo = signal<string>('Orden del día de sesiones');
   generandoExcel = signal<boolean>(false);
 
+  /** Puntos visibles antes de pulsar "Ver todos". */
+  readonly puntosVisibles = 3;
+  expandidos = signal<Set<string>>(new Set());
+
+  estaExpandido(id: string): boolean {
+    return this.expandidos().has(id);
+  }
+
+  alternarExpandido(id: string): void {
+    const siguiente = new Set(this.expandidos());
+    if (!siguiente.delete(id)) siguiente.add(id);
+    this.expandidos.set(siguiente);
+  }
+
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const tipoParam = params.get('tipo');
@@ -49,42 +61,14 @@ export class OrdenDiaComponent {
 
   cargarEventos(): void {
     this.loading.set(true);
-    this._eventoService.getEventos(this.tipo).subscribe({
+    this._eventoService.getResumenOrdenesDia(this.tipo).subscribe({
       next: (response: any) => {
-        const citas: any[] = response.citas || [];
-
-        if (citas.length === 0) {
-          this.originalData.set([]);
-          this.temp.set([]);
-          this.filteredCount.set(0);
-          this.loading.set(false);
-          this.setPage({ offset: 0 });
-          return;
-        }
-
-        const peticiones = citas.map((c: any) =>
-          this._eventoService.getPuntos(c.id).pipe(catchError(() => of({ data: [] })))
-        );
-
-        forkJoin(peticiones).subscribe((resultados: any[]) => {
-          const filas = citas.map((cita: any, i: number) => {
-            const puntos: any[] = resultados[i]?.data || [];
-            const ordenDelDia = puntos.length > 0
-              ? puntos.map((p: any) => p.punto).filter(Boolean)
-              : [];
-            return {
-              id: cita.id,
-              fecha: cita.fecha,
-              ordenDelDia
-            };
-          });
-
-          this.originalData.set(filas);
-          this.temp.set(filas);
-          this.filteredCount.set(filas.length);
-          this.loading.set(false);
-          this.setPage({ offset: 0 });
-        });
+        const filas: any[] = response.data || [];
+        this.originalData.set(filas);
+        this.temp.set(filas);
+        this.filteredCount.set(filas.length);
+        this.loading.set(false);
+        this.setPage({ offset: 0 });
       },
       error: (e: HttpErrorResponse) => {
         const msg = e.error?.msg || 'Error desconocido';

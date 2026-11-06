@@ -35,26 +35,23 @@
                         [limit]="pageSize()" [count]="filteredCount()" [offset]="page()" (page)="setPage($event)"
                         [loadingIndicator]="loading()">
 
-                        <ngx-datatable-column prop="id" [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            name="ID" [width]="100">
-                            <ng-template let-row="row" ngx-datatable-cell-template>
-                                {{ row.id }}
-                            </ng-template>
-                        </ngx-datatable-column>
-
                         <ngx-datatable-column prop="fecha" [headerClass]="'text-center'" [cellClass]="'text-center'"
-                            name="Fecha" [width]="150">
+                            name="Fecha" [width]="120" [minWidth]="110" [maxWidth]="140">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 {{ row.fecha | date:'dd/MM/yyyy' }}
                             </ng-template>
                         </ngx-datatable-column>
 
                         <ngx-datatable-column [headerClass]="'text-center'" [cellClass]="'text-start'"
-                            name="Orden del día">
+                            name="Orden del día" [sortable]="false" [width]="900" [minWidth]="500">
                             <ng-template let-row="row" ngx-datatable-cell-template>
                                 <ol *ngIf="row.ordenDelDia?.length > 0" class="mb-0 ps-3">
-                                    <li *ngFor="let punto of row.ordenDelDia">{{ punto }}</li>
+                                    <li *ngFor="let punto of (estaExpandido(row.id) ? row.ordenDelDia : row.ordenDelDia.slice(0, puntosVisibles))">{{ punto }}</li>
                                 </ol>
+                                <button *ngIf="row.ordenDelDia?.length > puntosVisibles" type="button"
+                                    class="btn btn-link btn-sm p-0 mt-1" (click)="alternarExpandido(row.id)">
+                                    {{ estaExpandido(row.id) ? 'Ver menos' : 'Ver todos (' + row.ordenDelDia.length + ')' }}
+                                </button>
                                 <span *ngIf="!row.ordenDelDia?.length" class="text-muted fst-italic">
                                     Sin orden del día
                                 </span>

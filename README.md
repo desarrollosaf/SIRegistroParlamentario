@@ -136,7 +136,7 @@ Ver la [arquitectura](#2-arquitectura-final).
 - `ROLE=consultas`: solo reportes, estadísticas, inteligencia y la lista de iniciativas. **No** arranca sockets, SPID ni el estado de votaciones, y responde **404** a las rutas de voto. Así, si el gateway se equivocara, el error se ve de inmediato, en vez de registrar un voto mal.
 - Sin `ROLE` (por ejemplo, `npm run dev` en local) corre **todo junto**, como antes.
 - Consultas usa un pool de **10** conexiones (`DB_POOL_MAX=10`): nunca puede acaparar las conexiones de la BD.
-- Consultas tiene un **límite de memoria** (`mem_limit: 1536m`, Node con `--max-old-space-size=1024`). Si se pasa, Docker reinicia **solo** ese contenedor.
+- Consultas tiene un **límite de memoria** (`mem_limit: 3g`, Node con `--max-old-space-size=2048`). Si se pasa, Docker reinicia **solo** ese contenedor. El núcleo tiene su propio tope de 2 GB. Ninguno de los dos usa swap.
 - El nginx del front y el gateway re-resuelven los nombres de los contenedores cada 10 s (`resolver 127.0.0.11`). Así, recrear un contenedor no deja una IP vieja que causaría 502.
 
 ### Fase 4: prueba de carga
@@ -202,9 +202,12 @@ Para cambiar una variable en producción: edita `backend/.env` y luego corre `do
 **Desplegar** (en la VM, de preferencia **fuera de una sesión**, aunque la Fase 1 recupera los eventos abiertos):
 
 ```bash
+cd /var/apps/SIRegistroParlamentario
 git pull
 docker compose up -d --build
 ```
+
+Si solo cambió `docker-compose.yml`, usa `docker compose up -d`, sin `--build`. Nunca despliegues durante una sesión: los contenedores se reinician.
 
 **Verificar:**
 
@@ -346,24 +349,16 @@ La ruta del **Excel** (`/api/reporte/iniciativas/general/`) está **comentada** 
 
 ## 10. Memoria (RAM) de la VM
 
-- **VM-61:** 4 núcleos, **3.4 GB de RAM, sin swap**.
+- **VM-61 (ORACLE-61, desde noviembre de 2026):** 4 vCPU, **16 GiB de RAM** y **4 GB de swap** (`/swapfile`).
+- **Por qué se subió:** con 4 GiB, la VM se quedó sin memoria el 27, 28 y 29 de octubre de 2026, y Linux mató procesos, incluidos algunos `node`. Las tres veces fueron minutos después de un commit, así que la causa probable es compilar con `docker compose up -d --build` dentro de la VM. Con 16 GiB, un build completo ya no provocó ese problema.
 - `mem_limit` del contenedor es **solo un tope**, no le da RAM nueva a nadie: todos los contenedores comparten la RAM de la VM.
-- Reparto aproximado en el peor caso:
-
-  | Quién | Uso aproximado |
-  |---|---|
-  | Núcleo | 100–200 MB |
-  | Consultas | hasta **1.5 GB** (tope) |
-  | MySQL de SIPresidencia | ~450 MB |
-  | Otros (SIPresidencia, frontends, cámaras) | ~150 MB |
-  | Sistema operativo y caché de disco | ~500 MB o más |
-  | **Total** | **~2.9 GB de 3.4 GB** |
-
-- **No conviene subir más el tope de consultas** sin darle más RAM a la VM. Sin swap, si la RAM se llena, Linux mata procesos y puede elegir **el núcleo de votos o el MySQL de SIPresidencia**.
-- **Si se necesita más RAM:**
-  1. Pedir que la VM suba a **6–8 GB** (lo más sano). Con eso, el tope de consultas puede subir a ~3 GB.
-  2. Agregar **2 GB de swap** como red de seguridad: no acelera nada, pero evita que se maten procesos.
-- **Decisión:** primero medir con `docker stats` durante la prueba de carga. Si consultas se queda **por debajo de ~1 GB**, no hace falta nada. Si se acerca a 1.5 GB o se reinicia, hay que pedir más RAM.
+- **Topes actuales:** núcleo 2 GB; consultas 3 GB, con heap de Node de 2 GB.
+- **Base de datos:** el MySQL de SIPresidencia no corre en esta VM; está en `192.168.36.58`.
+- **Discos:** `/` tiene solo **22 GB**. Docker y los proyectos pesados viven en `/var` (357 GB):
+  - `/var/apps/SIRegistroParlamentario`
+  - `/var/apps/SICamaras`
+- **Revisión periódica:** `df -h / /var`. Si `/` pasa del 80 %, revisa qué creció antes de que se llene.
+- **Al apagar la VM:** confirma que la tarjeta de red quede conectada al encender. Si está desconectada, SSH responde `No route to host` y `sipresidencia-backend` puede reiniciarse varias veces hasta recuperar su base de datos.
 
 ---
 
@@ -388,7 +383,6 @@ La ruta del **Excel** (`/api/reporte/iniciativas/general/`) está **comentada** 
 - [ ] Confirmar el `max_connections` de la BD (`SHOW VARIABLES LIKE 'max_connections';`). Con dos backends, el máximo teórico de conexiones sube, aunque las pruebas usaron muy pocas.
 - [ ] (Opcional) Reescribir los reportes de `iniciativas.ts` y `reporte.ts` con pocas consultas grandes, como ya está hecho en `estadistico.ts`, para que bajen de ~20 s a 1–2 s la primera vez.
 - [ ] (Opcional) Cachear los Excel ya generados.
-- [ ] (Opcional) Si la RAM no alcanza: subir la VM a 6–8 GB y/o agregar swap.
 
 ---
 

@@ -54,6 +54,7 @@
   <!-- ── AG Grid ── -->
   <div *ngIf="!cargando" class="grid-wrap">
     <ag-grid-angular
+      [localeText]="textosTabla"
       [theme]="theme"
       [rowData]="rowData"
       [columnDefs]="columnDefs"

@@ -38,6 +38,21 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+.agenda-descripcion {
+    white-space: normal;
+    line-height: 1.4;
+}
+
+.agenda-acciones {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.agenda-acciones .dropdown-toggle::after {
+    display: none;
+}
+
 /* Botones  */
 .btn-group-actions {
   display: flex;
@@ -310,3 +325,8 @@
   text-align: center;
 }
 
+
+/* En pantallas chicas la tabla se desplaza de lado en vez de aplastar columnas. */
+ngx-datatable.bootstrap {
+    min-width: 900px;
+}

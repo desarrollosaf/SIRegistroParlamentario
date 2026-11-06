@@ -84,6 +84,12 @@ export interface EditPresentante {
   styleUrl: './iniciativas-decretos.component.scss',
 })
 export class IniciativasDecretosComponent implements OnInit, OnDestroy {
+  readonly textosTabla = {
+    page: 'Página', to: 'a', of: 'de', more: 'más', pageSizeSelectorLabel: 'Filas por página:',
+    firstPage: 'Primera página', previousPage: 'Página anterior', nextPage: 'Página siguiente', lastPage: 'Última página',
+    noRowsToShow: 'No hay datos para mostrar', loadingOoo: 'Cargando...',
+  };
+
   private _eventoService = inject(EventoService);
   private destroy$ = new Subject<void>();
 

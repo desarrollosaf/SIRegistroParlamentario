@@ -29,7 +29,6 @@ import IntegranteLegislatura from "../models/integrante_legislaturas";
 import AnfitrionAgenda from "../models/anfitrion_agendas";
 import IntegranteComision from "../models/integrante_comisions";
 import { createTtlCache } from "../utils/cachedAsync";
-import { mapConLimite, LIMITE_REPORTES } from "../utils/mapConLimite";
 
 
 type ReporteBaseItem = {
@@ -120,273 +119,179 @@ const procesarPresentan = async (presentan: any[]) => {
 
 const obtenerIniciativasBase = async () => {
   return await IniciativaPuntoOrden.findAll({
-    attributes: ["id", "iniciativa", "materia", "createdAt", "id_punto", "expediente", "precluida","tipo", "publico"],
+    attributes: ["id", "iniciativa", "materia", "createdAt", "id_punto", "precluida", "tipo", "publico"],
     include: [
-      {
-        model: PuntosOrden,
-        as: "punto",
-        attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-        include: [
-          {
-            model: IniciativaEstudio,
-            as: "estudio",
-            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
-            required: false,
-            where: { type: 1 },
-            include: [
-              {
-                model: PuntosOrden,
-                as: "iniciativa",
-                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-                include: [
-                  {
-                    model: Agenda,
-                    as: "evento",
-                    attributes: ["id", "fecha", "descripcion", "liga"],
-                    include: [
-                      {
-                        model: TipoEventos,
-                        as: "tipoevento",
-                        attributes: ["nombre"]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        model: ExpedienteEstudiosPuntos,
-        as: "expedienteturno",
-        attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-        include: [
-          {
-            model: IniciativaEstudio,
-            as: "estudio",
-            attributes: ["id", "status", "createdAt", "punto_origen_id", "punto_destino_id", "type"],
-            required: false,
-            include: [
-              {
-                model: PuntosOrden,
-                as: "iniciativa",
-                attributes: ["id", "punto", "nopunto", "tribuna", "dispensa"],
-                include: [
-                  {
-                    model: Agenda,
-                    as: "evento",
-                    attributes: ["id", "fecha", "descripcion", "liga"],
-                    include: [
-                      {
-                        model: TipoEventos,
-                        as: "tipoevento",
-                        attributes: ["nombre"]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        model: Agenda,
-        as: "evento",
-        attributes: ["id", "fecha", "descripcion", "liga"],
-        include: [
-          {
-            model: TipoEventos,
-            as: "tipoevento",
-            attributes: ["nombre"]
-          }
-        ]
-      }
+      { model: PuntosOrden, as: "punto", attributes: ["id", "punto", "dispensa"] },
+      { model: Agenda, as: "evento", attributes: ["id", "fecha"] },
     ],
-    order: [["createdAt", "ASC"]]
+    order: [["createdAt", "ASC"], ["id", "ASC"]],
   });
 };
 
+// Los ids mezclan tipos entre tablas (puntos_ordens.id es numérico y
+// punto_origen_id es texto). SQL los compara igual; un Map no, así que siempre
+// se cruza con la clave en texto.
+const clave = (valor: any): string => String(valor);
+
+const agruparPor = (filas: any[], campo: string): Map<string, any[]> => {
+  const grupos = new Map<string, any[]>();
+  for (const fila of filas) {
+    if (fila[campo] == null) continue;
+    const k = clave(fila[campo]);
+    const grupo = grupos.get(k);
+    if (grupo) grupo.push(fila);
+    else grupos.set(k, [fila]);
+  }
+  return grupos;
+};
+
+const unicos = (valores: any[]) => [...new Set(valores.filter(Boolean))];
+
+/** id_comision puede traer una lista en texto: "[uuid1,uuid2]". */
+const idsDeComision = (valor: any): string[] =>
+  String(valor || "")
+    .replace(/[\[\]]/g, "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+// Antes: un JOIN con 66 mil filas para 1,480 iniciativas, más 4 consultas por
+// iniciativa. Ahora cada tabla se consulta una vez y se cruza en memoria.
 const construirReporteBaseSinCache = async (): Promise<ReporteBaseItem[]> => {
-  const iniciativas = await obtenerIniciativasBase();
+  const iniciativas = (await obtenerIniciativasBase()).map((i) => i.toJSON() as any);
+  const camposEstudio = ["id", "status", "punto_origen_id", "punto_destino_id"];
 
-  // Con tope de concurrencia: antes era Promise.all sobre TODAS las iniciativas
-  // y acaparaba el pool completo (ver utils/mapConLimite.ts).
-  const reporte = await mapConLimite(iniciativas, LIMITE_REPORTES, async (iniciativa, index) => {
-      const data: any = iniciativa.toJSON();
-    //   const {
-    //     proponentesString,
-    //     presentaString,
-    //     diputados,
-    //     diputadoIds,
-    //     gruposParlamentarios,
-    //     grupoParlamentarioIds
-    //   } = await procesarPresentan(data.id);
-          
-      const todosEstudios = [
-        ...(Array.isArray(data.punto?.estudio) ? data.punto.estudio : []),
-        ...(Array.isArray(data.expedienteturno)
-          ? data.expedienteturno.flatMap((exp: any) =>
-              Array.isArray(exp.estudio) ? exp.estudio : exp.estudio ? [exp.estudio] : []
-            )
-          : [])
-      ];
+  const puntoIds = unicos(iniciativas.map((d) => d.punto?.id));
+  const estudiosDelPunto = await IniciativaEstudio.findAll({
+    where: { type: 1, punto_origen_id: puntoIds },
+    attributes: camposEstudio,
+    raw: true,
+  });
+  const expedientesTurno = await ExpedienteEstudiosPuntos.findAll({
+    where: { punto_origen_sesion_id: unicos(iniciativas.map((d) => d.id_punto)) },
+    attributes: ["expediente_id", "punto_origen_sesion_id"],
+    raw: true,
+  });
+  const estudiosDelExpediente = await IniciativaEstudio.findAll({
+    where: { punto_origen_id: unicos(expedientesTurno.map((e: any) => e.expediente_id)) },
+    attributes: camposEstudio,
+    raw: true,
+  });
 
-      const fuenteEstudios = deduplicarPorId(todosEstudios);
+  const estudiosPorPunto = agruparPor(estudiosDelPunto, "punto_origen_id");
+  const expedientesPorPunto = agruparPor(expedientesTurno, "punto_origen_sesion_id");
+  const estudiosPorExpediente = agruparPor(estudiosDelExpediente, "punto_origen_id");
 
-      const estudios = fuenteEstudios.filter((e: any) => e.status === "1");
-      const dictamenes = fuenteEstudios.filter((e: any) => e.status === "2");
-      const rechazadocomi = fuenteEstudios.filter((e: any) => e.status === "4");
-      const rechazosesion = fuenteEstudios.filter((e: any) => e.status === "5");
-      const dispensa = String(data.punto?.dispensa) === "1";
-      const precluida = String(data.precluida) === "1";
+  const fuentes = iniciativas.map((d) =>
+    deduplicarPorId([
+      ...(estudiosPorPunto.get(clave(d.punto?.id)) ?? []),
+      ...(expedientesPorPunto.get(clave(d.id_punto)) ?? []).flatMap(
+        (e: any) => estudiosPorExpediente.get(clave(e.expediente_id)) ?? []
+      ),
+    ])
+  );
+  const posiblesPuntos = iniciativas.map((d, i) =>
+    unicos([d.punto?.id, ...fuentes[i].map((e: any) => e.punto_destino_id)])
+  );
 
-      const posiblesPuntosIds = [
-        data.punto?.id,
-        ...fuenteEstudios.map((e: any) => e.punto_destino_id).filter(Boolean)
-      ];
+  const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
+    where: { punto_origen_sesion_id: unicos(posiblesPuntos.flat()) },
+    attributes: ["expediente_id", "punto_origen_sesion_id"],
+    raw: true,
+  });
+  const relacionadosPorPunto = agruparPor(expedientesRelacionados, "punto_origen_sesion_id");
+  const origenesDeCierre = posiblesPuntos.map((puntos) =>
+    unicos([
+      ...puntos,
+      ...puntos.flatMap((p) => (relacionadosPorPunto.get(clave(p)) ?? []).map((e: any) => e.expediente_id)),
+    ])
+  );
 
-      const posiblesPuntosUnicos = [...new Set(posiblesPuntosIds)];
+  const cierresDB: any[] = await IniciativaEstudio.findAll({
+    where: { status: "3", punto_origen_id: unicos(origenesDeCierre.flat()) },
+    attributes: camposEstudio,
+    raw: true,
+  });
+  cierresDB.forEach((c, posicion) => { c.posicion = posicion; });
+  const cierresPorOrigen = agruparPor(cierresDB, "punto_origen_id");
 
-      const expedientesRelacionados = await ExpedienteEstudiosPuntos.findAll({
-        where: {
-          punto_origen_sesion_id: {
-            [Op.in]: posiblesPuntosUnicos
-          }
-        },
-        attributes: ["id", "expediente_id", "punto_origen_sesion_id"],
-        raw: true
-      });
+  const cierresPrincipales = iniciativas.map((_, i) => {
+    const propio = fuentes[i].find((e: any) => e.status === "3");
+    if (propio) return propio;
+    const candidatos = origenesDeCierre[i].flatMap((o) => cierresPorOrigen.get(clave(o)) ?? []);
+    return candidatos.reduce((menor: any, c: any) => (!menor || c.posicion < menor.posicion ? c : menor), null);
+  });
 
-      const expedienteIds = [
-        ...new Set(
-          expedientesRelacionados
-            .map((e: any) => e.expediente_id)
-            .filter(Boolean)
-        )
-      ];
+  // Fecha de expedición: punto destino del cierre → su evento.
+  const puntosDestino: any[] = await PuntosOrden.findAll({
+    where: { id: unicos(cierresPrincipales.map((c) => c?.punto_destino_id)) },
+    attributes: ["id", "id_evento"],
+    raw: true,
+  });
+  const eventosDestino: any[] = await Agenda.findAll({
+    where: { id: unicos(puntosDestino.map((p) => p.id_evento)) },
+    attributes: ["id", "fecha"],
+    raw: true,
+  });
+  const eventoDePunto = new Map(puntosDestino.map((p) => [clave(p.id), p.id_evento]));
+  const fechaDeEvento = new Map(eventosDestino.map((e) => [clave(e.id), e.fecha]));
 
-      const whereCierres: any = {
-        status: "3"
-      };
+  // Comisiones a las que se turnó cada punto.
+  const turnos = await PuntosComisiones.findAll({
+    where: { id_punto: puntoIds },
+    attributes: ["id_punto", "id_comision"],
+    raw: true,
+  });
+  const turnosPorPunto = agruparPor(turnos, "id_punto");
+  const comisiones: any[] = await Comision.findAll({
+    where: { id: unicos(turnos.flatMap((t: any) => idsDeComision(t.id_comision))) },
+    attributes: ["id", "nombre"],
+    order: [["id", "ASC"]],
+    raw: true,
+  });
 
-      if (posiblesPuntosUnicos.length > 0 || expedienteIds.length > 0) {
-        whereCierres[Op.or] = [];
+  return iniciativas.map((data, index) => {
+    const fuente = fuentes[index];
+    const cierrePrincipal = cierresPrincipales[index];
+    const dispensa = String(data.punto?.dispensa) === "1";
+    const precluida = String(data.precluida) === "1";
 
-        if (posiblesPuntosUnicos.length > 0) {
-          whereCierres[Op.or].push({
-            punto_origen_id: {
-              [Op.in]: posiblesPuntosUnicos
-            }
-          });
-        }
+    let observacion = "En estudio";
+    if (precluida) {
+      observacion = "Precluida";
+    } else if (dispensa || cierrePrincipal) {
+      observacion = "Aprobada";
+    } else if (fuente.some((e: any) => e.status === "5")) {
+      observacion = "Rechazada en sesión";
+    } else if (fuente.some((e: any) => e.status === "4")) {
+      observacion = "Rechazada en comisión";
+    }
 
-        if (expedienteIds.length > 0) {
-          whereCierres[Op.or].push({
-            punto_origen_id: {
-              [Op.in]: expedienteIds
-            }
-          });
-        }
-      }
+    const idsTurnado = new Set(
+      (turnosPorPunto.get(clave(data.punto?.id)) ?? []).flatMap((t: any) => idsDeComision(t.id_comision))
+    );
+    const comisionesTurnado = idsTurnado.size
+      ? comisiones.filter((c) => idsTurnado.has(clave(c.id))).map((c) => c.nombre).join(", ")
+      : null;
 
-      const cierresDB =
-        whereCierres[Op.or]?.length > 0
-          ? await IniciativaEstudio.findAll({
-              where: whereCierres,
-              include: [
-                {
-                  model: PuntosOrden,
-                  as: "iniciativa",
-                  attributes: ["id", "punto", "nopunto", "tribuna"],
-                  include: [
-                    {
-                      model: Agenda,
-                      as: "evento",
-                      attributes: ["id", "fecha", "descripcion", "liga"],
-                      include: [
-                        {
-                          model: TipoEventos,
-                          as: "tipoevento",
-                          attributes: ["nombre"]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            })
-          : [];
+    const fechaCierre = fechaDeEvento.get(clave(eventoDePunto.get(clave(cierrePrincipal?.punto_destino_id))));
+    const fechaEventoRaw = data.evento?.fecha ?? null;
 
-      const cierresMerge = [
-        ...fuenteEstudios.filter((e: any) => e.status === "3"),
-        ...cierresDB.map((c: any) => c.toJSON())
-      ];
-
-      const cierres = deduplicarPorId(cierresMerge);
-      const cierrePrincipal = cierres.length > 0 ? cierres[0] : null;
-
-      let observacion = "En estudio";
-      if(precluida){
-        observacion = "Precluida";
-
-      }else if(dispensa) {
-        observacion = "Aprobada";
-        
-      }else{
-
-        if (cierrePrincipal) {
-          observacion = "Aprobada";
-        } else if (rechazosesion.length > 0) {
-          observacion = "Rechazada en sesión";
-        } else if (rechazadocomi.length > 0) {
-          observacion = "Rechazada en comisión";
-        } else if (dictamenes.length > 0) {
-          observacion = "En estudio";
-        } else if (estudios.length > 0) {
-          observacion = "En estudio";
-        }
-
-
-      }  
-
-      
-
-      const turnadoInfo = await getComisionesTurnado(data.punto?.id);
-      const fechaExpedicion =
-        cierrePrincipal?.iniciativa?.evento?.fecha
-          ? formatearFechaCorta(cierrePrincipal.iniciativa.evento.fecha)
-          : "-";
-
-    //   const diputado = diputados.length > 0 ? diputados.join(", ") : "-";
-    //   const grupoParlamentario = gruposParlamentarios.length > 0 ? gruposParlamentarios.join(", ") : "-";
-      const fechaEventoRaw = data.evento?.fecha ?? null;
-
-      return {
-        no: index + 1,
-        id: normalizarTexto(data.id),
-        // autor: normalizarTexto(proponentesString),
-        // autor_detalle: normalizarTexto(presentaString),
-        iniciativa: normalizarTexto(data.iniciativa),
-        materia: normalizarTexto(data.materia || data.punto?.punto),
-        presentac: formatearFechaCorta(fechaEventoRaw),
-        fecha_evento_raw: fechaEventoRaw,
-        comisiones: normalizarTexto(turnadoInfo.comisiones_turnado),
-        expedicion: fechaExpedicion,
-        observac: observacion,
-        // diputado,
-        // grupo_parlamentario: grupoParlamentario,
-        // diputado_ids: diputadoIds,
-        // grupo_parlamentario_ids: grupoParlamentarioIds,
-        periodo: obtenerPeriodo(fechaEventoRaw),
-        tipo: data.tipo,
-        publico: data.publico,
-
-      };
-    });
-  return reporte;
-
+    return {
+      no: index + 1,
+      id: normalizarTexto(data.id),
+      iniciativa: normalizarTexto(data.iniciativa),
+      materia: normalizarTexto(data.materia || data.punto?.punto),
+      presentac: formatearFechaCorta(fechaEventoRaw),
+      fecha_evento_raw: fechaEventoRaw,
+      comisiones: normalizarTexto(comisionesTurnado),
+      expedicion: fechaCierre ? formatearFechaCorta(fechaCierre) : "-",
+      observac: observacion,
+      periodo: obtenerPeriodo(fechaEventoRaw),
+      tipo: data.tipo,
+      publico: data.publico,
+    };
+  });
 };
 
 // Mismo patrón que estadistico.ts: el reporte no depende de parámetros, se
@@ -418,49 +323,6 @@ const obtenerPeriodo = (fecha?: string | null): string => {
 const normalizarTexto = (valor: any): string => {
   if (!valor) return "-";
   return String(valor).trim() || "-";
-};
-
-const getComisionesTurnado = async (puntoId: string) => {
-  if (!puntoId) {
-    return { turnado: false, comisiones_turnado: null };
-  }
-
-  const puntosComisiones = await PuntosComisiones.findAll({
-    where: { id_punto: puntoId },
-    attributes: ["id_comision"],
-    raw: true
-  });
-
-  if (puntosComisiones.length === 0) {
-    return { turnado: false, comisiones_turnado: null };
-  }
-
-  const todosIds = puntosComisiones
-    .map((item: any) => item.id_comision || "")
-    .join(",");
-
-  const comisionIds = todosIds
-    .replace(/[\[\]]/g, "")
-    .split(",")
-    .map((id: string) => id.trim())
-    .filter(Boolean);
-
-  const comisionIdsUnicos = [...new Set(comisionIds)];
-
-  if (comisionIdsUnicos.length === 0) {
-    return { turnado: false, comisiones_turnado: null };
-  }
-
-  const comisiones = await Comision.findAll({
-    where: { id: comisionIdsUnicos },
-    attributes: ["nombre"],
-    raw: true
-  });
-
-  return {
-    turnado: true,
-    comisiones_turnado: comisiones.map((c: any) => c.nombre).join(", ")
-  };
 };
 
 const deduplicarPorId = (items: any[]) => {
